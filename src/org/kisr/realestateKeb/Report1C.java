@@ -468,6 +468,10 @@ public class Report1C {
 				{	if(("govsAgg.newGroup").equals(op)&&govsAgg!=null)
 					govsAgg.add(new LinkedList<Integer>());
 					int remGroup=("govsAgg.remGroup").equals(op)?TL.Util.parseInt(tl.h.req("i"),-1):-1;
+					Map<Integer,Integer>ng=namesGovs(tl);//int[]ng=namesGovs(tl);
+					//String[]ns=strs[0],gs=strs[StrsIndx.gov.ordinal()];
+					Map<Integer,LookupTbl>//gvs=lookup.get(LookupTbl.Col.gov),
+							nms=lookup.get(LookupTbl.Col.name);
 					for(int k=0,i ; k < govsAgg.size() ; k++ )
 						if( remGroup != k )
 						{	i=remGroup!=-1&&remGroup<k?k-1:k;
@@ -483,10 +487,7 @@ public class Report1C {
 								}
 							}
 							tl.out("<table line=\"299\"><tr><td>");
-							Map<Integer,Integer>ng=namesGovs(tl);//int[]ng=namesGovs(tl);
-							//String[]ns=strs[0],gs=strs[StrsIndx.gov.ordinal()];
-							Map<Integer,LookupTbl>//gvs=lookup.get(LookupTbl.Col.gov),
-									nms=lookup.get(LookupTbl.Col.name);
+
 							tl.out("<select multiple size=\"10\" name=\"",nm,"\">");
 							for(LookupTbl t:govs.values())//int j=1;j<gs.length;j++)
 							{tl.out("<optGroup label=\"",t.text,"\" >");//gs[j]
