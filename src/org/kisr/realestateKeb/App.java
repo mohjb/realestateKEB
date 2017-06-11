@@ -266,13 +266,13 @@ insert into usr values
         @F public String text;
         @F public Lang lang;
 
-        LookupTbl copy(){return new LookupTbl().set(no, col, code, text);}
+        LookupTbl copy(){return new LookupTbl().set(no, col, code, text,lang);}
 
-        LookupTbl set(Integer n,Col c,Integer d,String x){no=n;col=c;code=d;text=x;return this;}
+        LookupTbl set(Integer n,Col c,Integer d,String x,Lang lng){no=n;col=c;code=d;text=x;lang=lng;return this;}
 
         public enum Col{gov,type,name,label,sector};
         public enum Lang{ar,en};
-        public enum C implements CI{no,col,code,text;
+        public enum C implements CI{no,col,code,text,lang;
             public Class<? extends Tbl>cls(){return LookupTbl.class;}
             public Class<? extends TL.Form>clss(){return cls();}
             public String text(){return name();}
@@ -284,7 +284,6 @@ insert into usr values
             public Object value(Object v){return val(tbl(),v);}
             public Object val(TL.Form f){return f.v(this);}
             public Object val(TL.Form f,Object v){return f.v(this,v);}
-
         }//C
 
         @Override public CI pkc(){return C.no;}
@@ -302,28 +301,30 @@ CREATE TABLE `t` (
  */
 
 
-        public static Map<Col,Map<Integer,LookupTbl>> lookup(){
+        public static Map<Col,Map<Integer,Map<Lang,LookupTbl>>> lookup(){
             TL p=TL.tl();TL.H h=p.h;Object o=h.a(LookupTbl.class);
-            Map<Col,Map<Integer,LookupTbl>>m=o==null?null:(
-                    Map<Col,Map<Integer,LookupTbl>>)o;
+            Map<Col,Map<Integer,Map<Lang,LookupTbl>>>m=o==null?null:(
+                    Map<Col,Map<Integer,Map<Lang,LookupTbl>>>)o;
             if(m==null)try{LookupTbl l=new LookupTbl();
-                h.a(LookupTbl.class,m=new HashMap<Col,Map<Integer,LookupTbl>>());
+                h.a(LookupTbl.class,m=new HashMap<Col,Map<Integer,Map<Lang,LookupTbl>>>());
                 for(TL.DB.Tbl i:l.query(TL.DB.Tbl.where())){
                     p.log("App.LookupTbl.lookup:1:",i.toJson());
-                    Map<Integer,LookupTbl>n=m.get(l.col);
+                    Map<Integer,Map<Lang,LookupTbl>>n=m.get(l.col);
                     if(n==null)
-                        m.put(l.col,n=new HashMap<Integer,LookupTbl>());
-                    LookupTbl t=n.get(l.code);
-                    if(t==null || t.no>l.no)
-                        n.put(l.code, l.copy());
+                        m.put(l.col,n=new HashMap<Integer,Map<Lang,LookupTbl>>());
+                    Map<Lang,LookupTbl>ln=n.get(l.code);
+                    if(ln==null)
+                        n.put(l.code,ln=new HashMap<Lang,LookupTbl>(  ));
+                    LookupTbl t=ln.get( l.lang );
+                    if(t==null || t.no>l.no )//|| t.lang!=l.lang
+                        ln.put(l.lang, l.copy());
                 }//for
                 //p.log("App.LookupTbl.lookup:ex:",m);
             }//ifm==null
             catch(Exception x){p.error("App.LookupTbl.lookup:ex:", x);
                 if(m==null)
-                    m=new HashMap<Col,Map<Integer,LookupTbl>>();
+                    m=new HashMap<Col,Map<Integer,Map<Lang,LookupTbl>>>();
             }return m;}
-
     }//class LookupTbl
 
 }//class App

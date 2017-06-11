@@ -25,7 +25,7 @@ public class Report1C {
 	static void htmlTable(String[][]a
 		,String ttl//,LookupTbl.Col col,int coli//strsJ
 		,String trAttribs,int yr,Lbl.Term term,Chart.Model mod
-		,int[]pStatistics,Lbl.Statistics[]StatisticsA
+		,int[]pStatistics
 		,boolean reversedXAxis
 	)throws Exception
 	{final int termBase=term.base, Ix=0;
@@ -50,7 +50,7 @@ public class Report1C {
 		for(int i=0;i<a.length;i++) {
 			if (i > 0)
 				TL.out("\n<tr ", trAttribs, ">");
-			String lbl = StatisticsA[pStatistics[i + 1]].label;
+			String lbl = Lbl.sttstcs[pStatistics[i + 1]].label;
 			TL.out("<th>", lbl, "</th>");
 			for (int j = 0; j < a[i].length; j++) {
 				TL.out(j % termBase == 0//quart&&j%4==0
@@ -95,37 +95,6 @@ public class Report1C {
 		return a;
 	}
 
-	static int[]namesGovs0(TL tl)throws java.io.IOException,java.sql.SQLException
-		{final String nmg="realestateKeb.lookup.namesGovs";
-			int[]a=(int[])tl.h.a(nmg);
-			if(a==null)
-			{Object[][]o=TL.DB.q("select distinct `"
-					+DataTbl.C.name+"`,`"
-					+DataTbl.C.gov+"` from "
-					+DataTbl.Name);
-				tl.h.a(nmg,a=new int[o.length]);
-				for(int i=0;i<o.length;i++)
-				{Object on=o[i][0],og=o[i][1];
-					int n=on instanceof Number
-						?((Number)on).intValue()
-						:TL.Util.parseInt(String.valueOf(on),-1)
-						,gov=og instanceof Number
-						?((Number)og).intValue()
-						:TL.Util.parseInt(String.valueOf(og),0);
-					if(n>=0 && n<o.length)
-						a[n]=gov;
-				}
-			}
-			return a;
-		}
-
-/**these are indices for strs as the 1st index * / strs -> lookup
- enum StrsIndx{name//,ptyp
- ,prop_desc
- ,gov
- ,prop_typ
- ,typ};//final static int gov=2,name=0,ptyp=1,typ=3;
-
  /**these are html-post-parameter names, so that the names are centeralized/have one spelling*/
 		enum Prm{from,to,from2,to2
 			,typ,contract,gov,terms;//S;
@@ -135,56 +104,58 @@ public class Report1C {
 		enum Lbl{;
 
 			enum Ranks{الأول
-				,
+					           ("1st"),
 				الثاني
-				,
+						("2nd"),
 				الثالث
-				,
+						("3rd"),
 				الرابع
+						("4th");String en;Ranks(String e){en=e;}
 			}//enum Ranks	   String[]ranks=new String[]{"الأول","الثاني","الثالث","الرابع"};
 
-			enum Contrct
-			{//Null
-				all(0,"إجمالي العقود"),
-				c1(1,"عقود مسجلة"),
-				c2(2,"وكالات عقارية")
+			enum Contrct {//Null
+				all(0,"إجمالي العقود","Total"),
+				c1(1,"عقود مسجلة","Registered"),
+				c2(2,"وكالات عقارية","Agent")
 				;
 
-				public String str;public int v;
+				public String ar,en;public int v;
 				//Contrct(){str=name();}
-				Contrct(int i,String p){str=p;v=i;}
+				Contrct(int i,String p,String e){ar=p;en=e;v=i;}
 				//@Override public String toString(){return str==null?name():str;}
 			};//Contrct
 
+			public static Term[]terms=Term.values();
 			public static Ranks[]ranks=Ranks.values();
 			public static Contrct[]contrcts=Contrct.values();
+			public static Statistics[]sttstcs=Statistics.values();
 
 		enum Term{
-			aggregate(1,"إجمالي","إجمالي الفترة")
-			, annual(1,"سنة","سنوي")
-			, nineMonths(1,"9شهور","9شهور" )//	=9months
-			, semiAnnual(2,"النصف","نصف سنوي")
-			, quarterly(4,"الربع","ربع سنوي")
-			, monthly(12,"شهر","شهري")
-			, weekly(52,"اسبوع","اسبوعي");
-			public int base;public String ar,lbl;
-			Term(int b,String a,String lbl){base=b;ar=a;this.lbl=lbl;}
+			aggregate(1,"إجمالي","إجمالي الفترة" ,"Aggregate","aggregate")
+			, annual(1,"سنة","سنوي" ,"Annual","Year")
+			, nineMonths(1,"9شهور","9شهور" ,"Nine Months","Nine Months")//	=9months
+			, semiAnnual(2,"النصف","نصف سنوي" ,"Semi-Annual","Half")
+			, quarterly(4,"الربع","ربع سنوي" ,"Quarterly","Quarter")
+			, monthly(12,"شهر","شهري" ,"Monthly","Month")
+			, weekly(52,"اسبوع","اسبوعي" ,"Weekly","Week");
+			public int base;public String ar,lbl,en,enLbl;
+			Term(int b,String a,String lbl,String e,String el){base=b;ar=a;this.lbl=lbl;en=e;enLbl=el;}
 		}//enum Term
 
 
-		enum Statistics
-		{count("count(*)","عدد")
-			,amount("format(sum(`"+DataTbl.C.price+"`),3)","إجمالي قيمة التداول")
-			,avgMtr("format(sum(`"+DataTbl.C.price+"`)/sum(`"+DataTbl.C.area+"`),1)","متوسط السعر")
-			,maxMtr("format(max(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`),4)","أعلى سعر متر")
-			,minMtr("format(min(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`),4)","أقل سعر متر")
-			,avgLand("format(avg(`"+DataTbl.C.area+"`),1)","متوسط المساحة")
-			,SumLand("format(sum(`"+DataTbl.C.area+"`),3)","إجمالي المساحة")
-			,maxLand("format(max(`"+DataTbl.C.area+"`),1)","أكبر مساحة")
-			,minLand("format(min(`"+DataTbl.C.area+"`),1)","أصغر مساحة");
+		enum Statistics{
+		count("count(*)","عدد","Count")
+			,amount("format(sum(`"+DataTbl.C.price+"`),3)","إجمالي قيمة التداول","Total Price")
+			,avgMtr("format(sum(`"+DataTbl.C.price+"`)/sum(`"+DataTbl.C.area+"`),1)","متوسط السعر","Average Price")
+			,maxMtr("format(max(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`),4)","أعلى سعر متر","Maximum Price of 1 square meter")
+			,minMtr("format(min(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`),4)","أقل سعر متر","Minimum Price of 1 square meter")
+			,avgLand("format(avg(`"+DataTbl.C.area+"`),1)","متوسط المساحة","Average Area")
+			,SumLand("format(sum(`"+DataTbl.C.area+"`),3)","إجمالي المساحة","Total Area")
+			,maxLand("format(max(`"+DataTbl.C.area+"`),1)","أكبر مساحة","Largest Area")
+			,minLand("format(min(`"+DataTbl.C.area+"`),1)","أصغر مساحة","Smallest Area");
 
-			public String sql,label;
-			Statistics(String p,String l){sql=p;label=l;}
+			public String sql,label,en;
+			Statistics(String p,String l,String e){sql=p;label=l;en=e;}
 		}//enum S//sttstcs
         }//enum Lbl
 
@@ -215,13 +186,16 @@ public class Report1C {
 				tl.h.a( LookupTbl.class, null );
 				tl.out("application-scope has been reset for entry 'lookup' hashmap, tl.h.a( LookupTbl.class, null ); ");
 			}
-			Map<LookupTbl.Col,Map<Integer,LookupTbl>> lookup=LookupTbl.lookup();
-			Map<Integer,LookupTbl>typs=lookup.get(LookupTbl.Col.type)
+			LookupTbl.Lang lang=LookupTbl.Lang.ar;{Object o=tl.h.var( "lang" );
+			if(o!=null)try{lang=LookupTbl.Lang.valueOf( o.toString() );}catch(Exception ex){}}
+
+			Map<LookupTbl.Col,Map<Integer,Map<LookupTbl.Lang,LookupTbl>>> lookup=LookupTbl.lookup();
+			Map<Integer,Map<LookupTbl.Lang,LookupTbl>>typs=lookup.get(LookupTbl.Col.type)
 					,govs=lookup.get(LookupTbl.Col.gov);
-			if(govs==null)govs=new HashMap<Integer,LookupTbl>();
-			if(typs==null)typs=new HashMap<Integer,LookupTbl>();
-			LookupTbl gov=govs.get(TL.Util.parseInt(Prm.gov.v(p),0))// replace iGov to gov
-					, typ=typs.get(TL.Util.parseInt(Prm.typ.v(p),0));
+			if(govs==null)govs=new HashMap<Integer,Map<LookupTbl.Lang,LookupTbl>>();
+			if(typs==null)typs=new HashMap<Integer,Map<LookupTbl.Lang,LookupTbl>>();
+			LookupTbl gov=govs.get(TL.Util.parseInt(Prm.gov.v(p),0)).get(lang)// replace iGov to gov
+					, typ=typs.get(TL.Util.parseInt(Prm.typ.v(p),0)).get(lang);
 			/*if(gov==null){
 				gov=new LookupTbl();
 				gov.col= LookupTbl.Col.gov;
@@ -339,11 +313,10 @@ public class Report1C {
 				tl.out(to ,"<br/>", to2);
 
 			tl.out("</td>");
-            Lbl.Statistics[ ]StatisticsA=Lbl.Statistics.values();
 
 			int[]pStatistics=(int[])tl.h.s(jspName+".pStatistics");
 			if(pStatistics==null)
-			{int n=StatisticsA.length+1;
+			{int n=Lbl.sttstcs.length+1;
 				tl.h.s(jspName+".pStatistics",pStatistics=new int[n]);
 				pStatistics[0]=1;
 				for(int i=1;i<n;i++)pStatistics[i]=i-1;
@@ -352,7 +325,7 @@ public class Report1C {
 			if(stateEdit){
 				tl.out("<td><div style=\"color:white;background-color:#3f8;border:2px solid green\">");
 				int n=pStatistics.length;
-                Lbl.Statistics[]a=StatisticsA;
+                Lbl.Statistics[]a=Lbl.sttstcs;
 				if("Statistics.reorder".equals(op))
 				{int i=TL.Util.parseInt(tl.h.req("i"),-1);
 					if(i<n&&i>=0)
@@ -394,7 +367,7 @@ public class Report1C {
 
 			tl.out("<td>");
 			if(stateEdit)
-			{   Lbl.Term[]a=Lbl.Term.values();
+			{   Lbl.Term[]a=Lbl.terms;
 				for(Lbl.Term t:a)//int i=0;i<a.length;i++)
 				{	//if(stateEdit)
 					tl.out("<input type=\"radio\" name=\""
@@ -456,11 +429,11 @@ public class Report1C {
 				{   //Map<Integer,LookupTbl>govs=lookup.get(LookupTbl.Col.gov);
 					//LookupTbl x=govs.get(0);
 					tl.out("<select name=",Prm.gov," >");
-					for(LookupTbl t:govs.values())//int i=1;i<govs.size();i++)
+					for(Map<LookupTbl.Lang,LookupTbl> t:govs.values())//int i=1;i<govs.size();i++)
 					{//String s=String.valueOf(t.code);//boolean b=!allGovs && s.equals(Prm.gov.v(p));//(//(s==null&&Prm.gov.v(p)==null)||(s!=null&& ))//if(b)iGov=i;
 						tl.out("\n<option value="
-							,t.code, (t==gov?" selected>":" >")//s.equals(Prm.gov.v(p))
-							,t.text,"</option>");
+							,t.get( lang ).code, (t==gov?" selected>":" >")//s.equals(Prm.gov.v(p))
+							,t.get( lang ).text,"</option>");
 					}
 					tl.out("</select>");
 				}//if govsAgg
@@ -470,7 +443,7 @@ public class Report1C {
 					int remGroup=("govsAgg.remGroup").equals(op)?TL.Util.parseInt(tl.h.req("i"),-1):-1;
 					Map<Integer,Integer>ng=namesGovs(tl);//int[]ng=namesGovs(tl);
 					//String[]ns=strs[0],gs=strs[StrsIndx.gov.ordinal()];
-					Map<Integer,LookupTbl>//gvs=lookup.get(LookupTbl.Col.gov),
+					Map<Integer,Map<LookupTbl.Lang,LookupTbl>>//gvs=lookup.get(LookupTbl.Col.gov),
 							nms=lookup.get(LookupTbl.Col.name);
 					for(int k=0,i ; k < govsAgg.size() ; k++ )
 						if( remGroup != k )
@@ -489,10 +462,10 @@ public class Report1C {
 							tl.out("<table line=\"299\"><tr><td>");
 
 							tl.out("<select multiple size=\"10\" name=\"",nm,"\">");
-							for(LookupTbl t:govs.values())//int j=1;j<gs.length;j++)
-							{tl.out("<optGroup label=\"",t.text,"\" >");//gs[j]
+							for(Map<LookupTbl.Lang,LookupTbl> t:govs.values())//int j=1;j<gs.length;j++)
+							{tl.out("<optGroup label=\"",t.get( lang ).text,"\" >");//gs[j]
 								for(Integer ii:ng.keySet())//int ii=1;ii<ng.length;ii++)
-									if(ng.get(ii).intValue()==t.code)//ng[ii]==t.code)//j
+									if(ng.get(ii).intValue()==t.get( lang ).code)//ng[ii]==t.code)//j
 									{tl.out("\n" ,
 											"\t\t\t\t\t<option value=\"",ii ,"\"");
 										if(l.contains(ii)){tl.out(" selected");}
@@ -504,11 +477,11 @@ public class Report1C {
 									"\t<select mXultiple name=\"X",nm,"\">\n" ,
 									"\t\t\t\t");
 
-							for(LookupTbl t:nms.values())//int j=0;j<ns.length;j++)
-							{tl.out("\n\t\t\t\t<option value=\"",t.code,"\"");
-								if(l.contains(t.code))//j
+							for(Map<LookupTbl.Lang,LookupTbl> t:nms.values())//int j=0;j<ns.length;j++)
+							{tl.out("\n\t\t\t\t<option value=\"",t.get( lang ).code,"\"");
+								if(l.contains(t.get( lang ).code))//j
 									tl.out(" selected");
-								tl.out(">", t.text,"</option>");//ns[j]
+								tl.out(">", t.get( lang ).text,"</option>");//ns[j]
 							}
 							tl.out("</select>\n\n\n\t\t\t\t</td>"
 							,"<td><button onclick=\"window.location='?op=govsAgg.remGroup&i="
@@ -531,12 +504,12 @@ public class Report1C {
 					"\t<td>");
 			if(stateEdit)
 			{   tl.out("<select name=\"",Prm.typ,"\" >");
-				for(LookupTbl t:typs.values())//int i=0;i<strs[StrsIndx.prop_typ.ordinal()].length;i++)
+				for(Map<LookupTbl.Lang,LookupTbl> t:typs.values())//int i=0;i<strs[StrsIndx.prop_typ.ordinal()].length;i++)
 				{	tl.out("\n\t\t<option value=\""
-					,t.code,"\"");
+					,t.get( lang ).code,"\"");
 					if(t==typ)
 						tl.out(" selected=\"true\"");
-					tl.out(">",t.text,"</option>");
+					tl.out(">",t.get( lang ).text,"</option>");
 				}
 				tl.out("</select>");
 			} else//{int i=parseInt(Prm.typ.v(p),-1);tl.out(i==-1?"-":strs[StrsIndx.prop_typ.ordinal()][i]);}
@@ -610,7 +583,7 @@ public class Report1C {
 						default:sql.append( "year(`").append(DataTbl.C.d).append("`)-").append(from).append(" as t");}
 
 					for(int i=1;i<=pStatistics[0];i++)
-						sql.append(",").append(StatisticsA[pStatistics[i]].sql);
+						sql.append(",").append(Lbl.sttstcs[pStatistics[i]].sql);
 
 					sql.append("from ").append(DataTbl.Name)
 							.append(" where year(`"  ).append(DataTbl.C.d)
@@ -642,10 +615,10 @@ public class Report1C {
 						{if(row++>0)
 						{htmlTable/*(tbl,out,allGovs?StrsIndx.gov.ordinal():StrsIndx.name.ordinal(),currentName
 				 ,"style=\"background-color:"+((++row%2)==0?"#eef":"#f8f8ff")+"\""
-				 ,from,term,series,cats,strs,pStatistics,StatisticsA,reversedXAxis);*/
-								(tbl,lookup.get(col_Gov_or_name).get(currentName).text
+				 ,from,term,series,cats,strs,pStatistics,Lbl.sttstcs,reversedXAxis);*/
+								(tbl,lookup.get(col_Gov_or_name).get(currentName).get( lang ).text
 										,"style=\"background-color:"+((row%2)==0?"#eef":"#f8f8ff")+"\""
-										,from,term,mod,pStatistics,StatisticsA,reversedXAxis);
+										,from,term,mod,pStatistics,reversedXAxis);
 							reset(tbl);
 						}currentName=nm;
 						}
@@ -654,9 +627,9 @@ public class Report1C {
 
 					}
 					if(row>0)htmlTable(tbl//allGovs?StrsIndx.gov.ordinal():StrsIndx.name.ordinal(),currentName
-							,lookup.get(col_Gov_or_name).get(currentName).text
+							,lookup.get(col_Gov_or_name).get(currentName).get( lang ).text
 							,"style=\"background-color:"+((++row%2)==0?"#eef":"#f8f8ff")+"\""
-							,from,term,mod,pStatistics,StatisticsA,reversedXAxis);
+							,from,term,mod,pStatistics,reversedXAxis);
 
 					tl.out("</table>");
 

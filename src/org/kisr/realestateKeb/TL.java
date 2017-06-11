@@ -1053,7 +1053,7 @@ public It it(List p,Tbl q){
             FI[]a=flds();TL tl=tl();TL.H h=tl.h;
             int n=prefix==null?0:prefix.trim().length();
             for(FI f:a){
-                String s=h.req(n==0?f:prefix+f);
+                String s=h.req(n==0? f.toString():prefix+f);//(prefix.endsWith( "." )?prefix:prefix+'.')
                 Class c=s==null?null:f.f().getType();
                 Object v=null;try {
                     if(s!=null)v=parse(s,c);

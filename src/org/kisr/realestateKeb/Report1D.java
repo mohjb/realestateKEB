@@ -18,18 +18,50 @@ public class Report1D extends Report1C {
 	final static String jspName="report1D.jsp";//,chartName="chart.jsp";
  public static class E{
 	TL tl;
-	String op,method;LookupTbl t=new LookupTbl();
-	Map<LookupTbl.Col,Map<Integer,LookupTbl>> lookup;
+	String op,method;LookupTbl t=new LookupTbl();LookupTbl.Lang lang;
+	Map<LookupTbl.Col,Map<Integer,Map<LookupTbl.Lang,LookupTbl>>> lookup;
 	Map<Integer,Integer>namesGovs;
 	int[]minmaxYear;
-	Lbl.Statistics[ ]StatisticsA;
+	List<Integer>sttstcs;
 	Prm[]prmA;
 }//E
 
-static List<Map<String,String>>toJson(Lbl.Term[]a){return null;}
-static List<Map<String,String>>toJson(Lbl.Ranks[]a){return null;}
-static List<Map<String,String>>toJson(Lbl.Contrct[]a){return null;}
-static List<Map<String,String>>toJson(Lbl.Statistics[]a){return null;}
+static List<Map<String,String>>toJson(Lbl.Term[]a){
+ 	List l=new LinkedList();
+ 	for ( Lbl.Term t :Lbl.terms ){
+ 		l.add( TL.Util.mapCreate( "name",t.name()
+	        ,"base",t.base
+			    ,"ar",t.ar
+			    ,"lbl",t.lbl
+	    ) );
+    }
+ 	return l;}
+
+static List<String>toJson(Lbl.Ranks[]a){
+	List l=new LinkedList();
+	for ( Lbl.Term t :Lbl.terms ){
+		l.add( t.name());
+	}return l;}
+
+static List<Map<String,String>>toJson(Lbl.Contrct[]a){
+	List l=new LinkedList();
+	for ( Lbl.Contrct t :Lbl.contrcts ){
+		l.add( TL.Util.mapCreate( "name",t.name()
+				,"v",t.v
+				,"str",t.str
+		) );
+	}
+	return l;}
+
+static List<Map<String,String>>toJson(Lbl.Statistics[]a){
+	List l=new LinkedList();
+	for ( Lbl.Statistics t :Lbl.sttstcs ){
+		l.add( TL.Util.mapCreate( "name",t.name()
+				,"lbl",t.label
+		) );
+	}
+	return l;}
+
 
 	public static void gGet(TL tl,E e)throws Exception{
 		if ("resetLookup".equals(e.op)) {
@@ -43,7 +75,7 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){return null;}
 					, "ranks", toJson(Lbl.ranks)
 					, "contrcts", toJson(Lbl.contrcts)
 					, "options", "allGovs,allTyps,aggGovs"
-					, "Statistics", toJson(e.StatisticsA)
+					, "Statistics", toJson(Lbl.sttstcs)
 					, "jspName", jspName
 					, "namesGovs", e.namesGovs
 					, "Prms", e.prmA
@@ -54,27 +86,34 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){return null;}
 	public static void query(TL tl,E e)throws Exception{
 	String p[] = new String[e.prmA.length];
 		int nullCol = -1;
-		int[] statistics = null;
+
 		for (int i = 0; i < p.length; i++) {
 			p[i] = tl.h.req(e.prmA[i].toString());
 			if (p[i] == null) nullCol = i;
 		}
-		{
-			Object o = tl.json.get("statistics");
+		{//int[] statistics = null;
+			Object o = tl.json.get("sttstcs");
 			if (o instanceof List) {
-				List<Number> l = (List) o;
-				int n = l.size();
+				e.sttstcs=(List<Integer>)o;
+				/*
+				List<Number> l = (List) o;int n = l.size();
 				tl.h.s("statistics", statistics = new int[n]);
 				for (int i = 0; i < l.size(); i++)
-					statistics[i] = l.get(i).intValue();
+					statistics[i] = l.get(i).intValue();*/
 			} else
-				statistics = (int[]) tl.h.s("statistics");
+			{e.sttstcs = new LinkedList<>(  );
+				e.sttstcs.add( Lbl.Statistics.avgMtr .ordinal());
+				e.sttstcs.add( Lbl.Statistics.count .ordinal());
+			}
 		}
+		e. lang=LookupTbl.Lang.ar;{Object o=tl.h.var( "lang" );
+			if(o!=null)try{e.lang=LookupTbl.Lang.valueOf( o.toString() );}catch(Exception ex){}}
 
-		Map<Integer, LookupTbl> typs = e.lookup.get(LookupTbl.Col.type)
+
+		Map<Integer, Map<LookupTbl.Lang,LookupTbl>> typs = e.lookup.get(LookupTbl.Col.type)
 				, govs = e.lookup.get(LookupTbl.Col.gov);
-		LookupTbl gov = govs.get(TL.Util.parseInt(Prm.gov.v(p), 0))
-			, typ = typs.get(TL.Util.parseInt(Prm.typ.v(p), 0));
+		LookupTbl gov = govs.get(TL.Util.parseInt(Prm.gov.v(p), 0)).get( e.lang )
+			, typ = typs.get(TL.Util.parseInt(Prm.typ.v(p), 0)).get( e.lang );
 
 		int from = TL.Util.parseInt(Prm.from.v(p), e.minmaxYear[0])
 			, to = TL.Util.parseInt(Prm.to.v(p), e.minmaxYear[1])
@@ -90,18 +129,19 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){return null;}
 			p[1] = temp;
 		}
 
-		boolean allGovs = gov.code == 0, aggGovs = "a".equals(Prm.gov.v(p)), allTyps = "0".equals(Prm.typ.v(p));
-		LookupTbl.Col col_Gov_or_name = allGovs ? LookupTbl.Col.gov : LookupTbl.Col.name;
+		boolean aggGovs = "a".equals(Prm.gov.v(p)) || "7".equals(Prm.gov.v(p))
+				, allGovs = gov.code == 0 ||aggGovs
+				, allTyps = "0".equals(Prm.typ.v(p));
+		LookupTbl.Col col_Gov_or_name = allGovs
+			? LookupTbl.Col.gov : LookupTbl.Col.name;
 
 		Lbl.Term term = Lbl.Term.annual;
 		if (Prm.terms.v(p) != null)
-			try {
-				term = Lbl.Term.valueOf(Prm.terms.v(p));
-			} catch (Exception ex) {
-				tl.error("parse term", ex);
-			}
+			try {term = Lbl.Term.valueOf(Prm.terms.v(p));}
+			catch (Exception ex) {tl.error("parse term", ex);}
 
-		Lbl.Contrct contrct = Prm.contract.v(p) == null ? Lbl.Contrct.all : Lbl.Contrct.valueOf(Prm.contract.v(p));
+		Lbl.Contrct contrct = Prm.contract.v(p) == null
+			? Lbl.Contrct.all : Lbl.Contrct.valueOf(Prm.contract.v(p));
 
 		if (nullCol < 0) try {
 			List<Map<Object, Object>> l = new LinkedList<Map<Object, Object>>();
@@ -134,8 +174,8 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){return null;}
 					sql.append("year(`").append(DataTbl.C.d).append("`)-")
 							.append(from).append(" as t");
 			}
-			for (int i = 0; i <= statistics.length; i++)
-				sql.append(",").append(e.StatisticsA[statistics[i]].sql);
+			for (int i = 0; i < e.sttstcs.size(  ); i++)
+				sql.append(",").append(Lbl.sttstcs[e.sttstcs.get( i )].sql);
 
 			sql.append("from ").append(DataTbl.Name)
 					.append(" where year(`").append(DataTbl.C.d)
@@ -150,8 +190,7 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){return null;}
 			if (term != Lbl.Term.aggregate) sql.append(",t");
 
 			PreparedStatement ps = TL.DB.p(sql.toString());// System.out.println("realestateKeb/2012/03/05/"+jspName+":ps="+ps);
-			{
-				int i = 1;
+			{int i = 1;
 				ps.setObject(i++, from);
 				ps.setObject(i++, to);
 				if (contrct != Lbl.Contrct.all)
@@ -159,20 +198,23 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){return null;}
 				if (!allGovs) ps.setObject(i++, p[Prm.gov.ordinal()]);
 				if (!allTyps) ps.setObject(i++, p[Prm.typ.ordinal()]);
 			}
-			int row = 0, currentName = -1, base = term == Lbl.Term.aggregate ? 1 : (to - from + 1) * term.base;
-			Object tbl[][] = null;
+			int row = 0, currentName = -1
+				, base = term == Lbl.Term.aggregate ? 1 : (to - from + 1) * term.base;
+			List<Map<Object,Object>>data=new LinkedList<Map<Object,Object>>();
+			Object[][]tbl=null;
 			ResultSet rs = ps.executeQuery();
 			while (rs.next()) {
 				int nm = rs.getInt(1), yr = rs.getInt(2);
 				if (nm != currentName) {
-					l.add(TL.Util.mapCreate("ix", currentName
-							, "title", e.lookup.get(col_Gov_or_name).get(currentName).text
-							, "tbl", tbl = new Object[base][statistics.length]));
+					data.add(TL.Util.mapCreate("nm", currentName
+							, "ttl", e.lookup.get(col_Gov_or_name).get(currentName).get( e.lang ).text
+							, "tbl", tbl =new Object[base][e.sttstcs.size()])
+					);
 					currentName = nm;
 				}
-				for (int c = 0; c < statistics.length; c++)
+				for (int c = 0; c < e.sttstcs.size(); c++)
 					try {
-						tbl[yr][c] = rs.getObject(c + 3);
+						tbl[yr][ c]= rs.getObject(c + 3);
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
@@ -189,8 +231,7 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){return null;}
 	public static void service(GenericServlet srvlt
 	,final javax.servlet.http.HttpServletRequest request
 	, final javax.servlet.http.HttpServletResponse response)
-	throws Exception
-{response.setContentType("text/html; charset=utf-8");TL tl=null;
+	throws Exception {response.setContentType("text/html; charset=utf-8");TL tl=null;
 	try {
 		tl = TL.Enter(srvlt, request, response, response.getWriter());//out);//
 		tl.logOut = tl.h.var("logOut", true);
@@ -208,7 +249,7 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){return null;}
 		e.lookup = LookupTbl.lookup();
 		e.namesGovs = namesGovs(tl);
 		e.minmaxYear = DataTbl.minmaxYear();
-		e.StatisticsA = Lbl.Statistics.values();
+
 		e.prmA = Prm.values();
 		if (e.t.no == null) {
 			if ("GET".equals(e.method))
