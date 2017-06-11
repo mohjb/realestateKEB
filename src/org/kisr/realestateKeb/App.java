@@ -192,11 +192,12 @@ insert into usr values
         @F public String notes;
         @F public Integer contract;
         @F public Date d;
+        @F public int sector;
 
 //@Override public Cat query(Object[]where){return super.query(where);}
 
         public enum C implements CI{no,y,m,w,name,block
-            ,area,typ,price,gov,notes,contract,d;
+            ,area,typ,price,gov,notes,contract,d,sector;
             public Class<? extends Tbl>cls(){return DataTbl.class;}
             public Class<? extends TL.Form>clss(){return cls();}
             public String text(){return name();}
@@ -263,12 +264,14 @@ insert into usr values
         @F public Col col;
         @F public Integer code;
         @F public String text;
+        @F public Lang lang;
 
         LookupTbl copy(){return new LookupTbl().set(no, col, code, text);}
 
         LookupTbl set(Integer n,Col c,Integer d,String x){no=n;col=c;code=d;text=x;return this;}
 
-        public enum Col{gov,type,name,label,labelEn};
+        public enum Col{gov,type,name,label,sector};
+        public enum Lang{ar,en};
         public enum C implements CI{no,col,code,text;
             public Class<? extends Tbl>cls(){return LookupTbl.class;}
             public Class<? extends TL.Form>clss(){return cls();}

@@ -1050,8 +1050,10 @@ public It it(List p,Tbl q){
             return null;}
 
         public Form readReq(String prefix){
-            FI[]a=flds();TL tl=tl();TL.H h=tl.h;for(FI f:a){
-                String s=h.req(prefix+f);
+            FI[]a=flds();TL tl=tl();TL.H h=tl.h;
+            int n=prefix==null?0:prefix.trim().length();
+            for(FI f:a){
+                String s=h.req(n==0?f:prefix+f);
                 Class c=s==null?null:f.f().getType();
                 Object v=null;try {
                     if(s!=null)v=parse(s,c);

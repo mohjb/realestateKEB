@@ -3,378 +3,335 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Real-Estate</title>
-    </head>
-<body dir="rtl" style="background-image:url(bg.jpg); background-repeat:repeat-x">
- <div><table width="99%" onclick="window.location='index.jsp'"><tr>
+</head>
+<body dir="rtl" style="background-image:url(bg.jpg); background-repeat:repeat-x" ng-app="myApp">
+<div><table width="99%" onclick="window.location='index.jsp'"><tr>
     <td><img style="border:3px black double" src="kbu-logo.png"/></td>
     <td><h1>بيانات تداول العقار في دولة الكويت</h1></td>
-    <td><img src="kisrlogo.gif"/></td></tr>
-    </table>
-    <div style="border:3px black double">
-    <form method="post" action="{{jspName}}">
-    <table width="75%" border="0" align="center">
-          <tr><th>من</th><th>الى</th>
-            if(stateEdit)
-            <th>متغيرات</th>
-            <th>تفصيل</th>
-            <th>نوع العقد</th>
-            <th>محافظة</th>
-            <th>نوع العقار</th>
-            <td rowspan="2">
-                <input type="hidden" name="stateEdit" value=\"",!stateEdit,"\"/>
-                <input type="submit" value=\""
-                           ,stateEdit?"بحث":"تغير"
-                \"/></td>  </tr>  <tr><td>
-            if(stateEdit){
-            <select name=\"",Prm.from,"\" >
-                for(int i=minmaxYear[0];i<=minmaxYear[1];i++) {
-                <option ", (from==i//s.equals(Prm.from.v(p)
-                ?" selected":"" )>",i,"</option>
-                }
-                </select><br/><select name=\"",Prm.from2,"\" >
-                for(int i=1;i<=52;i++) {
+    <td><img src="kisrlogo.gif"/></td></tr></table>
 
-                <option ",( i==from2//s.equals(Prm.from2.v(p)
-                ?" selected":""),">",i,"</option>
-                }
-                </select>
+    <div style="border:3px black double" >
+        <form method="post" action="{{jspName}}" ng-controller="formController">
+            <table width="75%" border="0" align="center">
+                <tr><th>من</th><th>الى</th>
+                    <th>متغيرات</th>
+                    <th>تفصيل</th>
+                    <th>نوع العقد</th>
+                    <th>محافظة</th>
+                    <th>نوع العقار</th>
+                    <td rowspan="2">
+                        <input type="hidden" name="stateEdit" value="{{!stateEdit}}" />
+                        <input type="submit" value="{{stateEdit?"بحث":"تغير"}}" />
+                    </td>
+                </tr>
+                <tr ng-init="yrs=new Array([)minmaxYears[1])">
+                    <td>
+                        <select name="from" >
+                            for(int i=minmaxYear[0];i<=minmaxYear[1];i++) {
+                            <option ng-repeat="i in yrs|after minmaxYears[0]-1" {{from==i ?'selected':''}}>{{i}}</option>
+                        </select>
 
-            </td><td>
+                    </td><td>
+                    <select name="to" >
+                        <option ng-repeat="i in yrs|after minmaxYears[0]-1" {{to==i ?'selected':''}}>{{i}}</option>
+                    </select>
+                </td>
 
-            if(stateEdit){
-            <select name=\"",Prm.to,"\" >
-                for(int i=minmaxYear[0];i<=minmaxYear[1];i++) {
-                <option", (i==to?" selected":"" ),">",i,"</option>
-                }
-                </select><br/>
+                    <td><div ng-repeat="i in StatisticsA.selected" style="color:white;background-color:#3f8;border:2px solid green">{{i.label}}</div>
+                        <div style="color:grey;background-color:#333;border:2px solid black">
+      <span style="font-size:24px; font-weight: 24px" ng-repeat="i in StatisticsA.unselected">
+          <a href="?i="{{i.i}}">⬆</a>{{i.label}}</span><a href="?&i={{i.i}}\">⬇</a>");<hr/>
+                            </span>
+                        </div>
+                    </td>
 
+                    <td>
+    <span ng-repeat="t in terms">
+    <input type="radio" name="{{Prm.terms}}" value="{{t}}" {{ (term==t?'checked':'' }}  />{{t.lbl }}<br/></span>
+                    </td>
 
-            tl.out("</td>");
-            Lbl.Statistics[ ]StatisticsA=Lbl.Statistics.values();
+                    <td><span ng-repeat="i in contrcts">
+    <input type="radio" name="contract" value="{{i.i}}" {{ i.i==contrct.i?"checked":""}} />{{i.str}} <br/></span>
+                    </td>
 
-            int[]pStatistics=(int[])tl.h.s(jspName+".pStatistics");
-            if(pStatistics==null)
-            {int n=StatisticsA.length+1;
-            tl.h.s(jspName+".pStatistics",pStatistics=new int[n]);
-            pStatistics[0]=1;
-            for(int i=1;i<n;i++)pStatistics[i]=i-1;
+                    <td line="line:264 ; gov-td ; wrong-to-close:line323 ">
+
+                        <table width"100%" border="0">
+                <tr>
+                    <td style="border:1px solid black">
+                        <select name="gov">
+                            <option ng-repeat="t in govs" value="{{t.code}}" {{t.code==gov.code?'selected':''}} >{{t.text}}</option>
+                        </select>
+                    </td>
+
+                </tr></table line="317 ; closing:299"><hr/>
+
+            </td>
+
+            <td>
+                <select name="typ">
+                    <option value="{{t.code}}" {{t.code==typ?'selected':''}} ng-repeat="t in typs">{{t.text}}</option>
+                </select>");
+            </td></tr></table></form>
+
+        <hr/>\n<table border="1" rules="all" ng-if="ok">
+        <tr><th width="200px" rowspan="2">{{allGovs?"محافظة":"منطقة"}}
+        </th><th rowspan="{{term.base !=1 ?'2':'1'}}" >وصف</th>
+
+            for(int yr = from; term==Lbl.Term.aggregate ?yr==from:yr<=to; yr++) {
+            tl.out( "\n<th" );
+            if ( term.base != 1 ) {
+            tl.out( " colspan="{{ term.base, "\"" );
             }
-
-            if(stateEdit){
-            tl.out("<td><div style="color:white;background-color:#3f8;border:2px solid green">");
-                int n=pStatistics.length;
-                Lbl.Statistics[]a=StatisticsA;
-                if("Statistics.reorder".equals(op))
-                {int i=TL.Util.parseInt(tl.h.req("i"),-1);
-                if(i<n&&i>=0)
-                {	if(i==0)
-                {if(pStatistics[0]>1)
-                pStatistics[0]--;
-                }
-                else
-                {	if(i==pStatistics[0]+1)
-                pStatistics[0]++;else
-                {int t=pStatistics[i];
-                pStatistics[i]=pStatistics[i-1];
-                pStatistics[i-1]=t;
-                }
-                }
-                }
-                }
-
-                if( pStatistics[0]<1)
-                pStatistics[0]=1;
-                for(int i=1;i<n;i++) {
-                if ( i == pStatistics[0] + 1 )
-                tl.out("</div>\n\t\t\t<div style="color:grey;background-color:#333;border:2px solid black">");
-if( i>1 )
-tl.out("\n\t\t\t<a href=\"", jspName ,"?op=Statistics.reorder&i=",i,"\">⬆</a>");
-else
-tl.out("<span style="font-size:24px; font-weight: 24px">");
-int j=i>=pStatistics.length?-1:pStatistics[ i ];
-tl.out(a==null||j<0||j>=a.length ? null:a[ j ]	.label);
-if( i==1 )
-tl.out("</span>") ;
-else if( i==pStatistics[0] )
-tl.out("<a href=\"",jspName,"?op=Statistics.reorder&i=0\">⬇</a>");
-if( i<n-1&&i!=pStatistics[0] )
-tl.out("<hr/>");
-}
-tl.out("</div></td>");
-}
-
-tl.out("<td>");
-    if(stateEdit)
-    {   Lbl.Term[]a=Lbl.Term.values();
-    for(Lbl.Term t:a)//int i=0;i<a.length;i++)
-    tl.out("<input type="radio" name=\""
-                   ,Prm.terms,"\"\n\tvalue=\"" ,t,"\" "
-    , (term==t?"checked":"" )
-    ,"/>",t.lbl ,"<br/>\n");
-
-    }else
-    tl.out(term==null?"-":term.lbl);
-    tl.out("</td><td>");
-
-    if(stateEdit)
-    {	for(Lbl.Contrct i:Lbl.contrcts)
-    {	tl.out("\t\t\t<input type="radio" name=\""
-                              ,Prm.contract
-                              ,"\" \r\n"
-    ,"\t\t\t\t\t\tvalue=\""
-    ,i
-    ,'"'
-    ,' '
-    , i==contrct?"checked":""
-    ,'/'
-    ,'>'
-    , i.str
-    ,"<br/>");
-    }
-    }
-    else
-    tl.out(contrct==null?"-":contrct.str);
-
-    tl.out("</td><td line="line:264 ; gov-td ; wrong-to-close:line323 ">");
-List<List<Integer>>govsAgg=(List<List<Integer>>)tl.h.s(jspName+".govsAgg");
-    {Object o=tl.h.s(jspName+".govsAgg.deactivate");
-    if(o!=null)
-    govsAgg=null;
-    }
-    if(stateEdit)
-    {	if(("govsAgg.deactivate").equals(op))
-    tl.h.s(jspName+".govsAgg.deactivate",(govsAgg=null)==null);
-    if(("govsAgg.activate").equals(op))
-    {tl.h.s(jspName+".govsAgg.deactivate",null);
-    if((govsAgg=(List<List<Integer>>)tl.h.s(jspName+".govsAgg"))==null)
-        tl.h.s(jspName+".govsAgg", govsAgg=new LinkedList<List<Integer>>());
+            if ( term == Lbl.Term.aggregate ) {
+            tl.out( term.lbl, " ", from, " - ", to );
+            } else {
+            tl.out( ">سنة ", yr, "</th>" );
             }
-            if(devuser)
-            { tl.out("<table width"100%" border="0"><tr>\n\t\t<td style="border:1px solid black"><input type="radio" name="govsAgg.active" value="0\""
-                                                                                                              ,govsAgg==null?" checked"
-                :" onchange="window.location='?op=govsAgg.deactivate'\""
-                ,"/>مبسط</td>\n"
-                ,"\t\t<td style="border:1px solid black"><input type="radio" name="govsAgg.active" value="1"<"
-                                                                  ,govsAgg!=null?" checked":" onchange="window.location='?op=govsAgg.activate'\""
-                ,"/>مجاميع مجموعات</td></tr></table>\n");
-            }else
-            tl.out("<input old-type="radio" type="hidden" name="govsAgg.active" value="0"/>");
+            }tl.out("</tr>");
+        if(term.base!=1)
+        {	tl.out("<tr>");
+        for(int i=0;i<(to-from+1)*term.base;i++)
+        tl.out("\n<th>"
+            ,term.ar
+            ," "
+            ,term==Lbl.Term.semiAnnual ||term==Lbl.Term.quarterly
+            ?Lbl.ranks[i%term.base].toString()
+            :String.valueOf((i%term.base)+1)
+            ,"</th>");
+        tl.out("</tr>");
+        }
 
-            if(govsAgg==null)
-            {   tl.out("<select name=",Prm.gov," >");
-                for(LookupTbl t:govs.values())//int i=1;i<govs.size();i++)
-                {tl.out("\n<option value="
-								,t.code, (t==gov?" selected>":" >")//s.equals(Prm.gov.v(p))
-                    ,t.text,"</option>");
-                }
-                tl.out("</select>");
-            }//if govsAgg
-            else
-            {	if(("govsAgg.newGroup").equals(op)&&govsAgg!=null)
-            govsAgg.add(new LinkedList<Integer>());
-                int remGroup=("govsAgg.remGroup").equals(op)?TL.Util.parseInt(tl.h.req("i"),-1):-1;
-                for(int k=0,i ; k < govsAgg.size() ; k++ )
-                if( remGroup != k )
-                {	i=remGroup!=-1&&remGroup<k?k-1:k;
-                String nm=Prm.gov.toString()+(i==0?"":i)
-                ,prm[]=request.getParameterValues(nm);
-                List<Integer>l=govsAgg.get(i);
-                    if(prm!=null)
-                    {l.clear();
-                    for(String s:prm)
-                    {int x=TL.Util.parseInt(s,-1);
-                    if(x>=0)
-                    l.add(x);
-                    }
-                    }
-                    tl.out("<table line="299"><tr><td>");
-                        Map<Integer,Integer>ng=namesGovs(tl);
-                        Map<Integer,LookupTbl>nms=lookup.get(LookupTbl.Col.name);
-                        tl.out("<select multiple size="10" name=\"",nm,"\">");
-                            for(LookupTbl t:govs.values())
-                            {tl.out("<optGroup label=\"",t.text,"\" >");
-                                for(Integer ii:ng.keySet())
-                                if(ng.get(ii).intValue()==t.code)
-                                {tl.out("\n" ,
-                                "\t\t\t\t\t<option value=\"",ii ,"\"");
-                                if(l.contains(ii)){tl.out(" selected");}
-                                tl.out(">",nms.get(ii) ,"</option>");
-                                }tl.out("</optGroup>");
-                            }
+        if(nullCol<0)try
+        {	Chart.Model mod=new Chart.Model();
+        tl.h.s(jspName+Chart.Model.class,mod);
+        mod.termBase=reversedXAxis?to:from;mod.termInc=(reversedXAxis?-1:1)*term.base;
+        Chart.Model.Chrt c0=mod.newChrt(col_Gov_or_name.name());//lookup.get(LookupTbl.Col.gov).get(allGovs?0:iGov).text
 
-                            tl.out("</select>\n" ,
-                        "\t<select mXultiple name=\"X",nm,"\">\n" ,
-                            "\t\t\t\t");
+        //TL.logo(jspName,"nullCol<0");
+        StringBuilder sql=new StringBuilder("select ")
+        .append(allGovs?DataTbl.C.gov:DataTbl.C.name).append(",");
+        switch(term){
+        case semiAnnual:sql.append( "(year(`")
+        .append(DataTbl.C.d).append("`)-").append(from).append(")* 2+ceiling(month(`")
+        .append(DataTbl.C.d).append("`)/6)-1 as t");break;
+        case quarterly:sql.append( "(year(`")
+        .append(DataTbl.C.d).append("`)-").append(from).append(")* 4+ceiling(month(`")
+        .append(DataTbl.C.d).append("`)/3)-1 as t");break;
+        case monthly:sql.append( "(year(`")
+        .append(DataTbl.C.d).append("`)-").append(from).append(")*12+month(`")
+        .append(DataTbl.C.d).append("`)-1 as t");break;
+        case weekly:sql.append( "(year(`")
+        .append(DataTbl.C.d).append("`)-").append(from).append(")*52+week (`")
+        .append(DataTbl.C.d).append("`)-1 as t");break;
+        default:sql.append( "year(`").append(DataTbl.C.d).append("`)-").append(from).append(" as t");}
 
-                            for(LookupTbl t:nms.values())
-                            {tl.out("\n\t\t\t\t<option value=\"",t.code,"\"");
-                                                       if(l.contains(t.code))//j
-                            tl.out(" selected");
-                            tl.out(">", t.text,"</option>");
-                            }
-                            tl.out("</select>\n\n\n\t\t\t\t</td>"
-                        ,"<td><button onclick=\"window.location='?op=govsAgg.remGroup&i="
-                                      ,i,"'\">إزالة المجموعة</button></td>\n" ,
-                        "\t\t</tr></table line="317 ; closing:299"><hr/>");
-                    }//for
-                    if(remGroup!=-1)govsAgg.remove(remGroup);
-                    tl.out("<span onclick="window.location='?op=govsAgg.newGroup'">إضافة مجموعة جديدة</span>");
-                    }//if govsAgg
-                    }//if stateEdit
-                    else tl.out(gov.text);
+        for(int i=1;i<=pStatistics[0];i++)
+        sql.append(",").append(StatisticsA[pStatistics[i]].sql);
 
-                    tl.out("\n" ,
-                    "</td>\n" ,
-                    "<!-- here seems to be the problem / the problems seem to start starting from here! -->\n" ,
-                    "\t<td>");
-                        if(stateEdit)
-                        {   tl.out("<select name=\"",Prm.typ,"\" >");
-                            for(LookupTbl t:typs.values())
-                            {	tl.out("\n\t\t<option value=\""
-                                                       ,t.code,"\"");
-                            if(t==typ)
-                            tl.out(" selected="true\"");
-                            tl.out(">",t.text,"</option>");
-                            }
-                            tl.out("</select>");
-                        } else
-                        tl.out(typ==null?"-":typ.text);
-                        tl.out("</td></tr></table></form>");
+        sql.append("from ").append(DataTbl.Name)
+        .append(" where year(`"  ).append(DataTbl.C.d)
+        .append("`)>=? and year(`").append(DataTbl.C.d).append("`)<=? ");
+        if(contrct!=Lbl.Contrct.all)
+        sql.append("and `").append(DataTbl.C.contract).append("`=? ");
+        if(!allGovs)
+        sql.append("and `").append(DataTbl.C.gov).append("`=? ");
+        if(term==Lbl.Term.nineMonths)
+        sql.append("and month(`"+DataTbl.C.d+"`)<=9");
+        sql.append(" group by ").append(col_Gov_or_name);
+        if(term!=Lbl.Term.aggregate)sql.append(",t");
 
-                    if(!stateEdit)
-                    {	tl.out("<hr/>\n<table border="1" rules="all">");
-                        if(term.base!=1){tl.out("\n<colgroup span="2" style=" width:250px; border:3px black double"/>");
-                        for(int yr=from;yr<=to;yr++)tl.out(
-                        "\n<colgroup span=\"",term.base,"" style=" border:3px black double\"/>");
-                        }
-                        tl.out("<tr><th width=\"200px\"");
-                                        if(term.base!=1)
-                                        tl.out(" rowspan=\"2\"");
-                            tl.out(">"
-                            ,allGovs?"محافظة":"منطقة"
-                            ,"</th><th");
-                            if(term.base!=1)
-                            tl.out(" rowspan=\"2\"");
-                            tl.out(">وصف</th>");
+        PreparedStatement ps=TL.DB.p(sql.toString());// System.out.println("realestateKeb/2012/03/05/"+jspName+":ps="+ps);
+        {int i=1;ps.setObject(i++,from);
+        ps.setObject(i++,to);
+        if(contrct!=Lbl.Contrct.all)
+        ps.setObject(i++,p[Prm.contract	.ordinal()]);
+        if(!allGovs)	ps.setObject(i++,p[Prm.gov		.ordinal()]);
+        if(!allTyps)	ps.setObject(i++,p[Prm.typ		.ordinal()]);
+        }
+        int row=0,currentName=term==Lbl.Term.aggregate ? 1:(to-from+1)*term.base;//boolean hasData=false;
+        String tbl[][]=new String[pStatistics[0]][currentName];//for(int i=0;i<tbl.length;i++)tbl[i]=new String[currentName];
+        currentName=-1;reset(tbl);
+        ResultSet rs=ps.executeQuery();
+        while(rs.next())
+        {int nm=rs.getInt(1),yr=rs.getInt(2);
+        if(nm!=currentName)
+        {if(row++>0)
+        {htmlTable(tbl,lookup.get(col_Gov_or_name).get(currentName).text
+        ,"style="background-color:"+((row%2)==0?"#eef":"#f8f8ff")+""{{from,term,mod,pStatistics,StatisticsA,reversedXAxis);
+        reset(tbl);
+        }currentName=nm;
+        }
+        for(int c=0;c<pStatistics[0];c++)try{
+        tbl[c][yr]=rs.getString(c+3);}catch(Exception ex){
+        ex.printStackTrace();}
+        }
+        if(row>0)htmlTable(tbl//allGovs?StrsIndx.gov.ordinal():StrsIndx.name.ordinal(),currentName
+        ,lookup.get(col_Gov_or_name).get(currentName).text
+        ,"style="background-color:"+((++row%2)==0?"#eef":"#f8f8ff")+""{{from,term,mod,pStatistics,StatisticsA,reversedXAxis);
 
-                            for(int yr = from; term==Lbl.Term.aggregate ?yr==from:yr<=to; yr++) {
-                            tl.out( "\n<th" );
-                            if ( term.base != 1 ) {
-                            tl.out( " colspan=\"", term.base, "\"" );
-                            }
-                            if ( term == Lbl.Term.aggregate ) {
-                            tl.out( term.lbl, " ", from, " - ", to );
-                            } else {
-                            tl.out( ">سنة ", yr, "</th>" );
-                            }
-                            }tl.out("</tr>");
-                        if(term.base!=1)
-                        {	tl.out("<tr>");
-                            for(int i=0;i<(to-from+1)*term.base;i++)
-                            tl.out("\n<th>"
-                                ,term.ar
-                                ," "
-                                ,term==Lbl.Term.semiAnnual ||term==Lbl.Term.quarterly
-                                ?Lbl.ranks[i%term.base].toString()
-                                :String.valueOf((i%term.base)+1)
-                                ,"</th>");
-                            tl.out("</tr>");
-                        }
+        tl.out("</table>");
 
-                        if(nullCol<0)try
-                        {	Chart.Model mod=new Chart.Model();
-                        tl.h.s(jspName+Chart.Model.class,mod);
-                        mod.termBase=reversedXAxis?to:from;mod.termInc=(reversedXAxis?-1:1)*term.base;
-                        Chart.Model.Chrt c0=mod.newChrt(col_Gov_or_name.name());//lookup.get(LookupTbl.Col.gov).get(allGovs?0:iGov).text
-
-                        //TL.logo(jspName,"nullCol<0");
-                        StringBuilder sql=new StringBuilder("select ")
-                        .append(allGovs?DataTbl.C.gov:DataTbl.C.name).append(",");
-                        switch(term){
-                        case semiAnnual:sql.append( "(year(`")
-                        .append(DataTbl.C.d).append("`)-").append(from).append(")* 2+ceiling(month(`")
-                        .append(DataTbl.C.d).append("`)/6)-1 as t");break;
-                        case quarterly:sql.append( "(year(`")
-                        .append(DataTbl.C.d).append("`)-").append(from).append(")* 4+ceiling(month(`")
-                        .append(DataTbl.C.d).append("`)/3)-1 as t");break;
-                        case monthly:sql.append( "(year(`")
-                        .append(DataTbl.C.d).append("`)-").append(from).append(")*12+month(`")
-                        .append(DataTbl.C.d).append("`)-1 as t");break;
-                        case weekly:sql.append( "(year(`")
-                        .append(DataTbl.C.d).append("`)-").append(from).append(")*52+week (`")
-                        .append(DataTbl.C.d).append("`)-1 as t");break;
-                        default:sql.append( "year(`").append(DataTbl.C.d).append("`)-").append(from).append(" as t");}
-
-                        for(int i=1;i<=pStatistics[0];i++)
-                        sql.append(",").append(StatisticsA[pStatistics[i]].sql);
-
-                        sql.append("from ").append(DataTbl.Name)
-                        .append(" where year(`"  ).append(DataTbl.C.d)
-                        .append("`)>=? and year(`").append(DataTbl.C.d).append("`)<=? ");
-                        if(contrct!=Lbl.Contrct.all)
-                        sql.append("and `").append(DataTbl.C.contract).append("`=? ");
-                        if(!allGovs)
-                        sql.append("and `").append(DataTbl.C.gov).append("`=? ");
-                        if(term==Lbl.Term.nineMonths)
-                        sql.append("and month(`"+DataTbl.C.d+"`)<=9");
-                        sql.append(" group by ").append(col_Gov_or_name);
-                        if(term!=Lbl.Term.aggregate)sql.append(",t");
-
-                        PreparedStatement ps=TL.DB.p(sql.toString());// System.out.println("realestateKeb/2012/03/05/"+jspName+":ps="+ps);
-                        {int i=1;ps.setObject(i++,from);
-                        ps.setObject(i++,to);
-                        if(contrct!=Lbl.Contrct.all)
-                        ps.setObject(i++,p[Prm.contract	.ordinal()]);
-                        if(!allGovs)	ps.setObject(i++,p[Prm.gov		.ordinal()]);
-                        if(!allTyps)	ps.setObject(i++,p[Prm.typ		.ordinal()]);
-                        }
-                        int row=0,currentName=term==Lbl.Term.aggregate ? 1:(to-from+1)*term.base;//boolean hasData=false;
-                        String tbl[][]=new String[pStatistics[0]][currentName];//for(int i=0;i<tbl.length;i++)tbl[i]=new String[currentName];
-                        currentName=-1;reset(tbl);
-                        ResultSet rs=ps.executeQuery();
-                        while(rs.next())
-                        {int nm=rs.getInt(1),yr=rs.getInt(2);
-                        if(nm!=currentName)
-                        {if(row++>0)
-                        {htmlTable(tbl,lookup.get(col_Gov_or_name).get(currentName).text
-                        ,"style="background-color:"+((row%2)==0?"#eef":"#f8f8ff")+"\""
-                        ,from,term,mod,pStatistics,StatisticsA,reversedXAxis);
-                        reset(tbl);
-                        }currentName=nm;
-                        }
-                        for(int c=0;c<pStatistics[0];c++)try{
-                        tbl[c][yr]=rs.getString(c+3);}catch(Exception ex){
-                        ex.printStackTrace();}
-                        }
-                        if(row>0)htmlTable(tbl//allGovs?StrsIndx.gov.ordinal():StrsIndx.name.ordinal(),currentName
-                        ,lookup.get(col_Gov_or_name).get(currentName).text
-                        ,"style="background-color:"+((++row%2)==0?"#eef":"#f8f8ff")+"\""
-                        ,from,term,mod,pStatistics,StatisticsA,reversedXAxis);
-
-                        tl.out("</table>");
-
-                    //if(series!=null)
-                    {c0.legend=true;c0.chartType=Chart.CT.Bar;
-                    tl.out("\r\n\t<img src=\""
-                                       ,Chart.jspName//chartName
-                    ,"?id="
-                    , c0.id
-                    ,"&width=1000"/>");
-                    }
-                    }//if(nullCol<0)
-                    catch(Throwable x){
-                    String end=tl.logo(jspName+":if(nullCol<0) Throwable:",x);
-                    tl.error(end);
-                    tl.out("<script>serverErrorTL="
+        //if(series!=null)
+        {c0.legend=true;c0.chartType=Chart.CT.Bar;
+        tl.out("\r\n\t<img src="{{Chart.jspName
+                    }}?id="
+                           , c0.id
+                           ,"&width=1000"/>");
+        }
+        }//if(nullCol<0)
+        catch(Throwable x){
+        String end=tl.logo(jspName+":if(nullCol<0) Throwable:",x);
+        tl.error(end);
+        tl.out("<script>serverErrorTL="
 							,end
 							,"</script>");
-                    }//catch
-                    }//if(!stateEdit)
-                    tl.out("</body><script>");
+        }//catch
+        }//if(!stateEdit)
+        tl.out("</body><script>");
 			String end=tl.logo(tl);
 			tl.out("\r\n"
 					,"serverTL="
 					,end
 					,"  \r\n"
 					,"</script>\r\n"
-                    ,"</html>
+,"</html>
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head>
+    <!--script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script-->
+    <script src="../../angular-1.6.4/angular.js"></script>
+    <script>
+
+var myApp = angular.module('myApp', []);
+myApp.controller("myController", [
+	"$scope",
+	function($scope) {//,$http
+		$scope.jspName='Report2.jsp'
+		$scope.title='Realestate Report 2'
+		$scope.range=function(a,b,c){
+			if(c==undefined)c=1;
+			if(b==undefined){b=a;a=0;}
+			var r=[];
+			for(var i=a;i<=b;i+=c)
+			r.push(i);
+			return r;}
+		$scope.minmaxYears=$scope.range(2000,2016)
+		$scope.from=2002
+		$scope.to=2014
+		$scope.terms=[
+			{name:'aggregate',lbl:'aggregate',ar:'aggregate',base:1}
+			,{name:'annual',lbl:'annual',ar:'year',base:1}
+			,{name:'nineMonths',lbl:'nineMonths',ar:'nineMonths',base:1}
+			,{name:'semi-annual',lbl:'semi-annual',ar:'half',base:2}
+			,{name:'quarterly',lbl:'quarterly',ar:'quarter',base:4}
+			,{name:'monthly',lbl:'monthly',ar:'monthl',base:12}
+			,{name:'weekly',lbl:'weekly',ar:'week',base:52}
+		]
+		$scope.term=$scope.terms[0]
+		$scope.ranks=[1,2,3,4]
+		$scope.sttstcs=[{name:'count',lbl:'count'}
+			,{name:'avgPrice',lbl:'avgPrice'}
+			,{name:'ttlPrice',lbl:'ttlPrice'}
+			,{name:'minPrice',lbl:'minPrice'}
+			,{name:'maxPrice',lbl:'maxPrice'}
+			,{name:'avgArea' ,lbl:'avgArea'}
+			,{name:'ttlArea' ,lbl:'ttlArea'}
+			,{name:'minArea' ,lbl:'minArea'}
+			,{name:'maxArea' ,lbl:'maxArea'} // ix 8
+		];
+		$scope.data=[
+			{ix:1,ttl:'gov',tbl:[
+				 [1,2,3,4,5,6,7,8,9,0]//sttstcs 0
+				,[2,3,4,5,6,7,8,9,0,1]//sttstcs 1
+				,[3,4,5,6,7,8,9,0,1,2]//sttstcs 2
+				,[4,5,6,7,8,9,0,1,2,3]//sttstcs 3
+				,[5,6,7,8,9,0,1,2,3,4]//sttstcs 4
+				,[6,7,8,9,0,1,2,3,4,5]//sttstcs 5
+				,[7,8,9,0,1,2,3,4,5,6]//sttstcs 6
+				,[8,9,0,1,2,3,4,5,6,7]//sttstcs 7
+				,[9,0,1,2,3,4,5,6,7,8]//sttstcs 8
+			]}
+			,{ix:2,ttl:'dasma',tbl:[
+				 [11,12,13,14,15,16,17,18,19,20]//sttstcs 0
+				,[12,13,14,15,16,17,18,19,10,11]//sttstcs 1
+				,[13,14,15,16,17,18,19,10,11,12]//sttstcs 2
+				,[14,15,16,17,18,19,10,11,12,13]//sttstcs 3
+				,[15,16,17,18,19,10,11,12,13,14]//sttstcs 4
+				,[16,17,18,19,10,11,12,13,14,15]//sttstcs 5
+				,[17,18,19,10,11,12,13,14,15,16]//sttstcs 6
+				,[18,19,10,11,12,13,14,15,16,17]//sttstcs 7
+				,[19,10,11,12,13,14,15,16,17,18]//sttstcs 8
+			]},
+			{ix:1,ttl:'gov',tbl:[
+				 [1,2,3,4,5,6,7,8,9,0]//sttstcs 0
+				,[2,3,4,5,6,7,8,9,0,1]//sttstcs 1
+				,[3,4,5,6,7,8,9,0,1,2]//sttstcs 2
+				,[4,5,6,7,8,9,0,1,2,3]//sttstcs 3
+				,[5,6,7,8,9,0,1,2,3,4]//sttstcs 4
+				,[6,7,8,9,0,1,2,3,4,5]//sttstcs 5
+				,[7,8,9,0,1,2,3,4,5,6]//sttstcs 6
+				,[8,9,0,1,2,3,4,5,6,7]//sttstcs 7
+				,[9,0,1,2,3,4,5,6,7,8]//sttstcs 8
+			]}
+		]
+
+		$scope.yrsChange=function(){
+								  $scope.yrs=$scope.range($scope.from,$scope.to);
+								  $scope.timeline=[]
+								  for(var i in $scope.yrs)
+								  for(var j=1;j<=$scope.term.base;j++){
+								  $scope.timeline.push([i,j])
+									}
+								  }
+		$scope.yrsChange();
+		//	$scope.app=$http.get('test.json')
+		myApp.filter('minmax',function minmax(){
+		return function(x,a){var r=[];
+			for(var i=0;i<x.length;i++)
+			if(x[i]>=a[0]&&x[i]<=a[1])
+				r.push(x[i]);
+		}
+		}
+	 )
+	}
+]);
+</script>
+    <title>{{'AngularJS test:'+title}}</title>
+</head>
+<body	>
+<div ng-controller="myController">
+    <h1>{{jspName}}</h1>
+    {{myApp}}
+
+    from:<select ng-model="from" ng-options="i for i in minmaxYears" ng-change="yrsChange()"></select>
+    , to:<select ng-model="to"	ng-options="i for i in minmaxYears" ng-change="yrsChange()"></select>
+    , term:<select ng-model="term"	ng-options="i.lbl for i in terms" ng-change="yrsChange()"></select>
+    <hr/>
+    span:{{to-from+1}} , term={{term}} : base={{term.base}}
+
+    <table border=1>
+        <tr><th ng-repeat="yr in yrs " colspan="{{term.base}}">{{yr}}</th>
+        </tr>
+        <tr ng-if="term.base!=1"><th ng-repeat="t in timeline ">{{t[1]}}</th></tr>
+    </table>
+    <span from={{from}} ng-repeat="i in yrs">[ {{i}}
+	<span to={{to}} ng-repeat="j in timeline">
+		( {{j}} )
+	</span>
+	]<br/>
+</span>
+</body>
+</html>

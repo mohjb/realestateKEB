@@ -6,6 +6,11 @@
       <root url="jar://D:/apache-tomcat-8.0.15/lib/servlet-api.jar!/" />
       <root url="jar://D:/apache-tomcat-8.0.15/webapps/ROOT/WEB-INF/lib/jcommon-1.0.15.jar!/" />
       <root url="jar://D:/apache-tomcat-8.0.15/webapps/ROOT/WEB-INF/lib/jfreechart-1.0.12.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../../../lib/jsp-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../../../lib/mysql-connector-java-5.1.11-bin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../../../lib/servlet-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../WEB-INF/lib/jcommon-1.0.15.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../WEB-INF/lib/jfreechart-1.0.12.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
