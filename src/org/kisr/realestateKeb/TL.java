@@ -57,7 +57,7 @@ public class TL
     public App.Usr usr;
     public App.Ssn ssn;
     public Map<String,Object>json;
-
+    Lang lang;public enum Lang{ar,en}
     public Map response;
     public Date now;//,sExpire;
 
@@ -262,6 +262,8 @@ public class TL
             json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
             response=TL.Util.mapCreate(//"msg",0 ,
                     "return",false , "op",h.req("op"),"req",o);
+            lang=Lang.ar; o=h.var( "lang" );
+            if(o!=null)try{lang=Lang.valueOf( o.toString() );}catch(Exception ex){}
             App.Ssn.onEnter();
         }catch(Exception ex){error("TL.onEnter",ex);}
         //if(pages==null){rsp.setHeader("Retry-After", "60");rsp.sendError(503,"pages null");throw new Exception("pages null");}

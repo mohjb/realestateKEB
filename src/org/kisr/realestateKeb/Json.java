@@ -334,6 +334,7 @@ public class Json
                     .w(",\"response\":").o(y.response,i2,c?path+".response":path)
                     .w(",\"Request\":").o(y.h.getRequest(),i2,c?path+".request":path)
                     //.w(",\"Session\":").o(y.getSession(false))
+                    .w(",\"lang\":").oStr(y.lang.toString(),i2)
                     .w(",\"application\":").o(y.h.getServletContext(),i2,c?path+".application":path)
                     .w(",\"config\":").o(y.h.srvlt.getServletConfig(),i2,c?path+".config":path)
                     .w(",\"Page\":").o(y.h.srvlt,i2,c?path+".Page":path)

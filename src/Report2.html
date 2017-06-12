@@ -13,7 +13,32 @@
 	<td><img style="border:3px black double" src="kbu-logo.png"/></td>
 	<td><h1>بيانات تداول العقار في دولة الكويت</h1></td>
 	<td><img src="kisrlogo.gif"/></td></tr>
- </table>
+ </table><!--
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict={{dict}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >$scope.dict={{$scope.dict}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup={{dict.lookup}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.name={{dict.lookup.name}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.type={{dict.lookup.type}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.gov={{dict.lookup.gov}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.sector={{dict.lookup.sector}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.label={{dict.lookup.label}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.ranks={{dict.ranks}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.jspName={{dict.jspName}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.minmaxYear={{dict.minmaxYear}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.minmaxYear.length={{dict.minmaxYear.length}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.terms={{dict.terms}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.contrcts={{dict.contrcts}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.namesGovs={{dict.namesGovs}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >dict.Statistics={{dict.Statistics}}</span> <br/>
+ <span style="color:grey;background-color:#333;border:2px solid black">version 2017.06.12.16.15</span>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >govs={{govs}}</span> 
+ <hr/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >x={{x}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >title={{title}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >mohammad={{mohammad}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >jspName={{jspName}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >lang={{lang}}</span> <br/>
+ <span style="color:white;background-color:#3f8;border:2px solid green" >Statistics={{Statistics}}</span> <br/ -->
 	<form method="post" action="{{jspName}}">
 		<table width="75%" border="0" align="center">
 			<tr><th>من</th><th>الى</th>
@@ -21,10 +46,18 @@
 				<th>تفصيل</th>
 				<th>نوع العقد</th>
 				<th>محافظة</th>
+				<th>قطاع</th>
 				<th>نوع العقار</th>
 				<td rowspan="2">
-					<input type="hidden" name="stateEdit" value="{{!stateEdit}}" />
 					<input type="submit" value="بحث" />
+					<input type="hidden" name="from" value="{{from}}"/>
+					<input type="hidden" name="to" value="{{to}}"/>
+					<input type="hidden" name="gov" value="{{gov.code}}"/>
+					<input type="hidden" name="sttstcs" value="{{ sttstcs.selected }}"/>
+					<input type="hidden" name="terms" value="{{term.name}}"/>
+					<input type="hidden" name="contract" value="{{contract.name}}"/>
+					<input type="hidden" name="typ" value="{{typ.code}}"/>
+					<input type="hidden" name="sector" value="{{sector.code}}"/>
 				</td>
 			</tr>
 			<tr >
@@ -34,7 +67,7 @@
 				<td>
 					<div style="color:white;background-color:#3f8;border:2px solid green">
 						<span ng-repeat="i in sttstcs.selected"
-						>{{Statistics[i].lbl}}<a
+						>{{dict.Statistics[i].ar}}<a
 							ng-if="i!=sttstcs.selected[0]" >⬆</a>
 							<a ng-if="i==sttstcs.selected[sttstcs.selected.length-1]" >⬇</a><hr/>
 						</span>
@@ -42,23 +75,28 @@
 					<div style="color:grey;background-color:#333;border:2px solid black">
 						<span style="font-size:24px; font-weight: 24px"
 							  ng-repeat="i in sttstcs.unselected">
-						   <a >⬆</a>{{Statistics[i].lbl}}<hr/>
+						   <a >⬆</a>{{dict.Statistics[i][lang]}}<hr/>
 						</span>
 					</div>
 				</td>
 
-				<td><select ng-model="term"	ng-options="i.lbl for i in terms" ng-change="yrsChange()"></select></td>
+				<td><select ng-model="term"	ng-options="i[lang] for i in dict.terms" ng-change="yrsChange()"></select></td>
 
-				<td><select ng-model="contract"	ng-options="i.str for i in contrcts" ng-change="yrsChange()"></select></td>
+				<td><select ng-model="contract"	ng-options="i[lang] for i in dict.contrcts" ng-change="yrsChange()"></select></td>
 
 				<td >
 					<select ng-model="gov"
-						ng-options="i.lang.en for i in govs"
+						ng-options="i[lang] for i in dict.lookup.gov"
 						></select></td>
 
 				<td >
+					<select ng-model="sector"
+							ng-options="i[lang] for i in dict.lookup.sector"
+					></select></td>
+
+				<td >
 					<select ng-model="typ"
-							ng-options="i.lang.en for i in typs"
+							ng-options="i[lang] for i in dict.lookup.type"
 					></select></td>
 			</tr>
 		</table>
@@ -77,34 +115,20 @@
 	</div -->
 	
 	<hr/>
-	<table border=1 rules="all">
-		<tr>
-			<th width="200px" rowspan="{{term.base==1?1:2}}">{{allGovs?"محافظة":"منطقة"}}</th>
-			<th rowspan="{{term.base ==1 ?1:2}}" >وصف</th>
-			<th ng-repeat="yr in yrs " colspan="{{term.base}}">{{yr}}</th>
-		</tr>
-		<tr ng-if="term.base!=1"><th ng-repeat="t in timeline ">{{t[1]}}</th></tr>
-		<tr ng-repeat="series in data" ng-repeat="s in series.tbl">
-			    <td ng-if="$index==0" rowspan="{{sttstcs.selected.length}}">{{series.ttl}}</td>
-			    <td ng-if="$index==0">{{ Statistics[sttstcs.selected[$index]].lbl}}</td>
-				<td ng-repeat="t in s">{{t}}</td>
-		</tr>
-	</table>
-
-
  <table border=1>
      <thead>
      <tr>
-         <th rowspan="{{term.base==1?1:2}}">area</th>
-         <th rowspan="{{term.base==1?1:2}}">sttstcs</th>
+         <th rowspan="{{term.base==1?1:2}}" width="200px">{{allGovs?"محافظة":"منطقة"}}</th>
+         <th rowspan="{{term.base==1?1:2}}">وصف</th>
          <th ng-repeat="yr in yrs " colspan="{{term.base}}">{{yr}}</th>
      </tr>
      <tr ng-if="term.base!=1"><th ng-repeat="t in timeline ">{{t[1]}}</th></tr>
      </thead>
+
      <tbody ng-repeat="dtm in data">
      <tr ng-repeat="row in dtm.tbl">
          <th ng-if="$index==0" rowspan="{{dtm.tbl.length}}">{{dtm.ttl}}</th>
-         <th >sttstc {{$index}}</th>
+         <th > {{ dict.Statistics[sttstcs.selected[$index]][lang] }}</th>
          <td ng-repeat="i in row" >{{i}} </td>
      </tr>
      </tbody>

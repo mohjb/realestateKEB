@@ -256,7 +256,7 @@ insert into usr values
     }//class DataTbl
 
     /**lookup*/
-    public static class LookupTbl extends Tbl{
+    public static class LookupTbl extends Tbl {//implements LookupTbl.ILang
         public static final String Name="t";
         @Override public String getName(){return Name;}//public LookupTbl(){super(Name);}
 
@@ -264,14 +264,13 @@ insert into usr values
         @F public Col col;
         @F public Integer code;
         @F public String text;
-        @F public Lang lang;
+        @F public TL.Lang lang;
 
         LookupTbl copy(){return new LookupTbl().set(no, col, code, text,lang);}
 
-        LookupTbl set(Integer n,Col c,Integer d,String x,Lang lng){no=n;col=c;code=d;text=x;lang=lng;return this;}
+        LookupTbl set(Integer n,Col c,Integer d,String x,TL.Lang lng){no=n;col=c;code=d;text=x;lang=lng;return this;}
 
         public enum Col{gov,type,name,label,sector};
-        public enum Lang{ar,en};
         public enum C implements CI{no,col,code,text,lang;
             public Class<? extends Tbl>cls(){return LookupTbl.class;}
             public Class<? extends TL.Form>clss(){return cls();}
@@ -292,29 +291,30 @@ insert into usr values
 /*
 CREATE TABLE `t` (
   `no` int(6) NOT NULL AUTO_INCREMENT,
-  `col` set('gov','type','name','label','labelEn') NOT NULL DEFAULT 'label',
+  `col` set('gov','type','name','label','sector') NOT NULL DEFAULT 'label',
   `code` int(4) NOT NULL,
   `text` text NOT NULL,
+  `lang` set('ar','en') NOT NULL DEFAULT 'ar',
   PRIMARY KEY (`no`),
   KEY `cc` (`col`,`code`)
 ) ENGINE=MyISAM AUTO_INCREMENT=305 DEFAULT CHARSET=utf8;
  */
+public interface ILang{String lang();public Map lang(Map m);}
 
-
-        public static Map<Col,Map<Integer,Map<Lang,LookupTbl>>> lookup(){
+        public static Map<Col,Map<Integer,Map<TL.Lang,LookupTbl>>> lookup(){
             TL p=TL.tl();TL.H h=p.h;Object o=h.a(LookupTbl.class);
-            Map<Col,Map<Integer,Map<Lang,LookupTbl>>>m=o==null?null:(
-                    Map<Col,Map<Integer,Map<Lang,LookupTbl>>>)o;
+            Map<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>m=o==null?null:(
+                    Map<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>)o;
             if(m==null)try{LookupTbl l=new LookupTbl();
-                h.a(LookupTbl.class,m=new HashMap<Col,Map<Integer,Map<Lang,LookupTbl>>>());
+                h.a(LookupTbl.class,m=new HashMap<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>());
                 for(TL.DB.Tbl i:l.query(TL.DB.Tbl.where())){
                     p.log("App.LookupTbl.lookup:1:",i.toJson());
-                    Map<Integer,Map<Lang,LookupTbl>>n=m.get(l.col);
+                    Map<Integer,Map<TL.Lang,LookupTbl>>n=m.get(l.col);
                     if(n==null)
-                        m.put(l.col,n=new HashMap<Integer,Map<Lang,LookupTbl>>());
-                    Map<Lang,LookupTbl>ln=n.get(l.code);
+                        m.put(l.col,n=new HashMap<Integer,Map<TL.Lang,LookupTbl>>());
+                    Map<TL.Lang,LookupTbl>ln=n.get(l.code);
                     if(ln==null)
-                        n.put(l.code,ln=new HashMap<Lang,LookupTbl>(  ));
+                        n.put(l.code,ln=new HashMap<TL.Lang,LookupTbl>(  ));
                     LookupTbl t=ln.get( l.lang );
                     if(t==null || t.no>l.no )//|| t.lang!=l.lang
                         ln.put(l.lang, l.copy());
@@ -323,7 +323,7 @@ CREATE TABLE `t` (
             }//ifm==null
             catch(Exception x){p.error("App.LookupTbl.lookup:ex:", x);
                 if(m==null)
-                    m=new HashMap<Col,Map<Integer,Map<Lang,LookupTbl>>>();
+                    m=new HashMap<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>();
             }return m;}
     }//class LookupTbl
 

@@ -18,8 +18,8 @@ public class Report1D extends Report1C {
 	final static String jspName="report1D.jsp";//,chartName="chart.jsp";
  public static class E{
 	TL tl;
-	String op,method;LookupTbl t=new LookupTbl();LookupTbl.Lang lang;
-	Map<LookupTbl.Col,Map<Integer,Map<LookupTbl.Lang,LookupTbl>>> lookup;
+	String op,method;LookupTbl t=new LookupTbl();
+	Map<LookupTbl.Col,Map<Integer,Map<TL.Lang,LookupTbl>>> lookup;
 	Map<Integer,Integer>namesGovs;
 	int[]minmaxYear;
 	List<Integer>sttstcs;
@@ -28,41 +28,79 @@ public class Report1D extends Report1C {
 
 static List<Map<String,String>>toJson(Lbl.Term[]a){
  	List l=new LinkedList();
- 	for ( Lbl.Term t :Lbl.terms ){
-        l.add( TL.Util.mapCreate( "name",t.name()
-                ,"base",t.base
-                ,"ar",t.ar,"lbl",t.lbl
-                ,"en",t.en,"enLbl",t.enLbl
-        ) );
-    }
+ 	for ( Lbl.Term t :Lbl.terms )
+        l.add( t.lbl(  t.lang( TL.Util.mapCreate( "name",t.name()
+                ,"base",t.base ) )));
  	return l;}
 
 static List<Map<String,String>>toJson(Lbl.Ranks[]a){
 	List l=new LinkedList();
 	for ( Lbl.Ranks t :a )
-        l.add( TL.Util.mapCreate( "name",t.name(),"en",t.en) );
+        l.add( t.lang( new HashMap(  ) ) );//TL.Util.mapCreate( "name",t.name(),"en",t.en)
 	return l;}
 
 static List<Map<String,String>>toJson(Lbl.Contrct[]a){
 	List l=new LinkedList();
-	for ( Lbl.Contrct t :Lbl.contrcts ){
-		l.add( TL.Util.mapCreate( "name",t.name()
-				,"v",t.v
-                ,"ar",t.ar
-                ,"en",t.en
-		) );
-	}
+	for ( Lbl.Contrct t :Lbl.contrcts )
+		l.add( t.lang( TL.Util.mapCreate( "name",t.name()
+				,"v",t.v ) ));
 	return l;}
 
 static List<Map<String,String>>toJson(Lbl.Statistics[]a){
 	List l=new LinkedList();
-	for ( Lbl.Statistics t :Lbl.sttstcs ){
-		l.add( TL.Util.mapCreate( "name",t.name()
-				,"lbl",t.label,"en",t.en
-		) );
-	}
+	for ( Lbl.Statistics t :Lbl.sttstcs )
+		l.add( t.lang( TL.Util.mapCreate( "name",t.name() ) ));
 	return l;}
 
+static Map<String,Map<Integer,Map<String,String>>>
+toJson(Map<LookupTbl.Col,Map<Integer,Map<TL.Lang,LookupTbl>>>a){
+	Map<String,Map<Integer,Map<String,String>>>m=new
+HashMap<String,Map<Integer,Map<String,String>>>();
+	for ( LookupTbl.Col col :a.keySet() )
+	{Map<Integer,Map<TL.Lang,LookupTbl>>a2=a.get( col );
+		String k2=col.toString();
+		Map<Integer,Map<String,String>> m2=m.get(k2);
+		if(m2==null)
+			m.put( k2,m2=new HashMap<Integer,Map<String,String>>() );
+		for(Integer i:a2.keySet()){
+			Map<TL.Lang,LookupTbl>a3=a2.get( i );//String k3=i.toString();
+			Map<String,String>m3=m2.get( i );
+			if(m3==null)
+				m2.put( i, m3=new HashMap<String,String>() );
+			for(TL.Lang lng:a3.keySet()){
+				LookupTbl t=a3.get( lng );
+				String k4=String.valueOf( lng );
+				m3.put( k4,t==null?"":t.text );
+				m3.put( "code",t==null?"":String.valueOf( t.code ));
+			}
+		}
+	}
+	return m;}
+
+/*public static  lookup(){
+	TL p=TL.tl();TL.H h=p.h;Object o=h.a(LookupTbl.class);
+	Map<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>m=o==null?null:(
+			                                                           Map<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>)o;
+	if(m==null)try{LookupTbl l=new LookupTbl();
+		h.a(LookupTbl.class,m=new HashMap<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>());
+		for(TL.DB.Tbl i:l.query(TL.DB.Tbl.where())){
+			p.log("App.LookupTbl.lookup:1:",i.toJson());
+			Map<Integer,Map<TL.Lang,LookupTbl>>n=m.get(l.col);
+			if(n==null)
+				m.put(l.col,n=new HashMap<Integer,Map<TL.Lang,LookupTbl>>());
+			Map<TL.Lang,LookupTbl>ln=n.get(l.code);
+			if(ln==null)
+				n.put(l.code,ln=new HashMap<TL.Lang,LookupTbl>(  ));
+			LookupTbl t=ln.get( l.lang );
+			if(t==null || t.no>l.no )//|| t.lang!=l.lang
+				ln.put(l.lang, l.copy());
+		}//for
+		//p.log("App.LookupTbl.lookup:ex:",m);
+	}//ifm==null
+	catch(Exception x){p.error("App.LookupTbl.lookup:ex:", x);
+		if(m==null)
+			m=new HashMap<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>();
+	}return m;}*/
 
 	public static void gGet(TL tl,E e)throws Exception{
 		if ("resetLookup".equals(e.op)) {
@@ -70,16 +108,16 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){
 			tl.out("application-scope has been reset for entry 'lookup' hashmap, tl.h.a( LookupTbl.class, null ); ");
 		} else if ("get".equals(e.op) || e.op == null)
 			TL.Util.mapSet(tl.response
-					, "lookup", e.lookup
+					, "lookup", toJson( e.lookup)
 					, "minmaxYear", e.minmaxYear
-					, "terms", toJson(Lbl.Term.values())
+					, "terms", toJson(Lbl.terms)
 					, "ranks", toJson(Lbl.ranks)
 					, "contrcts", toJson(Lbl.contrcts)
-					, "options", "allGovs,allTyps,aggGovs"
+					//, "options", TL.Util.lst( "allGovs","allTyps","aggGovs")
 					, "Statistics", toJson(Lbl.sttstcs)
 					, "jspName", jspName
 					, "namesGovs", e.namesGovs
-					, "Prms", e.prmA
+					//, "Prms", e.prmA
 			);
 	}
 
@@ -102,14 +140,12 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){
 				e.sttstcs.add( Lbl.Statistics.count .ordinal());
 			}
 		}
-		e. lang=LookupTbl.Lang.ar;{Object o=tl.h.var( "lang" );
-			if(o!=null)try{e.lang=LookupTbl.Lang.valueOf( o.toString() );}catch(Exception ex){}}
 
 
-		Map<Integer, Map<LookupTbl.Lang,LookupTbl>> typs = e.lookup.get(LookupTbl.Col.type)
+		Map<Integer, Map<TL.Lang,LookupTbl>> typs = e.lookup.get(LookupTbl.Col.type)
 				, govs = e.lookup.get(LookupTbl.Col.gov);
-		LookupTbl gov = govs.get(TL.Util.parseInt(Prm.gov.v(p), 0)).get( e.lang )
-			, typ = typs.get(TL.Util.parseInt(Prm.typ.v(p), 0)).get( e.lang );
+		LookupTbl gov = govs.get(TL.Util.parseInt(Prm.gov.v(p), 0)).get( tl.lang )
+			, typ = typs.get(TL.Util.parseInt(Prm.typ.v(p), 0)).get( tl.lang );
 
 		int from = TL.Util.parseInt(Prm.from.v(p), e.minmaxYear[0])
 			, to = TL.Util.parseInt(Prm.to.v(p), e.minmaxYear[1])
@@ -203,7 +239,7 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){
 				int nm = rs.getInt(1), yr = rs.getInt(2);
 				if (nm != currentName) {
 					data.add(TL.Util.mapCreate("nm", currentName
-							, "ttl", e.lookup.get(col_Gov_or_name).get(currentName).get( e.lang ).text
+							, "ttl", e.lookup.get(col_Gov_or_name).get(currentName).get( tl.lang ).text
 							, "tbl", tbl =new Object[base][e.sttstcs.size()])
 					);
 					currentName = nm;
@@ -230,7 +266,7 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){
 	throws Exception {response.setContentType("text/html; charset=utf-8");TL tl=null;
 	try {
 		tl = TL.Enter(srvlt, request, response, response.getWriter());//out);//
-		tl.logOut = tl.h.var("logOut", true);
+		tl.logOut = tl.h.var("logOut", false);
 		tl.h.comments = tl.h.CommentJson;
 		if (request.getCharacterEncoding() == null)
 			request.setCharacterEncoding("UTF-8");

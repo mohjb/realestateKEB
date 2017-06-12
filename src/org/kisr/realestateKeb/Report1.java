@@ -133,7 +133,7 @@ public class Report1 {
                 request.setCharacterEncoding("UTF-8");
 
 
-            Map<LookupTbl.Col,Map<Integer,LookupTbl>> lookup=LookupTbl.lookup();
+            Map<LookupTbl.Col,Map<Integer,Map<TL.Lang,LookupTbl>>> lookup=LookupTbl.lookup();
             Prm[]pa=Prm.values();
             String p[]=new String[pa.length];
             int nullCol=-1;
@@ -158,7 +158,7 @@ public class Report1 {
                     ?LookupTbl.Col.gov
                     :LookupTbl.Col.name;
 
-            Map<Integer,LookupTbl>typs=lookup.get(LookupTbl.Col.type)
+            Map<Integer,Map<TL.Lang,LookupTbl>>typs=lookup.get(LookupTbl.Col.type)
                     ,govs=lookup.get(LookupTbl.Col.gov);
             int n2=typs.size();
 
@@ -278,12 +278,12 @@ public class Report1 {
             , allGovs?"selected":""
 
             ,'>'
-            , govs.get(0).text
+            , govs.get(0).get( tl.lang ).text
             ,"</option>");
 
             int iGov=col.ordinal();
             for ( int i = 1 ; i < govs . size ( ) ;i++)//if(i!=1)
-            {	LookupTbl g=govs.get(i);
+            {	LookupTbl g=govs.get(i).get( tl.lang );
                 String s=String.valueOf(g.code);//i
                 boolean b= !allGovs&&
                         (	(s==null&&Prm.gov.v(p)==null)
@@ -299,7 +299,7 @@ public class Report1 {
                 ,' '
                 , b?"selected":""
                 ,'>'
-                , govs.get(i).text
+                , govs.get(i).get( tl.lang ).text
                 ,"</option>");
 
             }
@@ -314,7 +314,7 @@ public class Report1 {
             ,'>');
 
             for(int i=0;i < typs.size() ;i++)
-            {	LookupTbl g=typs.get(i);
+            {	LookupTbl g=typs.get(i).get( tl.lang );
                 String s=String.valueOf(g.code);
                 tl.out("\r\n"
                 ,"\t\t<option value=\""
@@ -434,7 +434,7 @@ public class Report1 {
                 tl.h.s(jspName+Chart.Model.class,mod);
                 mod.termBase=to;mod.termInc=-term.base;
                 Chart.Model.Chrt c0=mod.newChrt(lookup.get(
-                        LookupTbl.Col.gov).get(allGovs?0:iGov) .text);
+                        LookupTbl.Col.gov).get(allGovs?0:iGov).get( tl.lang ) .text);
 
                 //tl.logo(jspName,"nullCol<0");
                 StringBuilder sql=new StringBuilder("select ")
@@ -488,7 +488,7 @@ public class Report1 {
                     if(nm!=currentName)
                     {	if(row++>0)
                     {	htmlTable
-                            (tbl,lookup.get(col).get(currentName).text
+                            (tbl,lookup.get(col).get(currentName).get( tl.lang ).text
                                     ,"style=\"background-color:"+
                                             ((row%2)==0?"#eef":"#f8f8ff")+"\""
                                     ,from,term,mod);
@@ -502,7 +502,7 @@ public class Report1 {
                     //tl.logo(jspName,":for-db-iterator:tbl(c=[0-",c,"), yr=",yr,")=",tbl);
                 }
                 if(row>0)htmlTable
-                        (tbl,lookup.get(col).get(currentName).text
+                        (tbl,lookup.get(col).get(currentName).get( tl.lang ).text
                                 ,"style=\"background-color:"+
                                         ((row%2)==0?"#eef":"#f8f8ff")+"\""
                                 ,from,term,mod);
