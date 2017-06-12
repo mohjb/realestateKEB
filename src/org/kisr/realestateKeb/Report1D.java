@@ -29,26 +29,27 @@ public class Report1D extends Report1C {
 static List<Map<String,String>>toJson(Lbl.Term[]a){
  	List l=new LinkedList();
  	for ( Lbl.Term t :Lbl.terms ){
- 		l.add( TL.Util.mapCreate( "name",t.name()
-	        ,"base",t.base
-			    ,"ar",t.ar
-			    ,"lbl",t.lbl
-	    ) );
+        l.add( TL.Util.mapCreate( "name",t.name()
+                ,"base",t.base
+                ,"ar",t.ar,"lbl",t.lbl
+                ,"en",t.en,"enLbl",t.enLbl
+        ) );
     }
  	return l;}
 
-static List<String>toJson(Lbl.Ranks[]a){
+static List<Map<String,String>>toJson(Lbl.Ranks[]a){
 	List l=new LinkedList();
-	for ( Lbl.Term t :Lbl.terms ){
-		l.add( t.name());
-	}return l;}
+	for ( Lbl.Ranks t :a )
+        l.add( TL.Util.mapCreate( "name",t.name(),"en",t.en) );
+	return l;}
 
 static List<Map<String,String>>toJson(Lbl.Contrct[]a){
 	List l=new LinkedList();
 	for ( Lbl.Contrct t :Lbl.contrcts ){
 		l.add( TL.Util.mapCreate( "name",t.name()
 				,"v",t.v
-				,"str",t.str
+                ,"ar",t.ar
+                ,"en",t.en
 		) );
 	}
 	return l;}
@@ -57,7 +58,7 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){
 	List l=new LinkedList();
 	for ( Lbl.Statistics t :Lbl.sttstcs ){
 		l.add( TL.Util.mapCreate( "name",t.name()
-				,"lbl",t.label
+				,"lbl",t.label,"en",t.en
 		) );
 	}
 	return l;}
@@ -93,14 +94,9 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){
 		}
 		{//int[] statistics = null;
 			Object o = tl.json.get("sttstcs");
-			if (o instanceof List) {
+			if (o instanceof List)
 				e.sttstcs=(List<Integer>)o;
-				/*
-				List<Number> l = (List) o;int n = l.size();
-				tl.h.s("statistics", statistics = new int[n]);
-				for (int i = 0; i < l.size(); i++)
-					statistics[i] = l.get(i).intValue();*/
-			} else
+			else
 			{e.sttstcs = new LinkedList<>(  );
 				e.sttstcs.add( Lbl.Statistics.avgMtr .ordinal());
 				e.sttstcs.add( Lbl.Statistics.count .ordinal());
@@ -152,13 +148,13 @@ static List<Map<String,String>>toJson(Lbl.Statistics[]a){
 			switch (term) {
 				case semiAnnual:
 					sql.append("(year(`")
-							.append(DataTbl.C.d).append("`)-").append(from).append(")* 2+ceiling(month(`")
-							.append(DataTbl.C.d).append("`)/6)-1 as t");
+						.append(DataTbl.C.d).append("`)-").append(from).append(")* 2+ceiling(month(`")
+						.append(DataTbl.C.d).append("`)/6)-1 as t");
 					break;
 				case quarterly:
 					sql.append("(year(`")
-							.append(DataTbl.C.d).append("`)-").append(from).append(")* 4+ceiling(month(`")
-							.append(DataTbl.C.d).append("`)/3)-1 as t");
+						.append(DataTbl.C.d).append("`)-").append(from).append(")* 4+ceiling(month(`")
+						.append(DataTbl.C.d).append("`)/3)-1 as t");
 					break;
 				case monthly:
 					sql.append("(year(`")
