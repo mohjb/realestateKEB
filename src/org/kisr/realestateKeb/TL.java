@@ -206,15 +206,19 @@ public class TL
                 dateFormat=new java.text.SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
 
         public static Integer[]parseInts(String s){
+            List<Integer>l=parseIntsl( s );
+            Integer[]a=new Integer[l.size()];l.toArray(a);
+            return a;}
+
+        public static List<Integer>parseIntsl(String s){
             java.util.Scanner c=new java.util.Scanner(s).
-                    useDelimiter("[\\s\\.\\-/\\:A-Za-z,]+");
+               useDelimiter("[\\s\\.\\-/\\:A-Za-z,]+");
             List<Integer>l=new LinkedList<Integer>();
             while(c.hasNextInt()){
                 //if(c.hasNextInt())else c.skip();
                 l.add(c.nextInt());
             }
-            Integer[]a=new Integer[l.size()];l.toArray(a);
-            return a;}
+            return l;}
 
         static Date parseDate(String s){
             Integer[]a=parseInts(s);int n=a.length;

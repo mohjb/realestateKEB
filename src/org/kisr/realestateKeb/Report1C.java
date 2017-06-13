@@ -96,7 +96,7 @@ public class Report1C {
 	}
 
  /**these are html-post-parameter names, so that the names are centeralized/have one spelling*/
-		enum Prm{from,to,from2,to2
+		enum Prm{from,to//,from2,to2
 			,typ,contract,gov,terms;//S;
 			String v(String[]a){return a[ordinal()];}};
 
@@ -209,8 +209,8 @@ public class Report1C {
 
 			int from=TL.Util.parseInt(Prm.from.v(p),minmaxYear[0])
 					,to=TL.Util.parseInt(Prm.to.v(p),minmaxYear[1])
-					,from2=TL.Util.parseInt(Prm.from2.v(p),1)
-					,to2=TL.Util.parseInt(Prm.to2.v(p),52);
+					//,from2=TL.Util.parseInt(Prm.from2.v(p),1)
+					;//,to2=TL.Util.parseInt(Prm.to2.v(p),52);
 
 			if(from>to)
 			{int tmp=from;
@@ -270,16 +270,16 @@ public class Report1C {
 					tl.out("\n\t\t\t<option ", (from==i//s.equals(Prm.from.v(p)
 					?" selected":"" ),">",i,"</option>");
 				}
-				tl.out("</select><br/>\n\t\t<select name=\"",Prm.from2,"\" >");
+				//tl.out("</select><br/>\n\t\t<select name=\"",Prm.from2,"\" >");
 				for(int i=1;i<=52;i++) {
 					//String s = String.valueOf(i);
 					tl.out("\n" ,
-							"\t\t\t<option ",( i==from2//s.equals(Prm.from2.v(p)
+							"\t\t\t<option ",( i==0//from2//s.equals(Prm.from2.v(p)
 					?" selected":""),">",i,"</option>");
 				}
 				tl.out("</select>");
 			}else
-				tl.out(from ,"<br/>", Prm.from2.v(p));
+				tl.out(from ,"<br/>", 0);//Prm.from2.v(p)
 
 			tl.out("</td>\n\t<td>");
 
@@ -290,17 +290,16 @@ public class Report1C {
 					tl.out("\n\t\t\t<option", (i==to//s.equals(Prm.to.v(p)
 					?" selected":"" ),">",i,"</option>");
 				}
-				tl.out("</select><br/>\n" ,
-						"\t\t<select name=\"",Prm.to2,"\" >");
+				//tl.out("</select><br/>\n" ,"\t\t<select name=\"",Prm.to2,"\" >");
 				for(int i=1;i<=52;i++) {
 					//String s = String.valueOf(i);
 					tl.out("\n" ,
-							"\t\t\t<option",( i==to2//s.equals(Prm.to2.v(p))
+							"\t\t\t<option",( i==0//to2//s.equals(Prm.to2.v(p))
 							?" selected>":">"),i,"</option>");
 				}
 				tl.out("</select>");
 			}else
-				tl.out(to ,"<br/>", to2);
+				tl.out(to ,"<br/>", 0);//to2
 
 			tl.out("</td>");
 

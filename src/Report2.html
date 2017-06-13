@@ -1,138 +1,151 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" ng-app="myApp">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>Real-Estate</title>
-	<!--script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script-->
-	<script src="../../../../angular-1.6.4/angular.js"></script>
-	<script src="Report2.js"></script>
-	<title>{{'AngularJS test:'+title}}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Real-Estate</title>
+    <!--script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script-->
+    <script src="../../../../angular-1.6.4/angular.js"></script>
+    <script src="../../../../angular-1.6.4/angular-sanitize.min.js"></script>
+    <script src="Report2.js"></script>
+    <title>{{'AngularJS test:'+title}}</title>
+    <style>.langAr{display:block} .langEn{display:none}
+	//label:before{d isplay:none;}
+    input[type="checkbox"]{
+        opacity:1;
+    }
+    input.switch[type="checkbox"] {
+        background-image: -webkit-linear-gradient(hsla(0,0%,0%,.1), hsla(0,0%,100%,.1)),
+        -webkit-linear-gradient(left, #f66 50%, #6cf 50%);
+        background-size: 100% 100%, 150% 100%;
+        background-position: 0 0, 15px 0;
+        border-radius: 25px;
+        box-shadow: inset 0 1px 4px hsla(0,0%,0%,.5),
+        inset 0 0 10px hsla(0,0%,0%,.5),
+        0 0 0 1px hsla(0,0%,0%,.1),
+        0 -1px 2px 2px hsla(0,0%,0%,.25),
+        0 2px 2px 2px hsla(0,0%,100%,.75);
+        cursor: pointer;
+        height: 14px;
+        left: 50%;
+        x-margin: -12px -37px;
+        padding-right: 14px;
+        x-position: absolute;
+        x-top: 50%;
+        width: 30px;
+        -webkit-appearance: none;
+        -webkit-transition: .25s;
+    }
+    input.switch[type="checkbox"]:after {
+        background-color: #eee;
+        background-image: -webkit-linear-gradient(hsla(0,0%,100%,.1), hsla(0,0%,0%,.1));
+        border-radius: 25px;
+        box-shadow: inset 0 1px 1px 1px hsla(0,0%,100%,1),
+        inset 0 -1px 1px 1px hsla(0,0%,0%,.25),
+        0 1px 3px 1px hsla(0,0%,0%,.5),
+        0 0 2px hsla(0,0%,0%,.25);
+        content: '';
+        display: block;
+        height: 15px;
+        x-left: 0;
+        position: relative;
+        top: -1;
+        width: 19px;
+    }
+    input.switch[type="checkbox"]:checked {
+        background-position: 0 0, 15px 0;
+        padding-left: 11px;
+        padding-right: 0;
+    }
+	</style>
 </head>
 <body dir="rtl" style="background-image:url(bg.jpg); background-repeat:repeat-x" ng-controller="myController">
- <table width="99%" ><tr>
-	<td><img style="border:3px black double" src="kbu-logo.png"/></td>
-	<td><h1>بيانات تداول العقار في دولة الكويت</h1></td>
-	<td><img src="kisrlogo.gif"/></td></tr>
- </table><!--
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict={{dict}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >$scope.dict={{$scope.dict}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup={{dict.lookup}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.name={{dict.lookup.name}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.type={{dict.lookup.type}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.gov={{dict.lookup.gov}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.sector={{dict.lookup.sector}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.lookup.label={{dict.lookup.label}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.ranks={{dict.ranks}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.jspName={{dict.jspName}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.minmaxYear={{dict.minmaxYear}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.minmaxYear.length={{dict.minmaxYear.length}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.terms={{dict.terms}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.contrcts={{dict.contrcts}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.namesGovs={{dict.namesGovs}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >dict.Statistics={{dict.Statistics}}</span> <br/>
- <span style="color:grey;background-color:#333;border:2px solid black">version 2017.06.12.16.15</span>
- <span style="color:white;background-color:#3f8;border:2px solid green" >govs={{govs}}</span> 
- <hr/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >x={{x}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >title={{title}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >mohammad={{mohammad}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >jspName={{jspName}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >lang={{lang}}</span> <br/>
- <span style="color:white;background-color:#3f8;border:2px solid green" >Statistics={{Statistics}}</span> <br/ -->
-	<form method="post" action="{{jspName}}">
-		<table width="75%" border="0" align="center">
-			<tr><th>من</th><th>الى</th>
-				<th>متغيرات</th>
-				<th>تفصيل</th>
-				<th>نوع العقد</th>
-				<th>محافظة</th>
-				<th>قطاع</th>
-				<th>نوع العقار</th>
-				<td rowspan="2">
-					<input type="submit" value="بحث" />
-					<input type="hidden" name="from" value="{{from}}"/>
-					<input type="hidden" name="to" value="{{to}}"/>
-					<input type="hidden" name="gov" value="{{gov.code}}"/>
-					<input type="hidden" name="sttstcs" value="{{ sttstcs.selected }}"/>
-					<input type="hidden" name="terms" value="{{term.name}}"/>
-					<input type="hidden" name="contract" value="{{contract.name}}"/>
-					<input type="hidden" name="typ" value="{{typ.code}}"/>
-					<input type="hidden" name="sector" value="{{sector.code}}"/>
-				</td>
-			</tr>
-			<tr >
-				<td><select ng-model="from" ng-options="i for i in minmaxYears" ng-change="yrsChange()"></select></td>
-				<td><select ng-model="to"	ng-options="i for i in minmaxYears" ng-change="yrsChange()"></select></td>
+<table width="99%" ><tr>
+    <td><img style="border:3px black double" src="kbu-logo.png"/></td>
+    <td><h1 ng-bind-html="lblTag(Lix.title)"></h1></td>
+    <td><img src="kisrlogo.gif"/></td></tr>
+</table>
+<button ng-click="switchLang()" ><span class="langAr">English</span><span class="langEn">عربي</span></button>
 
-				<td>
+<xform method="post" action="{{jspName}}">
+    <table width="75%" border="0" align="center">
+        <tr><th ng-bind-html="lblTag(Lix.from)"></th><th ng-bind-html="lblTag(Lix.to)"></th>
+            <th ng-bind-html="lblTag(Lix.statistics)"></th>
+            <th ng-bind-html="lblTag(Lix.term)"></th>
+            <th ng-bind-html="lblTag(Lix.ContractType)"></th>
+            <th ng-bind-html="lblTag(Lix.gov)"></th>
+            <th ng-bind-html="lblTag(Lix.sector)"></th>
+            <th ng-bind-html="lblTag(Lix.realestateType)"></th>
+            <td rowspan="2">
+                <button ng-click="onClk()" ng-bind-html="lblTag(Lix.Query)"></button>
+                <!-- input type="hidden" name="from" value="{{from}}"/>
+                <input type="hidden" name="to" value="{{to}}"/>
+                <input type="hidden" name="gov" value="{{gov.code}}"/>
+                <input type="hidden" name="sttstcs" value="{{ sttstcs.selected }}"/>
+                <input type="hidden" name="terms" value="{{term.name}}"/>
+                <input type="hidden" name="contract" value="{{contract.name}}"/>
+                <input type="hidden" name="typ" value="{{typ.code}}"/>
+                <input type="hidden" name="sector" value="{{sector.code}}"/ -->
+            </td>
+        </tr>
+        <tr >
+            <td><select ng-model="from" ng-options="i for i in minmaxYears" ng-change="yrsChange()"></select></td>
+            <td><select ng-model="to"	ng-options="i for i in minmaxYears" ng-change="yrsChange()"></select></td>
+
+            <td><input type="checkbox" class="switch" onchange="var x=document.getElementById('sttstcs_span'),s=x.style,d=s.display;s.display=d==''?'none':''"/><span id="sttstcs_span" style="display:none">
 					<div style="color:white;background-color:#3f8;border:2px solid green">
-						<span ng-repeat="i in sttstcs.selected"
-						>{{dict.Statistics[i].ar}}<a
-							ng-if="i!=sttstcs.selected[0]" >⬆</a>
+						<span ng-repeat="i in sttstcs.selected" style="font-size:24px; font-weight: 24px"
+                        >{{dict.Statistics[i][lang]}}<a
+                                ng-if="i!=sttstcs.selected[0]" >⬆</a>
 							<a ng-if="i==sttstcs.selected[sttstcs.selected.length-1]" >⬇</a><hr/>
 						</span>
 					</div>
 					<div style="color:grey;background-color:#333;border:2px solid black">
-						<span style="font-size:24px; font-weight: 24px"
-							  ng-repeat="i in sttstcs.unselected">
+						<span ng-repeat="i in sttstcs.unselected">
 						   <a >⬆</a>{{dict.Statistics[i][lang]}}<hr/>
 						</span>
-					</div>
-				</td>
+					</div></span>
+            </td>
 
-				<td><select ng-model="term"	ng-options="i[lang] for i in dict.terms" ng-change="yrsChange()"></select></td>
+            <td><select ng-model="term"	ng-options="i[lang] for i in dict.terms" ng-change="yrsChange()"></select></td>
 
-				<td><select ng-model="contract"	ng-options="i[lang] for i in dict.contrcts" ng-change="yrsChange()"></select></td>
+            <td><select ng-model="contract"	ng-options="i[lang] for i in dict.contrcts" ng-change="yrsChange()"></select></td>
 
-				<td >
-					<select ng-model="gov"
-						ng-options="i[lang] for i in dict.lookup.gov"
-						></select></td>
+            <td >
+                <select ng-model="gov"
+                        ng-options="i[lang] for i in dict.lookup.gov"
+                ></select></td>
+            <td >
+                <select ng-model="sector"
+                        ng-options="i[lang] for i in dict.lookup.sector"
+                ></select></td>
 
-				<td >
-					<select ng-model="sector"
-							ng-options="i[lang] for i in dict.lookup.sector"
-					></select></td>
+            <td >
+                <select ng-model="typ"
+                        ng-options="i[lang] for i in dict.lookup.type"
+                ></select></td>
+        </tr>
+    </table>
+</xform>
 
-				<td >
-					<select ng-model="typ"
-							ng-options="i[lang] for i in dict.lookup.type"
-					></select></td>
-			</tr>
-		</table>
-	</form>
-	<!--div> ng -controller="myController"
-		<h1>{{jspName}}</h1>
+<hr/>
+<table border=1>
+    <thead>
+    <tr>
+        <th rowspan="{{term.base==1?1:2}}" width="200px" ng-bind-html="lblTag(allGovs?Lix.gov:Lix.AreaName)"></th>
+        <th rowspan="{{term.base==1?1:2}}" ng-bind-html="lblTag(Lix.Desc)"></th>
+        <th ng-repeat="yr in yrs " colspan="{{term.base}}">{{yr}}</th>
+    </tr>
+    <tr ng-if="term.base!=1"><th ng-repeat="t in timeline ">{{t[1]}}</th></tr>
+    </thead>
 
-
-		<span:{{to-from+1}} , term={{term}} : base={{term.base}}
-		<span from={{from}} ng-repeat="i in yrs">[ {{i}}
-	<span to={{to}} ng-repeat="j in timeline">
-		( {{j}} )
-	</span>
-	]<br/>
-</span>
-	</div -->
-	
-	<hr/>
- <table border=1>
-     <thead>
-     <tr>
-         <th rowspan="{{term.base==1?1:2}}" width="200px">{{allGovs?"محافظة":"منطقة"}}</th>
-         <th rowspan="{{term.base==1?1:2}}">وصف</th>
-         <th ng-repeat="yr in yrs " colspan="{{term.base}}">{{yr}}</th>
-     </tr>
-     <tr ng-if="term.base!=1"><th ng-repeat="t in timeline ">{{t[1]}}</th></tr>
-     </thead>
-
-     <tbody ng-repeat="dtm in data">
-     <tr ng-repeat="row in dtm.tbl">
-         <th ng-if="$index==0" rowspan="{{dtm.tbl.length}}">{{dtm.ttl}}</th>
-         <th > {{ dict.Statistics[sttstcs.selected[$index]][lang] }}</th>
-         <td ng-repeat="i in row" >{{i}} </td>
-     </tr>
-     </tbody>
- </table>
+    <tbody ng-repeat="dtm in data">
+    <tr ng-repeat="row in dtm.tbl">
+        <th ng-if="$index==0" rowspan="{{dtm.tbl.length}}">{{dtm.ttl}}</th>
+        <th > {{ dict.Statistics[sttstcs.selected[$index]][lang] }}</th>
+        <td ng-repeat="i in row" >{{i}} </td>
+    </tr>
+    </tbody>
+</table>
 
 </body>
 </html>

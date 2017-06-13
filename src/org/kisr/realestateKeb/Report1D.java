@@ -1,10 +1,7 @@
 package org.kisr.realestateKeb;
 
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.sql.ResultSet;
 import java.sql.PreparedStatement;
 import javax.servlet.*;
@@ -22,9 +19,56 @@ public class Report1D extends Report1C {
 	Map<LookupTbl.Col,Map<Integer,Map<TL.Lang,LookupTbl>>> lookup;
 	Map<Integer,Integer>namesGovs;
 	int[]minmaxYear;
-	List<Integer>sttstcs;
+	List<Number>sttstcs;//
 	Prm[]prmA;
 }//E
+ public static enum L{
+	zero             // 0
+	,dir             // 1
+	,title           // 2
+	,from            // 3
+	,to              // 4
+	,Statistics      // 5
+	,Terms           // 6
+	,ContractType    // 7
+	,gov             // 8
+	,sector          // 9
+	,realestateType  // 10
+	,Query           // 11
+	,AreaName        // 12
+	,Desc            // 13
+	,first           // 14
+	,second          // 15
+	,third           // 16
+	,fourth          // 17
+	,total           // 18
+	,Registered      // 19
+	,Agent           // 20
+	,Agg             // 21
+	,AggPeriod       // 22
+	,Annual          // 23
+	,nineMonths      // 24
+	,Half            // 25
+	,SemiAnnual      // 26
+	,Quarter         // 27
+	,Quarterly       // 28
+	,Month           // 29
+	,Monthly         // 30
+	,Week            // 31
+	,Weekly          // 32
+	,Count           // 33
+	,TotalPrice      // 34
+	,AvgPrice        // 35
+	,MaxPrice        // 36
+	,MinPrice        // 37
+	,AvgArea         // 38
+	,TotalArea       // 39
+	,MaxArea         // 40
+	,MinArea         // 41
+	,kisr            // 42
+	,ted             // 43
+	,mohjb           // 44
+}
 
 static List<Map<String,String>>toJson(Lbl.Term[]a){
  	List l=new LinkedList();
@@ -77,31 +121,6 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 	}
 	return m;}
 
-/*public static  lookup(){
-	TL p=TL.tl();TL.H h=p.h;Object o=h.a(LookupTbl.class);
-	Map<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>m=o==null?null:(
-			                                                           Map<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>)o;
-	if(m==null)try{LookupTbl l=new LookupTbl();
-		h.a(LookupTbl.class,m=new HashMap<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>());
-		for(TL.DB.Tbl i:l.query(TL.DB.Tbl.where())){
-			p.log("App.LookupTbl.lookup:1:",i.toJson());
-			Map<Integer,Map<TL.Lang,LookupTbl>>n=m.get(l.col);
-			if(n==null)
-				m.put(l.col,n=new HashMap<Integer,Map<TL.Lang,LookupTbl>>());
-			Map<TL.Lang,LookupTbl>ln=n.get(l.code);
-			if(ln==null)
-				n.put(l.code,ln=new HashMap<TL.Lang,LookupTbl>(  ));
-			LookupTbl t=ln.get( l.lang );
-			if(t==null || t.no>l.no )//|| t.lang!=l.lang
-				ln.put(l.lang, l.copy());
-		}//for
-		//p.log("App.LookupTbl.lookup:ex:",m);
-	}//ifm==null
-	catch(Exception x){p.error("App.LookupTbl.lookup:ex:", x);
-		if(m==null)
-			m=new HashMap<Col,Map<Integer,Map<TL.Lang,LookupTbl>>>();
-	}return m;}*/
-
 	public static void gGet(TL tl,E e)throws Exception{
 		if ("resetLookup".equals(e.op)) {
 			tl.h.a(LookupTbl.class, null);
@@ -122,140 +141,158 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 	}
 
 
-	public static void query(TL tl,E e)throws Exception{
-	String p[] = new String[e.prmA.length];
+	public static void query(TL tl,E e)throws Exception{try {
+		String p[] = new String[ e.prmA.length ];
 		int nullCol = -1;
 
-		for (int i = 0; i < p.length; i++) {
-			p[i] = tl.h.req(e.prmA[i].toString());
-			if (p[i] == null) nullCol = i;
+		for ( int i = 0; i < p.length; i++ ) {
+			p[ i ] = tl.h.req( e.prmA[ i ].toString() );
+			if ( p[ i ] == null ) nullCol = i;
 		}
-		{//int[] statistics = null;
-			Object o = tl.json.get("sttstcs");
-			if (o instanceof List)
-				e.sttstcs=(List<Integer>)o;
-			else
-			{e.sttstcs = new LinkedList<>(  );
-				e.sttstcs.add( Lbl.Statistics.avgMtr .ordinal());
-				e.sttstcs.add( Lbl.Statistics.count .ordinal());
+		{try{
+			Object o = tl.json==null?tl.h.req("sttstcs"):tl.json.get( "sttstcs" );
+			if ( o instanceof Collection ) {
+				//if ( o instanceof List< ? > ){List<?>l=(List)o;if(l. (elements are Number) ) e.sttstcs=(List<Number>)o;}if ( e.sttstcs == null )
+					e.sttstcs = new LinkedList< Number >( ( Collection ) o );
+			}else if ( o instanceof Object[] ) {
+				e.sttstcs = new LinkedList< Number >();Object[]a=(Object[] )o;
+				for ( Object v: a)
+					e.sttstcs.add(
+							v instanceof Number
+							?(Number)v
+							: TL.Util.parseInt(
+								v==null?null
+								:v.toString() ,0 ) );
 			}
-		}
+			else if(o!=null){
+				String s=o.toString().trim();
+				if(s.startsWith( "[" )||s.startsWith( "{" ))
+				{s=s.endsWith( "]" )||s.endsWith( "}" )
+					?s.substring( 1,s.length()-1 ):s.substring( 1 );}
+				e.sttstcs=new LinkedList<Number>( TL.Util.parseIntsl( s ) );
+			}}catch(Exception ex){}
+			if(e.sttstcs==null) {
+				e.sttstcs = new LinkedList();
+				e.sttstcs.add( Lbl.Statistics.avgMtr.ordinal() );
+				e.sttstcs.add( Lbl.Statistics.count.ordinal() );
+			}
+		}int n=e.sttstcs.size();
 
+		Map< Integer, Map< TL.Lang, LookupTbl > > typs = e.lookup.get( LookupTbl.Col.type ), govs = e.lookup.get( LookupTbl.Col.gov );
+		LookupTbl gov = govs.get( TL.Util.parseInt( Prm.gov.v( p ), 0 ) ).get( tl.lang ), typ = typs.get( TL.Util.parseInt( Prm.typ.v( p ), 0 ) ).get( tl.lang );
 
-		Map<Integer, Map<TL.Lang,LookupTbl>> typs = e.lookup.get(LookupTbl.Col.type)
-				, govs = e.lookup.get(LookupTbl.Col.gov);
-		LookupTbl gov = govs.get(TL.Util.parseInt(Prm.gov.v(p), 0)).get( tl.lang )
-			, typ = typs.get(TL.Util.parseInt(Prm.typ.v(p), 0)).get( tl.lang );
+		int from = TL.Util.parseInt( Prm.from.v( p ), e.minmaxYear[ 0 ] ), to = TL.Util.parseInt( Prm.to.v( p ), e.minmaxYear[ 1 ] )
+			;//	, from2 = TL.Util.parseInt( Prm.from2.v( p ), 1 ), to2 = TL.Util.parseInt( Prm.to2.v( p ), 52 );
 
-		int from = TL.Util.parseInt(Prm.from.v(p), e.minmaxYear[0])
-			, to = TL.Util.parseInt(Prm.to.v(p), e.minmaxYear[1])
-			, from2 = TL.Util.parseInt(Prm.from2.v(p), 1)
-			, to2 = TL.Util.parseInt(Prm.to2.v(p), 52);
-
-		if (from > to) {
+		if ( from > to ) {
 			int tmp = from;
 			from = to;
 			to = tmp;
-			String temp = p[0];
-			p[0] = p[1];
-			p[1] = temp;
+			String temp = p[ 0 ];
+			p[ 0 ] = p[ 1 ];
+			p[ 1 ] = temp;
 		}
 
-		boolean aggGovs = "a".equals(Prm.gov.v(p)) || "7".equals(Prm.gov.v(p))
-				, allGovs = gov.code == 0 ||aggGovs
-				, allTyps = "0".equals(Prm.typ.v(p));
+		boolean aggGovs = "a".equals( Prm.gov.v( p ) )
+				|| "7".equals( Prm.gov.v( p ) )
+			, allGovs = gov.code == 0 || aggGovs
+			, allTyps = "0".equals( Prm.typ.v( p ) );
 		LookupTbl.Col col_Gov_or_name = allGovs
 			? LookupTbl.Col.gov : LookupTbl.Col.name;
 
 		Lbl.Term term = Lbl.Term.annual;
-		if (Prm.terms.v(p) != null)
-			try {term = Lbl.Term.valueOf(Prm.terms.v(p));}
-			catch (Exception ex) {tl.error("parse term", ex);}
+		if ( Prm.terms.v( p ) != null )
+			try {
+				term = Lbl.Term.valueOf( Prm.terms.v( p ) );
+			} catch ( Exception ex ) {
+				tl.error( "parse term", ex );
+			}
 
-		Lbl.Contrct contrct = Prm.contract.v(p) == null
-			? Lbl.Contrct.all : Lbl.Contrct.valueOf(Prm.contract.v(p));
-
-		if (nullCol < 0) try {
-			List<Map<Object, Object>> l = new LinkedList<Map<Object, Object>>();
-			tl.response.put("l", l);
-
-			StringBuilder sql = new StringBuilder("select ")
-					.append(allGovs ? DataTbl.C.gov : DataTbl.C.name).append(",");
-			switch (term) {
+		Lbl.Contrct contrct = Prm.contract.v( p ) == null
+				                      ? Lbl.Contrct.all : Lbl.Contrct.valueOf( Prm.contract.v( p ) );
+		tl.log( jspName,":query:read sttstcs: version 2017.06.13.18.20:",new Date()
+				,':',e.sttstcs ," ,nullCol=",nullCol);
+		if ( nullCol < 0 ) try {
+			StringBuilder sql = new StringBuilder( "select " )
+					                    .append( allGovs ? DataTbl.C.gov : DataTbl.C.name ).append( "," );
+			switch ( term ) {
 				case semiAnnual:
-					sql.append("(year(`")
-						.append(DataTbl.C.d).append("`)-").append(from).append(")* 2+ceiling(month(`")
-						.append(DataTbl.C.d).append("`)/6)-1 as t");
+					sql.append( "(year(`" )
+							.append( DataTbl.C.d ).append( "`)-" ).append( from ).append( ")* 2+ceiling(month(`" )
+							.append( DataTbl.C.d ).append( "`)/6)-1 as t" );
 					break;
 				case quarterly:
-					sql.append("(year(`")
-						.append(DataTbl.C.d).append("`)-").append(from).append(")* 4+ceiling(month(`")
-						.append(DataTbl.C.d).append("`)/3)-1 as t");
+					sql.append( "(year(`" )
+							.append( DataTbl.C.d ).append( "`)-" ).append( from ).append( ")* 4+ceiling(month(`" )
+							.append( DataTbl.C.d ).append( "`)/3)-1 as t" );
 					break;
 				case monthly:
-					sql.append("(year(`")
-							.append(DataTbl.C.d).append("`)-").append(from).append(")*12+month(`")
-							.append(DataTbl.C.d).append("`)-1 as t");
+					sql.append( "(year(`" )
+							.append( DataTbl.C.d ).append( "`)-" ).append( from ).append( ")*12+month(`" )
+							.append( DataTbl.C.d ).append( "`)-1 as t" );
 					break;
 				case weekly:
-					sql.append("(year(`")
-							.append(DataTbl.C.d).append("`)-").append(from).append(")*52+week (`")
-							.append(DataTbl.C.d).append("`)-1 as t");
+					sql.append( "(year(`" )
+							.append( DataTbl.C.d ).append( "`)-" ).append( from ).append( ")*52+week (`" )
+							.append( DataTbl.C.d ).append( "`)-1 as t" );
 					break;
 				default:
-					sql.append("year(`").append(DataTbl.C.d).append("`)-")
-							.append(from).append(" as t");
+					sql.append( "year(`" ).append( DataTbl.C.d ).append( "`)-" )
+							.append( from ).append( " as t" );
 			}
-			for (int i = 0; i < e.sttstcs.size(  ); i++)
-				sql.append(",").append(Lbl.sttstcs[e.sttstcs.get( i )].sql);
+			for ( int i = 0; i < n; i++ )
+				sql.append( "," ).append( Lbl.sttstcs[ e.sttstcs.get( i ).intValue() ].sql );
 
-			sql.append("from ").append(DataTbl.Name)
-					.append(" where year(`").append(DataTbl.C.d)
-					.append("`)>=? and year(`").append(DataTbl.C.d).append("`)<=? ");
-			if (contrct != Lbl.Contrct.all)
-				sql.append("and `").append(DataTbl.C.contract).append("`=? ");
-			if (!allGovs)
-				sql.append("and `").append(DataTbl.C.gov).append("`=? ");
-			if (term == Lbl.Term.nineMonths)
-				sql.append("and month(`" + DataTbl.C.d + "`)<=9");
-			sql.append(" group by ").append(col_Gov_or_name);
-			if (term != Lbl.Term.aggregate) sql.append(",t");
+			sql.append( "from " ).append( DataTbl.Name )
+					.append( " where year(`" ).append( DataTbl.C.d )
+					.append( "`)>=? and year(`" ).append( DataTbl.C.d ).append( "`)<=? " );
+			if ( contrct != Lbl.Contrct.all )
+				sql.append( "and `" ).append( DataTbl.C.contract ).append( "`=? " );
+			if ( !allGovs )
+				sql.append( "and `" ).append( DataTbl.C.gov ).append( "`=? " );
+			if ( term == Lbl.Term.nineMonths )
+				sql.append( "and month(`" + DataTbl.C.d + "`)<=9" );
+			sql.append( " group by " ).append( col_Gov_or_name );
+			if ( term != Lbl.Term.aggregate ) sql.append( ",t" );
 
-			PreparedStatement ps = TL.DB.p(sql.toString());// System.out.println("realestateKeb/2012/03/05/"+jspName+":ps="+ps);
-			{int i = 1;
-				ps.setObject(i++, from);
-				ps.setObject(i++, to);
-				if (contrct != Lbl.Contrct.all)
-					ps.setObject(i++, p[Prm.contract.ordinal()]);
-				if (!allGovs) ps.setObject(i++, p[Prm.gov.ordinal()]);
-				if (!allTyps) ps.setObject(i++, p[Prm.typ.ordinal()]);
+			PreparedStatement ps = TL.DB.p( sql.toString() );// System.out.println("realestateKeb/2012/03/05/"+jspName+":ps="+ps);
+			{
+				int i = 1;
+				ps.setObject( i++, from );
+				ps.setObject( i++, to );
+				if ( contrct != Lbl.Contrct.all )
+					ps.setObject( i++, p[ Prm.contract.ordinal() ] );
+				if ( !allGovs ) ps.setObject( i++, p[ Prm.gov.ordinal() ] );
+				if ( !allTyps ) ps.setObject( i++, p[ Prm.typ.ordinal() ] );
 			}
-			int row = 0, currentName = -1
-				, base = term == Lbl.Term.aggregate ? 1 : (to - from + 1) * term.base;
-			List<Map<Object,Object>>data=new LinkedList<Map<Object,Object>>();
-			Object[][]tbl=null;
+			int row = 0, currentName = -1, base = term == Lbl.Term.aggregate ? 1 : (to - from + 1) * term.base;
+			List< Map< Object, Object > > data = new LinkedList< Map< Object, Object > >();
+			tl.response.put( "return", data );
+			Object[][] tbl = null;//new Object[ base ][ n ];
+			Map<Integer,Map<TL.Lang,LookupTbl>>x=e.lookup.get( col_Gov_or_name );
 			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
-				int nm = rs.getInt(1), yr = rs.getInt(2);
-				if (nm != currentName) {
-					data.add(TL.Util.mapCreate("nm", currentName
-							, "ttl", e.lookup.get(col_Gov_or_name).get(currentName).get( tl.lang ).text
-							, "tbl", tbl =new Object[base][e.sttstcs.size()])
-					);
-					currentName = nm;
-				}
-				for (int c = 0; c < e.sttstcs.size(); c++)
+			while ( rs.next() ) {
+				int nm = rs.getInt( 1 ), yr = rs.getInt( 2 );
+				if ( nm != currentName )
+					data.add( TL.Util.mapCreate( "nm", currentName=nm
+						, "ttl", x.get( currentName=nm ).get( tl.lang ).text
+						, "tbl", tbl = new Object[ n ][ base ] ) );
+
+				for ( int c = 0; c < n; c++ )
 					try {
-						tbl[yr][ c]= rs.getObject(c + 3);
-					} catch (Exception ex) {
-						ex.printStackTrace();
+						tbl[ c ][ yr ] = rs.getObject( c + 3 );
+					} catch ( Exception ex ) {
+						tl.error( jspName+":query:resultSet.next:for cols:line287:",ex );//ex.printStackTrace();
 					}
 			}
 		}//if(nullCol<0)
-		catch (Throwable x) {
-			tl.response.put("endX", tl.logo(jspName + ":if(nullCol<0) Throwable:", x));
+		catch ( Throwable x ) {
+			tl.response.put( "queryEndX:2:", tl.logo( jspName + ":if(nullCol<0) Throwable:", x ) );
 		}//catch
-		tl.response.put("end", tl.logo(tl));
+	}catch  ( Throwable x ) {
+		tl.response.put( "queryEndX:1:", tl.logo( jspName , x ) );
+	}//catch
+		tl.response.put("queryEnd", tl.logo(tl));
 }
 
 
@@ -284,18 +321,18 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 
 		e.prmA = Prm.values();
 		if (e.t.no == null) {
-			if ("GET".equals(e.method))
-				gGet(tl, e);
-			else if ("POST".equals(e.method))
+			if ("POST".equals(e.method)||"query".equals( e.op ))
 				query(tl, e);
+			else//if ("GET".equals(e.method))
+				gGet(tl, e);
 		}	else //if (e.t.no != null)
 		{	if ("GET".equals(e.method))
-				tl.response.put("data",TL.DB.q("select * from t where no=?",e.t.no));
+				tl.response.put("return",TL.DB.q("select * from t where no=?",e.t.no));
 			else if ("PUT".equals(e.method))
-				tl.response.put("data",e.t.save());//TL.DB.x("insert into t values(?, `" +tl.h.req("col")+"`=? where no=?",tl.h.req("value"),e.t.no));
+				tl.response.put("return",e.t.save());//TL.DB.x("insert into t values(?, `" +tl.h.req("col")+"`=? where no=?",tl.h.req("value"),e.t.no));
 			else if ("POST".equals(e.method))
-				tl.response.put("data",e.t.save());//TL.DB.x("update t set `"+tl.h.req("col")+"`=? where no=?",tl.h.req("value"),e.t.no));
-			//else if ("DELETE".equals(e.method)) tl.response.put("data",e.t.delete());;
+				tl.response.put("return",e.t.save());//TL.DB.x("update t set `"+tl.h.req("col")+"`=? where no=?",tl.h.req("value"),e.t.no));
+			//else if ("DELETE".equals(e.method)) tl.response.put("return",e.t.delete());;
 		}
 		new Json.Output(tl.h.getOut()).o(tl.response);
 	}catch(Exception ex){if(tl!=null)

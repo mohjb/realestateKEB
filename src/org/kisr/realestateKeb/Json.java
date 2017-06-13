@@ -213,9 +213,11 @@ public class Json
             Iterator e=o.keySet().iterator();Object k,v;
             //if(o instanceof Store.Obj)w("uuid:").o(((Store.Obj)o).uuid);
             if(e.hasNext()){k=e.next();v=o.get(k);//if(o instanceof Store.Obj)w(",");
-                o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
+                oStr(String.valueOf( k ),ind);//o(k,ind,c?path+k:path);//changed 2017/06/13
+                w(":");o(v,ind,c?path+k:path);}
             while(e.hasNext()){k=e.next();v=o.get(k);w(",");
-                o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
+                oStr(String.valueOf( k ),ind);//o(k,ind,c?path+k:path);//changed 2017/06/13
+                w(":");o(v,ind,c?path+k:path);}
             if(c) w("}//")
                     .p(o.getClass().getName())
                     .w("&cachePath=\"")

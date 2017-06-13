@@ -1,12 +1,72 @@
 
-var myApp = angular.module('myApp', []);
+var myApp = angular.module('myApp', ['ngSanitize']);
+Lix={
+ 	 zero            : {code:0 ,name:'zero          '}
+	,dir             : {code:1 ,name:'dir           '}
+	,title           : {code:2 ,name:'title         '}
+	,from            : {code:3 ,name:'from          '}
+	,to              : {code:4 ,name:'to            '}
+	,statistics      : {code:5 ,name:'statistics    '}
+	,term            : {code:6 ,name:'term          '}
+	,ContractType    : {code:7 ,name:'ContractType  '}
+	,gov             : {code:8 ,name:'gov           '}
+	,sector          : {code:9 ,name:'sector        '}
+	,realestateType  : {code:10,name:'realestateType'}
+	,Query           : {code:11,name:'Query         '}
+	,AreaName        : {code:12,name:'AreaName      '}
+	,Desc            : {code:13,name:'Desc          '}
+	,first           : {code:14,name:'first         '}
+	,second          : {code:15,name:'second        '}
+	,third           : {code:16,name:'third         '}
+	,fourth          : {code:17,name:'fourth        '}
+	,total           : {code:18,name:'total         '}
+	,Registered      : {code:19,name:'Registered    '}
+	,Agent           : {code:20,name:'Agent         '}
+	,Agg             : {code:21,name:'Agg           '}
+	,AggPeriod       : {code:22,name:'AggPeriod     '}
+	,Annual          : {code:23,name:'Annual        '}
+	,nineMonths      : {code:24,name:'nineMonths    '}
+	,Half            : {code:25,name:'Half          '}
+	,SemiAnnual      : {code:26,name:'SemiAnnual    '}
+	,Quarter         : {code:27,name:'Quarter       '}
+	,Quarterly       : {code:28,name:'Quarterly     '}
+	,Month           : {code:29,name:'Month         '}
+	,Monthly         : {code:30,name:'Monthly       '}
+	,Week            : {code:31,name:'Week          '}
+	,Weekly          : {code:32,name:'Weekly        '}
+	,Count           : {code:33,name:'Count         '}
+	,TotalPrice      : {code:34,name:'TotalPrice    '}
+	,AvgPrice        : {code:35,name:'AvgPrice      '}
+	,MaxPrice        : {code:36,name:'MaxPrice      '}
+	,MinPrice        : {code:37,name:'MinPrice      '}
+	,AvgArea         : {code:38,name:'AvgArea       '}
+	,TotalArea       : {code:39,name:'TotalArea     '}
+	,MaxArea         : {code:40,name:'MaxArea       '}
+	,MinArea         : {code:41,name:'MinArea       '}
+	,kisr            : {code:42,name:'kisr          '}
+	,ted             : {code:43,name:'ted           '}
+	,mohjb           : {code:44,name:'mohjb         '}
+}
+
 myApp.controller("myController", [
-	"$scope",
-	function($scope) {//,$http
+	"$scope","$http",
+	function($scope,$http) {//
 		$scope.jspName='t.jsp'
 		$scope.lang='ar'
-		$scope.mohammad='moh'
-		$scope.title='Realestate Report 2'
+		$scope.Lix=Lix
+		$scope.label=function(ix,lng){
+			var x=$scope.dict||0
+			x=x.lookup||0
+			x=x.label||0
+			x=ix?x[ix.code]||ix:x
+			x=x[lng||$scope.lang]||(ix&&ix.name)
+			return x||'.';
+		}
+		$scope.lblTag=function(ix){
+			return '<span class="langAr">'
+			+$scope.label(ix,'ar')+'</span><span class="langEn">'
+			+$scope.label(ix,'en')+'</span>';}
+
 		$scope.range=function(a,b,c){
 			if(c==undefined)c=1;
 			if(b==undefined){b=a;a=0;}
@@ -14,118 +74,88 @@ myApp.controller("myController", [
 			for(var i=a;i<=b;i+=c)
 			r.push(i);
 			return r;}
-		/*$scope.terms=[
-			{name:'aggregate',lbl:'aggregate',ar:'aggregate',base:1}
-			,{name:'annual',lbl:'annual',ar:'year',base:1}
-			,{name:'nineMonths',lbl:'nineMonths',ar:'nineMonths',base:1}
-			,{name:'semi-annual',lbl:'semi-annual',ar:'half',base:2}
-			,{name:'quarterly',lbl:'quarterly',ar:'quarter',base:4}
-			,{name:'monthly',lbl:'monthly',ar:'monthl',base:12}
-			,{name:'weekly',lbl:'weekly',ar:'week',base:52}
-		]
-		$scope.term=$scope.terms[0]
-		$scope.ranks=[1,2,3,4]
-		$scope.govs=[
-		     {code:0,no:0,col:'gov',lang:{en:'all',ar:'كل'}}
-		    ,{code:1,no:1,col:'gov',lang:{en:'Capital'          ,ar:'العاصمة'}}
-		    ,{code:2,no:2,col:'gov',lang:{en:'Hawalli'          ,ar:'حولي'}}
-		    ,{code:3,no:3,col:'gov',lang:{en:'Mubarek Alkabir'  ,ar:'مبارك الكبير'}}
-		    ,{code:4,no:4,col:'gov',lang:{en:'Farwaniya'        ,ar:'فروانية'}}
-		    ,{code:5,no:5,col:'gov',lang:{en:'Ahmedi'           ,ar:'احمدي'}}
-		    ,{code:6,no:6,col:'gov',lang:{en:'Jahra'            ,ar:'جهراء'}}
-		    ,{code:7,no:7,col:'gov',lang:{en:'Total'            ,ar:'إجمالي'}}
-		];$scope.gov=$scope.govs[0]
-		$scope.Statistics=[{name:'count',lbl:'count'}
-			,{name:'avgPrice',lbl:'avgPrice'}//1
-			,{name:'ttlPrice',lbl:'ttlPrice'}//2
-			,{name:'minPrice',lbl:'minPrice'}//3
-			,{name:'maxPrice',lbl:'maxPrice'}//4
-			,{name:'avgArea' ,lbl:'avgArea'}//5
-			,{name:'ttlArea' ,lbl:'ttlArea'}//6
-			,{name:'minArea' ,lbl:'minArea'}//7
-			,{name:'maxArea' ,lbl:'maxArea'} // ix 8
-		];*/
-		$scope.dict=
-		{"lookup":
-		
-		
-		{"name":{0:{"ar":"null","code":"0"},1:{"ar":" أبرق خيطان","code":"1"},2:{"ar":"أبو الحصانية","code":"2"},3:{"ar":"أبو حليفة","code":"3"},4:{"ar":"ابوفطيره","code":"4"},5:{"ar":"أشبيلية","code":"5"},6:{"ar":"الاندلس","code":"6"},7:{"ar":"البدع","code":"7"},8:{"ar":"الجابرية","code":"8"},9:{"ar":"الجهراء","code":"9"},10:{"ar":"الخالدية","code":"10"},11:{"ar":"الخيران","code":"11"},12:{"ar":"الخيران الجديدة","code":"12"},13:{"ar":"الدسمة","code":"13"},14:{"ar":"الدعية","code":"14"},15:{"ar":"الدوحة","code":"15"},16:{"ar":"الرابية","code":"16"},17:{"ar":"الرحاب","code":"17"},18:{"ar":"الرقة","code":"18"},19:{"ar":"الرقعي","code":"19"},20:{"ar":"الرميثية","code":"20"},21:{"ar":"الروضة","code":"21"},22:{"ar":"الزهراء","code":"22"},23:{"ar":"السالمية","code":"23"},24:{"ar":"السرة","code":"24"},25:{"ar":"السلام","code":"25"},26:{"ar":"الشامية","code":"26"},27:{"ar":"الشرق","code":"27"},28:{"ar":"الشريط الساحلي","code":"28"},29:{"ar":"الشريط الساحلي 1","code":"29"},30:{"ar":"الشريط الساحلي 2","code":"30"},31:{"ar":"الشعب","code":"31"},32:{"ar":"الشعب البحرى","code":"32"},33:{"ar":"الشعب السكني","code":"33"},34:{"ar":"الشهداء","code":"34"},35:{"ar":"الشويخ","code":"35"},36:{"ar":"الصالحية","code":"36"},37:{"ar":"الصباحية","code":"37"},38:{"ar":"الصديق","code":"38"},39:{"ar":"الصليبخات","code":"39"},40:{"ar":"الصوابر","code":"40"},41:{"ar":"الضجيج","code":"41"},42:{"ar":"الظهر","code":"42"},43:{"ar":"العارضية","code":"43"},44:{"ar":"العدان","code":"44"},45:{"ar":"العديلية","code":"45"},46:{"ar":"العقيله","code":"46"},47:{"ar":"العميريه","code":"47"},48:{"ar":"العيون","code":"48"},49:{"ar":"الفحيحيل","code":"49"},50:{"ar":"الفردوس","code":"50"},51:{"ar":"الفروانية","code":"51"},52:{"ar":"الفنطاس","code":"52"},53:{"ar":"الفنطاس الزراعيه","code":"53"},54:{"ar":"الفنيطيس","code":"54"},55:{"ar":"الفيحاء","code":"55"},56:{"ar":"القادسية","code":"56"},57:{"ar":"القبلة","code":"57"},58:{"ar":"القرين","code":"58"},59:{"ar":"القصر","code":"59"},60:{"ar":"القصور","code":"60"},61:{"ar":"القيروان","code":"61"},62:{"ar":"المباركية","code":"62"},63:{"ar":"المرقاب","code":"63"},64:{"ar":"المسيلة","code":"64"},65:{"ar":"المقوع","code":"65"},66:{"ar":"المقوع الشرقي","code":"66"},67:{"ar":"المنصورية","code":"67"},68:{"ar":"المنطقة التجارية","code":"68"},72:{"ar":"المنطقة التجارية السابعة cancelled","code":"72"},73:{"ar":"المنطقة التجارية السادسة cancelled","code":"73"},74:{"ar":"المنقف","code":"74"},75:{"ar":"المهبولة","code":"75"},76:{"ar":"النزهة","code":"76"},77:{"ar":"النسيم","code":"77"},78:{"ar":"النعيم","code":"78"},79:{"ar":"النهضة","code":"79"},80:{"ar":"الواحة","code":"80"},81:{"ar":"الوفرة","code":"81"},82:{"ar":"الوفرة السكنيه","code":"82"},83:{"ar":"اليرموك","code":"83"},84:{"ar":"انجفة","code":"84"},85:{"ar":"بنيد القار","code":"85"},86:{"ar":"بيان","code":"86"},87:{"ar":"جابر العلى","code":"87"},88:{"ar":"جليب الشيوخ","code":"88"},89:{"ar":"جنوب الجهراء","code":"89"},90:{"ar":"شمال غرب صليبيخات","code":"90"},91:{"ar":"جنوب الرابية","code":"91"},92:{"ar":"جنوب السرة","code":"92"},93:{"ar":"جنوب الفردوس","code":"93"},94:{"ar":"حطين","code":"94"},95:{"ar":"حولى","code":"95"},96:{"ar":"خيطان","code":"96"},97:{"ar":"خيطان الجنوبي","code":"97"},98:{"ar":"داخل المدينة","code":"98"},99:{"ar":"سعد العبد الله","code":"99"},100:{"ar":"سلوى","code":"100"},101:{"ar":"شرق الأحمدي","code":"101"},102:{"ar":"شرق الصليبيخات","code":"102"},103:{"ar":"شرق حولي","code":"103"},104:{"ar":"شمال الفنطاس","code":"104"},105:{"ar":"صباح السالم","code":"105"},106:{"ar":"صباح الناصر","code":"106"},107:{"ar":"صبحان","code":"107"},108:{"ar":"عبد الله السالم","code":"108"},109:{"ar":"عبد الله المبارك","code":"109"},110:{"ar":"علي صباح السالم","code":"110"},111:{"ar":"غرب أبو فطيرة","code":"111"},112:{"ar":"غرب الفنطاس","code":"112"},113:{"ar":"غرب غرناطة","code":"113"},114:{"ar":"غرب مشرف","code":"114"},115:{"ar":"غرناطة","code":"115"},116:{"ar":"فهد الأحمد","code":"116"},117:{"ar":"فيلكا","code":"117"},118:{"ar":"قرطبة","code":"118"},119:{"ar":"كيفان","code":"119"},120:{"ar":"لؤلؤة الخيران","code":"120"},121:{"ar":"مبارك العبدالله","code":"121"},122:{"ar":"مبارك الكبير","code":"122"},123:{"ar":"محلة البلوش","code":"123"},124:{"ar":"محلة الشرق","code":"124"},125:{"ar":"مدينة الاحمدي cancelled","code":"125"},126:{"ar":"مدينة الكويت","code":"126"},127:{"ar":"مشرف","code":"127"},128:{"ar":"ميدان حولي","code":"128"},129:{"ar":"هدية","code":"129"},130:{"ar":"الأحمدي","code":"130"},131:{"ar":"العارضية الحرفية","code":"131"},132:{"ar":"ام الهيمان","code":"132"},133:{"ar":"الكويت","code":"133"},134:{"ar":"الشويخ cancelled","code":"134"},135:{"ar":"العارضيه مخازن","code":"135"},136:{"ar":"صباح الأحمد البحرية","code":"136"},137:{"ar":"صباح الاحمد","code":"137"},138:{"ar":"دسمان","code":"138"},139:{"ar":"جابر الأحمد","code":"139"},140:{"ar":"ابوفطيره الحرفيه","code":"140"},141:{"ar":"جنوب أبرق خيطان","code":"141"},142:{"ar":"شرق الرقة","code":"142"},143:{"ar":"المسايل","code":"143"},144:{"ar":"غرب ابوفطيره الحرفيه","code":"144"},145:{"ar":"الشويخ السكنيه","code":"145"}}
-		
-		,"type":{0:{"ar":"إجمالي","code":"0"},1:{"ar":"أخرى","code":"1"},2:{"ar":"أرض استثماري","code":"2"},3:{"ar":"أرض خاصة","code":"3"},4:{"ar":"أرض تجاري","code":"4"},5:{"ar":"ارض صناعي","code":"5"},6:{"ar":"بناية استثماري","code":"6"},7:{"ar":"بناية تجاري","code":"7"},8:{"ar":"بناية خاص","code":"8"},9:{"ar":"بيت استثماري","code":"9"},10:{"ar":"بيت خاص","code":"10"},11:{"ar":"تحويطة","code":"11"},12:{"ar":"دكان","code":"12"},13:{"ar":"شقة استثماري","code":"13"},14:{"ar":"شقة خاصة","code":"14"},15:{"ar":"فندق تجارى","code":"15"},16:{"ar":"مجمع استثماري","code":"16"},17:{"ar":"مجمع تجاري ","code":"17"},18:{"ar":"مجمع خاص","code":"18"},19:{"ar":"ارض مخازن","code":"19"},20:{"ar":"مدرسة خاص","code":"20"},21:{"ar":"هيكل أسود","code":"21"},22:{"ar":"وحدة سكنية خاصة","code":"22"},23:{"ar":"معرض تجاري","code":"23"},24:{"ar":"بيت تجاري","code":"24"},25:{"ar":"دكان استثماري","code":"25"},26:{"ar":"دكان تجاري","code":"26"},27:{"ar":"فندق استثماري","code":"27"},28:{"ar":"مستشفى استثماري","code":"28"},29:{"ar":"مدرسة استثماري","code":"29"},30:{"ar":"مكتب استثماري","code":"30"},31:{"ar":"تحت الإنشاء استثماري","code":"31"},32:{"ar":"تحت الإنشاء خاص","code":"32"},33:{"ar":"ارض لشريط الساحلي","code":"33"},34:{"ar":"بيت لشريط الساحلي","code":"34"},35:{"ar":"مجمع مطاعم","code":"35"},36:{"ar":"محل استثماري","code":"36"},37:{"ar":"استوديو استثماري","code":"37"},38:{"ar":"تجاري تجاري","code":"38"},39:{"ar":"صناعي","code":"39"},40:{"ar":"اراضي معارض","code":"40"},41:{"ar":"ارض بنك","code":"41"},42:{"ar":"مكتب تجاري","code":"42"},43:{"ar":"محل تجاري","code":"43"},44:{"ar":"هدم تجاري","code":"44"},45:{"ar":" هدم استثماري","code":"45"},46:{"ar":"بناية مخازن","code":"46"},47:{"ar":"مخازن","code":"47"},48:{"ar":"ملحق خاص","code":"48"},49:{"ar":"عيادة استثماري","code":"49"},50:{"ar":"ملحقات استثماري","code":"50"},51:{"ar":"معلق استثماري","code":"51"},52:{"ar":"أرض حرفي","code":"52"},53:{"ar":"تحويطة حرفي","code":"53"},54:{"ar":"بناية حرفي","code":"54"},55:{"ar":"تحت الإنشاء تجاري","code":"55"},56:{"ar":"شقة تجاري","code":"56"},57:{"ar":"محل حرفي","code":"57"},58:{"ar":"معهد صحي استثماري","code":"58"},59:{"ar":"تحويطة استثماري","code":"59"},60:{"ar":"هيكل أسود حرفي","code":"60"},61:{"ar":"محلات الشريط الساحلي","code":"61"},62:{"ar":"هيكل أسود استثماري","code":"62"},63:{"ar":"حرفي حرفي","code":"63"},64:{"ar":"تحت الانشاء الشريط الساحلي","code":"64"},65:{"ar":"مطعم استثماري","code":"65"},66:{"ar":"بناء تجاري حرفي","code":"66"}}
-		
-		,"gov":{0:{"ar":"جميع المحافظات","code":"0"},1:{"ar":"محافظة العاصمة","code":"1"},2:{"ar":"محافظة حولي","code":"2"},3:{"ar":"محافظة الفروانية","code":"3"},4:{"ar":"محافظة مبارك الكبير","code":"4"},5:{"ar":"محافظة الاحمدي","code":"5"},6:{"ar":"محافظة الجهراء","code":"6"},7:{"ar":" إجمالي",en:'total',code:7}}
-
-	,sector:{0:{en:'total',ar:'إجمالي',code:0},1:{en:'private',ar:'خاص'},2:{en:'com',ar:'تجاري'},3:{en:'inv',ar:'استثماري'},4:{en:'industrial',ar:'صناعي'},5:{en:'other',ar:'أخرى'}}
-	,label:{dir:'rtl'}
-	}
-
-,"ranks":[{"ar":"الأول","en":"1st"},{"ar":"الثاني","en":"2nd"},{"ar":"الثالث","en":"3rd"},{"ar":"الرابع","en":"4th"}]
-
-,"jspName":"report1D.jsp"
-,"minmaxYear":[2000 , 2016]
-,"terms":[{"ar":"إجمالي","name":"aggregate","en":"Aggregate","arLbl":"إجمالي الفترة","base":1,"enLbl":"aggregate"},{"ar":"سنة","name":"annual","en":"Annual","arLbl":"سنوي","base":1,"enLbl":"Year"},{"ar":"9شهور","name":"nineMonths","en":"Nine Months","arLbl":"9شهور","base":1,"enLbl":"Nine Months"},{"ar":"النصف","name":"semiAnnual","en":"Semi-Annual","arLbl":"نصف سنوي","base":2,"enLbl":"Half"},{"ar":"الربع","name":"quarterly","en":"Quarterly","arLbl":"ربع سنوي","base":4,"enLbl":"Quarter"},{"ar":"شهر","name":"monthly","en":"Monthly","arLbl":"شهري","base":12,"enLbl":"Month"},{"ar":"اسبوع","name":"weekly","en":"Weekly","arLbl":"اسبوعي","base":52,"enLbl":"Week"}]
-
-,"contrcts":[{"ar":"إجمالي العقود","v":0,"name":"all","en":"Total"},{"ar":"عقود مسجلة","v":1,"name":"c1","en":"Registered"},{"ar":"وكالات عقارية","v":2,"name":"c2","en":"Agent"}]
-
-,"Statistics":[{"ar":"عدد","name":"count","en":"Count"},{"ar":"إجمالي قيمة التداول","name":"amount","en":"Total Price"},{"ar":"متوسط السعر","name":"avgMtr","en":"Average Price"},{"ar":"أعلى سعر متر","name":"maxMtr","en":"Maximum Price of 1 square meter"},{"ar":"أقل سعر متر","name":"minMtr","en":"Minimum Price of 1 square meter"},{"ar":"متوسط المساحة","name":"avgLand","en":"Average Area"},{"ar":"إجمالي المساحة","name":"SumLand","en":"Total Area"},{"ar":"أكبر مساحة","name":"maxLand","en":"Largest Area"},{"ar":"أصغر مساحة","name":"minLand","en":"Smallest Area"}]
-
-,"namesGovs":{1:3,2:5,3:5,4:4,5:3,6:3,7:4,8:2,9:6,10:1,11:5,12:5,13:1,14:1,15:1,16:3,17:3,18:5,19:3,20:2,21:1,22:2,23:2,24:1,25:2,26:1,27:1,28:2,29:2,30:4,31:2,32:2,33:2,34:2,35:1,36:1,37:5,38:2,39:1,40:1,41:3,42:5,43:4,44:4,45:1,46:5,47:3,48:6,49:5,50:3,51:3,52:5,53:5,54:4,55:1,56:1,57:1,58:4,59:6,60:4,61:6,62:1,63:1,64:4,65:5,66:5,67:1,68:1,74:5,75:6,76:1,77:6,78:6,79:3,80:6,81:5,82:5,83:1,84:5,85:1,86:2,87:5,88:3,89:6,90:1,91:3,92:2,93:3,94:2,95:2,96:3,97:3,98:1,99:6,100:2,101:5,102:6,103:2,104:5,105:4,106:3,107:4,108:1,109:3,110:5,111:4,112:4,113:1,114:2,115:1,116:5,117:1,118:1,119:1,120:5,121:2,122:4,123:1,124:1,125:5,126:1,127:2,128:2,129:5,130:5,131:3,132:5,133:1,135:3,136:5,137:5,138:1,139:6,140:4,141:3,142:5,143:4,144:4,145:1}
-
-}//x 
-
-		$scope.minmaxYears=$scope.range($scope.from=$scope.dict.minmaxYear[0],$scope.to=$scope.dict.minmaxYear[1])
-		$scope.gov=$scope.dict.lookup.gov[0]
-		$scope.sttstcs={selected:[1,2,6,0],unselected:[3,4,5,7,8]}
-		$scope.term=$scope.dict.terms[0]
-		$scope.contract=$scope.dict.contrcts[0]
-		$scope.typ=$scope.dict.lookup.type[0]
-		$scope.sector=$scope.dict.lookup.sector[0]
-		
-		$scope.data=[
-			{nm:1,ttl:'gov',tbl:[
-				 [1,2,3,4,5,6,7,8,9,0]//sttstcs 0
-				,[2,3,4,5,6,7,8,9,0,1]//sttstcs 1
-				,[3,4,5,6,7,8,9,0,1,2]//sttstcs 2
-				,[4,5,6,7,8,9,0,1,2,3]//sttstcs 3
-				,[5,6,7,8,9,0,1,2,3,4]//sttstcs 4
-				,[6,7,8,9,0,1,2,3,4,5]//sttstcs 5
-				,[7,8,9,0,1,2,3,4,5,6]//sttstcs 6
-				,[8,9,0,1,2,3,4,5,6,7]//sttstcs 7
-				,[9,0,1,2,3,4,5,6,7,8]//sttstcs 8
-			]}
-			,{nm:2,ttl:'dasma',tbl:[
-				 [11,12,13,14,15,16,17,18,19,20]//sttstcs 0
-				,[12,13,14,15,16,17,18,19,10,11]//sttstcs 1
-				,[13,14,15,16,17,18,19,10,11,12]//sttstcs 2
-				,[14,15,16,17,18,19,10,11,12,13]//sttstcs 3
-				,[15,16,17,18,19,10,11,12,13,14]//sttstcs 4
-				,[16,17,18,19,10,11,12,13,14,15]//sttstcs 5
-				,[17,18,19,10,11,12,13,14,15,16]//sttstcs 6
-				,[18,19,10,11,12,13,14,15,16,17]//sttstcs 7
-				,[19,10,11,12,13,14,15,16,17,18]//sttstcs 8
-			]},
-			{nm:3,ttl:'Daaya',tbl:[
-				 [1,2,3,4,5,6,7,8,9,0]//sttstcs 0
-				,[2,3,4,5,6,7,8,9,0,1]//sttstcs 1
-				,[3,4,5,6,7,8,9,0,1,2]//sttstcs 2
-				,[4,5,6,7,8,9,0,1,2,3]//sttstcs 3
-				,[5,6,7,8,9,0,1,2,3,4]//sttstcs 4
-				,[6,7,8,9,0,1,2,3,4,5]//sttstcs 5
-				,[7,8,9,0,1,2,3,4,5,6]//sttstcs 6
-				,[8,9,0,1,2,3,4,5,6,7]//sttstcs 7
-				,[9,0,1,2,3,4,5,6,7,8]//sttstcs 8
-			]}
-		]
 
 		$scope.yrsChange=function(){
-			  $scope.yrs=$scope.range($scope.from,$scope.to);
-			  $scope.timeline=[]
-			  for(var i in $scope.yrs)
-			  for(var j=1;j<=$scope.term.base;j++){
-			  $scope.timeline.push([i,j])
-				}
-							  }
+			$scope.yrs=$scope.range($scope.from,$scope.to);
+			$scope.timeline=[]
+			for(var i in $scope.yrs)
+			for(var j=1;j<=$scope.term.base;j++)
+				$scope.timeline.push([i,j])
+		}
 		$scope.yrsChange();
-		//	$scope.app=$http.get('test.json')
+		$scope.app=$http.get($scope.jspName/*, { transformResponse: [function (data) {
+				//console.log('cntrlr:$http.get.transformResponse:$scope=',$scope,' ,data=',data,' ,arguments=',arguments)
+				if(!myApp.serverResponses)
+					myApp.serverResponses=[]
+				myApp.serverResponses.push(data)
+				return data; }] }*/).
+			then
+			(function(response)
+				{	console.log('cntrlr:$http.get.then:$scope='
+						,$scope,' ,response=',response)
+					var data=response.data
+					/*if(typeof data =='string'){
+						try{
+							data=JSON.parse(data)
+						}catch(ex){
+							console.error('cntrlr:$http.get.then:parse response.data',ex);}
+					}*/
+					if(!myApp.serverResponses)
+						 myApp.serverResponses=[data]//$scope.dict]
+					else myApp.serverResponses.push(data)
+					$scope.dict=data
+
+					$scope.minmaxYears=$scope.range($scope.from=$scope.dict.minmaxYear[0],$scope.to=$scope.dict.minmaxYear[1])
+					$scope.gov=$scope.dict.lookup.gov[0]
+					$scope.sttstcs={selected:[1,2,6,0],unselected:[3,4,5,7,8]}
+					$scope.term=$scope.dict.terms[0]
+					$scope.contract=$scope.dict.contrcts[0]
+					$scope.typ=$scope.dict.lookup.type[0]
+					$scope.sector=$scope.dict.lookup.sector[0]
+				}//$http.get.response
+				, function myError(response) {
+					console.log('cntrlr:$http.get.then:error:$scope='
+						,$scope,' ,arguments=',arguments)
+				}
+			)
+
+		$scope.getQueryParams=function cntrlrQueryParams(){
+			var p={
+			 "from"		:$scope.from
+			,"to"		:$scope.to
+			,"gov"		:$scope.gov.code
+			,"sttstcs"	:$scope.sttstcs.selected
+			,"terms"	:$scope.term.name
+			,"contract"	:$scope.contract.name
+			,"typ"		:$scope.typ.code
+			,"sector"	:$scope.sector.code
+			}
+			return p;
+		}
+		$scope.onClk=function cntrlrOnclk(){
+			var params=$scope.getQueryParams()
+			console.log('cntrlrOnclk',$scope,params)
+			$http.post($scope.jspName,params).then(
+				function (response) {var data=response.data
+					console.log('cntrlr:onClk:$http.post.then:$scope='
+						,$scope,' ,arguments=',arguments)
+					myApp.serverResponses.push(data)
+					$scope.data=data
+					$scope.yrsChange();
+				}
+				, function myError(response) {
+					console.log('cntrlr:onClk:$http.post.then:error:$scope='
+						,$scope,' ,arguments=',arguments)
+				}
+			)
+		}
+
+		$scope.switchLang=function(){
+			var ar=$scope.lang=='ar';
+			$scope.lang=(ar=!ar)?'ar':'en';
+			document.body.dir=ar?'rtl':'ltr';
+			document.styleSheets[1].rules[0].style.display=ar?'':'none'
+			document.styleSheets[1].rules[1].style.display=ar?'none':''
+		}
 	}
 ]);
