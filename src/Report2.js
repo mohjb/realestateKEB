@@ -1,6 +1,6 @@
 
 var myApp = angular.module('myApp', ['ngSanitize']);
-Lix={
+Lix={//Label Index
  	 zero            : {code:0 ,name:'zero          '}
 	,dir             : {code:1 ,name:'dir           '}
 	,title           : {code:2 ,name:'title         '}
@@ -47,7 +47,7 @@ Lix={
 	,ted             : {code:43,name:'ted           '}
 	,mohjb           : {code:44,name:'mohjb         '}
 }
-
+did=function(p){return document.getElementById(p);}
 myApp.controller("myController", [
 	"$scope","$http",
 	function($scope,$http) {//
@@ -90,29 +90,14 @@ myApp.controller("myController", [
 				$scope.timeline.push([i,j])
 		}
 		$scope.yrsChange();
-		$scope.app=$http.get($scope.jspName/*, { transformResponse: [function (data) {
-				//console.log('cntrlr:$http.get.transformResponse:$scope=',$scope,' ,data=',data,' ,arguments=',arguments)
-				if(!myApp.serverResponses)
-					myApp.serverResponses=[]
-				myApp.serverResponses.push(data)
-				return data; }] }*/).
-			then
-			(function(response)
-				{	console.log('cntrlr:$http.get.then:$scope='
+		$scope.app=$http.get($scope.jspName).
+			then(function(response){
+					console.log('cntrlr:$http.get.then:$scope='
 						,$scope,' ,response=',response)
-					var data=response.data
-					/*if(typeof data =='string'){
-						try{
-							data=JSON.parse(data)
-						}catch(ex){
-							console.error('cntrlr:$http.get.then:parse response.data',ex);}
-					}*/
-					if(!myApp.serverResponses)
-						 myApp.serverResponses=[data]//$scope.dict]
-					else myApp.serverResponses.push(data)
-					$scope.dict=data
-
-					$scope.minmaxYears=$scope.range($scope.from=$scope.dict.minmaxYear[0],$scope.to=$scope.dict.minmaxYear[1])
+					$scope.dict=response.data
+					$scope.minmaxYears=$scope.range(
+						$scope.from=$scope.dict.minmaxYear[0],
+						$scope.to=$scope.dict.minmaxYear[1])
 					$scope.gov=$scope.dict.lookup.gov[0]
 					$scope.sttstcs={selected:[1,2,6,0],unselected:[3,4,5,7,8]}
 					$scope.term=$scope.dict.terms[0]
@@ -141,19 +126,26 @@ myApp.controller("myController", [
 			return p;
 		}
 		$scope.onClk=function cntrlrOnclk(){
-			var params=$scope.getQueryParams()
+			var params=$scope.getQueryParams();
+			did('btn').disabled=true
+			did('imgWait').style.display=''
+			did('dataTbl').style.display='none'
 			console.log('cntrlrOnclk',$scope,params)
 			$http.post($scope.jspName,params).then(
 				function (response) {var data=response.data
 					console.log('cntrlr:onClk:$http.post.then:$scope='
 						,$scope,' ,arguments=',arguments)
-					myApp.serverResponses.push(data)
+					did('btn').disabled=false
+					did('imgWait').style.display='none'
+					did('dataTbl').style.display=''
 					$scope.data=data['return']
 					$scope.yrsChange();
 				}
 				, function myError(response) {
 					console.log('cntrlr:onClk:$http.post.then:error:$scope='
 						,$scope,' ,arguments=',arguments)
+					did('btn').disabled=false
+					did('imgWait').style.display='none'
 				}
 			)
 		}
@@ -165,5 +157,70 @@ myApp.controller("myController", [
 			document.styleSheets[1].rules[0].style.display=ar?'':'none'
 			document.styleSheets[1].rules[1].style.display=ar?'none':''
 		}
+
 	}
 ]);
+myApp.filter('fltr',function(){
+	return function(p,op1){
+		function intgr(p)
+		{var x=Math.abs(p),b=[],s
+			if(x<1000)
+				return p;
+			while(x>999)
+			{s=Math.floor(x%1000).toString();
+				while(s.length<3)s='0'+s;
+				b.push(s,',')
+				x=Math.floor(x/1000)
+			}b.push(x)
+			if(p<0)b.push('-')
+			b.reverse();
+			return b.join('')}
+		function num(p)
+		{var x=Math.abs(p),s=Math.floor((x*1000)%1000).toString(),b;
+				while(s.length<3)s='0'+s;b=[s,'.',intgr(Math.floor(x))];
+				if(p<0)b.push('-')
+				return b.reverse().join()}
+		if(!p)return p;
+		switch(op1||0)
+		{case 'integer':return intgr(p)
+			case "number":return num(p);
+			case 'currency':return num(p)+'KD'
+			default:var x=Math.abs(p),
+			s=Math.floor((x*1000)%1000)
+			return s==0?intgr(p):num(p);
+		}
+	}
+})
+myApp.filter('filtr',function(){//$sce
+	return function(p,op1){
+		function intgr(p)
+		{var x=Math.abs(p),b="",s,i=0//,z=['medium','large','x-large','xx-large']
+			if(x<1000)
+				return p;
+			while(x>999)
+			{s=Math.floor(x%1000).toString();
+				while(s.length<3)s='0'+s;
+				b=',<span class="num'+i+'">'+s+'</span>'+b // style="font-size:'+z[i]+'"
+				if(i<3)i++
+				x=Math.floor(x/1000)
+			}b='<span class="num'+i+'">'+x+'</span>'+b //style="font-size:'+z[i]+'"
+			if(p<0)b='-'+b
+			return b;}
+		function num(p)
+		{var x=Math.abs(p),s=Math.floor((x*1000)%1000).toString(),b;
+				while(s.length<3)s='0'+s;
+				b=intgr(Math.floor(x))+'.<sub>'+s+'</sub>';//span style="font-size:small" span
+				if(p<0)b='-'+b
+				return b;}
+		if(!p)return p;var r;
+		switch(op1||0)
+		{case 'integer':r= intgr(p);break;
+			case "number":r= num(p);break;
+			case 'currency':r= num(p)+'KD';break;
+			default:var x=Math.abs(p),
+			s=Math.floor((x*1000)%1000)
+			r= s==0?intgr(p):num(p);
+		}
+		return r;//$sce.trustAsHtml(r);
+	}
+})

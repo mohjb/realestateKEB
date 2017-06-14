@@ -22,54 +22,6 @@ public class Report1D extends Report1C {
 	List<Number>sttstcs;//
 	Prm[]prmA;
 }//E
- public static enum L{
-	zero             // 0
-	,dir             // 1
-	,title           // 2
-	,from            // 3
-	,to              // 4
-	,Statistics      // 5
-	,Terms           // 6
-	,ContractType    // 7
-	,gov             // 8
-	,sector          // 9
-	,realestateType  // 10
-	,Query           // 11
-	,AreaName        // 12
-	,Desc            // 13
-	,first           // 14
-	,second          // 15
-	,third           // 16
-	,fourth          // 17
-	,total           // 18
-	,Registered      // 19
-	,Agent           // 20
-	,Agg             // 21
-	,AggPeriod       // 22
-	,Annual          // 23
-	,nineMonths      // 24
-	,Half            // 25
-	,SemiAnnual      // 26
-	,Quarter         // 27
-	,Quarterly       // 28
-	,Month           // 29
-	,Monthly         // 30
-	,Week            // 31
-	,Weekly          // 32
-	,Count           // 33
-	,TotalPrice      // 34
-	,AvgPrice        // 35
-	,MaxPrice        // 36
-	,MinPrice        // 37
-	,AvgArea         // 38
-	,TotalArea       // 39
-	,MaxArea         // 40
-	,MinArea         // 41
-	,kisr            // 42
-	,ted             // 43
-	,mohjb           // 44
-}
- //public enum RowsBy{gov,sector,contract}
 
 static List<Map<String,String>>toJson(Lbl.Term[]a){
  	List l=new LinkedList();
@@ -91,11 +43,6 @@ static List<Map<String,String>>toJson(Lbl.Contrct[]a){
 				,"v",t.v ) ));
 	return l;}
 
-static List<Map<String,String>>toJson(Lbl.Statistics[]a){
-	List l=new LinkedList();
-	for ( Lbl.Statistics t :Lbl.sttstcs )
-		l.add( t.lang( TL.Util.mapCreate( "name",t.name() ) ));
-	return l;}
 
 static Map<String,Map<Integer,Map<String,String>>>
 toJson(Map<LookupTbl.Col,Map<Integer,Map<TL.Lang,LookupTbl>>>a){
@@ -112,15 +59,26 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 			Map<String,String>m3=m2.get( i );
 			if(m3==null)
 				m2.put( i, m3=new HashMap<String,String>() );
-			for(TL.Lang lng:a3.keySet()){
+			toJson(a3,m3);/*for(TL.Lang lng:a3.keySet()){
 				LookupTbl t=a3.get( lng );
 				String k4=String.valueOf( lng );
 				m3.put( k4,t==null?"":t.text );
 				m3.put( "code",t==null?"":String.valueOf( t.code ));
-			}
+			}*/
 		}
 	}
 	return m;}
+
+ static Map<String,String>toJson(Map<TL.Lang,LookupTbl>a3,Map<String,String>m3){
+	if(m3==null)m3=new HashMap<String,String>();
+	for(TL.Lang lng:a3.keySet()){
+		LookupTbl t=a3.get( lng );
+		String k4=String.valueOf( lng );
+		m3.put( k4,t==null?"":t.text );
+		m3.put( "code",t==null?"":String.valueOf( t.code ));
+	}
+	return m3;
+ }
 
 	public static void gGet(TL tl,E e)throws Exception{
 		if ("resetLookup".equals(e.op)) {
@@ -134,13 +92,41 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 					, "ranks", toJson(Lbl.ranks)
 					, "contrcts", toJson(Lbl.contrcts)
 					//, "options", TL.Util.lst( "allGovs","allTyps","aggGovs")
-					, "Statistics", toJson(Lbl.sttstcs)
+					, "Statistics", Statistics.toJson( null )//toJson(Lbl.sttstcs)
 					, "jspName", jspName
 					, "namesGovs", e.namesGovs
 					//, "Prms", e.prmA
 			);
 	}
 
+enum Statistics {
+	count("count(*)","integer",34)
+	,amount("sum(`"+DataTbl.C.price+"`)","currency",35)
+	,avgMtr("sum(`"+DataTbl.C.price+"`)/sum(`"+DataTbl.C.area+"`)","currency",36)
+	,maxMtr("max(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)","currency",37)
+	,minMtr("min(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)","currency",38)
+	,avgLand("avg(`"+DataTbl.C.area+"`)","number",39)
+	,SumLand("sum(`"+DataTbl.C.area+"`)","number",40)
+	,maxLand("max(`"+DataTbl.C.area+"`)","number",41)
+	,minLand("min(`"+DataTbl.C.area+"`)","number",42);
+
+	public String sql, format;int code;
+	Statistics(String p,String frmt,int c){sql=p;format=frmt;code=c;}
+static Statistics[]a=values();
+	static List<Map<String,String>>toJson(List<Map<String,String>>l){
+		if(l==null) l=new LinkedList();
+		for ( Statistics t :a )
+			l.add(  t.toJson());
+		return l;
+	}
+	Map<String,String>toJson(){
+		Map<String,String>m=new HashMap<>(  );
+		m.put( "name",name() );
+		m.put("code",String.valueOf(code));
+		m.put("format",format);
+		return m;
+	}
+}//enum S//sttstcs
 
 	public static void query(TL tl,E e)throws Exception{try {
 		String p[] = new String[ e.prmA.length ];
@@ -174,8 +160,8 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 			}}catch(Exception ex){}
 			if(e.sttstcs==null) {
 				e.sttstcs = new LinkedList();
-				e.sttstcs.add( Lbl.Statistics.avgMtr.ordinal() );
-				e.sttstcs.add( Lbl.Statistics.count.ordinal() );
+				e.sttstcs.add( Statistics.avgMtr.ordinal() );
+				e.sttstcs.add( Statistics.count.ordinal() );
 			}
 		}int n=e.sttstcs.size();
 
@@ -216,16 +202,24 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 
 		Lbl.Contrct contrct = Prm.contract.v( p ) == null
 				? Lbl.Contrct.all : Lbl.Contrct.valueOf( Prm.contract.v( p ) );
+
 		DataTbl.C rowsBy=DataTbl.C.gov;
-		try{rowsBy=DataTbl.C.valueOf(tl.h.req("rowsBy"));}catch(Exception ex){}
+		try{String s=tl.h.req("rowsBy");
+			if("agg".equals( s ))
+				aggGovs=true;else
+			rowsBy=DataTbl.C.valueOf(s);}
+		catch(Exception ex){}
+
 		tl.log( jspName,":query:read sttstcs: version 2017.06.13.18.20:",new Date()
 				,':',e.sttstcs ," ,nullCol=",nullCol);
 		if ( nullCol < 0 ) try {
 			StringBuilder sql = new StringBuilder( "select " )
-				.append( rowsBy==DataTbl.C.sector
-						?aggGovs?sct.code.toString():(allSectors ? rowsBy : DataTbl.C.typ).toString()
-						://rowsBy==DataTbl.C.gov?
-						 aggGovs?gov.code.toString():(allGovs ? DataTbl.C.gov : DataTbl.C.name).toString()
+				.append( aggGovs?"0":
+					(rowsBy==DataTbl.C.sector
+					 ?(allSectors ? rowsBy : DataTbl.C.typ)
+					 ://rowsBy==DataTbl.C.gov?
+						(allGovs ? DataTbl.C.gov : DataTbl.C.name)
+					).toString()
 				).append( "," );
 			switch ( term ) {
 				case semiAnnual:
@@ -253,7 +247,7 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 							.append( from ).append( " as t" );
 			}
 			for ( int i = 0; i < n; i++ )
-				sql.append( "," ).append( Lbl.sttstcs[ e.sttstcs.get( i ).intValue() ].sql );
+				sql.append( "," ).append(Statistics.a[ e.sttstcs.get( i ).intValue() ].sql );
 
 			sql.append( "from " ).append( DataTbl.Name )
 					.append( " where year(`" ).append( DataTbl.C.d )
@@ -270,11 +264,11 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 				sql.append( "and month(`" + DataTbl.C.d + "`)<=9" );
 			if(!aggGovs ) {
 				sql.append(" group by ").append(rowsBy==DataTbl.C.sector?
-						(allSectors?rowsBy:DataTbl.C.typ)
-						:col_Gov_or_name);
+					(allSectors?rowsBy:DataTbl.C.typ)
+					:col_Gov_or_name);
 				if (term != Lbl.Term.aggregate) sql.append(",t");
 			}else
-				sql.append(term == Lbl.Term.aggregate?" group by 7":" group by t");
+				sql.append(term == Lbl.Term.aggregate?" group by 0":" group by t");
 
 			PreparedStatement ps = TL.DB.p( sql.toString() );// System.out.println("realestateKeb/2012/03/05/"+jspName+":ps="+ps);
 			{	int i = 1;
@@ -297,14 +291,14 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 			while ( rs.next() ) {
 				int nm = rs.getInt( 1 ), yr = rs.getInt( 2 );
 				if ( nm != currentName )
-					data.add( TL.Util.mapCreate( //"nm", currentName=nm
-						 "row", x.get( currentName=nm )
+					data.add( TL.Util.mapCreate( "row",
+						toJson(x.get( currentName=nm ),null)
 						, "tbl", tbl = new Number[ n ][ base ] ) );
 
 				for ( int c = 0; c < n; c++ )
 					try{tbl[ c ][ yr ] = rs.getFloat( c + 3 );
 					} catch ( Exception ex ) {
-						tl.error( jspName+":query:resultSet.next:for cols:line287:",ex );//ex.printStackTrace();
+						tl.error( jspName+":query:resultSet.next:for cols:line287:",ex );
 					}
 			}
 		}//if(nullCol<0)
