@@ -74,10 +74,17 @@ myApp.controller("myController", [
 			for(var i=a;i<=b;i+=c)
 			r.push(i);
 			return r;}
-
+        $scope.from=2000;$scope.to=2017;$scope.rowsBy='gov';
 		$scope.yrsChange=function(){
-			$scope.yrs=$scope.range($scope.from,$scope.to);
-			$scope.timeline=[]
+			if( !$scope.term
+			||$scope.term.name=='aggregate'
+			|| !$scope.dict
+			|| !$scope.dict.terms
+			|| !$scope.dict.terms[0]
+			|| $scope.term==$scope.dict.terms[0]  )
+			    $scope.yrs=[$scope.from+' - '+$scope.to];
+			    else $scope.yrs=$scope.range($scope.from,$scope.to);
+			$scope.timeline=[];if($scope.term)
 			for(var i in $scope.yrs)
 			for(var j=1;j<=$scope.term.base;j++)
 				$scope.timeline.push([i,j])
@@ -129,6 +136,7 @@ myApp.controller("myController", [
 			,"contract"	:$scope.contract.name
 			,"typ"		:$scope.typ.code
 			,"sector"	:$scope.sector.code
+			,rowsBy:$scope.rowsBy||'gov'
 			}
 			return p;
 		}
@@ -140,7 +148,7 @@ myApp.controller("myController", [
 					console.log('cntrlr:onClk:$http.post.then:$scope='
 						,$scope,' ,arguments=',arguments)
 					myApp.serverResponses.push(data)
-					$scope.data=data
+					$scope.data=data['return']
 					$scope.yrsChange();
 				}
 				, function myError(response) {

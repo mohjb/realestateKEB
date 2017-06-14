@@ -69,6 +69,7 @@ public class Report1D extends Report1C {
 	,ted             // 43
 	,mohjb           // 44
 }
+ //public enum RowsBy{gov,sector,contract}
 
 static List<Map<String,String>>toJson(Lbl.Term[]a){
  	List l=new LinkedList();
@@ -178,11 +179,14 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 			}
 		}int n=e.sttstcs.size();
 
-		Map< Integer, Map< TL.Lang, LookupTbl > > typs = e.lookup.get( LookupTbl.Col.type ), govs = e.lookup.get( LookupTbl.Col.gov );
-		LookupTbl gov = govs.get( TL.Util.parseInt( Prm.gov.v( p ), 0 ) ).get( tl.lang ), typ = typs.get( TL.Util.parseInt( Prm.typ.v( p ), 0 ) ).get( tl.lang );
+		Map< Integer, Map< TL.Lang, LookupTbl > > typs = e.lookup.get( LookupTbl.Col.type )
+				, govs = e.lookup.get( LookupTbl.Col.gov )
+				, scts = e.lookup.get( LookupTbl.Col.sector );
+		LookupTbl gov = govs.get( TL.Util.parseInt( Prm.gov.v( p ), 0 ) ).get( tl.lang )
+				, typ = typs.get( TL.Util.parseInt( Prm.typ.v( p ), 0 ) ).get( tl.lang )
+				, sct = scts.get( TL.Util.parseInt( tl.h.req("sector"), 0 ) ).get( tl.lang );
 
-		int from = TL.Util.parseInt( Prm.from.v( p ), e.minmaxYear[ 0 ] ), to = TL.Util.parseInt( Prm.to.v( p ), e.minmaxYear[ 1 ] )
-			;//	, from2 = TL.Util.parseInt( Prm.from2.v( p ), 1 ), to2 = TL.Util.parseInt( Prm.to2.v( p ), 52 );
+		int from = TL.Util.parseInt( Prm.from.v( p ), e.minmaxYear[ 0 ] ), to = TL.Util.parseInt( Prm.to.v( p ), e.minmaxYear[ 1 ] );
 
 		if ( from > to ) {
 			int tmp = from;
@@ -196,7 +200,9 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 		boolean aggGovs = "a".equals( Prm.gov.v( p ) )
 				|| "7".equals( Prm.gov.v( p ) )
 			, allGovs = gov.code == 0 || aggGovs
+			, allSectors=sct.code==0
 			, allTyps = "0".equals( Prm.typ.v( p ) );
+
 		LookupTbl.Col col_Gov_or_name = allGovs
 			? LookupTbl.Col.gov : LookupTbl.Col.name;
 
@@ -209,17 +215,23 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 			}
 
 		Lbl.Contrct contrct = Prm.contract.v( p ) == null
-				                      ? Lbl.Contrct.all : Lbl.Contrct.valueOf( Prm.contract.v( p ) );
+				? Lbl.Contrct.all : Lbl.Contrct.valueOf( Prm.contract.v( p ) );
+		DataTbl.C rowsBy=DataTbl.C.gov;
+		try{rowsBy=DataTbl.C.valueOf(tl.h.req("rowsBy"));}catch(Exception ex){}
 		tl.log( jspName,":query:read sttstcs: version 2017.06.13.18.20:",new Date()
 				,':',e.sttstcs ," ,nullCol=",nullCol);
 		if ( nullCol < 0 ) try {
 			StringBuilder sql = new StringBuilder( "select " )
-					                    .append( allGovs ? DataTbl.C.gov : DataTbl.C.name ).append( "," );
+				.append( rowsBy==DataTbl.C.sector
+						?aggGovs?sct.code.toString():(allSectors ? rowsBy : DataTbl.C.typ).toString()
+						://rowsBy==DataTbl.C.gov?
+						 aggGovs?gov.code.toString():(allGovs ? DataTbl.C.gov : DataTbl.C.name).toString()
+				).append( "," );
 			switch ( term ) {
 				case semiAnnual:
 					sql.append( "(year(`" )
-							.append( DataTbl.C.d ).append( "`)-" ).append( from ).append( ")* 2+ceiling(month(`" )
-							.append( DataTbl.C.d ).append( "`)/6)-1 as t" );
+						.append( DataTbl.C.d ).append( "`)-" ).append( from ).append( ")* 2+ceiling(month(`" )
+						.append( DataTbl.C.d ).append( "`)/6)-1 as t" );
 					break;
 				case quarterly:
 					sql.append( "(year(`" )
@@ -250,37 +262,47 @@ HashMap<String,Map<Integer,Map<String,String>>>();
 				sql.append( "and `" ).append( DataTbl.C.contract ).append( "`=? " );
 			if ( !allGovs )
 				sql.append( "and `" ).append( DataTbl.C.gov ).append( "`=? " );
+			if ( !allTyps )
+				sql.append( "and `" ).append( DataTbl.C.typ ).append( "`=? " );
+			if ( !allSectors )
+				sql.append( "and `" ).append( DataTbl.C.sector ).append( "`=? " );
 			if ( term == Lbl.Term.nineMonths )
 				sql.append( "and month(`" + DataTbl.C.d + "`)<=9" );
-			sql.append( " group by " ).append( col_Gov_or_name );
-			if ( term != Lbl.Term.aggregate ) sql.append( ",t" );
+			if(!aggGovs ) {
+				sql.append(" group by ").append(rowsBy==DataTbl.C.sector?
+						(allSectors?rowsBy:DataTbl.C.typ)
+						:col_Gov_or_name);
+				if (term != Lbl.Term.aggregate) sql.append(",t");
+			}else
+				sql.append(term == Lbl.Term.aggregate?" group by 7":" group by t");
 
 			PreparedStatement ps = TL.DB.p( sql.toString() );// System.out.println("realestateKeb/2012/03/05/"+jspName+":ps="+ps);
-			{
-				int i = 1;
+			{	int i = 1;
 				ps.setObject( i++, from );
 				ps.setObject( i++, to );
 				if ( contrct != Lbl.Contrct.all )
 					ps.setObject( i++, p[ Prm.contract.ordinal() ] );
 				if ( !allGovs ) ps.setObject( i++, p[ Prm.gov.ordinal() ] );
-				if ( !allTyps ) ps.setObject( i++, p[ Prm.typ.ordinal() ] );
+				if ( !allTyps ) ps.setObject( i++, typ.code );
+				if ( !allSectors ) ps.setObject( i++, sct.code );
 			}
 			int row = 0, currentName = -1, base = term == Lbl.Term.aggregate ? 1 : (to - from + 1) * term.base;
 			List< Map< Object, Object > > data = new LinkedList< Map< Object, Object > >();
 			tl.response.put( "return", data );
-			Object[][] tbl = null;//new Object[ base ][ n ];
-			Map<Integer,Map<TL.Lang,LookupTbl>>x=e.lookup.get( col_Gov_or_name );
+			Number[][] tbl = null;
+			Map< Integer, Map< TL.Lang, LookupTbl > >x=
+				rowsBy==DataTbl.C.sector?(allSectors?scts:typs)
+					:(allGovs?govs:e.lookup.get( LookupTbl.Col.name  ));
 			ResultSet rs = ps.executeQuery();
 			while ( rs.next() ) {
 				int nm = rs.getInt( 1 ), yr = rs.getInt( 2 );
 				if ( nm != currentName )
-					data.add( TL.Util.mapCreate( "nm", currentName=nm
-						, "ttl", x.get( currentName=nm ).get( tl.lang ).text
-						, "tbl", tbl = new Object[ n ][ base ] ) );
+					data.add( TL.Util.mapCreate( //"nm", currentName=nm
+						 "row", x.get( currentName=nm )
+						, "tbl", tbl = new Number[ n ][ base ] ) );
 
 				for ( int c = 0; c < n; c++ )
-					try {
-						tbl[ c ][ yr ] = rs.getObject( c + 3 );
+					try{tbl[ c ][ yr ] = rs.getFloat( c + 3 );
 					} catch ( Exception ex ) {
 						tl.error( jspName+":query:resultSet.next:for cols:line287:",ex );//ex.printStackTrace();
 					}

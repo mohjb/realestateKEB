@@ -9,6 +9,7 @@
     <script src="Report2.js"></script>
     <title>{{'AngularJS test:'+title}}</title>
     <style>.langAr{display:block} .langEn{display:none}
+    tbody:nth-child(even) {background: #CCF}
 	//label:before{d isplay:none;}
     input[type="checkbox"]{
         opacity:1;
@@ -113,11 +114,11 @@
             <td >
                 <select ng-model="gov"
                         ng-options="i[lang] for i in dict.lookup.gov"
-                ></select></td>
+                ></select><input ng-model="rowsBy" type="radio" value="gov" /></td>
             <td >
                 <select ng-model="sector"
                         ng-options="i[lang] for i in dict.lookup.sector"
-                ></select></td>
+                ></select><input ng-model="rowsBy" type="radio" value="sector" /></td>
 
             <td >
                 <select ng-model="typ"
@@ -128,10 +129,14 @@
 </xform>
 
 <hr/>
-<table border=1>
+<table border=1 ng-init="x=dict.lookup[ rowsBy=='sector'
+    ?(sector.code==0?'sector':'typ')
+    :(gov.code==0 || gov.code==7 ? 'gov':'name' ] ">
     <thead>
     <tr>
-        <th rowspan="{{term.base==1?1:2}}" width="200px" ng-bind-html="lblTag(allGovs?Lix.gov:Lix.AreaName)"></th>
+        <th rowspan="{{term.base==1?1:2}}" width="200px" ng-bind-html="lblTag(
+        rowsBy=='sector'?(sector.code==0?Lix.sector:Lix.realestateType)
+        :allGovs?Lix.gov:Lix.AreaName)"></th>
         <th rowspan="{{term.base==1?1:2}}" ng-bind-html="lblTag(Lix.Desc)"></th>
         <th ng-repeat="yr in yrs " colspan="{{term.base}}">{{yr}}</th>
     </tr>
@@ -140,12 +145,14 @@
 
     <tbody ng-repeat="dtm in data">
     <tr ng-repeat="row in dtm.tbl">
-        <th ng-if="$index==0" rowspan="{{dtm.tbl.length}}">{{dtm.ttl}}</th>
-        <th > {{ dict.Statistics[sttstcs.selected[$index]][lang] }}</th>
-        <td ng-repeat="i in row" >{{i}} </td>
+        <th ng-if="$index==0" rowspan="{{dtm.tbl.length}}" nm="{{ dtm.row }}"
+        ng-init=" y = x[ dtm.row.code ] "><span class="langAr"
+            >{{ y.ar||dtm.row.ar }}</span><span class="langEn">{{ y.en||dtm.row.en }}</span></th>
+        <th ng-init="y=dict.Statistics[sttstcs.selected[$index]]"><span class="langAr"
+            >{{ y.ar }}</span><span class="langEn">{{ y.en }}</span></th>
+        <td ng-repeat="i in row track by $index" >{{i}} </td>
     </tr>
     </tbody>
 </table>
-
 </body>
 </html>
