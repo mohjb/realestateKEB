@@ -1,7 +1,7 @@
 
 var myApp = angular.module('myApp', ['ngSanitize']);
 Lix={//Label Index
- 	 zero            : {code:0 ,name:'zero          '}
+	 zero            : {code:0 ,name:'zero          '}
 	,dir             : {code:1 ,name:'dir           '}
 	,title           : {code:2 ,name:'title         '}
 	,from            : {code:3 ,name:'from          '}
@@ -45,12 +45,12 @@ Lix={//Label Index
 	,MinArea         : {code:41,name:'MinArea       '}
 	,kisr            : {code:42,name:'kisr          '}
 	,ted             : {code:43,name:'ted           '}
-	,mohjb           : {code:44,name:'mohjb         '}
-}
+	,mohjb           : {code:44,name:'mohjb         '}}
+
 did=function(p){return document.getElementById(p);}
 myApp.controller("myController", [
 	"$scope","$http",
-	function($scope,$http) {//
+	function($scope,$http) {
 		$scope.jspName='t.jsp'
 		$scope.lang='ar'
 		$scope.Lix=Lix
@@ -151,8 +151,8 @@ myApp.controller("myController", [
 		}
 
 		$scope.switchLang=function(){
-			var ar=$scope.lang=='ar';
-			$scope.lang=(ar=!ar)?'ar':'en';
+			var ar=$scope.lang!='ar';
+			$scope.lang=ar?'ar':'en';
 			document.body.dir=ar?'rtl':'ltr';
 			document.styleSheets[1].rules[0].style.display=ar?'':'none'
 			document.styleSheets[1].rules[1].style.display=ar?'none':''
@@ -168,7 +168,7 @@ myApp.filter('fltr',function(){
 				return p;
 			while(x>999)
 			{s=Math.floor(x%1000).toString();
-				while(s.length<3)s='0'+s;
+				if(s.length==1)s='00'+s;else if(s.length==2)s='0'+s;
 				b.push(s,',')
 				x=Math.floor(x/1000)
 			}b.push(x)
@@ -177,9 +177,10 @@ myApp.filter('fltr',function(){
 			return b.join('')}
 		function num(p)
 		{var x=Math.abs(p),s=Math.floor((x*1000)%1000).toString(),b;
-				while(s.length<3)s='0'+s;b=[s,'.',intgr(Math.floor(x))];
-				if(p<0)b.push('-')
-				return b.reverse().join()}
+			if(s.length==1)s='00'+s;else if(s.length==2)s='0'+s;
+			b=[s,'.',intgr(Math.floor(x))];
+			if(p<0)b.push('-')
+			return b.reverse().join()}
 		if(!p)return p;
 		switch(op1||0)
 		{case 'integer':return intgr(p)
@@ -191,36 +192,38 @@ myApp.filter('fltr',function(){
 		}
 	}
 })
-myApp.filter('filtr',function(){//$sce
+myApp.filter('filtr',function(){
 	return function(p,op1){
 		function intgr(p)
-		{var x=Math.abs(p),b="",s,i=0//,z=['medium','large','x-large','xx-large']
+		{var x=Math.abs(p),b="",s,i=1
 			if(x<1000)
 				return p;
 			while(x>999)
 			{s=Math.floor(x%1000).toString();
-				while(s.length<3)s='0'+s;
-				b=',<span class="num'+i+'">'+s+'</span>'+b // style="font-size:'+z[i]+'"
-				if(i<3)i++
+				if(s.length==1)s='00'+s;else if(s.length==2)s='0'+s;
+				b=',<span class="num'+(i++)+'">'+s+'</span>'+b
 				x=Math.floor(x/1000)
-			}b='<span class="num'+i+'">'+x+'</span>'+b //style="font-size:'+z[i]+'"
+			}b='<span class="num'+i+'">'+x+'</span>'+b
 			if(p<0)b='-'+b
 			return b;}
-		function num(p)
-		{var x=Math.abs(p),s=Math.floor((x*1000)%1000).toString(),b;
-				while(s.length<3)s='0'+s;
-				b=intgr(Math.floor(x))+'.<sub>'+s+'</sub>';//span style="font-size:small" span
-				if(p<0)b='-'+b
-				return b;}
-		if(!p)return p;var r;
+		function num(p,s)
+		{var x=Math.abs(p),b;
+			if(s==undefined)
+				s=Math.floor((x*1000)%1000);
+			s=s.toString()
+			if(s.length==1)s='00'+s;else if(s.length==2)s='0'+s;
+			b=intgr(Math.floor(x))+'.<span class="num0">'+s+'</span>>';
+			if(p<0)b='-'+b
+			return b;}
+		if(!p)return p;
 		switch(op1||0)
-		{case 'integer':r= intgr(p);break;
-			case "number":r= num(p);break;
-			case 'currency':r= num(p)+'KD';break;
+		{case 'integer':p= intgr(p);break;
+			case "number":p= num(p);break;
+			case 'currency':p= num(p)+'KD';break;
 			default:var x=Math.abs(p),
 			s=Math.floor((x*1000)%1000)
-			r= s==0?intgr(p):num(p);
+			p= s==0?intgr(p):num(p,s);
 		}
-		return r;//$sce.trustAsHtml(r);
+		return p
 	}
 })
