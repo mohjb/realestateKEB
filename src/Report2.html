@@ -4,17 +4,17 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Real-Estate</title>
     <!--script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script-->
-    <script src="../../../../angular-1.6.4/angular.js"></script>
-    <script src="../../../../angular-1.6.4/angular-sanitize.min.js"></script>
+    <script src="../../../angular-1.6.4/angular.js"></script>
+    <script src="../../../angular-1.6.4/angular-sanitize.min.js"></script>
     <script src="Report2.js"></script>
     <title>{{'AngularJS test:'+title}}</title>
     <style>.langAr{display:block} .langEn{display:none}
     tbody:nth-child(even) {background: #eeF}
-	.num0{font-size:medium}
-	.num1{font-size:large;color:green}
-	.num2{font-size:x-large;color:blue}
-	.num3{font-size:xx-large;}
-	.num4{font-size:xx-large;font-weight:bold}
+	.num0{font-size:medium;color:silver}
+	.num1{font-size:large}
+	.num2{font-size:x-large;color:green}
+	.num3{font-size:xx-large;color:blue}
+	.num4{font-size:xx-large;font-weight:bold;color:deeppink}
 	.num5{font-size:xx-large;font-weight:bold;color:red}
 	//label:before{d isplay:none;}
     input[type="checkbox"]{
@@ -65,11 +65,11 @@
     }
 	</style>
 </head>
-<body dir="rtl" style="background-image:url(bg.jpg); background-repeat:repeat-x" ng-controller="myController">
+<body dir="rtl" style="background-image:url(../../bg.jpg); background-repeat:repeat-x" ng-controller="myController">
 <table width="99%" ><tr>
-    <td><img style="border:3px black double" src="kbu-logo.png"/></td>
+    <td><img style="border:3px black double" src="../../kbu-logo.png"/></td>
     <td><h1 ng-bind-html="lblTag(Lix.title)"></h1></td>
-    <td><img src="kisrlogo.gif"/></td></tr>
+    <td><img src="../../kisrlogo.gif"/></td></tr>
 </table>
 <button ng-click="switchLang()" ><span class="langAr">English</span><span class="langEn">عربي</span></button>
 
@@ -130,7 +130,7 @@
     </table>
 </xform>
 
-<hr/><img id="imgWait" src="wait.gif" style="display:none"/>
+<hr/><img id="imgWait" src="../../wait.gif" style="display:none"/>
 <table id="dataTbl" border=1 nginit="x=dict.lookup[ rowsBy=='sector'
     ?(sector.code==0?'sector':'typ')
     :(gov.code==0 || gov.code==7 ? 'gov':'name' ] ">
@@ -152,7 +152,7 @@
         >{{ y.ar||dtm.row.ar }}</span><span class="langEn">{{ y.en||dtm.row.en }}</span></th>
         <th ng-init=" t=dict.lookup.label[s.code]" s="{{s}}" t="{{t}}"><span class="langAr"
         >{{ t.ar }}</span><span class="langEn">{{ t.en }}</span></th>
-        <td ng-repeat="i in row track by $index" ng-bind-html="i|filtr:s.format"></td>
+        <td ng-repeat="i in row track by $index" title="{{i|numberSpelling}}" ng-bind-html="i|filtr:s.format"></td>
     </tr>
     </tbody>
 </table>
