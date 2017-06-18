@@ -51,9 +51,10 @@ did=function(p){return document.getElementById(p);}
 myApp.controller("myController", [
 	"$scope","$http",
 	function($scope,$http) {
-		$scope.jspName='../../t.jsp'
+		$scope.jspName='t.jsp'
 		$scope.lang='ar'
-		$scope.Lix=Lix
+		$scope.Lix=Lix;
+		$scope.stataData=''
 		$scope.label=function(ix,lng){
 			var x=$scope.dict||0
 			x=x.lookup||0
@@ -140,6 +141,7 @@ myApp.controller("myController", [
 					did('dataTbl').style.display=''
 					$scope.data=data['return']
 					$scope.yrsChange();
+					$scope.updateStataData()
 				}
 				, function myError(response) {
 					console.log('cntrlr:onClk:$http.post.then:error:$scope='
@@ -157,8 +159,45 @@ myApp.controller("myController", [
 			document.styleSheets[1].rules[0].style.display=ar?'':'none'
 			document.styleSheets[1].rules[1].style.display=ar?'none':''
 		}
-
+  
+  $scope.termBase2stataChar(tb,yr,t)
+  {
+	var c=tb==2?'h':tb==4?'q':tb==12?'m':tb==52?'w':'';
+	return yr==undefined?c // { }
+	:yr+c+(tb==1?'':t);
 	}
+
+  $scope.updateStataData=function(){try{
+	function p(b){return b.en+'  '+b.ar;}
+	//function pp(a,b){a.push(ps(b))}
+	var s=$scope,b=[s.from==s.to?s.to:s.from+'-'+s.to 
+		, p(s.term) 
+		, 'GroupBy: '+s.rowsBy  
+		, 'Governrate: '+p(s.gov) 
+		, 'Sector: '+p(s.sector) 
+		, 'Contracts: '+p(s.contract)]
+	,lines=[b.join('\t')]
+	,tb=s.term.base,dt=s.data,S=s.dict.Statistics,ls=s.dict.lookup.label
+	,ss=s.sttstcs.selected,sn=ss.length//,tt=new Array(sn)
+	b=['']
+	for(var d=0;d<dt.length;d++)for(var st=0;st<sn;st++)
+		b.push('('+p(dt[d].row)+' _ '+p( ls[ S[ ss[st]  ].code  ] )+')' )
+	lines.push(b.join('\t'));
+
+	for(var yr=s.from;yr<=s.to;yr++){
+	  for(var y2=0;y2<tb;y2++){
+		b=[$scope.terbBase2stataChar(tb,yr,y2+1)]
+		for(var d=0;d<dt.length;d++){
+		  for(var st=0;st<sn;st++)try{
+			b.push(s.data[d] .tbl[st][ (yr-s.from)*tb+y2 ]);}
+			catch(ex){console.error('updateStataData:yr=',yr,'term=',y2,'d=',d,'st',st,ex);}
+		}
+		lines.push(b.join('\t'));
+	}}
+	return s.stataData=lines.join('\n')
+   }catch(ex){console.error('updateStataData',ex)}
+  }//updateStataData
+ }// controller function
 ]);
 
 myApp.filter('filtr',function(){
@@ -272,9 +311,9 @@ myApp.filter('numberSpelling',function(){
 	 }if(x>0){
 		var b=a[base],h=x%100//,t=Math.floor(v/10)%10//,o=x%10;
 		if(x==1){
-        	if(base>1 && b && b.en)apnd(b);
-        	else{ apnd(a.s); apnd(a[1][1]);}
-        }else if(b.ar2 && h==2 ){
+			if(base>1 && b && b.en)apnd(b);
+			else{ apnd(a.s); apnd(a[1][1]);}
+		}else if(b.ar2 && h==2 ){
 			if(x>2)
 			{	hnds(Math.floor(v/100)%10);
 				r.ar.push(a.w.ar)
@@ -307,3 +346,97 @@ myApp.filter('numberSpelling',function(){
 	return f(v);
  }
 })
+
+
+myApp.directive('tsline', [ function() {
+
+function generateChart(scope,element,attrs)//,data,d,from,to,termBase
+{
+ function convert2Domain(from,to,termBase){
+	var r=[];
+	for(var y=from;y<=to;y++)for(var t=1;t<=termBase;t++)
+		r.push(scope.termBase2stataChar(termBase,y,t))
+	return r;}
+
+ //series= $scope.data[d].tbl[0]
+ function convertData2chart(series,domain,key,color,a){
+/*
+input-data-format
+series:[<int>,,,]
+yrs:[<int:from>,,,<int:to>]
+termBase:1,2,4,12,52
+
+chart-data format:
+	array of objects
+		{
+			area:<bool>							//optional
+			,values:[ { x:<int> , y:<num> } ]
+			,key: <str>
+			,color:<#rrggbb>
+			,strokeWidth:<num>					//optional
+			,classed:<str:'dashed'>				//optional
+			,fillOpacity:<num: 0.0 ... 1.0>		//optional
+		}
+*/
+	if(a==undefined){a=[]}
+	var r={values:[],key:key,color:color||'blue'}
+	for(var i=0;i<series.length;i++)
+		r.values.push({x:domain[i],y:series[i]});
+	return r;
+}
+
+	var d=attrs.d,tb=scope.term.base
+	,r=
+		{
+		element:element
+		,chartData:convertData2chart(scope.data[d] .tbl[0]
+			,convert2Domain(scope.from,scope.to,tb)
+			,scope.data[d].row[scope.lang]//<span class="langAr"	>{{ y.ar||dtm.row.ar }}</span><span class="langEn">{{ y.en||dtm.row.en }}</span>
+			) ;
+		}
+
+	r.chart = nv.models.lineChart()
+		.options({
+			duration: 300,
+			useInteractiveGuideline: true
+		});
+	r.chart.xAxis
+			//.axisLabel(l[n-1])//"Time (s)"
+			//.tickFormat(d3.format(',.1f'))
+			.staggerLabels(true);
+
+	r.chart.yAxis
+		//.axisLabel(l[1])//l[n-1]//'Voltage (v)'
+		.tickFormat(function(d) {
+			if (d == null) {
+				return 'N/A';
+			}
+			return d3.format(',.2f')(d);
+		});
+
+	d3.select(element).append('svg')
+		.attr('style','width:75%;height:50%')
+			.datum(r.chartData)
+			.call(r.chart);
+
+		//nv.utils.windowResize(r.chart.update);
+
+		//return chart;}
+		nv.addGraph(r.chart);
+	return r;
+ }
+
+
+return {
+	restrict: 'A'//'E'
+	//,transclude: true,
+	,scope: {d:'d'}
+	//,templateUrl: 'my-dialog.html'
+	,link: generateChart
+  };
+}//directive func
+
+ ]);
+
+
+
