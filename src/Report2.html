@@ -149,14 +149,15 @@
 	<tr ng-repeat="row in dtm.tbl"  ng-init="s=dict.Statistics[sttstcs.selected[$index]]">
 		<th ng-if="$index==0" rowspan="{{dtm.tbl.length}}" nm="{{ dtm.row }}"
 			ng-init=" y = x[ dtm.row.code ] "><span class="langAr"
-		>{{ y.ar||dtm.row.ar }}</span><span class="langEn">{{ y.en||dtm.row.en }}</span><span tsline="$index"></span></th>
+		>{{ y.ar||dtm.row.ar }}</span><span class="langEn">{{ y.en||dtm.row.en }}</span>
+            <span tsline="$index"></span></th>
 		<th ng-init=" t=dict.lookup.label[s.code]" s="{{s}}" t="{{t}}"><span class="langAr"
 		>{{ t.ar }}</span><span class="langEn">{{ t.en }}</span></th>
 		<td ng-repeat="i in row track by $index" title="{{i|numberSpelling}}" ng-bind-html="i|filtr:s.format"></td>
 	</tr>
 	</tbody>
 </table>
-<hr/><h3>Stata-Format:</h3>
-<pre id="stata" style="border:3px blue double;background-color:#f0f0ff">{{stataData}}</pre></span>
+<hr/><h3>Stata-Format:</h3><a href="{{stataData}}" download="stata.csv">download</a>
+<!--pre-- id="stata" style="border:3px blue double;background-color:#f0f0ff">{ {stataData} }</pre--></span>
 </body>
 </html>

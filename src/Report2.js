@@ -160,8 +160,7 @@ myApp.controller("myController", [
 			document.styleSheets[1].rules[1].style.display=ar?'none':''
 		}
   
-  $scope.termBase2stataChar(tb,yr,t)
-  {
+  $scope.termBase2stataChar=function(tb,yr,t){
 	var c=tb==2?'h':tb==4?'q':tb==12?'m':tb==52?'w':'';
 	return yr==undefined?c // { }
 	:yr+c+(tb==1?'':t);
@@ -170,31 +169,51 @@ myApp.controller("myController", [
   $scope.updateStataData=function(){try{
 	function p(b){return b.en+'  '+b.ar;}
 	//function pp(a,b){a.push(ps(b))}
-	var s=$scope,b=[s.from==s.to?s.to:s.from+'-'+s.to 
+	var s=$scope ,delimiter=','
+	,b=[s.from==s.to?s.to:s.from+'-'+s.to
 		, p(s.term) 
 		, 'GroupBy: '+s.rowsBy  
 		, 'Governrate: '+p(s.gov) 
 		, 'Sector: '+p(s.sector) 
 		, 'Contracts: '+p(s.contract)]
-	,lines=[b.join('\t')]
+	,lines=[b.join(delimiter)]
 	,tb=s.term.base,dt=s.data,S=s.dict.Statistics,ls=s.dict.lookup.label
 	,ss=s.sttstcs.selected,sn=ss.length//,tt=new Array(sn)
 	b=['']
 	for(var d=0;d<dt.length;d++)for(var st=0;st<sn;st++)
 		b.push('('+p(dt[d].row)+' _ '+p( ls[ S[ ss[st]  ].code  ] )+')' )
-	lines.push(b.join('\t'));
+	lines.push(b.join(delimiter));
 
 	for(var yr=s.from;yr<=s.to;yr++){
 	  for(var y2=0;y2<tb;y2++){
-		b=[$scope.terbBase2stataChar(tb,yr,y2+1)]
+		b=[$scope.termBase2stataChar(tb,yr,y2+1)]
 		for(var d=0;d<dt.length;d++){
 		  for(var st=0;st<sn;st++)try{
 			b.push(s.data[d] .tbl[st][ (yr-s.from)*tb+y2 ]);}
 			catch(ex){console.error('updateStataData:yr=',yr,'term=',y2,'d=',d,'st',st,ex);}
 		}
-		lines.push(b.join('\t'));
+		lines.push(b.join(delimiter));
 	}}
-	return s.stataData=lines.join('\n')
+	var csv= lines.join('\n')
+	/*function downloadCSV(args) {
+            var data, filename, link;
+            //var csv = convertArrayOfObjectsToCSV({data: stockData});
+            if (csv == null) return;
+
+            filename = args.filename || 'export.csv';
+
+            if (!csv.match(/^data:text\/csv/i)) {
+                csv = 'data:text/csv;charset=utf-8,' + csv;
+            }
+            data = encodeURI(csv);
+
+            //link = document.createElement('a');link.setAttribute('href', data);link.setAttribute('download', filename);
+           // link.click();}*/
+    if (!csv.match(/^data:text\/csv/i)) {
+       csv = 'data:text/csv;charset=utf-8,' + csv;
+       }
+    csv = encodeURI(csv);
+    return s.stataData=csv
    }catch(ex){console.error('updateStataData',ex)}
   }//updateStataData
  }// controller function
@@ -386,14 +405,12 @@ chart-data format:
 }
 
 	var d=attrs.d,tb=scope.term.base
-	,r=
-		{
+	,r={
 		element:element
 		,chartData:convertData2chart(scope.data[d] .tbl[0]
 			,convert2Domain(scope.from,scope.to,tb)
 			,scope.data[d].row[scope.lang]//<span class="langAr"	>{{ y.ar||dtm.row.ar }}</span><span class="langEn">{{ y.en||dtm.row.en }}</span>
-			) ;
-		}
+			)}
 
 	r.chart = nv.models.lineChart()
 		.options({
