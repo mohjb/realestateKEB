@@ -100,7 +100,7 @@ myApp.controller("myController", [
 						$scope.from=$scope.dict.minmaxYear[0],
 						$scope.to=$scope.dict.minmaxYear[1])
 					$scope.gov=$scope.dict.lookup.gov[0]
-					$scope.sttstcs={selected:[1,2,6,0],unselected:[3,4,5,7,8]}
+					$scope.sttstcs={selected:[2,1,6,0],unselected:[3,4,5,7,8]}
 					$scope.term=$scope.dict.terms[0]
 					$scope.contract=$scope.dict.contrcts[0]
 					$scope.typ=$scope.dict.lookup.type[0]
@@ -210,9 +210,10 @@ myApp.controller("myController", [
             //link = document.createElement('a');link.setAttribute('href', data);link.setAttribute('download', filename);
            // link.click();}*/
     if (!csv.match(/^data:text\/csv/i)) {
-       csv = 'data:text/csv;charset=utf-8,' + csv;
+       csv = 'data:text/csv;charset=UTF-16,' + csv;//;charset=utf-8
        }
     csv = encodeURI(csv);
+    b=did('stataA');b.setAttribute('href',b.href=csv);
     return s.stataData=csv
    }catch(ex){console.error('updateStataData',ex)}
   }//updateStataData
@@ -370,7 +371,7 @@ myApp.filter('numberSpelling',function(){
 myApp.directive('tsline', [ function() {
 
 function generateChart(scope,element,attrs)//,data,d,from,to,termBase
-{
+{try{
  function convert2Domain(from,to,termBase){
 	var r=[];
 	for(var y=from;y<=to;y++)for(var t=1;t<=termBase;t++)
@@ -401,15 +402,15 @@ chart-data format:
 	var r={values:[],key:key,color:color||'blue'}
 	for(var i=0;i<series.length;i++)
 		r.values.push({x:domain[i],y:series[i]});
-	return r;
+	return [r];
 }
 
-	var d=attrs.d,tb=scope.term.base
+	var datum=scope.dtm,series=datum.tbl[0],tb=scope.term.base//d=scope.dtm  attrs.d||this.index
 	,r={
 		element:element
-		,chartData:convertData2chart(scope.data[d] .tbl[0]
+		,chartData:convertData2chart(series //scope.data[d].tbl[0]
 			,convert2Domain(scope.from,scope.to,tb)
-			,scope.data[d].row[scope.lang]//<span class="langAr"	>{{ y.ar||dtm.row.ar }}</span><span class="langEn">{{ y.en||dtm.row.en }}</span>
+			,datum.row[scope.lang]//scope.data[d]<span class="langAr"	>{{ y.ar||dtm.row.ar }}</span><span class="langEn">{{ y.en||dtm.row.en }}</span>
 			)}
 
 	r.chart = nv.models.lineChart()
@@ -431,8 +432,8 @@ chart-data format:
 			return d3.format(',.2f')(d);
 		});
 
-	d3.select(element).append('svg')
-		.attr('style','width:75%;height:50%')
+	d3.select(element[0]).append('svg')
+		.attr('style','width:75%;height:50%;min-width:600px')
 			.datum(r.chartData)
 			.call(r.chart);
 
@@ -441,16 +442,19 @@ chart-data format:
 		//return chart;}
 		nv.addGraph(r.chart);
 	return r;
- }
+ }catch(ex){
+    console.error('generateChart',ex);}
+ }//function generate
 
 
 return {
 	restrict: 'A'//'E'
 	//,transclude: true,
-	,scope: {d:'d'}
+	//,scope: {d:'d'}
 	//,templateUrl: 'my-dialog.html'
 	,link: generateChart
   };
+
 }//directive func
 
  ]);
