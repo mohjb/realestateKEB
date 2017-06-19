@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<script>
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+}
+
+function drop(ev) {
+    ev.preventDefault();
+    var data = ev.dataTransfer.getData("text");
+    ev.target.appendChild(document.getElementById(data));
+}
+</script>
+</head>
+<body>
+
+<div id="div1" ondrop="drop(event)" ondragover="allowDrop(event)"  style="display:flex;border:3px double black">1
+<span id="st1" draggable="true" ondragstart="drag(event)" style="border:1px solid blue;background-color:#f0f0ff">sttstc 1</span></div>
+<hr/>
+<div id="div2" ondrop="drop(event)" ondragover="allowDrop(event)"  style="display:flex;border:3px double black">2
+<span id="st2" draggable="true" ondragstart="drag(event)" style="border:1px solid blue;background-color:#f0f0ff">sttstc  2</span></div>
+<hr/>
+<div id="div3" ondrop="drop(event)" ondragover="allowDrop(event)"  style="display:flex;border:3px double black">3
+<span id="st3" draggable="true" ondragstart="drag(event)" style="border:1px solid blue;background-color:#f0f0ff">sttstc  3</span>
+</div>
+<div id="div4" ondrop="drop(event)" ondragover="allowDrop(event)"  style="display:flex;border:3px double black">4<span id="st4" draggable="true" ondragstart="drag(event)" style="border:1px solid blue;background-color:#f0f0ff">sttstc  4</span></div>
+<div id="div5" ondrop="drop(event)" ondragover="allowDrop(event)"  style="display:flex;border:3px double black">5<span id="st5" draggable="true" ondragstart="drag(event)" style="border:1px solid blue;background-color:#f0f0ff">sttstc  5</span></div>
+<div id="div6" ondrop="drop(event)" ondragover="allowDrop(event)"  style="display:flex;border:3px double black">6<span id="st6" draggable="true" ondragstart="drag(event)" style="border:1px solid blue;background-color:#f0f0ff">sttstc  6</span></div>
+<div id="div7" ondrop="drop(event)" ondragover="allowDrop(event)"  style="display:flex;border:3px double black">7
+<img id="drag1" src="img_logo.gif" draggable="true"
+ondragstart="drag(event)" width="336" height="69" alt="icon"></div>
+
+</body>
+</html>
