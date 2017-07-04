@@ -8,18 +8,114 @@
 <script src="/angular-1.6.4/angular-ui-router.js"></script>
 	<script>
 function did(p){return document.getElementById(p);}
-
+function dt(p){return new Date(p);}
 (window.xa=app=(angular||{})
 .module('app', ['ngSanitize','angular-md5','ui.router'] ))
-.factory('app', [ function appFactory() {
+.factory('app', ['$http', function appFactory($http) {
 	var p=window.xa||{}
 	p.ls={usr:{
-		moh:{un:'moh',pw:'6f8f57715090da2632453988d9a1501b',uid:0,firstName:'Mohammad',lastName:'Buhamad',email:'mbohamad@kisr.edu.kw',level:'fullAccess',notes:'',created:'2017/06/20T21:05',created:'2017/06/20T21:05'}
-		}
+		moh:{url:'user-moh',un:'moh',pw:'6f8f57715090da2632453988d9a1501b'
+			,firstName:'Mohammad',lastName:'Buhamad',email:'mohamadjb@gmail.com'
+			,level:'fullAccess',notes:'',created:'2017/06/20T21:05'
+			,lastModified:'2017/06/20T21:05'}}
 		,contracts:[]
 	}// ls // localStorage
+	p.urls={};p.urls[p.ls.usr.moh.url]={o:p.ls.usr.moh,lm:new Date().getTime(),chng:0}
 	p.logout=function appLogout(state){p.usr=0;}
 	p.goals=['dl','sv','cm','sp','ni']
+	p.save=function(){
+		var s=JSON.stringify(p.ls)
+		localStorage.aswan20170704=s
+		p.load(s);
+	}
+	p.merge=function(a,b){
+		function disect(a,b){
+			var r=[{},{}]//0:in a & not in b, 1:in both , 2:not in a & in b
+			for(var i in a){
+				var c=a[i];
+				if(c && c.url)
+				{var z=p.urls[c.url]
+				 if(!z)
+					r[0][c.url]=c
+				 else{
+					r[1][c.url]=z;
+					if(c.lastModified>z.lastModified)
+						z.c=c;}
+				}
+			}
+			return r;}
+		var chngsCount=0
+		function mrg(a,b,w){
+			var sc=disect(a[w],b[w])
+			for(var u in sc[0]){
+				chngsCount++
+				var c=sc[0][u]
+				console.log('app.merge:added ',u,c);
+				p.urls[u]={o:c,lm:c.lastModified,chng:0}
+				p.ls[w].push(c);
+			}
+			for(var u in sc[1]){
+				var z=sc[1][u],c=z.c
+				if(c){
+					for(var i in c){
+						var v=c[i],x=z.o[i]
+						if(v!=x){
+							chngsCount++
+							console.log('app.merge:updated:url=',u,',property=',i,',oldVal=',x,z.o,',newVal=',v,c)
+							z.o[i]=v
+					}}
+					delete z.c
+				}
+			}
+		}
+		try{
+		//compare usr 's first , then compare contracts
+		mrg(a,b,'usr')
+		mrg(a,b,'contracts')
+		}catch(ex){console.log('app.merge:error',a,b,ex)}
+		return chngsCount;
+	}
+	p.load=function(s,depth){
+		if(depth==undefined)
+			depth=3
+		if(!s){
+			s=localStorage.aswan20170704
+			try{p.merge(JSON.parse(s),p.ls)
+			}catch(ex){
+				console.log('app.load:json-parse:error',ex)}
+		}
+		$http.post('f.jsp',s).then(
+			function(response){
+				console.log('app.load:post:response:',response,arguments)
+				var x=response.data
+				if(p.merge(x,p.ls) && depth>0)
+					p.load(0,depth-1)
+			},function(response){
+				console.log('app.load:post:error:',response,arguments)
+			})
+	}
+	p.chng=function(x){
+		if(x && x.url){
+			var d=new Date(),n=d.getTime();
+			console.log('app.chng',x,arguments)
+			var z=p.urls[x.url]
+			if(!z)
+				z=p.urls[x.url]={o:x,lm:x.lastModified,chng:n}
+			else z.chng=n
+		}
+	}
+	p.blur=function(x){
+		if(x && x.url){
+			var d=new Date(),n=d.getTime();
+			console.log('app.blur',x,arguments)
+			var z=p.urls[x.url]
+			if(z && z.chng>z.lm)
+			{z.lm=x.lastModified=z.chng
+				p.save();
+			}
+				
+		}
+	}
 	p.compute=function(c){}
 	p.computeDl=function(c){}
 	p.computeSv=function(c){}
@@ -28,6 +124,7 @@ function did(p){return document.getElementById(p);}
 	p.computeNi=function(c){}
 	p.cols={ppl:'number of People'
 		,dl:'Direct Labor'
+		,month:'month'
 		,dm:'Direct Material'
 		,sv:'Direct Supervisor'
 		,oh:'Overhead'
@@ -36,10 +133,12 @@ function did(p){return document.getElementById(p);}
 		,ni:'Net Income'
 		,tt:'Total Cost'
 	}
-	p.newCntrct=function(){var d=new Date();
-	  return {lastModified:d,date:d
-		,title:'Contract'+d.getTime()
-		,ppl:0,Month:0
+	p.newCntrct=function(){var d=new Date(),n=d.getTime()
+	  ,p= {lastModified:n,created:n
+		,url:'cntrct-'+n
+		,usr:(app.usr&&app.usr.url)
+		,title:'Contract'+n
+		,ppl:0,month:0
 		,dl:0 // 'Direct Labor'
 		,dm:0 // Direct Material
 		,sv:0 // direct Supervisor
@@ -50,7 +149,9 @@ function did(p){return document.getElementById(p);}
 		,ni:0 // net-income
 		,goal:'dl'
 		}
+		return p;
 	}
+	p.load()
 	return function appFactoryCallback(message) {return p;}
 }])
 .config(function appConfig($stateProvider,$urlRouterProvider){
@@ -70,7 +171,6 @@ function did(p){return document.getElementById(p);}
 	//  template:did('template.main').innerHTML
 	templateProvider: function ($timeout, $stateParams) {
 		return $timeout(function () {return did('template.main').innerHTML}, 100);}
-
 	})
 	.state('cntrct',{
 	  url:'/cntrct',controller:'cntrctCtrl',
@@ -107,7 +207,6 @@ function did(p){return document.getElementById(p);}
 	}
 	if(app.usr)
 		location.hash='#!/main'
-
 	})
 .controller('mainCtrl',
  function mainCtrlController($scope,app ) {
@@ -116,9 +215,9 @@ function did(p){return document.getElementById(p);}
 	
 	if(!app || !app.usr)
 		return location.hash='#!/login'
-
 	if(app){
 		$scope.app=app
+		$scope.cntrcts=app.ls.contracts
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , app=',app )
 	}else{
 		$scope.usr=null;
@@ -132,7 +231,6 @@ function did(p){return document.getElementById(p);}
 	
 	if(!app || !app.usr)
 		return location.hash='#!/login'
-
 	if(app){
 		$scope.app=app
 		$scope.c=app.cntrct
@@ -153,7 +251,6 @@ function did(p){return document.getElementById(p);}
 			background: -moz-linear-gradient(#ae9018, #6e5632); /* For Firefox 3.6 to 15 */
 			background: linear-gradient(#ae9018, #6e5632); /* Standard syntax */
 		}
-
 		ul { list-style-type: none; }
 		label{
 			background-color: #AAAFAB;
@@ -180,12 +277,10 @@ function did(p){return document.getElementById(p);}
 		-o-transition:all 1s ease;
 		transition:all 1s ease;
 	}
-
 	input[type=checkbox]:checked ~ ul {
 		max-height: 100%;
 		max-width: 100%;
 		opacity: 1;	}
-
 	input[type=checkbox] + label:before{
 		transform-origin:25% 50%;
 		border: 8px solid transparent;
@@ -204,13 +299,11 @@ function did(p){return document.getElementById(p);}
 		transition:all .5s ease;
 		position: absolute;
 		margin-top: 1px;	}
-
 	input[type=checkbox]:checked + label:before {
 		transform: rotate(90deg);
 		/*margin-top: 6px;
 		 margin-left: -25px;*/
 	}
-
 	.styl1{
 		float: left;
 		width: 45%;
@@ -221,7 +314,6 @@ function did(p){return document.getElementById(p);}
 		border-radius:15px;
 	}
 	.stylLeg{background-color: beige;border:1px solid black;border-radius:7px;}
-
 	.Rtable {
   display: flex;
   flex-wrap: wrap;
@@ -239,7 +331,6 @@ function did(p){return document.getElementById(p);}
   background: fade(slategrey,20%);
   > h1, > h2, > h3, > h4, > h5, > h6 { margin: 0; }
 }
-
 /* Table column sizing
 ================================== */
 .Rtable--2cols > .Rtable-cell  { width: 50%; }
@@ -247,14 +338,6 @@ function did(p){return document.getElementById(p);}
 .Rtable--4cols > .Rtable-cell  { width: 25%; }
 .Rtable--5cols > .Rtable-cell  { width: 20%; }
 .Rtable--6cols > .Rtable-cell  { width: 16.6%; }
-
-
-
-
-
-
-
-
 /* Page styling
 ================================== */
 @import url(https://fonts.googleapis.com/css?family=Josefin+Sans:400,700);
@@ -281,16 +364,16 @@ strong { color: darken(slategrey,20%); }
 </head>
 <body class="grad">
 <div style="position:absolute;top:0;left:0;width:1600px;height:847px;background-image:url(ab_left.png);z-index: -10"></div>
-<img src="logo.png">, by mohamadjb@gmail.com
+<img src="logo.png">
 <div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="app">
-<main ui-view></main></div>
+<main ui-view></main>, by mohamadjb@gmail.com</div>
 
 <templates>
 
 <template id="template.main" >
 	<h2 class="ghost">Contracts Main Menu</h2>
 	<a ng-click="app.logout()" href="#!/login)">logout</a>
-	<a ng-click="app.ls.contracts.push(app.cntrct=app.newCntrct())" href="#!/cntrct" >New Contract</a>
+	<a ng-click="cntrcts.push(app.cntrct=app.newCntrct())" href="#!/cntrct" >New Contract</a>
 	<div class="Rtable Rtable--4cols" >
 		<div class="Rtable-cell"><h3>Title</h3></div>
 		<div class="Rtable-cell"><h3>Created</h3></div>
@@ -299,7 +382,7 @@ strong { color: darken(slategrey,20%); }
 	</div>
 	<div class="Rtable Rtable--4cols" ng-repeat="i in cntrcts">
 		<div class="Rtable-cell"><h3><a ng-click="app.cntrct=i" href="#!/cntrct">{{i.title}}</h3></div>
-		<div class="Rtable-cell"><a ng-click="app.cntrct=i" href="#!/cntrct">{{i.date}}</a></div>
+		<div class="Rtable-cell"><a ng-click="app.cntrct=i" href="#!/cntrct">{{dt(i.created)}}</a></div>
 		<div class="Rtable-cell"><a ng-click="app.cntrct=i" href="#!/cntrct"  >{{i.tt}}</a></div>
 		<div class="Rtable-cell"><a ng-click="app.cntrct=i" href="#!/cntrct"  >{{i.ni}}</a></div>
 	</div>
@@ -308,47 +391,47 @@ strong { color: darken(slategrey,20%); }
 <template id="template.cntrct" >
 	<h2 class="ghost">Contract:{{c.title}}</h2>
 	<a href="#!/main)">Main menu</a>
-	<select ng-model="c.goal" ng-options="g in app.goals"></select>
+	<select ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.goal" ng-options="i for i in app.goals"></select>
 
- <div class="Rtable Rtable--2cols" ng-repeat="i in cntrcts">
-	<div class="Rtable-cell"><h3>Title</h3></div>
-	<div class="Rtable-cell"><h3><input ng-model="app.cntrct.title"/></h3></div>
+ <div class="Rtable Rtable--2cols" >
+	<div class="Rtable-cell" style="align:right"><h3>Title</h3></div>
+	<div class="Rtable-cell" style="align:left" ><h3><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.title"/></h3></div>
+
+	<div class="Rtable-cell" style="align:right">Created</div>
+	<div class="Rtable-cell" style="align:left" >{{dt(c.created)}}</div>
+
+	<div class="Rtable-cell" style="align:right">Last Modified</div>
+	<div class="Rtable-cell" style="align:left" >{{dt(c.lastModified)}}</div>
 	
 	<div class="Rtable-cell">Ppl</div>
-	<div class="Rtable-cell"><input ng-model="c.ppl"/></div>
+	<div class="Rtable-cell"><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.ppl"/></div>
 	
-	<div class="Rtable-cell">DL</div>
-	<div class="Rtable-cell"><input ng-model="c.dl"/></div>
+	<div class="Rtable-cell" style="align:right">Month</div>
+	<div class="Rtable-cell" style="align:left" ><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.month"/></div>
 	
-	<div class="Rtable-cell">DM</div>
-	<div class="Rtable-cell"><input ng-model="c.dm"/></div>
+	<div class="Rtable-cell" style="align:right">DL</div>
+	<div class="Rtable-cell" style="align:left" ><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.dl"/></div>
 	
-	<div class="Rtable-cell">SV</div>
-	<div class="Rtable-cell"><input ng-model="c.sv"/></div>
+	<div class="Rtable-cell" style="align:right">DM</div>
+	<div class="Rtable-cell" style="align:left" ><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.dm"/></div>
 	
-	<div class="Rtable-cell">OH</div>
-	<div class="Rtable-cell"><input ng-model="c.oh"/></div>
+	<div class="Rtable-cell" style="align:right">SV</div>
+	<div class="Rtable-cell" style="align:left" ><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.sv"/></div>
 	
-	<div class="Rtable-cell">Total Cost</div>
-	<div class="Rtable-cell"><input ng-model="c.tc"/></div>
+	<div class="Rtable-cell" style="align:right">OH</div>
+	<div class="Rtable-cell" style="align:left" ><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.oh"/></div>
 	
-	<div class="Rtable-cell">Com</div>
-	<div class="Rtable-cell"><input ng-model="c.cm"/></div>
+	<div class="Rtable-cell" style="align:right">Total Cost</div>
+	<div class="Rtable-cell" style="align:left" ><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.tc"/></div>
 	
-	<div class="Rtable-cell"></div>
-	<div class="Rtable-cell"><input ng-model="c."/></div>
+	<div class="Rtable-cell" style="align:right">Com</div>
+	<div class="Rtable-cell" style="align:left" ><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.cm"/></div>
 	
-	<div class="Rtable-cell">Sales Price</div>
-	<div class="Rtable-cell"><input ng-model="c.sp"/></div>
+	<div class="Rtable-cell" style="align:right">Sales Price</div>
+	<div class="Rtable-cell" style="align:left" ><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.sp"/></div>
 	
-	<div class="Rtable-cell">Net Income</div>
-	<div class="Rtable-cell"><input ng-model="c.ni"/></div>
-
-	<div class="Rtable-cell">Created</div>
-	<div class="Rtable-cell"><input ng-model="c.date"/></div>
-
-	<div class="Rtable-cell">Last Modified</div>
-	<div class="Rtable-cell">{{c.ni}}</div>
+	<div class="Rtable-cell" style="align:right">Net Income</div>
+	<div class="Rtable-cell" style="align:left" ><input ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.ni"/></div>
 </div>
 </template>
 
