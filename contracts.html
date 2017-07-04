@@ -1,0 +1,370 @@
+<!DOCTYPE>
+<html>
+<head>
+<link href="favic32.ico" rel="shortcut icon" />
+<script src="/angular-1.6.4/angular.js"></script>
+<script src="/angular-1.6.4/angular-sanitize.min.js"></script>
+<script src="/angular-1.6.4/angular-md5.js"></script>
+<script src="/angular-1.6.4/angular-ui-router.js"></script>
+	<script>
+function did(p){return document.getElementById(p);}
+
+(window.xa=app=(angular||{})
+.module('app', ['ngSanitize','angular-md5','ui.router'] ))
+.factory('app', [ function appFactory() {
+	var p=window.xa||{}
+	p.ls={usr:{
+		moh:{un:'moh',pw:'6f8f57715090da2632453988d9a1501b',uid:0,firstName:'Mohammad',lastName:'Buhamad',email:'mbohamad@kisr.edu.kw',level:'fullAccess',notes:'',created:'2017/06/20T21:05',created:'2017/06/20T21:05'}
+		}
+		,contracts:[]
+	}// ls // localStorage
+	p.logout=function appLogout(state){p.usr=0;}
+	p.goals=['dl','sv','cm','sp','ni']
+	p.compute=function(c){}
+	p.computeDl=function(c){}
+	p.computeSv=function(c){}
+	p.computeCm=function(c){}
+	p.computeSp=function(c){}
+	p.computeNi=function(c){}
+	p.cols={ppl:'number of People'
+		,dl:'Direct Labor'
+		,dm:'Direct Material'
+		,sv:'Direct Supervisor'
+		,oh:'Overhead'
+		,cm:'Commession'
+		,sp:'Sales Price'
+		,ni:'Net Income'
+		,tt:'Total Cost'
+	}
+	p.newCntrct=function(){var d=new Date();
+	  return {lastModified:d,date:d
+		,title:'Contract'+d.getTime()
+		,ppl:0,Month:0
+		,dl:0 // 'Direct Labor'
+		,dm:0 // Direct Material
+		,sv:0 // direct Supervisor
+		,oh:0 // Over head
+		//total cost
+		,cm:0 // comession
+		,sp:0 // sales-price
+		,ni:0 // net-income
+		,goal:'dl'
+		}
+	}
+	return function appFactoryCallback(message) {return p;}
+}])
+.config(function appConfig($stateProvider,$urlRouterProvider){
+	console.log('config',this,arguments);
+	$urlRouterProvider.otherwise('/login');
+	$stateProvider.state('login',{
+		url:'/login',controller:'loginCtrl',
+		//templateUrl:did('template.login').innerHTML
+		templateProvider: function ($timeout, $stateParams) {
+			return $timeout(function () {
+				return did('template.login').innerHTML
+				//'<h1>' + $stateParams.contactId + '</h1>'
+			}, 100);}
+	})
+	.state('main',{
+	  url:'/main',controller:'mainCtrl',
+	//  template:did('template.main').innerHTML
+	templateProvider: function ($timeout, $stateParams) {
+		return $timeout(function () {return did('template.main').innerHTML}, 100);}
+
+	})
+	.state('cntrct',{
+	  url:'/cntrct',controller:'cntrctCtrl',
+	//  template:did('template.main').innerHTML
+	templateProvider: function ($timeout, $stateParams) {
+		return $timeout(function () {return did('template.cntrct').innerHTML}, 100);}
+	})
+})//config
+.controller('loginCtrl',
+ function loginCtrlController($scope,app
+	,md5,$state,$rootScope) 
+ {	console.log('app.controller:loginCtrl:($scope'
+ 		,$scope,',app',app,',md5',md5
+ 		,',$state',$state,',$rootScope',$rootScope
+ 		,',arguments',arguments,',this',this,')')
+	$scope.un=''
+	$scope.pw=''
+	$scope.msg=''
+	if(app instanceof Function)app=app();
+	$scope.app=app;
+	$scope.clk=
+	function calek(){
+		console.log('loginCtrl:clk',arguments,this);
+		var u=app.ls.usr[$scope.un]
+		if(!md5){console.error('controller:loginCtrl:function-clk:param-md5 not defined');
+			md5={createHash:function loginCtrlDummyMd5(){} } }
+		if(u && u.pw == md5.createHash($scope.pw)){
+			app.usr=u;
+			//TODO: DbLog.newEntry(login)
+			$scope.msg='login successful,\n'+(new Date)
+			location.hash='#!/main';//$state.go('main')
+		}
+		else $scope.msg='invalid login \n,'+(new Date)
+	}
+	if(app.usr)
+		location.hash='#!/main'
+
+	})
+.controller('mainCtrl',
+ function mainCtrlController($scope,app ) {
+	if(app instanceof Function)
+		app=app();
+	
+	if(!app || !app.usr)
+		return location.hash='#!/login'
+
+	if(app){
+		$scope.app=app
+		console.log('mainCntrl:version=',$scope.version='mainCntrl , app=',app )
+	}else{
+		$scope.usr=null;
+		console.log('mainCntrl:version=',$scope.version='mainCntrl , no app')
+	}
+})
+.controller('cntrctCtrl',
+ function cntrctCtrlController($scope,app ) {
+	if(app instanceof Function)
+		app=app();
+	
+	if(!app || !app.usr)
+		return location.hash='#!/login'
+
+	if(app){
+		$scope.app=app
+		$scope.c=app.cntrct
+		console.log('cntrctCtrl:version=',$scope.version='cntrctCtrl , app=',app )
+	}else{
+		$scope.usr=null;
+		console.log('cntrctCtrl:version=',$scope.version='cntrctCtrl , no app')
+	}
+})
+</script>
+<title>Aswan 2017, by mohamadjb@gmail.com</title>
+<style>
+	.ghost{color:white}
+		.grad {
+			background: #ae9018; /* For browsers that do not support gradients */
+			background: -webkit-linear-gradient(#ae9018, #6e5632); /* For Safari 5.1 to 6.0 */
+			background: -o-linear-gradient(#ae9018, #6e5632); /* For Opera 11.1 to 12.0 */
+			background: -moz-linear-gradient(#ae9018, #6e5632); /* For Firefox 3.6 to 15 */
+			background: linear-gradient(#ae9018, #6e5632); /* Standard syntax */
+		}
+
+		ul { list-style-type: none; }
+		label{
+			background-color: #AAAFAB;
+			border-radius: 5px;
+			padding: 3px;
+			padding-left: 25px;
+			color: white;
+		}
+	li {
+		margin: 10px;
+		padding: 5px;
+		border: 1px solid #ABC;
+		border-radius: 5px;
+	}
+	input[type=checkbox] { display: none; }
+	input[type=checkbox] ~ ul {
+		max-height: 0;
+		max-width: 0;
+		opacity: 0;
+		overflow: hidden;
+		white-space:nowrap;
+		-webkit-transition:all 1s ease;
+		-moz-transition:all 1s ease;
+		-o-transition:all 1s ease;
+		transition:all 1s ease;
+	}
+
+	input[type=checkbox]:checked ~ ul {
+		max-height: 100%;
+		max-width: 100%;
+		opacity: 1;	}
+
+	input[type=checkbox] + label:before{
+		transform-origin:25% 50%;
+		border: 8px solid transparent;
+		border-width: 8px 12px;
+		border-left-color: white;
+		margin-left: -20px;
+		width: 0;
+		height: 0;
+		display: inline-block;
+		text-align: center;
+		content: '';
+		color: #AAAFAB;
+		-webkit-transition:all .5s ease;
+		-moz-transition:all .5s ease;
+		-o-transition:all .5s ease;
+		transition:all .5s ease;
+		position: absolute;
+		margin-top: 1px;	}
+
+	input[type=checkbox]:checked + label:before {
+		transform: rotate(90deg);
+		/*margin-top: 6px;
+		 margin-left: -25px;*/
+	}
+
+	.styl1{
+		float: left;
+		width: 45%;
+		min-height: 50px;
+		margin-bottom: 20px;
+		padding: 5px;
+		background-color: beige;
+		border-radius:15px;
+	}
+	.stylLeg{background-color: beige;border:1px solid black;border-radius:7px;}
+
+	.Rtable {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 3em 0;
+  padding: 0;
+}
+.Rtable-cell {
+  box-sizing: border-box;
+  flex-grow: 1;
+  width: 100%;  // Default to full width
+  padding: 0.8em 1.2em;
+  overflow: hidden; // Or flex might break
+  list-style: none;
+  border: solid @bw white;
+  background: fade(slategrey,20%);
+  > h1, > h2, > h3, > h4, > h5, > h6 { margin: 0; }
+}
+
+/* Table column sizing
+================================== */
+.Rtable--2cols > .Rtable-cell  { width: 50%; }
+.Rtable--3cols > .Rtable-cell  { width: 33.33%; }
+.Rtable--4cols > .Rtable-cell  { width: 25%; }
+.Rtable--5cols > .Rtable-cell  { width: 20%; }
+.Rtable--6cols > .Rtable-cell  { width: 16.6%; }
+
+
+
+
+
+
+
+
+/* Page styling
+================================== */
+@import url(https://fonts.googleapis.com/css?family=Josefin+Sans:400,700);
+html { 
+  height: 100%;/*  background-color: #EEE; */
+}
+body {
+  box-sizing: border-box;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 2em;
+  /* max-width: 800px;*/
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 1.2em;
+  background-color: white;
+  border: double 3px #DDD;
+  border-top: none; border-bottom: none;
+}
+h1, h2, h3, h4, h5, h6 { margin-top: 0; }
+h3 { font-size: 1.2em; }
+h4 { font-size: 1em; }
+strong { color: darken(slategrey,20%); }
+	</style>
+</head>
+<body class="grad">
+<div style="position:absolute;top:0;left:0;width:1600px;height:847px;background-image:url(ab_left.png);z-index: -10"></div>
+<img src="logo.png">, by mohamadjb@gmail.com
+<div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="app">
+<main ui-view></main></div>
+
+<templates>
+
+<template id="template.main" >
+	<h2 class="ghost">Contracts Main Menu</h2>
+	<a ng-click="app.logout()" href="#!/login)">logout</a>
+	<a ng-click="app.ls.contracts.push(app.cntrct=app.newCntrct())" href="#!/cntrct" >New Contract</a>
+	<div class="Rtable Rtable--4cols" >
+		<div class="Rtable-cell"><h3>Title</h3></div>
+		<div class="Rtable-cell"><h3>Created</h3></div>
+		<div class="Rtable-cell"><h3>Total</h3></div>
+		<div class="Rtable-cell"><h3>Net Income</h3></div>
+	</div>
+	<div class="Rtable Rtable--4cols" ng-repeat="i in cntrcts">
+		<div class="Rtable-cell"><h3><a ng-click="app.cntrct=i" href="#!/cntrct">{{i.title}}</h3></div>
+		<div class="Rtable-cell"><a ng-click="app.cntrct=i" href="#!/cntrct">{{i.date}}</a></div>
+		<div class="Rtable-cell"><a ng-click="app.cntrct=i" href="#!/cntrct"  >{{i.tt}}</a></div>
+		<div class="Rtable-cell"><a ng-click="app.cntrct=i" href="#!/cntrct"  >{{i.ni}}</a></div>
+	</div>
+</template>
+
+<template id="template.cntrct" >
+	<h2 class="ghost">Contract:{{c.title}}</h2>
+	<a href="#!/main)">Main menu</a>
+	<select ng-model="c.goal" ng-options="g in app.goals"></select>
+
+ <div class="Rtable Rtable--2cols" ng-repeat="i in cntrcts">
+	<div class="Rtable-cell"><h3>Title</h3></div>
+	<div class="Rtable-cell"><h3><input ng-model="app.cntrct.title"/></h3></div>
+	
+	<div class="Rtable-cell">Ppl</div>
+	<div class="Rtable-cell"><input ng-model="c.ppl"/></div>
+	
+	<div class="Rtable-cell">DL</div>
+	<div class="Rtable-cell"><input ng-model="c.dl"/></div>
+	
+	<div class="Rtable-cell">DM</div>
+	<div class="Rtable-cell"><input ng-model="c.dm"/></div>
+	
+	<div class="Rtable-cell">SV</div>
+	<div class="Rtable-cell"><input ng-model="c.sv"/></div>
+	
+	<div class="Rtable-cell">OH</div>
+	<div class="Rtable-cell"><input ng-model="c.oh"/></div>
+	
+	<div class="Rtable-cell">Total Cost</div>
+	<div class="Rtable-cell"><input ng-model="c.tc"/></div>
+	
+	<div class="Rtable-cell">Com</div>
+	<div class="Rtable-cell"><input ng-model="c.cm"/></div>
+	
+	<div class="Rtable-cell"></div>
+	<div class="Rtable-cell"><input ng-model="c."/></div>
+	
+	<div class="Rtable-cell">Sales Price</div>
+	<div class="Rtable-cell"><input ng-model="c.sp"/></div>
+	
+	<div class="Rtable-cell">Net Income</div>
+	<div class="Rtable-cell"><input ng-model="c.ni"/></div>
+
+	<div class="Rtable-cell">Created</div>
+	<div class="Rtable-cell"><input ng-model="c.date"/></div>
+
+	<div class="Rtable-cell">Last Modified</div>
+	<div class="Rtable-cell">{{c.ni}}</div>
+</div>
+</template>
+
+
+<template id="template.login" >
+	<h2>Login to your account</h2>
+	testing 2017.07.03.20.02.2
+	<form >
+		<input type="text" ng-model="un" placeholder="Username" autofocus ng-change="chng()" />
+		<input type="password" ng-model="pw" placeholder="Password"  ng-change="chng()" />
+		<button ng-click="clk()" >Login</button>
+	</form>
+	{{msg}}
+	<div class="cta"><a href="#"><!--Forgot your password?--></a></div>
+</template>
+
+
+</templates>
+</body></html>

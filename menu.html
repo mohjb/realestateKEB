@@ -1,0 +1,486 @@
+<html><head><title>Aswan 2016, by mohamadjb@gmail.com</title>
+	<style>
+	
+		.grad {
+			background: #ae9018; /* For browsers that do not support gradients */
+			background: -webkit-linear-gradient(#ae9018, #6e5632); /* For Safari 5.1 to 6.0 */
+			background: -o-linear-gradient(#ae9018, #6e5632); /* For Opera 11.1 to 12.0 */
+			background: -moz-linear-gradient(#ae9018, #6e5632); /* For Firefox 3.6 to 15 */
+			background: linear-gradient(#ae9018, #6e5632); /* Standard syntax */
+		}
+
+		ul { list-style-type: none; }
+		label{
+			background-color: #AAAFAB;
+			border-radius: 5px;
+			padding: 3px;
+			padding-left: 25px;
+			color: white;
+		}
+	li {
+		margin: 10px;
+		padding: 5px;
+		border: 1px solid #ABC;
+		border-radius: 5px;
+	}
+	input[type=checkbox] { display: none; }
+	input[type=checkbox] ~ ul {
+		max-height: 0;
+		max-width: 0;
+		opacity: 0;
+		overflow: hidden;
+		white-space:nowrap;
+		-webkit-transition:all 1s ease;
+		-moz-transition:all 1s ease;
+		-o-transition:all 1s ease;
+		transition:all 1s ease;
+	}
+
+	input[type=checkbox]:checked ~ ul {
+		max-height: 100%;
+		max-width: 100%;
+		opacity: 1;	}
+
+	input[type=checkbox] + label:before{
+		transform-origin:25% 50%;
+		border: 8px solid transparent;
+		border-width: 8px 12px;
+		border-left-color: white;
+		margin-left: -20px;
+		width: 0;
+		height: 0;
+		display: inline-block;
+		text-align: center;
+		content: '';
+		color: #AAAFAB;
+		-webkit-transition:all .5s ease;
+		-moz-transition:all .5s ease;
+		-o-transition:all .5s ease;
+		transition:all .5s ease;
+		position: absolute;
+		margin-top: 1px;	}
+
+	input[type=checkbox]:checked + label:before {
+		transform: rotate(90deg);
+		/*margin-top: 6px;
+		 margin-left: -25px;*/
+	}
+
+	.styl1{
+		float: left;
+		width: 45%;
+		min-height: 50px;
+		margin-bottom: 20px;
+		padding: 5px;
+		background-color: beige;
+		border-radius:15px;
+	}
+	.stylLeg{background-color: beige;border:1px solid black;border-radius:7px;}
+	</style>
+	<script>
+		
+		/**by mohamadjb@google.com , mbohamad@kisr.edu.kw
+		 * 99876454 , 443-529-9994 */
+	$=function $(p){if($.isLoaded)
+		return sys.dom.id(p);
+		else{	if(!$.onloadQ)$.onloadQ=[p];
+			else $.onloadQ.append(p);}}
+	
+	window.onload=$.onload=function $onload(e){$.isLoaded=true;//App.parseDomOnLoad();
+		if($.onloadQ)
+		for(var i in $.onloadQ)try{
+			$.onloadQ[i](e)}
+		catch(ex){console.log('$.onloadQ,i=',i,',ex=',ex);}}
+	
+	sys={
+		dom:{
+			id:function sysDomDid(p){return document.getElementById(p);}
+			
+			,dce:function sysDomCElem(n,p,t,id,attrbs,styl){var
+				r=document.createElement(n);if(id)r.id=id;if(t)sys.dom.dct(t,r);
+				if(attrbs)for(var i in attrbs)r.setAttribute(i,r[i]=attrbs[i]);
+				if(p.styl)for(var i in p.s)n.style[i]=styl[i];
+				if(p)p.appendChild(r);return r;}
+			
+			,dcb:function sysDomCBtn(p,t,i,c){var r=sys.dom.ce('button',p,t,i);r.onclick=c;return r;}
+			
+			,dct:function sysDomCTxt(t,p){var r=document.createTextNode(t);if(p)p.appendChild(r);return r;}
+			
+			,dci:function sysDomCInp(p,val,id,c,typ){var r=document.createElement('input');r.type=typ||'text';
+				if(id)r.id=id;if(val)r.value=val;if(p)p.appendChild(r);if(c)r.onchange=c;return r;}
+			
+			,bldPolicy_preAppendToParent:1
+			,bld:function sysDomBuildHtml(params,parent)/**BuildDomTree params::= 'nodeName':str
+														 'id':str ,t:text ,clk:onclick­function ,chng:onchange­function
+														 ,a:jsobj­attributes ,s:jsobj­style
+														 ,c:jsarray­children: each item is recursively a params
+														 ; or params can be string, or array:call bldTbl ;
+														 parent: domElement*/
+			{var t=sys.dom,p=params,nm=p?(p.nodeName||p.n):p
+				,typ=typeof(p),typo=typ=='object'
+				,arr=p instanceof Array?1:0//,arrC=p&& p.c instanceof Array;
+				if(//arr==p &&
+				   arr && p )arr=p.constructor == Array
+				   try{if(!parent)parent=document.body;
+					   if(!typo && !arr)return t.dct(p,parent);
+					   else if(typeof(nm)!='string')return t.bldObjProps(p,parent);
+					   var n=nm?t.dce(nm,t.bldPolicy_preAppendToParent?parent:0
+									  ,p.t ,p.id||(p.a?p.a.id:undefined) ,p.a ,p.s )	:p.t!=undefined?t.dct(p.t):p;
+									  //	if(nm.toLowerCase()=='input' && !n.type)n.type=p.type||((p.a?p.a.type:0)||'text');
+									  if(nm.toLowerCase()=='input' && p.type)n.type=p.type;
+									  if(nm.toLowerCase()=='label' && p['for'])n.setAttribute('for',n['for']=p['for']);
+									  if(p.name||(p.a&&p.a.name))n.name=p.name||p.a.name;
+									  if(p.clk)n.onclick=p.clk;
+									  if(p.chng)n.onchange=p.chng;
+									  //if(p.s)for(var i in p.s)n.style[i]=p.s[i];
+									  //if(p.a)for(var i in p.a)n[i]=p.a[i];
+									  if(p.c || arr )
+									  {if(arr||(nm.toLowerCase()=='table'))t.bldTbl (p,n);
+										  else if(nm.toLowerCase()=='select')t.bldSlct(p.c,n,p);
+										  else for(var i=0;i<p.c.length;i++)
+										  {var x=p.c[i],y=typeof(x);if(y!='object' && ! x instanceof Array)//y=='string'
+											  t.dct(x,n);//n.appendChild(document.createTextNode(x));
+											  else
+											  t.bld(x,n);
+										  }}
+									  if(!t.bldPolicy_preAppendToParent&&parent)parent.appendChild(n);
+				   }catch(ex){console.error('sys.dom.bld:ex',ex);}return n;}//function sys.dom.bld
+			
+			,bldObjProps:function sysDomBuildHtmlObjProp(o,pr){
+				var t=sys.dom;if(o&&typeof(o.nodeName)=='string')return t.bld(o,pr);
+				var fldSet=t.dce('FieldSet',pr||document.body);
+				fldSet.json=o;
+				if(o instanceof Array)t.bldTbl(o,fldSet);
+				else if( typeof(o)!='object')t.dct(o,fldSet);
+				else for(var i in o){
+					var lg=t.dce('legend',fldSet,i),x=o[i];
+					if(x instanceof Array)
+					t.bldTbl(x,fldSet);
+					else if(typeof(x)=='object')
+					t.bldObjProps(x,fldSet);
+					else t.dct(x,fldSet);
+				}return fldSet;
+			}//bldObjProp
+			
+			,/** params: array ;or same as bld.params
+			  .columnsHidden integer count of the first columns that should not generate html
+			  , .c  2 dimensional array of elements ,this method will nest each elem in a TD
+			  , and the elem is same as bld.params,recursive
+			  , .headings 1dim array , this method nests each elem in a TH, and the elem is
+			  , .footer
+			  same as bld.params
+			  , pr:parent dom­element , based­on/uses dce
+			  */bldTbl:function sysDomBuildHtmlTable(params,pr){
+				  var t=sys.dom,tbl=pr&&pr.nodeName=='TABLE'?pr:
+				  t.dce('table',pr,null,params?params.id:0)
+				  ,tb=tbl?tbl.tBodies[0]||tbl.createTBody():0
+				  ,arr=params instanceof Array;tbl.json=params;
+				  if(params.headings){var
+					  ht=tbl.tHead||tbl.createTHead()
+					  ,a=params.headings,th,tr=
+					  th.children?th.children[0]||ht.insertRow():0;
+					  for(var i in a)if(!(params.columnsHidden>=i)){th=dce('th',tr);t.bld(a[i],th);}}
+				  if(params.c || arr)
+				  {var r,a=arr?params:params.c,tr,td;
+					  for(var i in a)
+					  {tr=tb.insertRow();
+						  if((tr.pk=a[i]))
+						  {	if(a[i] instanceof Array)
+							  {for(var j in a[i])
+								  if(!(params.columnsHidden>=i))
+								  {td=tr.insertCell();
+									  t.bld(a[i][j],td);}
+							  }
+							  else{td=tr.insertCell();
+								  t.bldObjProps(a[i][j],td);}
+						  }
+					  }
+				  }
+				  if(params.footer){var ht=tbl.tFoot||tbl.createTFoot(),a=params.footer,tr,td;
+					  tr=ht.children?ht.children[0]||ht.insertRow():0;
+					  for(var i in a)
+					  if(!(params.columnsHidden>=i))
+				  {td=tr.insertCell();t.bld(a[i],td);}}
+				  return tbl;}
+			  
+			  ,bldSlct:function sysDomBuildSelect(a,pr,params){
+				  var c=a||params.c,n,t,v,s=params.selected||(params.a?params.a.selected:undefined);
+				  for(var i=0;c&&i<c.length;i++)
+				  {	pr.options[pr.options.length]=n=typeof(c[i])=='string'||!((c[i] instanceof Array&&c[i].length>1)||(c[i]?c[i].value:null))
+					  ?new Option(t=v=c[i]):new Option(t=(c[i].text||c[i][0]),v=(c[i].value||c[i][1]));if(s==t||s==v)n.selected=true;}}
+			  
+		}//dom
+		,menu:{tree:['System Menu'
+					 ,[	['H.R.',[
+								 ['Profiles',
+								  [['new',function(event){var src=event.target;
+								  	while(src&&src.nodeName!='LI')
+								  		src=src.parentNode;
+								  	if(!src.flag)
+										{src.flag=1;src=sys.formsProtos.hr.profile.gui.item.gen(0,src);
+										 while(src)
+										 {	 src.style.overflow='visible';
+											 src=src.parentNode;
+										 }
+										}else {src.firstChild.innerHTML='';}
+									}]
+								   ,['list',function(event){sys.formsProtos.hr.gui.item}]
+								   ]	]
+								 ,['Salary']
+								 ,['Leaves']
+								 ,['Retirement']
+								 ,['Reports']
+								 ]]//hr
+					   ,['Financial Accounting',[]]
+					   ,['Managerial Accounting',[]]
+					   ,['Inventory subsystem',[]]
+					   ,['Quotation subsystem',[]]
+					   ,['Authorization subsystem',[]]
+					   ,['QrCode subsystem',[]]
+					   ]]//tree
+					   
+					   ,genOld:function sysMenuGenOld(a,id){
+						   function w(){var a=arguments;for(var i in a)document.write(a[i]);return w;}w.w=w;
+						   if(a[1] instanceof Array){
+							   w('\n<li><input type="checkbox" id="',id
+								 ,'"/><label for="',id,'">',a[0] , '</label><ul>\n');
+								 for(var i in a[1])sys.menu.genOld(a[1][i],id+'.'+i)
+								 w('\n</ul> </li>\n');
+						   }else w('<li><label>' , a[0] , '</label> <!-- Conte(n/x)t:',a,' --></li>');
+					   }//function gen(a,id)
+					   
+					   ,bld:function sysMenuBld(a,id,p){
+						   var li,ul;
+						   if(a[1] instanceof Array){
+							   li=sys.dom.bld({n:'li',c:
+											  [{n:'label','for' : id  ,t:a[0]}
+											   ,{n:'input','type':'checkbox',id:id}
+											   
+											   ] },p)
+											   ul=sys.dom.bld({n:'ul' },li)
+											   for(var i in a[1])sys.menu.bld(a[1][i],id+'.'+i,ul)
+						   }else{
+							   li=sys.dom.bld({n:'li',t:a[0]},p);
+							   if(a[1] instanceof Function)
+							   li.onclick=a[1];
+						   }return li;}//function menu.bld(a,id,parent)
+		}//menu
+		
+		,/**
+		  * parameter p attributes
+		  *	data: body data of the xhr request sent to the server ,default null
+		  *	headers: json-object of name/value , set as request headers, defaults to null
+		  *	asyncFunc: reference to a function that is called in asynchronous mode
+		  , when the server successfully responds the func is given as a param
+		  the xhr obj and second param p, defaults to null which is synchronise mode
+		  *	method: string , POST, GET, defaults to POST
+		  *	url: the url of xhr , defaults to string 'xhr.jsp'
+		  *	asJson:boolean, if true returns JSON.parse(xhr.responseText) else returns xhr.responseText
+		  * //as: string 'text' , 'json' , defaults to text //'html', 'xml'
+		  * */
+		xhr:function sys_xhr(p)//data,callBack,asText)
+		{if(!p)return p;
+			var ct='Content-Type',cs='charset',x=App.isIE?new
+			ActiveXObject("microsoft.XMLHTTP")
+			:new XMLHttpRequest();
+			x.open(p.method||'POST',p.url||'/aswan2016/xhr.jsp', p.asyncFunc);
+			//if(p.headers)for(var i in p.headers)x.setRequestHeader(i,p.headers[i]);//console.log('scriptedReq:header['+i+']:'+headers[i]);
+			if(!p.headers || !p.headers[ct])x.setRequestHeader(ct, 'text/json');//'application/x-www-form-urlencoded');
+			if(!p.headers || !p.headers[cs])x.setRequestHeader(cs, 'utf-8');
+			if(p.asyncFunc)x.onreadystatechange=function App_xhrAsync()
+			{console.log('sys_xhrAsync:x=',x,' ,p=',p);
+				if (x.readyState === 4 && x.status==200){var o=
+					p.asJson?JSON.parse ( x . responseText ) : x . responseText;
+					p.responseJsonResponse=o;
+					if(!p.asJson || !o.errorMessage)
+					p.asyncFunc(o['return'],x,p);
+					else
+					console.log('sys_xhrAsync:case cant call p.asyncFunc:',o,x,p);
+				}else
+				console.log('sys_xhrAsync:case not ready:',x,p);
+			};
+			if(p.headers)for(var i in p.headers)
+			x.setRequestHeader( i , p.headers [ i ] ) ; //setRequestHeader( Name, Value )
+			if(!window.ax)window.ax=[ [x,p]];else window.ax.push([x,p]);
+			x.send((typeof p.data)=='string'?p.data:(p.requestBodyDataJsonified=JSON
+				.stringify(p.data)));//console.log('scriptedReq:response:'+ajax.responseText);
+				console.log('xhr:end:x=',x,' ,p=',p, x.response);
+				return p.asJson?JSON.parse ( x . responseText ) : x . responseText ;
+		}//function xhr
+		
+		//,storagePrefix:'abs'
+		,formsProtos:{
+			
+			/*	client object (ClntObj) :
+			 json:server presentation jsobj
+			 path: identifier for server-consumption
+			 lstnrs: array/list of pending-state / referer-listeners
+			 dom: array of lstnrs dom value-view(fields/prop):forms/inp/buttons/textareas/checkboxs/...ect
+			 */
+			
+			/**xhrMan:
+			 forms /prototypes/classes
+			 objects/instances/items : each should have a PK (primary key) , path (string for server to identify the obj)
+			 */
+			hr:{
+				profile:{paths:{/* <path:str>:ClntObj ,,,   in case of hr.profile : the path is 'hr.profile.'<cid> */},
+					fields:[
+							{name:'Name'}
+							,{name:'CID',type:'integer'}
+							,{name:'Nationality',select: ["Afghanistan","Albania","Algeria","Andorra","Angola","Anguilla","Antigua & Barbuda","Argentina","Armenia","Aruba","Australia","Austria","Azerbaijan","Bahamas"
+								,"Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bermuda","Bhutan","Bolivia","Bosnia & Herzegovina","Botswana","Brazil","British Virgin Islands"
+								,"Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon" ,"Canada","Cape Verde","Cayman Islands","Chad","Chile","China","Colombia","Congo","Cook Islands","Costa Rica"
+								,"Cote D Ivoire","Croatia","Cruise Ship","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea"
+								,"Estonia","Ethiopia","Falkland Islands","Faroe Islands","Fiji","Finland","France","French Polynesia","French West Indies","Gabon","Gambia","Georgia","Germany","Ghana"
+								,"Gibraltar","Greece","Greenland","Grenada","Guam","Guatemala","Guernsey","Guinea","Guinea Bissau","Guyana","Haiti","Honduras","Hong Kong","Hungary","Iceland","India"
+								,"Indonesia","Iran","Iraq","Ireland","Isle of Man","Israel","Italy","Jamaica","Japan","Jersey","Jordan","Kazakhstan","Kenya","Kuwait","Kyrgyz Republic","Laos","Latvia"
+								,"Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Macau","Macedonia","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Mauritania"
+								,"Mauritius","Mexico","Moldova","Monaco","Mongolia","Montenegro","Montserrat","Morocco","Mozambique","Namibia","Nepal","Netherlands","Netherlands Antilles","New Caledonia"
+								,"New Zealand","Nicaragua","Niger","Nigeria","Norway","Oman","Pakistan","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal"
+								,"Puerto Rico","Qatar","Reunion","Romania","Russia","Rwanda","Saint Pierre & Miquelon","Samoa","San Marino","Satellite","Saudi Arabia","Senegal","Serbia","Seychelles"
+								,"Sierra Leone","Singapore","Slovakia","Slovenia","South Africa","South Korea","Spain","Sri Lanka","St Kitts & Nevis","St Lucia","St Vincent","St. Lucia","Sudan"
+								,"Suriname","Swaziland","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor L'Este","Togo","Tonga","Trinidad & Tobago","Tunisia"
+								,"Turkey","Turkmenistan","Turks & Caicos","Uganda","Ukraine","United Arab Emirates","United Kingdom"
+								, "United States",  "United States Minor Outlying Islands"
+								,"Uruguay","Uzbekistan","Venezuela","Vietnam","Virgin Islands (US)"
+								,"Yemen","Zambia","Zimbabwe"]}
+							,{name:'tel no',type:'tel'}//address,email
+							,{name:'Passport no.',type:'integer'}
+							,{name:'type',select:[//enum
+								'operator'
+								,'administrator'
+								,'contractor']}// (only commision)
+							,{name:'Job Category',select:["Mechanical Engineer"
+								, "Electrical Engineer", "Instrument Engineer"
+								, "Mechanical Supervisor", "Welder –TIG & ARC"
+								, "Fabricator", "Valve Technician", "Instrument Technician"
+								, "Machinist", "Electrician", "Pipe Fitter", "CNC Operator"
+								, "Store Keeper", "General Manager", "Project Manager"
+								, "Accountant", "Coordinator", "Secretary", "Receptionist"
+								, "Draft man", "Lison Officer (Mandoop)", "Driver", "Care Taker"]}
+							,{name:'Punch ID','type':'integer'}
+							,{name:'Date','type':'date',c:[{name:'Joining'},{name:'D.O.B.'}]}
+							,{name:'Size',type:'integer',c:[{name:'shoe size'},{name:'overall size'}]}
+							,{name:'Expiry',type:'date',c:[
+								{name:'Passport'}
+								,{name:'CID'},{name:'Residency'}
+								,{name:'Contract(ministry of labor)'}
+								,{name:'driver license'}]}
+							,{name:'free attendance',type:'checkbox' ,authorization:'TopLevel,Auditor'}
+							,{name:'Bank Account detailes',authorization:'TopLevel,Auditor',c:[
+								{name:'cash',type:'checkbox'}
+								,{name:'bank name'}
+								,{name:'account number'}
+								]}
+							,{name:'Salary',desc:'salary fields (each has change log)',authorization:'TopLevel,Auditor'
+							,c:[{name:'basic salary'}
+								,{name:'mobile'}
+								,{name:'fuel'}
+								,{name:'Increment'}
+								,{name:'Custom Items'}]}
+							,{name:'Attachments',type:'file',c:[
+								 {name:'Face Pic'},{name:'cid'},{name:'cidBack'}
+								,{name:'residency'}
+								,{name:'passport'}
+								,{name:'ministryLabor'}
+								,{name:'driver license'}]}
+							]//sys.formsProtos.hr.profile.fields
+							,gui:{item:
+								{/**generate html /dom under parent p, d is the data-fields-values / jsObj */
+									gen:function sys_formsProtos_hr_profile_gui_item_gen(d,p){
+										var form,c,g={n:'form',s:{'leftMargin':'20%'}}
+										,x,y,z,nm,f=sys.formsProtos.hr.profile.fields;
+										form=sys.dom.bld(g,p||sys.dom.id('centerDiv'));
+										function flds(d,f,p,nam,typ,isEnum)
+										{	if(f)for(var i in f)
+											{var x=f[i],nm=x.name;
+												y={n:'fieldset' ,a:{className:'styl1'},c:	[	 {n:'legend',t:nm ,a:{className:'stylLeg'}}]//fieldset.c
+												}//fieldset
+												var fldset=sys.dom.bld(y,p)//bld
+												if(x.select){sys.dom.bld({n:'select',c:x.select,name:nam?nm=nam+'.'+nm:nm},fldset);}
+												else if(x.c||x.enm){flds(d[i],x.c||x.enm,fldset,nam?nm=nam+'.'+nm:nm,x.type,x.enm)}
+												else{var nme=nam?nm=nam+'.'+nm:nm;
+													y={n:'input',a:
+														{name:nme , type:typ||x.type
+															,value:!d||d[nm]==undefined?'':d[nm]
+															,onchange:'t=event.target||event.source;sys.formsProtos.proto.onchng(event,t,arguments)'// sys.formsProtos.proto.onchng // function(){console.log('sys.formsProtos.hr.profile.gui.item.gen.flds.inpOnChng:'+nme,arguments);}
+														}//input.attribs
+													}//input
+													c=sys.dom.bld(y,fldset)//bld
+													c.data=d;
+												}//else
+											}//for
+										}//function flds
+										flds(d,f,form);
+										form.inps={};var a=['input','select','textarea']
+										for(var ai in a){
+											c= form.getElementsByTagName(a[ai]) ;
+											for(var i in c){
+												x=c[i];nm=x.name;
+												form.inps[nm]=x;
+											}	}
+										form.d=d;
+										return form;}//sys_formsProtos_hr_profile_gui_item_gen
+									,set:function(v,d){}
+									,get:function sys_formsProtos_hr_profile_gui_item_get(form){
+										var f=sys.formsProtos.hr.profile.fields
+										,r={},l,v,inps=form&&form.inps;
+										for(var i in f){l=f[i].name;
+											v=inps && inps[l];
+											v=v? v.value : null;
+											r[l]=v;
+										}return r;}// sys_formsProtos_hr_profile_gui_item_get
+								}//sys.formsProtos.hr.profile.gui.item
+								,list:{gen:function(){}
+									,set:function(){}
+									,get:function(){}
+								}//sys.formsProtos.hr.profile.gui.list
+							}//sys.formsProtos.hr.profile.gui
+							,storage:{list:{save:function(){},load:function(){}
+							}//sys.formsProtos.hr.profile.storage.list
+							,item:{save:function(){},load:function(){}
+							}//sys.formsProtos.hr.profile.storage.item
+							}//sys.formsProtos.hr.profile.storage
+				}//sys.formsProtos.hr.profile
+			}//sys.formsProtos.hr
+			
+			,proto:{onchng:function(evt,trgt,args)
+				{try{console.log('sys.protos.onchng:',arguments);
+					var obj=trgt.data||{},p={//trgt:trgt,,lstnrs:obj.lsntrs
+						obj:obj,path:obj.path
+						,propName:trgt.name
+						,newVal:trgt.value
+						,oldVal:obj[trgt.name]
+					}
+					sys.formsProtos.proto.triggerChangeEvent(p,trgt.data.lstnrs,trgt);
+					if(!trgt.data)trgt.data=obj;
+					obj[trgt.name]=trgt.value;
+				}catch(ex){console.error('sys.protos.onchng:ex:',ex);}
+				}//onchng
+				,triggerChangeEvent:function(evt,lsntrs,trgt){//obj,path,prop,newVal,oldVal,lstnrs
+					/**evt:
+					 obj	: collection of all the properties, the server json objt
+					 path: string of the path on the server for the obj
+					 propName: string name of the property that changed
+					 newVal: new value for the property set on the obj
+					 oldVal: the previous value set on the obj
+					 lstnrs: list of listeners intrested in changes that happen on the obj
+
+					 listeners are: dom list , xhrMan , other models
+					 far fetched future long term plan:need a class which is a wrapper for the listeners(dom lstnrs + model lstnrs) + server-json + referer's
+					 , */
+				}//triggerChangeEvent
+				
+			}
+		}//sys.formsProtos
+	}//sys
+	
+		</script>
+</head>
+<body class="grad" >
+<div style="position:absolute;top:0;left:0;width:1600px;height:847px;background-image:url(ab_left.png);z-index: -10"></div>
+<img src="logo.png"/>, by mohamadjb@gmail.com
+<div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible">
+		<script>//sys.menu.genOld(sys.menu.tree,'sysMnu')
+			sys.menu.bld(sys.menu.tree,'sysMenuTree',sys.dom.id('leftDiv'))</script>
+</div></body></html>
