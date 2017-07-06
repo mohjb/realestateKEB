@@ -7,6 +7,17 @@
 	<script>//\>\s*\{\{([^\|]*)\|filtr\:'currency'\}\} , ni= tc+cm-sp
 function did(p){return document.getElementById(p);}
 function dt(p){return new Date(p);}
+function cs(p){
+	var ss=document.styleSheets
+	for(var i in ss)try{
+		var x=ss[i],r=x.rules//console.log(i,ss[i])
+		for(var j in r)try{
+			var y=r[j],t=y.selectorText//console.log(j,ss[i].rules[j])
+			if(t==p)
+				return y.style
+		}catch(ex){}
+	}catch(ex){}
+}
 (window.xa=app=(angular||{})
 .module('app', ['ngSanitize','angular-md5','ui.router'] ))
 .factory('app', ['$http', function appFactory($http) {
@@ -14,8 +25,12 @@ function dt(p){return new Date(p);}
 	p.ls={rate:{url:"rate",lastModified:0,v:333},usr:{
 			moh:{url:'user-moh',un:'moh',pw:'6f8f57715090da2632453988d9a1501b'
 				,firstName:'Mohammad',lastName:'Buhamad',email:'mohamadjb@gmail.com'
-				,level:'fullAccess',notes:'',created:'2017/06/20T21:05'
-				,lastModified:'2017/06/20T21:05'}}
+				,level:'fullAccess',notes:'',created:'2017/06/20T21:05',f:1
+				,lastModified:'2017/06/20T21:05'}
+			,be:{url:'user-be',un:'be',pw:'92eb5ffee6ae2fec3ad71c777531578f'
+				,firstName:'Secratery',lastName:'x',email:'bohamaem@gmail.com'
+				,level:'user',notes:'',created:'2017/07/06T16:00',f:0
+				,lastModified:'2017/07/06T21:05'}}
 		,contracts:[]
 		,oh:[]
 		,profiles:[]
@@ -23,7 +38,10 @@ function dt(p){return new Date(p);}
 	p.ohSum=function(){}
 	p.rate=function(){return p.ls.rate.v;}
 	p.urls={};p.urls[p.ls.usr.moh.url]={o:p.ls.usr.moh,lm:new Date().getTime(),chng:0}
-	p.logout=function appLogout(state){p.usr=0;}
+	p.logout=function appLogout(state){p.usr=0;
+		cs('.onUsrF').display='none'
+		cs('.onLoggedIn').display='none'
+		cs('.onLoggedOut').display='';}
 	p.dt=dt
 	p.goals=['dl','sv','cm','sp','ni']
 	p.save=function(){
@@ -55,7 +73,12 @@ function dt(p){return new Date(p);}
 				var c=sc[0][u]
 				console.log('app.merge:added ',u,c);
 				p.urls[u]={o:c,lm:c.lastModified,chng:0}
-				p.ls[w].push(c);
+				if(p.ls[w].push)
+					p.ls[w].push(c);
+				else if(w=='usr')
+					p.ls[w][c.un]=c
+				else
+					p.ls[w][c.url]=c
 			}
 			for(var u in sc[1]){
 				var z=sc[1][u],c=z.c
@@ -72,6 +95,7 @@ function dt(p){return new Date(p);}
 			}
 		}
 		try{
+		//compare usr 's first , then compare contracts
 		for(var i in a)//mrg(a,b,'usr');mrg(a,b,'contracts')
 			mrg(a,b,i)
 		}catch(ex){console.log('app.merge:error',a,b,ex)}
@@ -189,7 +213,7 @@ function dt(p){return new Date(p);}
 			,'contractor']}// (only commision)
 		,{name:'JobCategory',isArray:true,type:'select',select:["Mechanical Engineer"
 			, "Electrical Engineer", "Instrument Engineer"
-			, "Mechanical Supervisor", "Welder ï¿½TIG & ARC"
+			, "Mechanical Supervisor", "Welder –TIG & ARC"
 			, "Fabricator", "Valve Technician", "Instrument Technician"
 			, "Machinist", "Electrician", "Pipe Fitter", "CNC Operator"
 			, "Store Keeper", "General Manager", "Project Manager"
@@ -289,7 +313,7 @@ function dt(p){return new Date(p);}
 				{var x='template.login'
 					,t=did(x)
 					,cnn=t.innerHTML;
-					console.log('config:func3:login',cnn);
+					//console.log('config:func3:login',cnn);
 					return cnn;
 				}, 100);}
 		})
@@ -301,7 +325,7 @@ function dt(p){return new Date(p);}
 				{var x='template.main'
 					,t=did(x)
 					,cnn=t.innerHTML;
-					console.log('config:func3:main',cnn);
+					//console.log('config:func3:main',cnn);
 					return cnn;
 				}, 100);}
 		}).state('cntrct',{
@@ -312,7 +336,7 @@ function dt(p){return new Date(p);}
 				{var x='template.cntrct'
 					,t=did(x)
 					,cnn=t.innerHTML;
-					console.log('config:func3:cntrct',cnn);
+					//console.log('config:func3:cntrct',cnn);
 					return cnn;
 				}, 100);}
 		}).state('oh',{
@@ -323,7 +347,7 @@ function dt(p){return new Date(p);}
 				{var x='template.oh'
 					,t=did(x)
 					,cnn=t.innerHTML;
-					console.log('config:func3:oh',cnn);
+					//console.log('config:func3:oh',cnn);
 					return cnn;
 				}, 100);}
 		}).state('profiles',{
@@ -334,7 +358,7 @@ function dt(p){return new Date(p);}
 				{var x='template.profiles'
 					,t=did(x)
 					,cnn=t.innerHTML;
-					console.log('config:func3:profiles',cnn);
+					//console.log('config:func3:profiles',cnn);
 					return cnn;
 				}, 100);}
 		}).state('cntrctsReport',{
@@ -345,7 +369,7 @@ function dt(p){return new Date(p);}
 				{var x='template.cntrctsReport'
 					,t=did(x)
 					,cnn=t.innerHTML;
-					console.log('config:func3:cntrctsReport',cnn);
+					//console.log('config:func3:cntrctsReport',cnn);
 					return cnn;
 				}, 100);}
 		})
@@ -372,8 +396,9 @@ function dt(p){return new Date(p);}
 			app.usr=u;
 			//TODO: DbLog.newEntry(login)
 			$scope.msg='login successful,\n'+(new Date)
-			did('logoNotLog').style.display='none'
-			did('logoLoggedin').style.display='grid'
+			cs('.onLoggedIn').display=''
+			cs('.onLoggedOut').display='none'
+			cs('.onUsrF').display=app.usr.f?'':'none';//did('logoNotLog').style.display='none';did('logoLoggedin').style.display='grid'
 			location.hash='#!/main';//$state.go('main')
 		}
 		else $scope.msg='invalid login \n,'+(new Date)
@@ -518,36 +543,36 @@ function dt(p){return new Date(p);}
 .filter('numberSpelling',function(){
  return function(v,op1){
 	var r={ar:[],en:[]}
-	,a={0:{ar:'&#1589;&#1601;&#1585;',en:'zero'},n:{ar:'&#1587;&#1575;&#1604;&#1576;',en:'negative',en2:'minus'}
-	,s:{ar:' ',en:' '},w:{ar:' &#1608; ',en:' '},point:{ar:' &#1601;&#1575;&#1589;&#1604;&#1577; ',en:' point '},frac:{ar:' &#1605;&#1606; &#1571;&#1604;&#1601; ',en:' of a thousandth'}
-	,1:{1:{ar:'&#1608;&#1575;&#1581;&#1583;',en:'one'},2:{ar:'&#1579;&#1606;&#1610;&#1606;',en:'two'},3:{ar:'&#1579;&#1604;&#1575;&#1579;&#1577;',en:'three'},4:{ar:'&#1575;&#1585;&#1576;&#1593;',en:'four'}
-			,5:{ar:'&#1582;&#1605;&#1587;&#1577;',en:'five'},6:{ar:'&#1587;&#1578;&#1577;',en:'six'},7:{ar:'&#1587;&#1576;&#1593;&#1577;',en:'seven'},8:{ar:'&#1579;&#1605;&#1575;&#1606;&#1610;&#1577;',en:'eight'}
-			,9:{ar:'&#1578;&#1587;&#1593;&#1577;',en:'nine'},10:{ar:'&#1593;&#1588;&#1585;&#1577;',en:'ten'},11:{ar:'&#1573;&#1581;&#1583;&#1609; &#1593;&#1588;&#1585;',en:'eleven'}
-			,12:{ar:'&#1573;&#1579;&#1606;&#1609; &#1593;&#1588;&#1585;',en:'twelve'},13:{ar:'&#1579;&#1604;&#1575;&#1579;&#1577; &#1593;&#1588;&#1585;',en:'thirteen'},14:{ar:'&#1575;&#1585;&#1576;&#1593;&#1577; &#1593;&#1588;&#1585;',en:'fourteen'}
-			,15:{ar:'&#1582;&#1605;&#1587;&#1577; &#1593;&#1588;&#1585;',en:'fifteen'},16:{ar:'&#1587;&#1578;&#1577; &#1593;&#1588;&#1585;',en:'sixteen'},17:{ar:'&#1587;&#1576;&#1593;&#1577; &#1593;&#1588;&#1585;',en:'seventeen'}
-			,18:{ar:'&#1579;&#1605;&#1575;&#1606;&#1610;&#1577; &#1593;&#1588;&#1585;',en:'eighteen'},19:{ar:'&#1578;&#1587;&#1593;&#1577; &#1593;&#1588;&#1585;',en:'ninteen'}
-		,t:{2:{ar:'&#1593;&#1588;&#1585;&#1608;&#1606;',en:'twenty'},3:{ar:'&#1579;&#1604;&#1575;&#1579;&#1608;&#1606;',en:'thirty'},4:{ar:'&#1575;&#1585;&#1576;&#1593;&#1608;&#1606;',en:'fourty'}
-			,5:{ar:'&#1582;&#1605;&#1587;&#1608;&#1606;',en:'fifty'},6:{ar:'&#1587;&#1578;&#1608;&#1606;',en:'sixty'},7:{ar:'&#1587;&#1576;&#1593;&#1608;&#1606;',en:'seventy'}
-			,8:{ar:'&#1579;&#1605;&#1575;&#1606;&#1608;&#1606;',en:'eighty'},9:{ar:'&#1578;&#1587;&#1593;&#1608;&#1606;',en:'ninety'}}
-		,100:{ar:'&#1605;&#1574;&#1577;',ar2:'&#1605;&#1574;&#1578;&#1610;&#1606;',en:'hundred'}}
-	, 2:{en:'thousand'		,ar:'&#1571;&#1604;&#1601;'		,ar2:'&#1571;&#1604;&#1601;&#1610;&#1606;'	,ar3:'&#1570;&#1604;&#1575;&#1601;' }
-	, 3:{en:'million'		,ar:'&#1605;&#1604;&#1610;&#1608;&#1606;'		,ar2:'&#1605;&#1604;&#1610;&#1608;&#1606;&#1610;&#1606;'	,ar3:'&#1605;&#1604;&#1575;&#1610;&#1606;' }
-	, 4:{en:'billion'		,ar:'&#1576;&#1604;&#1610;&#1608;&#1606;'		,ar2:'&#1576;&#1604;&#1610;&#1608;&#1606;&#1610;&#1606;'	,ar3:'&#1576;&#1604;&#1575;&#1610;&#1606;' }
-	, 5:{en:'trillion'		,ar:'&#1578;&#1585;&#1604;&#1610;&#1608;&#1606;'	,ar2:'&#1578;&#1585;&#1604;&#1610;&#1608;&#1606;&#1610;&#1606;'	,ar3:'&#1578;&#1585;&#1604;&#1575;&#1610;&#1606;'}
-	, 6:{en:'Quadrillion'   ,ar:'&#1603;&#1608;&#1575;&#1583;&#1585;&#1604;&#1610;&#1608;&#1606;' ,ar2:'&#1603;&#1608;&#1575;&#1583;&#1585;&#1604;&#1610;&#1608;&#1606;&#1610;&#1606;',ar3:'&#1603;&#1608;&#1575;&#1583;&#1585;&#1604;&#1575;&#1610;&#1606;'}
-	/*, 7:{en:'Quintillion'   ,ar:'&#1603;&#1608;&#1575;&#1606;&#1578;&#1604;&#1610;&#1608;&#1606;'	}
-	, 8:{en:'Sextillion'	,ar:'&#1587;&#1603;&#1587;&#1578;&#1604;&#1610;&#1608;&#1606;'	}
-	, 9:{en:'Septillion'	,ar:'&#1587;&#1576;&#1578;&#1604;&#1610;&#1608;&#1606;'	}
-	,10:{en:'Octillion'		,ar:'&#1571;&#1608;&#1603;&#1578;&#1604;&#1610;&#1608;&#1606;'	}
-	,11:{en:'Nonillion'		,ar:'&#1606;&#1608;&#1606;&#1604;&#1610;&#1608;&#1606;'	}
-	,12:{en:'Decillion'		,ar:'&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'	}
-	,13:{en:'Undecillion'	,ar:'&#1571;&#1606;&#1583;&#1610;&#1587;&#1604;&#1610;&#1608;&#1606;'	}
-	,14:{en:'Duodecillion'	,ar:'&#1583;&#1610;&#1608;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'	}
-	,15:{en:'Tredecillion'	,ar:'&#1578;&#1585;&#1610;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'	}
-	,16:{en:'Quattuordecillion'	,ar:'&#1603;&#1608;&#1575;&#1578;&#1608;&#1585;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'}
-	,17:{en:'Quinquadecillion'	,ar:'&#1603;&#1608;&#1575;&#1606;&#1603;&#1608;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'}
-	,18:{en:'Sedecillion'		,ar:'&#1587;&#1610;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'	}
-	,19:{en:'Septendecillion'	,ar:'&#1587;&#1610;&#1576;&#1578;&#1606;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;' }
+	,a={0:{ar:'صفر',en:'zero'},n:{ar:'سالب',en:'negative',en2:'minus'}
+	,s:{ar:' ',en:' '},w:{ar:' و ',en:' '},point:{ar:' فاصلة ',en:' point '},frac:{ar:' من ألف ',en:' of a thousandth'}
+	,1:{1:{ar:'واحد',en:'one'},2:{ar:'ثنين',en:'two'},3:{ar:'ثلاثة',en:'three'},4:{ar:'اربع',en:'four'}
+			,5:{ar:'خمسة',en:'five'},6:{ar:'ستة',en:'six'},7:{ar:'سبعة',en:'seven'},8:{ar:'ثمانية',en:'eight'}
+			,9:{ar:'تسعة',en:'nine'},10:{ar:'عشرة',en:'ten'},11:{ar:'إحدى عشر',en:'eleven'}
+			,12:{ar:'إثنى عشر',en:'twelve'},13:{ar:'ثلاثة عشر',en:'thirteen'},14:{ar:'اربعة عشر',en:'fourteen'}
+			,15:{ar:'خمسة عشر',en:'fifteen'},16:{ar:'ستة عشر',en:'sixteen'},17:{ar:'سبعة عشر',en:'seventeen'}
+			,18:{ar:'ثمانية عشر',en:'eighteen'},19:{ar:'تسعة عشر',en:'ninteen'}
+		,t:{2:{ar:'عشرون',en:'twenty'},3:{ar:'ثلاثون',en:'thirty'},4:{ar:'اربعون',en:'fourty'}
+			,5:{ar:'خمسون',en:'fifty'},6:{ar:'ستون',en:'sixty'},7:{ar:'سبعون',en:'seventy'}
+			,8:{ar:'ثمانون',en:'eighty'},9:{ar:'تسعون',en:'ninety'}}
+		,100:{ar:'مئة',ar2:'مئتين',en:'hundred'}}
+	, 2:{en:'thousand'		,ar:'ألف'		,ar2:'ألفين'	,ar3:'آلاف' }
+	, 3:{en:'million'		,ar:'مليون'		,ar2:'مليونين'	,ar3:'ملاين' }
+	, 4:{en:'billion'		,ar:'بليون'		,ar2:'بليونين'	,ar3:'بلاين' }
+	, 5:{en:'trillion'		,ar:'ترليون'	,ar2:'ترليونين'	,ar3:'ترلاين'}
+	, 6:{en:'Quadrillion'   ,ar:'كوادرليون' ,ar2:'كوادرليونين',ar3:'كوادرلاين'}
+	/*, 7:{en:'Quintillion'   ,ar:'كوانتليون'	}
+	, 8:{en:'Sextillion'	,ar:'سكستليون'	}
+	, 9:{en:'Septillion'	,ar:'سبتليون'	}
+	,10:{en:'Octillion'		,ar:'أوكتليون'	}
+	,11:{en:'Nonillion'		,ar:'نونليون'	}
+	,12:{en:'Decillion'		,ar:'ديسيليون'	}
+	,13:{en:'Undecillion'	,ar:'أنديسليون'	}
+	,14:{en:'Duodecillion'	,ar:'ديوديسيليون'	}
+	,15:{en:'Tredecillion'	,ar:'تريديسيليون'	}
+	,16:{en:'Quattuordecillion'	,ar:'كواتورديسيليون'}
+	,17:{en:'Quinquadecillion'	,ar:'كوانكوديسيليون'}
+	,18:{en:'Sedecillion'		,ar:'سيديسيليون'	}
+	,19:{en:'Septendecillion'	,ar:'سيبتنديسيليون' }
 	
 	
 	
@@ -647,19 +672,9 @@ function dt(p){return new Date(p);}
 .num4{font-size:xx-large;font-weight:bold;color:deeppink}
 .num5{font-size:xx-large;font-weight:bold;color:red}
 
-.bvl2{
-
-    width: 200px;
-    height: 50px;
-    
-    background: #666666;
-    
-    border: 1px solid #000000;    
-    
-    -moz-box-shadow: inset 2px 2px 2px rgba(255, 255, 255, .4), inset -2px -2px 2px rgba(0, 0, 0, .4);
-    -webkit-box-shadow: inset 2px 2px 2px rgba(255, 255, 255, .4), inset -2px -2px 2px rgba(0, 0, 0, .4);
-    box-shadow: inset 2px 2px 2px rgba(255, 255, 255, .4), inset -2px -2px 2px rgba(0, 0, 0, .4);
-}
+.onUsrF{display:none}
+.onLoggedIn{display:none}
+.onLoggedOut{display:block}
 
 .bvl{
   
@@ -677,109 +692,18 @@ border-radius: 25px;
 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f6e6b4), color-stop(100%,#ed9017)); /* webkit */font-size:20px
 }
 
-.bvl0{
-	min-width: 100px; /*not necessary if the button has text on it*/
-	height: 30px;
-	border: 0;
-	/* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, rgba(115,187,223,1) 0%,rgba(23,86,127,1) 100%);
-	/* Opera 11.10+ */
-	background: -ms-linear-gradient(top, rgba(115,187,223,1) 0%,rgba(23,86,127,1) 100%);
-	/* IE10+ */
-	background: linear-gradient(to bottom, rgba(115,187,223,1) 0%,rgba(23,86,127,1) 100%);
-	/* W3C */
-	/*filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#73bbe9', endColorstr='#17567f',GradientType=0 ); IE6-9 */
-	filter: none; /*IE6-9 */
-	-moz-box-shadow:
-	0px -1px 3px rgba(190,255,255,0.5), /*top external highlight*/
-	2px 3px 3px rgba(0,0,0,0.2), /*bottom external shadow*/
-	inset 0 -1px 1px rgba(0,0,0,0.5), /*bottom internal shadow*/
-	inset 0 1px 1px rgba(255,255,255,1); /*top internal highlight*/
-	-webkit-box-shadow:
-	0px -1px 3px rgba(190,255,255,0.5), /*top external highlight*/
-	2px 3px 3px rgba(0,0,0,0.2), /*bottom external shadow*/
-	inset 0 -1px 1px rgba(0,0,0,0.5), /*bottom internal shadow*/
-	inset 0 1px 1px rgba(255,255,255,1); /*top internal highlight*/
-	box-shadow:
-	0px -1px 3px rgba(190,255,255,0.5), /*top external highlight*/
-	2px 3px 3px rgba(0,0,0,0.2), /*bottom external shadow*/
-	inset 0 -1px 1px rgba(0,0,0,0.5), /*bottom internal shadow*/
-	inset 0 1px 1px rgba(255,255,255,1); /*top internal highlight*/
-}
-
 	.ghost{color:white}
-		.grad {
+
+	.grad {
 			background: #ae9018; /* For browsers that do not support gradients */
 			background: -webkit-linear-gradient(#ae9018, #6e5632); /* For Safari 5.1 to 6.0 */
 			background: -o-linear-gradient(#ae9018, #6e5632); /* For Opera 11.1 to 12.0 */
 			background: -moz-linear-gradient(#ae9018, #6e5632); /* For Firefox 3.6 to 15 */
 			background: linear-gradient(#ae9018, #6e5632); /* Standard syntax */
 		}
-		ul { list-style-type: none; }
-		label{
-			background-color: #AAAFAB;
-			border-radius: 5px;
-			padding: 3px;
-			padding-left: 25px;
-			color: white;
-		}
-	li {
-		margin: 10px;
-		padding: 5px;
-		border: 1px solid #ABC;
-		border-radius: 5px;
-	}
-	input[type=checkbox] { display: none; }
-	input[type=checkbox] ~ ul {
-		max-height: 0;
-		max-width: 0;
-		opacity: 0;
-		overflow: hidden;
-		white-space:nowrap;
-		-webkit-transition:all 1s ease;
-		-moz-transition:all 1s ease;
-		-o-transition:all 1s ease;
-		transition:all 1s ease;
-	}
-	input[type=checkbox]:checked ~ ul {
-		max-height: 100%;
-		max-width: 100%;
-		opacity: 1;	}
-	input[type=checkbox] + label:before{
-		transform-origin:25% 50%;
-		border: 8px solid transparent;
-		border-width: 8px 12px;
-		border-left-color: white;
-		margin-left: -20px;
-		width: 0;
-		height: 0;
-		display: inline-block;
-		text-align: center;
-		content: '';
-		color: #AAAFAB;
-		-webkit-transition:all .5s ease;
-		-moz-transition:all .5s ease;
-		-o-transition:all .5s ease;
-		transition:all .5s ease;
-		position: absolute;
-		margin-top: 1px;	}
-	input[type=checkbox]:checked + label:before {
-		transform: rotate(90deg);
-		/*margin-top: 6px;
-		 margin-left: -25px;*/
-	}
-	.styl1{
-		float: left;
-		width: 45%;
-		min-height: 50px;
-		margin-bottom: 20px;
-		padding: 5px;
-		background-color: beige;
-		border-radius:15px;
-	}
-	.stylLeg{background-color: beige;border:1px solid black;border-radius:7px;}
 
-	a, a:visited, a:hover, a:active {
+
+a, a:visited, a:hover, a:active {
   color: inherit;    text-decoration: none;
 }
 
@@ -790,7 +714,7 @@ input, textarea, select, button, meter, progress {
     -webkit-writing-mode: horizontal-tb;
 	    margin: 0;
 		padding: 8px;
-    display: block;
+    /*display: block;*/
     border: none;
     border-bottom: 3px solid #444;
 	width:30%
@@ -802,22 +726,6 @@ input, textarea, select, button, meter, progress {
 progress:focus , textarea:focus , select:focus , button:focus , meter:focus
 {animation:fade 2s}@keyframes fade{0%{background:rgba(240,240,240,0.9)}100%{background:rgba(240,240,240,0.01);}}
 
- input :focus{width:50%}
-
-
-.xx
-{	transition: width 0.4s ease-in-out;
-	background:rgba(240,240,255,0.9);
-}
-
-input[type="button"]{
-      color: white;
-      background: lightblue;
-      padding: 1em 1.4em;
-      font-size: 1.2em;
-      border:none;
-      border-radius: 10px;
-    }
 
 .tbl{
 display: grid;
@@ -835,7 +743,8 @@ display: grid;
     text-align: center;
     vertical-align: middle;/* x-padding-top: 25; */
     margin: 2px;
-	
+color:white;
+-webkit-text-stroke: 1px black;
 	display: flex;
   flex-direction: column;
   justify-content: center;
@@ -872,27 +781,30 @@ display: grid;
              0 7px 0 #333333, 0 8px 7px rgba(0, 0, 0, 0.4),
              0 9px 10px rgba(0, 0, 0, 0.2);
 }
+body{
+color:white;
+-webkit-text-stroke: 1px black;}
 	</style>
 </head>
 <body class="grad">
 <div style="position:absolute;top:0;left:0;width:1600px;height:847px;background-image:url(ab_left.png);z-index: -10"></div>
-<img id="logoNotLog" src="logo.png">
- <div id="logoLoggedin" class="Rtable Rtable--6cols" width="100%" style="
-    display:none ;
+<img class="onLoggedOut" src="logo.png">
+<span class="onLoggedIn"><div width="100%" style="
+    display:grid ;
     grid-gap: 3px;
     grid-auto-rows: minmax(100px,auto);
-    grid-template-columns: repeat(6,1fr);
+    grid-template-columns: repeat({{app.usr.f?5:2}},1fr);
     background: rgba(240,240,255,.1);
     border-radius: 5px;
     padding: 3px;
  ">
 	<div class="menuItem" style="min-width:300px"><img src="logo.png"></div>
 	<div class="menuItem bvl"><a href="#!/main">Contracts</a></div>
-	<div class="menuItem bvl"><a href="#!/cntrctsReport">cntrctsReport</a></div>
-	<div class="menuItem bvl"><a href="#!/profiles">Profiles</a></div>
-	<div class="menuItem bvl"><a href="#!/oh">Overheads</a></div>
-	<div class="menuItem bvl"><a ng-click="app.logout()" href="#!/login"></a></div>
-</div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/cntrctsReport">cntrctsReport</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/profiles">Profiles</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/oh">Overheads</a></div>
+	<!--div class="menuItem bvl"><a ng-click="app.logout()" href="#!/login">Logout</a></div-->
+</div></span>
 <div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="app">
 
 <main ui-view></main><sub>, by mohamadjb@gmail.com</sub></div>
@@ -907,35 +819,34 @@ display: grid;
 		<a ng-click="cntrcts.push(app.cntrct=app.newCntrct())" href="#!/cntrct" class="menuItem bvl"><div class="menuItem">New Contract</div></a>
 	</div>
 <hr/>
-	<div class="tbl hding" style="grid-template-columns: repeat(5,1fr);background:rgba(#f0f0ffe0)">
+	<div class="tbl hding" style="grid-template-columns: repeat({{app.usr.f?5:4}},1fr);background:rgba(#f0f0ffe0)">
 		<div class="menuItem">Jobcard No</div>
 		<div class="menuItem"><h3>Title</h3></div>
 		<div class="menuItem">Created</div>
 		<div class="menuItem">Total</div>
-		<div class="menuItem">Net Income</div>
+		<div ng-if="app.usr.f" class="menuItem">Net Income</div>
 	</div>
 	<div ng-repeat="i in cntrcts">
 	 <a ng-click="app.cntrct=i" href="#!/cntrct" ng-class="i.ni<=0?'bvl negRow':'bvl'">
-	  <div class="tbl" style="grid-template-columns: repeat(5,1fr);" >
-		<div class="menuItem">{{i.jn}}</div>
+	  <div class="tbl" style="grid-template-columns: repeat({{app.usr.f?5:4}},1fr);" >
+		<div class="menuItem"><span ng-if="i.closed">&#128274;</span><sub ng-if="i.paid" style="color:red;font-size: small;" class="neon" >PAID</sub>{{i.jn}}</div>
 		<div class="menuItem"><h3>{{i.title}}</h3></div>
 		<div class="menuItem">{{dt(i.created)|date:"yyyy/MM/dd HH:mm"}}</div>
 		<div class="menuItem"><span title="{{i.tc|numberSpelling}}" ng-bind-html="i.tc|filtr:'currency'"></span></div>
-		<div ng-class="i.ni<=0?'menuItem negCell':'menuItem'"><span title="{{i.ni|numberSpelling}}" ng-bind-html="i.ni|filtr:'currency'"></span></div>
+		<div ng-if="app.usr.f" ng-class="i.ni<=0?'menuItem negCell':'menuItem'"><span title="{{i.ni|numberSpelling}}" ng-bind-html="i.ni|filtr:'currency'"></span></div>
 	</div></a></div>
 </template>
 
 <template id="template.cntrct" >
-	<h2 class="ghost"><span class="neon">Contract:</span><span class="st3d">{{c.title}}</span></h2>
-	
-	<select ng-change="app.chng(c)" ng-blur="app.blur(c)" ng-model="c.goal" ng-options="i for i in app.goals"></select>
+	<h2 class="ghost"><span class="neon">Contract:</span><span class="st3d"><span ng-if="i.closed">&#128274;</span>{{c.title}}</span></h2>
 
  <div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
 	<div class="menuItem hding" style="text-align:right"><h3>Title</h3></div>
-	<div class="menuItem" style="text-align:left" ><h3><input ng-model="c.title" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></h3></div>
+	<div class="menuItem" style="text-align:left" ><h3><input ng-disabled="c.closed" ng-model="c.title" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></h3></div>
 
 	<div class="menuItem hding" style="text-align:right">Contractor</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="c.contractor" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" ng-model="c.contractor"
+		ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
 
 	<div class="menuItem hding" style="text-align:right">Created</div>
 	<div class="menuItem" style="text-align:left" >{{dt(c.created)|date:"yyyy/MM/dd HH:mm"}}</div>
@@ -943,43 +854,60 @@ display: grid;
 	<div class="menuItem hding" style="text-align:right">Last Modified</div>
 	<div class="menuItem" style="text-align:left" >{{dt(c.lastModified)|date:"yyyy/MM/dd HH:mm"}}</div>
 
+	<div class="menuItem hding" style="text-align:right">Started</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" type="date" ng-model="c.start" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Completed</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" type="date" ng-model="c.completed" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Paid</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed||(c.paid&&!app.usr.f)" type="checkbox" ng-model="c.paid" ng-change="app.chng(c)" ng-blur="app.blur(c)"
+		/><sub ng-if="c.paid" style="color:red;font-size: small;" class="neon" >PAID</sub></div>
+
+	<div class="menuItem hding" style="text-align:right">Closed</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed&&!app.usr.f" type="checkbox" ng-model="c.closed" ng-change="app.chng(c)" ng-blur="app.blur(c)"
+		/><span ng-if="c.closed">&#128274;</span></div>
+
 	<div class="menuItem hding" style="text-align:right" 
 		title="rate(at the time of the contract creation) is the overhead-sum of the company , divided by total number of operators"
 		>Rate</div><div class="menuItem" style="text-align:left"><span 
 		title="{{c.rate|numberSpelling}}" ng-bind-html="c.rate|filtr:'currency'"></span></div>
 
 	<div class="menuItem hding" style="text-align:right">Jobcard No</div>
-	<div class="menuItem" style="text-align:left" ><input 
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" 
 		ng-model="c.jn" type="number" min="0" placeholder="0" step="1" ng-change="app.chng(c)" 
 		ng-blur="app.blur(c)"/></div>
 
 	<div class="menuItem hding" style="text-align:right">#Labor</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="c.ppl" type="number" min="0" placeholder="0" step="1" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed||!app.usr.f" ng-model="c.ppl" type="number" min="0" placeholder="0" step="1" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
 
 	<div class="menuItem hding" style="text-align:right">#Month</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="c.month" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
-	
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed||!app.usr.f" ng-model="c.month" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+
 	<div class="menuItem hding" style="text-align:right">Labor cost</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="c.dl" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
-	                                                         
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed||!app.usr.f" ng-model="c.dl" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
+
 	<div class="menuItem hding" style="text-align:right">Material</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="c.dm" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
-	                                                         
-	<div class="menuItem hding" style="text-align:right">SV</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="c.sv" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
-	                                                         
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" ng-model="c.dm" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
+
+	<div class="menuItem hding" style="text-align:right" ng-if="app.usr.f">SV</div>
+	<div class="menuItem" style="text-align:left" ng-if="app.usr.f"><input ng-disabled="c.closed" ng-model="c.sv" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
+
 	<div class="menuItem hding" style="text-align:right">Overhead Cost</div><div class="menuItem" style="text-align:left"><span title="{{c.oh|numberSpelling}}" ng-bind-html="c.oh|filtr:'currency'"></span></div>
-	                                                         
+
 	<div class="menuItem hding" style="text-align:right">Total Cost</div><div class="menuItem" style="text-align:left"><span title="{{c.tc|numberSpelling}}" ng-bind-html="c.tc|filtr:'currency'"></span></div>
-	                                                         
+
 	<div class="menuItem hding" style="text-align:right">Commission</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="c.cm" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
-	                                                         
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed||!app.usr.f" ng-model="c.cm" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
+
 	<div class="menuItem hding" style="text-align:right">Invoice price</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="c.sp" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
-	                                                         
-	<div class="menuItem hding" style="text-align:right">Owner Income</div>
-	<div ng-class="c.ni<=0?'menuItem negCell':'menuItem'" style="text-align:left" ><span title="{{c.ni|numberSpelling}}" ng-bind-html="c.ni|filtr:'currency'"></span></div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed||!app.usr.f" ng-model="c.sp" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
+
+	<div class="menuItem hding" style="text-align:right" ng-if="app.usr.f">Owner Income</div>
+	<div ng-class="c.ni<=0?'menuItem negCell':'menuItem'" style="text-align:left" ng-if="app.usr.f" ><span title="{{c.ni|numberSpelling}}" ng-bind-html="c.ni|filtr:'currency'"></span></div>
+
+	<div class="menuItem hding" style="text-align:right">Remarks</div>
+	<div class="menuItem" style="text-align:left" ><textarea ng-disabled="c.closed" ng-model="c.remarks" ng-change="app.chng(c)" ng-blur="app.blur(c)"></textarea></div>
 </div>
 </template>
 
