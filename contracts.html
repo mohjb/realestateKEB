@@ -4,7 +4,7 @@
 <script src="/angular-1.6.4/angular-sanitize.min.js"></script>
 <script src="/angular-1.6.4/angular-md5.js"></script>
 <script src="/angular-1.6.4/angular-ui-router.js"></script>
-	<script>//\>\s*\{\{([^\|]*)\|filtr\:'currency'\}\}
+	<script>//\>\s*\{\{([^\|]*)\|filtr\:'currency'\}\} , ni= tc+cm-sp
 function did(p){return document.getElementById(p);}
 function dt(p){return new Date(p);}
 (window.xa=app=(angular||{})
@@ -72,9 +72,8 @@ function dt(p){return new Date(p);}
 			}
 		}
 		try{
-		//compare usr 's first , then compare contracts
-		mrg(a,b,'usr')
-		mrg(a,b,'contracts')
+		for(var i in a)//mrg(a,b,'usr');mrg(a,b,'contracts')
+			mrg(a,b,i)
 		}catch(ex){console.log('app.merge:error',a,b,ex)}
 		return chngsCount;
 	}
@@ -90,11 +89,12 @@ function dt(p){return new Date(p);}
 		$http.post('f.jsp',s).then(
 			function(response){
 				console.log('app.load:post:response:',response,arguments)
-				var x=response.data
+				var x=response.data;p.lastServerCheck=new Date();
 				if(p.merge(x,p.ls) && depth>0)
 					p.load(0,depth-1)
 			},function(response){
-				console.log('app.load:post:error:',response,arguments)
+				console.log('app.load:post:error:',response,arguments);
+				p.lastServerCheck=new Date();
 			})
 	}
 	p.chng=function(x){
@@ -121,8 +121,9 @@ function dt(p){return new Date(p);}
 		}
 	}
 	p.compute=function(c){
-		c.oh=c.rate*c.ppl*c.month;
-		c.tc=c.dl+c.dm+c.sv+c.oh
+		c.oh=(c.rate||0)*(c.ppl||0)*(c.month||0);
+		c.tc=(c.dl||0)+(c.dm||0)+(c.sv||0)+(c.oh||0)
+		c.ni=(c.sp||0)-((c.tc||0)+(c.cm||0))
 	}
 	p.cols={ppl:'number of People'
 		,dl:'Direct Labor'		//sum
@@ -156,7 +157,109 @@ function dt(p){return new Date(p);}
 		}
 		return x;
 	}
-	p.load()
+	
+	p.profileFields=[
+		{name:'Name',isArray:true}
+		,{name:'CID',type:'integer'}
+		,{name:'Nationality',isArray:true,type:'select'
+			,select: ["Afghanistan","Albania","Algeria","Andorra","Angola","Anguilla","Antigua & Barbuda","Argentina","Armenia","Aruba","Australia","Austria","Azerbaijan","Bahamas"
+			,"Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bermuda","Bhutan","Bolivia","Bosnia & Herzegovina","Botswana","Brazil","British Virgin Islands"
+			,"Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon" ,"Canada","Cape Verde","Cayman Islands","Chad","Chile","China","Colombia","Congo","Cook Islands","Costa Rica"
+			,"Cote D Ivoire","Croatia","Cruise Ship","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea"
+			,"Estonia","Ethiopia","Falkland Islands","Faroe Islands","Fiji","Finland","France","French Polynesia","French West Indies","Gabon","Gambia","Georgia","Germany","Ghana"
+			,"Gibraltar","Greece","Greenland","Grenada","Guam","Guatemala","Guernsey","Guinea","Guinea Bissau","Guyana","Haiti","Honduras","Hong Kong","Hungary","Iceland","India"
+			,"Indonesia","Iran","Iraq","Ireland","Isle of Man","Israel","Italy","Jamaica","Japan","Jersey","Jordan","Kazakhstan","Kenya","Kuwait","Kyrgyz Republic","Laos","Latvia"
+			,"Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Macau","Macedonia","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Mauritania"
+			,"Mauritius","Mexico","Moldova","Monaco","Mongolia","Montenegro","Montserrat","Morocco","Mozambique","Namibia","Nepal","Netherlands","Netherlands Antilles","New Caledonia"
+			,"New Zealand","Nicaragua","Niger","Nigeria","Norway","Oman","Pakistan","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal"
+			,"Puerto Rico","Qatar","Reunion","Romania","Russia","Rwanda","Saint Pierre & Miquelon","Samoa","San Marino","Satellite","Saudi Arabia","Senegal","Serbia","Seychelles"
+			,"Sierra Leone","Singapore","Slovakia","Slovenia","South Africa","South Korea","Spain","Sri Lanka","St Kitts & Nevis","St Lucia","St Vincent","St. Lucia","Sudan"
+			,"Suriname","Swaziland","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor L'Este","Togo","Tonga","Trinidad & Tobago","Tunisia"
+			,"Turkey","Turkmenistan","Turks & Caicos","Uganda","Ukraine","United Arab Emirates","United Kingdom"
+			, "United States",  "United States Minor Outlying Islands"
+			,"Uruguay","Uzbekistan","Venezuela","Vietnam","Virgin Islands (US)"
+			,"Yemen","Zambia","Zimbabwe"]}
+		,{name:'contactInfo',c:[{name:'telNo',type:'tel',isArray:true}
+			,{name:'address',isArray:true}
+			,{name:'email',type:'email',isArray:true}]}
+		,{name:'PassportNo',isArray:true,type:'integer'}
+		,{name:'type',type:'select',select:[//enum
+			'operator'
+			,'administrator'
+			,'contractor']}// (only commision)
+		,{name:'JobCategory',isArray:true,type:'select',select:["Mechanical Engineer"
+			, "Electrical Engineer", "Instrument Engineer"
+			, "Mechanical Supervisor", "Welder ï¿½TIG & ARC"
+			, "Fabricator", "Valve Technician", "Instrument Technician"
+			, "Machinist", "Electrician", "Pipe Fitter", "CNC Operator"
+			, "Store Keeper", "General Manager", "Project Manager"
+			, "Accountant", "Coordinator", "Secretary", "Receptionist"
+			, "Draft man", "Lison Officer (Mandoop)", "Driver", "Care Taker"]}
+		,{name:'PunchID',type:'integer'}
+		,{name:'Date','type':'date',c:[{name:'Joining'},{name:'DOB'}]}
+		,{name:'Size',type:'integer',c:[{name:'shoe'},{name:'overall'}]}
+		,{name:'Expiry',type:'date',c:[
+			{name:'Passport'}
+			,{name:'CID'},{name:'Residency'}
+			,{name:'Contract',desc:'(ministry of labor)'}
+			,{name:'driverLicense'}]}
+		,{name:'freeAttendance',type:'checkbox' ,authorization:'TopLevel,Auditor'}
+		,{name:'BankAccountDetailes',isArray:true,authorization:'TopLevel,Auditor',c:[
+			{name:'cash',type:'checkbox'}
+			,{name:'bankName'}
+			,{name:'accountNumber'}
+			]}
+		,{name:'Salary',type:'currency'
+			,desc:'salary fields (each has change log)'
+			,authorization:'TopLevel,Auditor'
+			,c:[{name:'basic salary'}
+			,{name:'mobile'}
+			,{name:'fuel'}
+			,{name:'Increment'}
+			,{name:'CustomItems',isArray:true}]}
+		,{name:'Attachments',type:'file',c:[
+			 {name:'FacePic',isArray:true},{name:'cid',isArray:true}//,{name:'cidBack'}
+			,{name:'residency',isArray:true}
+			,{name:'passport',isArray:true}
+			,{name:'ministryLabor',isArray:true}
+			,{name:'driverLicense',isArray:true}]}
+		]//profileFields
+	p.newProfile=function(){
+		var d=new Date(),n=d.getTime()
+		,x={url:'profile'+n,created:n,lastModified:n};
+		p.urls[x.url]={o:x,lm:n,chng:0}
+		for(var i in p.profileFields)
+		{var u=p.profileFields[i];
+			if(u.c){var z=x[u.name]={}
+			  for(var j in u.c){var w=u.c[j]
+				z[w.name]=w.type=='integer'||w.type=='tel'?n
+				:w.type=='file'?0
+				:w.type=='file'?0
+				:w.type=='file'?0
+				:w.type=='currency'?0
+				:w.name+w.name+n
+			}}
+			else 
+				x[u.name]=u.type=='integer'?n
+				:u.type=='select'?0
+				:u.type==''?0
+				:u.type==''?0
+				:u.type==''?0
+				:u.type==''?0
+				:u.type==''?0
+				:u.type==''?0
+				:u.type==''?0
+				:u.name+n
+		}p.save();
+	}
+	p.serverIntrvl=setInterval(function(){
+		var x=p.lastServerCheck.getTime()
+		,n=new Date().getTime();
+		if(x+120000<=n)
+		{	console.log('app:polling server');
+			p.load('');}
+	},10000)
+	p.lastServerCheck=new Date();p.load()
 	return function appFactoryCallback(message) {return p;}
 }])
 .config(function appConfig($stateProvider,$urlRouterProvider){
@@ -415,36 +518,36 @@ function dt(p){return new Date(p);}
 .filter('numberSpelling',function(){
  return function(v,op1){
 	var r={ar:[],en:[]}
-	,a={0:{ar:'صفر',en:'zero'},n:{ar:'سالب',en:'negative',en2:'minus'}
-	,s:{ar:' ',en:' '},w:{ar:' و ',en:' '},point:{ar:' فاصلة ',en:' point '},frac:{ar:' من ألف ',en:' of a thousandth'}
-	,1:{1:{ar:'واحد',en:'one'},2:{ar:'ثنين',en:'two'},3:{ar:'ثلاثة',en:'three'},4:{ar:'اربع',en:'four'}
-			,5:{ar:'خمسة',en:'five'},6:{ar:'ستة',en:'six'},7:{ar:'سبعة',en:'seven'},8:{ar:'ثمانية',en:'eight'}
-			,9:{ar:'تسعة',en:'nine'},10:{ar:'عشرة',en:'ten'},11:{ar:'إحدى عشر',en:'eleven'}
-			,12:{ar:'إثنى عشر',en:'twelve'},13:{ar:'ثلاثة عشر',en:'thirteen'},14:{ar:'اربعة عشر',en:'fourteen'}
-			,15:{ar:'خمسة عشر',en:'fifteen'},16:{ar:'ستة عشر',en:'sixteen'},17:{ar:'سبعة عشر',en:'seventeen'}
-			,18:{ar:'ثمانية عشر',en:'eighteen'},19:{ar:'تسعة عشر',en:'ninteen'}
-		,t:{2:{ar:'عشرون',en:'twenty'},3:{ar:'ثلاثون',en:'thirty'},4:{ar:'اربعون',en:'fourty'}
-			,5:{ar:'خمسون',en:'fifty'},6:{ar:'ستون',en:'sixty'},7:{ar:'سبعون',en:'seventy'}
-			,8:{ar:'ثمانون',en:'eighty'},9:{ar:'تسعون',en:'ninety'}}
-		,100:{ar:'مئة',ar2:'مئتين',en:'hundred'}}
-	, 2:{en:'thousand'		,ar:'ألف'		,ar2:'ألفين'	,ar3:'آلاف' }
-	, 3:{en:'million'		,ar:'مليون'		,ar2:'مليونين'	,ar3:'ملاين' }
-	, 4:{en:'billion'		,ar:'بليون'		,ar2:'بليونين'	,ar3:'بلاين' }
-	, 5:{en:'trillion'		,ar:'ترليون'	,ar2:'ترليونين'	,ar3:'ترلاين'}
-	, 6:{en:'Quadrillion'   ,ar:'كوادرليون' ,ar2:'كوادرليونين',ar3:'كوادرلاين'}
-	/*, 7:{en:'Quintillion'   ,ar:'كوانتليون'	}
-	, 8:{en:'Sextillion'	,ar:'سكستليون'	}
-	, 9:{en:'Septillion'	,ar:'سبتليون'	}
-	,10:{en:'Octillion'		,ar:'أوكتليون'	}
-	,11:{en:'Nonillion'		,ar:'نونليون'	}
-	,12:{en:'Decillion'		,ar:'ديسيليون'	}
-	,13:{en:'Undecillion'	,ar:'أنديسليون'	}
-	,14:{en:'Duodecillion'	,ar:'ديوديسيليون'	}
-	,15:{en:'Tredecillion'	,ar:'تريديسيليون'	}
-	,16:{en:'Quattuordecillion'	,ar:'كواتورديسيليون'}
-	,17:{en:'Quinquadecillion'	,ar:'كوانكوديسيليون'}
-	,18:{en:'Sedecillion'		,ar:'سيديسيليون'	}
-	,19:{en:'Septendecillion'	,ar:'سيبتنديسيليون' }
+	,a={0:{ar:'&#1589;&#1601;&#1585;',en:'zero'},n:{ar:'&#1587;&#1575;&#1604;&#1576;',en:'negative',en2:'minus'}
+	,s:{ar:' ',en:' '},w:{ar:' &#1608; ',en:' '},point:{ar:' &#1601;&#1575;&#1589;&#1604;&#1577; ',en:' point '},frac:{ar:' &#1605;&#1606; &#1571;&#1604;&#1601; ',en:' of a thousandth'}
+	,1:{1:{ar:'&#1608;&#1575;&#1581;&#1583;',en:'one'},2:{ar:'&#1579;&#1606;&#1610;&#1606;',en:'two'},3:{ar:'&#1579;&#1604;&#1575;&#1579;&#1577;',en:'three'},4:{ar:'&#1575;&#1585;&#1576;&#1593;',en:'four'}
+			,5:{ar:'&#1582;&#1605;&#1587;&#1577;',en:'five'},6:{ar:'&#1587;&#1578;&#1577;',en:'six'},7:{ar:'&#1587;&#1576;&#1593;&#1577;',en:'seven'},8:{ar:'&#1579;&#1605;&#1575;&#1606;&#1610;&#1577;',en:'eight'}
+			,9:{ar:'&#1578;&#1587;&#1593;&#1577;',en:'nine'},10:{ar:'&#1593;&#1588;&#1585;&#1577;',en:'ten'},11:{ar:'&#1573;&#1581;&#1583;&#1609; &#1593;&#1588;&#1585;',en:'eleven'}
+			,12:{ar:'&#1573;&#1579;&#1606;&#1609; &#1593;&#1588;&#1585;',en:'twelve'},13:{ar:'&#1579;&#1604;&#1575;&#1579;&#1577; &#1593;&#1588;&#1585;',en:'thirteen'},14:{ar:'&#1575;&#1585;&#1576;&#1593;&#1577; &#1593;&#1588;&#1585;',en:'fourteen'}
+			,15:{ar:'&#1582;&#1605;&#1587;&#1577; &#1593;&#1588;&#1585;',en:'fifteen'},16:{ar:'&#1587;&#1578;&#1577; &#1593;&#1588;&#1585;',en:'sixteen'},17:{ar:'&#1587;&#1576;&#1593;&#1577; &#1593;&#1588;&#1585;',en:'seventeen'}
+			,18:{ar:'&#1579;&#1605;&#1575;&#1606;&#1610;&#1577; &#1593;&#1588;&#1585;',en:'eighteen'},19:{ar:'&#1578;&#1587;&#1593;&#1577; &#1593;&#1588;&#1585;',en:'ninteen'}
+		,t:{2:{ar:'&#1593;&#1588;&#1585;&#1608;&#1606;',en:'twenty'},3:{ar:'&#1579;&#1604;&#1575;&#1579;&#1608;&#1606;',en:'thirty'},4:{ar:'&#1575;&#1585;&#1576;&#1593;&#1608;&#1606;',en:'fourty'}
+			,5:{ar:'&#1582;&#1605;&#1587;&#1608;&#1606;',en:'fifty'},6:{ar:'&#1587;&#1578;&#1608;&#1606;',en:'sixty'},7:{ar:'&#1587;&#1576;&#1593;&#1608;&#1606;',en:'seventy'}
+			,8:{ar:'&#1579;&#1605;&#1575;&#1606;&#1608;&#1606;',en:'eighty'},9:{ar:'&#1578;&#1587;&#1593;&#1608;&#1606;',en:'ninety'}}
+		,100:{ar:'&#1605;&#1574;&#1577;',ar2:'&#1605;&#1574;&#1578;&#1610;&#1606;',en:'hundred'}}
+	, 2:{en:'thousand'		,ar:'&#1571;&#1604;&#1601;'		,ar2:'&#1571;&#1604;&#1601;&#1610;&#1606;'	,ar3:'&#1570;&#1604;&#1575;&#1601;' }
+	, 3:{en:'million'		,ar:'&#1605;&#1604;&#1610;&#1608;&#1606;'		,ar2:'&#1605;&#1604;&#1610;&#1608;&#1606;&#1610;&#1606;'	,ar3:'&#1605;&#1604;&#1575;&#1610;&#1606;' }
+	, 4:{en:'billion'		,ar:'&#1576;&#1604;&#1610;&#1608;&#1606;'		,ar2:'&#1576;&#1604;&#1610;&#1608;&#1606;&#1610;&#1606;'	,ar3:'&#1576;&#1604;&#1575;&#1610;&#1606;' }
+	, 5:{en:'trillion'		,ar:'&#1578;&#1585;&#1604;&#1610;&#1608;&#1606;'	,ar2:'&#1578;&#1585;&#1604;&#1610;&#1608;&#1606;&#1610;&#1606;'	,ar3:'&#1578;&#1585;&#1604;&#1575;&#1610;&#1606;'}
+	, 6:{en:'Quadrillion'   ,ar:'&#1603;&#1608;&#1575;&#1583;&#1585;&#1604;&#1610;&#1608;&#1606;' ,ar2:'&#1603;&#1608;&#1575;&#1583;&#1585;&#1604;&#1610;&#1608;&#1606;&#1610;&#1606;',ar3:'&#1603;&#1608;&#1575;&#1583;&#1585;&#1604;&#1575;&#1610;&#1606;'}
+	/*, 7:{en:'Quintillion'   ,ar:'&#1603;&#1608;&#1575;&#1606;&#1578;&#1604;&#1610;&#1608;&#1606;'	}
+	, 8:{en:'Sextillion'	,ar:'&#1587;&#1603;&#1587;&#1578;&#1604;&#1610;&#1608;&#1606;'	}
+	, 9:{en:'Septillion'	,ar:'&#1587;&#1576;&#1578;&#1604;&#1610;&#1608;&#1606;'	}
+	,10:{en:'Octillion'		,ar:'&#1571;&#1608;&#1603;&#1578;&#1604;&#1610;&#1608;&#1606;'	}
+	,11:{en:'Nonillion'		,ar:'&#1606;&#1608;&#1606;&#1604;&#1610;&#1608;&#1606;'	}
+	,12:{en:'Decillion'		,ar:'&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'	}
+	,13:{en:'Undecillion'	,ar:'&#1571;&#1606;&#1583;&#1610;&#1587;&#1604;&#1610;&#1608;&#1606;'	}
+	,14:{en:'Duodecillion'	,ar:'&#1583;&#1610;&#1608;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'	}
+	,15:{en:'Tredecillion'	,ar:'&#1578;&#1585;&#1610;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'	}
+	,16:{en:'Quattuordecillion'	,ar:'&#1603;&#1608;&#1575;&#1578;&#1608;&#1585;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'}
+	,17:{en:'Quinquadecillion'	,ar:'&#1603;&#1608;&#1575;&#1606;&#1603;&#1608;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'}
+	,18:{en:'Sedecillion'		,ar:'&#1587;&#1610;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;'	}
+	,19:{en:'Septendecillion'	,ar:'&#1587;&#1610;&#1576;&#1578;&#1606;&#1583;&#1610;&#1587;&#1610;&#1604;&#1610;&#1608;&#1606;' }
 	
 	
 	
@@ -757,6 +860,9 @@ display: grid;
              0 0 40px #A5F1FF;
 }
 
+.negRow {background: rgba(255, 73, 0, 0.24);}
+.negCell{background: rgba(255, 73, 0, 0.58);}
+
 .st3d{
 
     color: #CCCCCC;
@@ -809,13 +915,13 @@ display: grid;
 		<div class="menuItem">Net Income</div>
 	</div>
 	<div ng-repeat="i in cntrcts">
-	 <a ng-click="app.cntrct=i" href="#!/cntrct" class="bvl">
+	 <a ng-click="app.cntrct=i" href="#!/cntrct" ng-class="i.ni<=0?'bvl negRow':'bvl'">
 	  <div class="tbl" style="grid-template-columns: repeat(5,1fr);" >
 		<div class="menuItem">{{i.jn}}</div>
 		<div class="menuItem"><h3>{{i.title}}</h3></div>
 		<div class="menuItem">{{dt(i.created)|date:"yyyy/MM/dd HH:mm"}}</div>
 		<div class="menuItem"><span title="{{i.tc|numberSpelling}}" ng-bind-html="i.tc|filtr:'currency'"></span></div>
-		<div class="menuItem"><span title="{{i.ni|numberSpelling}}" ng-bind-html="i.ni|filtr:'currency'"></span></div>
+		<div ng-class="i.ni<=0?'menuItem negCell':'menuItem'"><span title="{{i.ni|numberSpelling}}" ng-bind-html="i.ni|filtr:'currency'"></span></div>
 	</div></a></div>
 </template>
 
@@ -873,7 +979,7 @@ display: grid;
 	<div class="menuItem" style="text-align:left" ><input ng-model="c.sp" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
 	                                                         
 	<div class="menuItem hding" style="text-align:right">Owner Income</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="c.ni" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
+	<div ng-class="c.ni<=0?'menuItem negCell':'menuItem'" style="text-align:left" ><span title="{{c.ni|numberSpelling}}" ng-bind-html="c.ni|filtr:'currency'"></span></div>
 </div>
 </template>
 
@@ -929,7 +1035,7 @@ display: grid;
 		<div class="menuItem">Owner Income</div>
 	</div>
 
-	<div class="tbl brdr" style="grid-template-columns: repeat(11,1fr)" ng-repeat=" c in a">
+	<div style="grid-template-columns: repeat(11,1fr)" ng-repeat=" c in a" ng-class="c.ni<=0?'tbl brdr negRow':'tbl brdr'">
 		<div class="menuItem">{{c.jn}}</div>
 		<div class="menuItem">{{c.title}}</div>
 		<div class="menuItem">{{dt(c.created)| date:"yyyy/MM/dd HH:mm"}}</div>
@@ -940,12 +1046,12 @@ display: grid;
 		<div class="menuItem"><span title="{{c.tc|numberSpelling}}" ng-bind-html="c.tc|filtr:'currency'"></span></div>
 		<div class="menuItem"><span title="{{c.cm|numberSpelling}}" ng-bind-html="c.cm|filtr:'currency'"></span></div>
 		<div class="menuItem"><span title="{{c.sp|numberSpelling}}" ng-bind-html="c.sp|filtr:'currency'"></span></div>
-		<div class="menuItem"><span title="{{c.ni|numberSpelling}}" ng-bind-html="c.ni|filtr:'currency'"></span></div>
+		<div ng-class="c.ni<=0?'menuItem negCell':'menuItem'"><span title="{{c.ni|numberSpelling}}" ng-bind-html="c.ni|filtr:'currency'"></span></div>
 	</div>
 
 	<div class="tbl hding" style="grid-template-columns: repeat(11,1fr)">
 		<div class="menuItem">rows:{{a.length}}</div>
-		<div class="menuItem">Total-sum:<span title="{{sum|numberSpelling}}" ng-bind-html="sum|filtr:'currency'"></span></div>
+		<div class="menuItem"><!-- n g-class="sum<=0?'menuItem negCell':'menuItem'">Total-sum:<span title="{ {sum|numberSpelling} }" ng-bind-html="sum|filtr:'currency'"></span--></div>
 		<div class="menuItem">Totals:</div>
 		<div class="menuItem"><span title="{{b[0].sum|numberSpelling}}" ng-bind-html="b[0].sum|filtr:'currency'"></span></div>
 		<div class="menuItem"><span title="{{b[1].sum|numberSpelling}}" ng-bind-html="b[1].sum|filtr:'currency'"></span></div>
@@ -954,7 +1060,7 @@ display: grid;
 		<div class="menuItem"><span title="{{b[4].sum|numberSpelling}}" ng-bind-html="b[4].sum|filtr:'currency'"></span></div>
 		<div class="menuItem"><span title="{{b[5].sum|numberSpelling}}" ng-bind-html="b[5].sum|filtr:'currency'"></span></div>
 		<div class="menuItem"><span title="{{b[6].sum|numberSpelling}}" ng-bind-html="b[6].sum|filtr:'currency'"></span></div>
-		<div class="menuItem"><span title="{{b[7].sum|numberSpelling}}" ng-bind-html="b[7].sum|filtr:'currency'"></span></div>
+		<div ng-class="b[7].sum<=0?'menuItem negCell':'menuItem'"><span title="{{b[7].sum|numberSpelling}}" ng-bind-html="b[7].sum|filtr:'currency'"></span></div>
 	</div>
 	
 	
