@@ -36,6 +36,9 @@ static String f(BufferedReader r)throws IOException{
 }
 
 %><%
+response.setHeader("Cache-Control","no-cache"); 
+response.setHeader("Pragma","no-cache"); 
+response.setDateHeader ("Expires", -1); 
 String method=request.getMethod(),postData="",appData="";
 Object o=application.getAttribute(AN);
 Date nowd=new Date();File f=new File(FN);
