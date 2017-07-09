@@ -506,67 +506,13 @@ function cs(p){
 			return a?pth(0,af[i]):af[i]
 		}
 	}
+	$scope.sp=$scope.selectedProfile=app.selectedProfile||app.ls.profiles[0]||{}
 	$scope.chngSlct=function(){
-		console.log('profilesCtrl.chngProfileSlct:',$scope.selectedProfile,$scope);
-		$scope.keys=$scope.prepareKeys($scope.selectedProfile)
-	}
-/*for preparing a list of 
-	key-properties between the keys-of-object 
-	selectedProfile and 'Name'-prop-of-items-of-array 
-	profileFields
-	
-	$scope.kys0=function(a,b){
-		function cpy(o){var x=[];for(var i in o ){
-			x.push(o[i].c?cpy(o[i]):o[i])}}
-		var x=[],f
-		for(var i in a)
-		{	x.push(i)
-			f=fld();
-		}
-		return  x;}
-	*/
-	$scope.prepareKeys=function prepareKeys(o,af){
-		function cpy(o){var b1=o instanceof Array
-			if(b1 || typeof(o)=='object'){
-				var x=b1?[]:{}
-				for(var i in o)if(i!='c')
-					x[i]=cpy(o[i]);
-				return x;
-			}return o;}
-
 		if(!$scope.selectedProfile)
-			$scope.selectedProfile=app.ls.profiles[0]||{}
-		if(!o)
-			o=$scope.selectedProfile||app.ls.profiles[0]||{}
-		if(!af)af=pf
-		var kx=[]//cpy(pf)
-		for(var i in o)if(!(i in ['url','created','lastModified','usr'])){
-			var v=o[i]
-			,f0=$scope.fld(i,af&&af.c?af.c:af)
-			,b1=v instanceof Array
-			,b2=typeof(v)=='object'
-			,b3=f0&&f0.c
-			,b4=f0&&f0.isArray
-			,f=f0?cpy(f0):{name:i}
-			f.v=v;
-			kx.push(f)
-			/*if( b1 ){}
-			else if();
-			else if(() )
-			{f.c=[];
-				for(var j in f0.c){}
-			kys(kx);
-				
-			}*/
-			if( b1||b2||b3||b4 )
-			{	var x=prepareKeys(v,f0)
-				if(b3)
-					f.c=x;
-				else 
-					f.v=x
-			}
-		}
-		return kx;
+			$scope.selectedProfile=app.selectedProfile||app.ls.profiles[0]||{}
+		console.log('profilesCtrl.chngProfileSlct:',$scope.selectedProfile,$scope);
+		$scope.sp=$scope.selectedProfile//$scope.keys=$scope.prepareKeys($scope.selectedProfile)
+		$scope.sp.freeAttendance = ! ! $scope.sp.freeAttendance 
 	}
 
 	$scope.chng=function(a,x){console.log('profilesCtrl.chng:',a,x);}
@@ -1155,62 +1101,65 @@ body{
 		]//profileFields
 -- >	
  </div-->
- <span ng-init="keys=prepareKeys(app.selectedProfile,pf)" >
+ 
+ 
  <div class="tbl" style="grid-template-columns: repeat(2,1fr)"
- 	ng-init="sp=app.selectedProfile"
- 	ng-repeat="f in keys" ><!-- f={{f}}-->
- 	<div class="menuItem hding" style="text-align:right">{{f.name}}</div>
+	ng-repeat="(i,v) in app.selectedProfile" 
+	ng-init="f=fld(i)"
+	
+	>
+	<div class="menuItem hding" style="text-align:right">{{i}}</div>
 	<div class="menuItem" style="text-align:left" ng-if="f.c">
 		<div class="tbl hding" style="grid-template-columns: repeat(2,1fr)" ng-repeat="i2 in f.c">
-		 (under-construction:f={{f}} , i2={{i2}} )
+		 (under-construction: i2={{i2}} )
 		</div>
 	</div>
 	<div class="menuItem" style="text-align:left" ng-if="!f.c && f.isArray">
-		<span ng-repeat="j in f.v">{{$index+1}}
+		<span ng-repeat="j in v">{{$index+1}}
 			<select 
-				ng-if=" f.type=='select'" xng-model="f.v[$index]" 
+				ng-if=" f.type=='select'" 
 				ng-model="j"
 				ng-options="o as o in f.select" 
-				ng-change="chng([sp,f.name,f.v,j,$index])" 
-				ng-blur="blur([sp,f.name,f.v,j,$index])" /></select>
+				ng-change="chng([sp,f.name,v,j,$index])" 
+				ng-blur="blur([sp,f.name,v,j,$index])" /></select>
 			<input
-				ng-if="f.type!='select'" 	xng-model="c[i]" 
+				ng-if="f.type!='select'"
 				ng-model="j"
 				type="{{f.type||'text'}}"
-				ng-change="chng([sp,f.name,f.v,j,$index])"
-				ng-blur="blur([sp,f.name,f.v,j,$index])" />
-			<input ng-if="$index > 0" type="button" ng-click="app.deleteProfileItem([sp,f.name,f.v,j,$index])" value="&#10062;" />
+				ng-change="chng([sp,f.name,v,j,$index])"
+				ng-blur="blur([sp,f.name,v,j,$index])" />
+			<input ng-if="$index > 0" type="button" ng-click="app.deleteProfileItem([sp,f.name,v,j,$index])" value="&#10062;" />
 		</span> 
-		<span >{{f.v.length}}
+		<span >{{v.length}}
 			<select 
-				ng-if=" f.type=='select'" xng-model="f.v" 
-				ng-model="f.v[f.v.length]"
+				ng-if=" f.type=='select'"
+				ng-model="v[v.length]"
 				ng-options="o as o in f.select" 
-				ng-change="chng([sp,f.name,f.v,j,f.v.length])" 
-				ng-blur="blur([sp,f.name,f.v,j,f.v.length])" /></select>
+				ng-change="chng([sp,f.name,v,j,v.length])" 
+				ng-blur="blur([sp,f.name,v,j,v.length])" /></select>
 			<input
-				ng-if="f.type!='select'" 	xng-model="c[i]" 
-				ng-model="f.v[f.v.length]"
+				ng-if="f.type!='select'"
+				ng-model="v[v.length]"
 				type="{{f.type||'text'}}"
-				ng-change="chng([sp,f.name,f.v,j,f.v[f.v.length]])"
-				ng-blur="blur([sp,f.name,f.v,j,f.v[f.v.length]])" />
+				ng-change="chng([sp,f.name,v,j,v[v.length]])"
+				ng-blur="blur([sp,f.name,v,j,v[v.length]])" />
 		</span> 
 		</div>
 	<div class="menuItem" style="text-align:left" 
 		ng-if="!f.c && !f.isArray && f.type=='select'">
 		<select 
-			ng-model="f.v" 
+			ng-model="v" 
 			ng-options="o as o in f.select" 
-			ng-change="chng([sp,f,f.name,f.v])" 
-			ng-blur="blur([sp,f,f.name,f.v])" /></select></div>
+			ng-change="chng([sp,f,f.name,v])" 
+			ng-blur="blur([sp,f,f.name,v])" /></select></div>
 	<div class="menuItem" style="text-align:left" 
 		ng-if="!f.c && !f.isArray && f.type!='select' ">
 		<input 
-			ng-model="f.v" 
+			ng-model="v" 
 			type="{{f.type||'text'}}" 
-			ng-change="chng([sp,f,f.name,f.v])" 
-			ng-blur="blur([sp,f,f.name,f.v])" /></div>
- </div></span>
+			ng-change="chng([sp,f,f.name,v])" 
+			ng-blur="blur([sp,f,f.name,v])" /></div>
+ </div>
 </template>
 
 <template id="template.cntrctsReport" >
