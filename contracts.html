@@ -89,7 +89,6 @@ function cs(p){
 			}
 			for(var u in sc[1]){
 				var z=sc[1][u],c=z.c
-
 				if(c){
 					for(var i in c){
 						var v=c[i],x=z.o[i]
@@ -152,7 +151,6 @@ function cs(p){
 				
 		}
 	}
-
 	p.newUsr=function(){
 		var un=prompt('Please Enter User-Name')
 		,pw,u,d=new Date(),n=d.getTime();
@@ -170,7 +168,6 @@ function cs(p){
 		p.urls[u.url]={o:u,lastModified:n,chng:0}
 		p.save();
 		return u;}
-
 	p.compute=function(c){
 		c.oh=(c.rate||0)*(c.ppl||0)*(c.month||0);
 		c.tc=(c.dl||0)+(c.dm||0)+(c.sv||0)+(c.oh||0)
@@ -214,7 +211,7 @@ function cs(p){
 		p.save();
 		location.hash='#!/main';
 	}}
-	
+
 	p.profileFields=[
 		{name:'Name',isArray:true}
 		,{name:'CID',type:'integer'}
@@ -494,33 +491,31 @@ function cs(p){
 	$scope.app=app
 	$scope.dt=dt
 	var pf=$scope.pf=app.profileFields
-	$scope.fld=function fld(path){
+	
+	
+	$scope.fld=function fld(path,af){//get field
 		function pth(pi,prnt){
 			var n=path[pi]
 			,x=prnt[n];
 			return pi+1>=path.length//pi+2>=pth.length?[x,x[path[pi+1]]]
 				?x:pth(pi+1,path,x);}
 		var a=path instanceof Array
-		,n=a?path[0]:path
-		for(var i in pf)
-		{if(n==pf[i].name)
-			return a?pth(0,pf[i]):pf[i]
+		,n=a?path[0]:path;if(!af)af=pf;
+		for(var i in af)
+		{if(n==af[i].name)
+			return a?pth(0,af[i]):af[i]
 		}
 	}
-	function f2(){
-		function pth(pi,prnt){
-			var n=path[pi]
-			,x=prnt[n];
-			return pi+1>=path.length//pi+2>=pth.length?[x,x[path[pi+1]]]
-				?x:pth(pi+1,path,x);}
-		var a=path instanceof Array
-		,n=a?path[0]:path
-		for(var i in pf)
-		{if(n==pf[i].name)
-			return a?pth(0,pf[i]):pf[i]
-		}
+	$scope.chngSlct=function(){
+		console.log('profilesCtrl.chngProfileSlct:',$scope.selectedProfile,$scope);
+		$scope.keys=$scope.prepareKeys($scope.selectedProfile)
 	}
-	$scope.kys=function(a,b){
+/*for preparing a list of 
+	key-properties between the keys-of-object 
+	selectedProfile and 'Name'-prop-of-items-of-array 
+	profileFields
+	
+	$scope.kys0=function(a,b){
 		function cpy(o){var x=[];for(var i in o ){
 			x.push(o[i].c?cpy(o[i]):o[i])}}
 		var x=[],f
@@ -529,7 +524,51 @@ function cs(p){
 			f=fld();
 		}
 		return  x;}
-	$scope.chng=function(a){console.log('profilesCtrl.chng:',a);}
+	*/
+	$scope.prepareKeys=function prepareKeys(o,af){
+		function cpy(o){var b1=o instanceof Array
+			if(b1 || typeof(o)=='object'){
+				var x=b1?[]:{}
+				for(var i in o)if(i!='c')
+					x[i]=cpy(o[i]);
+				return x;
+			}return o;}
+
+		if(!$scope.selectedProfile)
+			$scope.selectedProfile=app.ls.profiles[0]||{}
+		if(!o)
+			o=$scope.selectedProfile||app.ls.profiles[0]||{}
+		if(!af)af=pf
+		var kx=[]//cpy(pf)
+		for(var i in o)if(!(i in ['url','created','lastModified','usr'])){
+			var v=o[i]
+			,f0=$scope.fld(i,af&&af.c?af.c:af)
+			,b1=v instanceof Array
+			,b2=typeof(v)=='object'
+			,b3=f0&&f0.c
+			,b4=f0&&f0.isArray
+			,f=f0?cpy(f0):{name:i}
+			f.v=v;
+			kx.push(f)
+			/*if( b1 ){}
+			else if();
+			else if(() )
+			{f.c=[];
+				for(var j in f0.c){}
+			kys(kx);
+				
+			}*/
+			if( b1||b2||b3||b4 )
+			{	var x=prepareKeys(v,f0)
+				if(b3)
+					f.c=x;
+				else 
+					f.v=x
+			}
+		}
+		return kx;
+	}
+
 	$scope.chng=function(a,x){console.log('profilesCtrl.chng:',a,x);}
 	$scope.blur=function(a,x){console.log('profilesCtrl.blur:',a,x);}
 	console.log('profilesCtrl:version=',$scope.version='profilesCtrl , app=',app )
@@ -629,8 +668,11 @@ function cs(p){
 	if(!app || !app.usr || !app.usr.f)
 		return location.hash='#!/login'
 	$scope.app=app
-	$scope.editUsr=app.usr
-	app.usr.f=!!app.usr.f
+	$scope.chng=function chng(x){
+		if(!x)x=$scope.editUsr
+		else $scope.editUsr=x
+		x.f=!!x.f;}
+	$scope.chng(app.usr);
 	console.log('usrsCtrl:version=',$scope.version='usrsCtrl , app=',app )
 })
 .filter('filtr',function(){
@@ -787,28 +829,6 @@ function cs(p){
 </script>
 <title>Aswan 2017, by mohamadjb@gmail.com</title>
 <style>
-.num0{font-size:small;color:silver}
-.num1{font-size:medium}
-.num2{font-size:large;color:green}
-.num3{font-size:x-large;color:blue}
-.num4{font-size:xx-large;font-weight:bold;color:deeppink}
-.num5{font-size:xx-large;font-weight:bold;color:red}
-.onUsrF{display:none}
-.onLoggedIn{display:none}
-.onLoggedOut{display:block}
-.bvl{
-    padding:10px 60px;
-    -webkit-border-radius: 25px;
-	-moz-border-radius: 25px;
-	border-radius: 25px;
-    background: -moz-linear-gradient(top, #f6e6b4 0%, #ed9017 100%); /* firefox */
-    border: solid #ccc 3px;
-    box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
-    -moz-box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
-    -webkit-box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
-    text-shadow: 0 1px 2px #fff;
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f6e6b4), color-stop(100%,#ed9017)); /* webkit */font-size:20px
-}
 .ghost{color:white}
 .grad {
 	background: #ae9018; /* For browsers that do not support gradients */
@@ -867,6 +887,19 @@ progress:focus , textarea:focus , select:focus , button:focus , meter:focus
     background: rgba(164, 133, 32, 0.55);
     border-radius: 6px;
 }
+.bvl{
+    padding:10px 10px/*60px*/;
+    -webkit-border-radius: 25px;
+	-moz-border-radius: 25px;
+	border-radius: 25px;
+    background: -moz-linear-gradient(top, #f6e6b4 0%, #ed9017 100%); /* firefox */
+    border: solid #ccc 3px;
+    box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
+    -moz-box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
+    -webkit-box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
+    text-shadow: 0 1px 2px #fff;
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f6e6b4), color-stop(100%,#ed9017)); /* webkit */font-size:20px
+}
 .neon{
     color: #D0F8FF;
     text-shadow: 0 0 5px #A5F1FF, 0 0 10px #A5F1FF,
@@ -886,12 +919,21 @@ progress:focus , textarea:focus , select:focus , button:focus , meter:focus
 body{
 	color:white;
 	-webkit-text-stroke: 1px black;}
+.num0{font-size:small;color:silver}
+.num1{font-size:medium}
+.num2{font-size:large;color:green}
+.num3{font-size:x-large;color:blue}
+.num4{font-size:xx-large;font-weight:bold;color:deeppink}
+.num5{font-size:xx-large;font-weight:bold;color:red}
+.onUsrF{display:none}
+.onLoggedIn{display:none}
+.onLoggedOut{display:block}
 </style>
 </head>
 <body class="grad">
 <div style="position:absolute;top:0;left:0;x-width:1600px;min-width:250px;min-height:250px;x-height:847px;width:100%;height:100%;background-image:url(ab_left.png);z-index: -10"></div>
 <img class="onLoggedOut" src="logo.png">
-<span class="onLoggedIn"><div width="100%" style="display:grid ;
+<span class="onLoggedIn"><div width="100%" style="display:inline-flex ;
     grid-gap: 3px;
     grid-auto-rows: minmax(100px,auto);
     grid-template-columns: repeat({{app.usr.f?6:2}},1fr);
@@ -1038,19 +1080,18 @@ body{
 <template id="template.profiles" >
 	<h2 class="st3d">Profiles</h2>
  <input ng-click="app.selectedProfile=app.newProfile()" value="New Profile" type="button"/>
- <select ng-model="app.selectedProfile" ng-options="i.Name for i in app.ls.profiles"></select>
+ <select ng-model="app.selectedProfile" ng-options="i.Name for i in app.ls.profiles" ng-change="chngSlct()"></select>
 <!--
-{{app.selectedProfile}}
-
+{ {app.selectedProfile}}
  <div class="tbl" style="grid-template-columns: repeat(2,1fr)"
- 	ng-init="sp=app.selectedProfile" 
- 	ng-init="pf=app.profileFields" >
+ 	n g-init="sp=app.selectedProfile" 
+ 	n g-init="pf=app.profileFields" >
 	<div class="menuItem hding" style="text-align:right">Name</div>
-	<div class="menuItem" style="text-align:left" ><input type="button" ng-click="app.deleteProfile()" value="&#10062;Delete" />
-		<span ng-repeat="nm in app.selectedProfile.Name"><br ng-if="$index > 0"/>{{$index+1}}
+	<div class="menuItem" style="text-align:left" ><input type="button" n g-click="app.deleteProfile()" value="&#10062;Delete" />
+		<span n g-repeat="nm in app.selectedProfile.Name"><br n g-if="$index > 0"/>{ {$index+1}}
 		  <input 
-			ng-model="app.selectedProfile.Name[$index]" 
-			ng-change="chng([app.selectedProfile,'Name',$index])" 
+			n g-model="app.selectedProfile.Name[$index]" 
+			n g-change="chng([app.selectedProfile,'Name',$index])" 
 			ng-blur="blur([app.selectedProfile,'Name',$index])"/>
 			<input type="button" ng-click="app.deleteProfileName($index)" value="&#10062;" />
 		</span></div>
@@ -1061,10 +1102,9 @@ body{
 			ng-change="chng([app.selectedProfile,'CID'])" 
 			ng-blur="blur([app.selectedProfile,'CID'])"/>
 		</div>
-
 	<div class="menuItem hding" style="text-align:right">Nationality</div>
 	<div class="menuItem" style="text-align:left" >
-		<span ng-repeat="nm in app.selectedProfile.Nationality"><br ng-if="$index > 0"/>{{$index+1}}
+		<span ng-repeat="nm in app.selectedProfile.Nationality"><br ng-if="$index > 0"/>{ {$index+1}}
 		  <select ng-options="nt for nt in app.profileFields.Nationality.select"
 			ng-model="app.selectedProfile.Nationality[$index]" 
 			ng-change="chng([app.selectedProfile,'Nationality',$index])" 
@@ -1115,46 +1155,62 @@ body{
 		]//profileFields
 -- >	
  </div-->
- 
+ <span ng-init="keys=prepareKeys(app.selectedProfile,pf)" >
  <div class="tbl" style="grid-template-columns: repeat(2,1fr)"
- 	ng-init="sp=app.selectedProfile;keys=kys(sp,pf)" 
- 	ng-repeat="(i,c) in keys" >
- 	<div class="menuItem hding" style="text-align:right">{{i}}</div>
-	<div class="menuItem" style="text-align:left" ng-if="pf[i].c">
-		<div class="tbl hding" style="grid-template-columns: repeat(2,1fr)" ng-repeat="i2 in sp[i].c">
+ 	ng-init="sp=app.selectedProfile"
+ 	ng-repeat="f in keys" ><!-- f={{f}}-->
+ 	<div class="menuItem hding" style="text-align:right">{{f.name}}</div>
+	<div class="menuItem" style="text-align:left" ng-if="f.c">
+		<div class="tbl hding" style="grid-template-columns: repeat(2,1fr)" ng-repeat="i2 in f.c">
+		 (under-construction:f={{f}} , i2={{i2}} )
 		</div>
 	</div>
-	<div class="menuItem" style="text-align:left" ng-if="!pf[i].c && pf[i].isArray">
-		<span ng-repeat="j in c">
+	<div class="menuItem" style="text-align:left" ng-if="!f.c && f.isArray">
+		<span ng-repeat="j in f.v">{{$index+1}}
 			<select 
-				ng-if=" pf[i].type=='select'" 
-				ng-model="c[i]" 
-				ng-options="o as o in pf[i].select" 
-				ng-change="chng(c)" 
-				ng-blur="blur(c)" /></select>
+				ng-if=" f.type=='select'" xng-model="f.v[$index]" 
+				ng-model="j"
+				ng-options="o as o in f.select" 
+				ng-change="chng([sp,f.name,f.v,j,$index])" 
+				ng-blur="blur([sp,f.name,f.v,j,$index])" /></select>
 			<input
-				ng-if="pf[i].type!='select'" 
-				ng-model="c[i]" 
-				type="{{pf[i].type}}"
-				ng-change="chng(c)"
-				ng-blur="blur(c)" />
+				ng-if="f.type!='select'" 	xng-model="c[i]" 
+				ng-model="j"
+				type="{{f.type||'text'}}"
+				ng-change="chng([sp,f.name,f.v,j,$index])"
+				ng-blur="blur([sp,f.name,f.v,j,$index])" />
+			<input ng-if="$index > 0" type="button" ng-click="app.deleteProfileItem([sp,f.name,f.v,j,$index])" value="&#10062;" />
+		</span> 
+		<span >{{f.v.length}}
+			<select 
+				ng-if=" f.type=='select'" xng-model="f.v" 
+				ng-model="f.v[f.v.length]"
+				ng-options="o as o in f.select" 
+				ng-change="chng([sp,f.name,f.v,j,f.v.length])" 
+				ng-blur="blur([sp,f.name,f.v,j,f.v.length])" /></select>
+			<input
+				ng-if="f.type!='select'" 	xng-model="c[i]" 
+				ng-model="f.v[f.v.length]"
+				type="{{f.type||'text'}}"
+				ng-change="chng([sp,f.name,f.v,j,f.v[f.v.length]])"
+				ng-blur="blur([sp,f.name,f.v,j,f.v[f.v.length]])" />
 		</span> 
 		</div>
 	<div class="menuItem" style="text-align:left" 
-		ng-if="!pf[i].c && !pf[i].isArray && pf[i].type=='select'">
+		ng-if="!f.c && !f.isArray && f.type=='select'">
 		<select 
-			ng-model="c[i]" 
-			ng-options="o as o in pf[i].select" 
-			ng-change="chng(c)" 
-			ng-blur="blur(c)" /></select></div>
+			ng-model="f.v" 
+			ng-options="o as o in f.select" 
+			ng-change="chng([sp,f,f.name,f.v])" 
+			ng-blur="blur([sp,f,f.name,f.v])" /></select></div>
 	<div class="menuItem" style="text-align:left" 
-		ng-if="!pf[i].c && !pf[i].isArray && pf[i].type!='select'">
+		ng-if="!f.c && !f.isArray && f.type!='select' ">
 		<input 
-			ng-model="c[i]" 
-			type="{{pf[i].type||'text'}}" 
-			ng-change="chng(c)" 
-			ng-blur="blur(c)" /></div>
- </div>
+			ng-model="f.v" 
+			type="{{f.type||'text'}}" 
+			ng-change="chng([sp,f,f.name,f.v])" 
+			ng-blur="blur([sp,f,f.name,f.v])" /></div>
+ </div></span>
 </template>
 
 <template id="template.cntrctsReport" >
@@ -1213,7 +1269,7 @@ body{
 
 <template id="template.usrs" >
 	<h2 class="ghost"><span class="neon">Users:</span><span class="st3d">{{editUsr.un}}</span></h2>
-	<select ng-model="editUsr" ng-options="c.un for c in app.ls.usr"></select>
+	<select ng-model="editUsr" ng-options="c.un for c in app.ls.usr" ng-change="chng(c)"></select>
 	<input type="button" ng-click="editUsr=app.newUsr()" value="New User"/>
  <div class="tbl" style="grid-template-columns: repeat(2,1fr)" ng-if="editUsr && !editUsr.deleted" >
 
