@@ -54,11 +54,11 @@ function cs(p){
 			var r=[{},{}]//0:in a & not in b, 1:in both , 2:not in a & in b
 			for(var i in a){
 				var c=a[i];
-				if(c && c.url)
+				if(c && c.url && !c.deleted)
 				{var z=p.urls[c.url]
 				 if(!z)
 					r[0][c.url]=c
-				 else{
+				 else {
 					r[1][c.url]=z;
 					if(c.lastModified>z.lastModified)
 						z.c=c;}
@@ -82,6 +82,7 @@ function cs(p){
 			}
 			for(var u in sc[1]){
 				var z=sc[1][u],c=z.c
+
 				if(c){
 					for(var i in c){
 						var v=c[i],x=z.o[i]
@@ -181,6 +182,12 @@ function cs(p){
 		}
 		return x;
 	}
+	p.deleteCntrct=function(){
+		if(confirm('Please confirm delete '+p.cntrct.title)){
+		p.cntrct.deleted=new Date();
+		p.save();
+		location.hash='#!/main';
+	}}
 	
 	p.profileFields=[
 		{name:'Name',isArray:true}
@@ -242,7 +249,8 @@ function cs(p){
 			,{name:'Increment'}
 			,{name:'CustomItems',isArray:true}]}
 		,{name:'Attachments',type:'file',c:[
-			 {name:'FacePic',isArray:true},{name:'cid',isArray:true}//,{name:'cidBack'}
+			 {name:'FacePic',isArray:true}
+			,{name:'cid',isArray:true}
 			,{name:'residency',isArray:true}
 			,{name:'passport',isArray:true}
 			,{name:'ministryLabor',isArray:true}
@@ -250,37 +258,23 @@ function cs(p){
 		]//profileFields
 	p.newProfile=function(){
 		var d=new Date(),n=d.getTime()
-		,x={url:'profile'+n,created:n,lastModified:n};
-		p.urls[x.url]={o:x,lm:n,chng:0}
+		,x={url:'profile'+n,created:n,lastModified:n,usr:app.usr.url};
+		p.urls[x.url]={o:x,lm:n,chng:0};p.ls.profiles.push(x)
 		for(var i in p.profileFields)
 		{var u=p.profileFields[i];
 			if(u.c){var z=x[u.name]={}
 			  for(var j in u.c){var w=u.c[j]
-				z[w.name]=w.type=='integer'||w.type=='tel'?n
-				:w.type=='file'?0
-				:w.type=='file'?0
-				:w.type=='file'?0
-				:w.type=='currency'?0
-				:w.name+w.name+n
-			}}
-			else 
-				x[u.name]=u.type=='integer'?n
-				:u.type=='select'?0
-				:u.type==''?0
-				:u.type==''?0
-				:u.type==''?0
-				:u.type==''?0
-				:u.type==''?0
-				:u.type==''?0
-				:u.type==''?0
-				:u.name+n
-		}p.save();
+				z[w.name]=w.isArray?[]:''
+			}}else
+				x[u.name]=u.isArray?[]:''
+		}x.Name[0]=p.ls.profiles.length+'.Name'
+		p.save();return x;
 	}
 	p.serverIntrvl=setInterval(function(){
 		var x=p.lastServerCheck.getTime()
 		,n=new Date().getTime();
 		if(x+120000<=n)
-		{	console.log('app:polling server');
+		{console.log('app:polling server');
 			p.load('');}
 	},10000)
 	p.lastServerCheck=new Date();p.load()
@@ -462,9 +456,8 @@ function cs(p){
 		return location.hash='#!/login'
 	$scope.app=app
 	$scope.dt=dt
-	$scope.c=app.cntrct
+	$scope.pf=app.profileFields
 	console.log('profilesCtrl:version=',$scope.version='profilesCtrl , app=',app )
-	
 })
 .controller('cntrctsReportCtrl',
  function cntrctsReportCtrlController($scope,app ) {
@@ -476,9 +469,12 @@ function cs(p){
 	$scope.dt=dt;
 	$scope.from=app.from;
 	$scope.to=app.to;
-	$scope.search=function(){
-		var a=$scope.a=[],from=app.from=$scope.from,to=app.to=$scope.to;
-		$scope.sum=0
+	$scope.PType=[$scope.paid='all','Only Paid','Only not paid']
+	$scope.search=function(d1,d2){
+		var a=$scope.a=[],pt=$scope.paid
+		,paid=0
+		,f=app.from=d1||$scope.from
+		,t=app.to=d2||$scope.to;//$scope.sum=0
 		$scope.b=[{name:'dl',sum:0}
 		,{name:'dm',sum:0}
 		,{name:'sv',sum:0}
@@ -486,22 +482,67 @@ function cs(p){
 		,{name:'tc',sum:0}
 		,{name:'cm',sum:0}
 		,{name:'sp',sum:0}
-		,{name:'ni',sum:0,f:1}
-		]
-		for(var i in app.ls.contracts){
-			var x=app.ls.contracts[i]
-			if(x.created>=from && x.created<=to){
-				$scope.a.push(x);
+		,{name:'ni',sum:0}
+		];
+		if( s &&(!(s instanceof Date)) )
+			s=new Date(s)
+		if( e &&(!(e instanceof Date)) )
+			e=new Date(e)
+		if(f || t)
+		for(var i in app.ls.contracts)try{
+			var c=app.ls.contracts[i]
+			,s=c.started
+			,e=c.completed
+			,z=f&&t /* for the sake of debugging ,if-else statements are used for checking time interval intersection (z) 
+				, but if debugging isnt needed, alternativly can be written as:
+			 z= (f&&t 
+			 	 && (	  (s&&e &&( s<=t&&f<=e )) 
+			 	 		||(s 	&&( f<=s&&s<=t )) 
+			 	 		||(e 	&&( f<=e&&e<=t )) 
+					)
+				)
+			  ||(f&&( 
+						  (e&& f<=e) 
+						||(s&& f<=s) 
+					)
+				)
+			  ||(t&&(	  (s&& s<=t)
+			  			||(e&& e<=t)
+					)
+			)*/
+			if(c.deleted)continue;
+			if(z && pt!='all')//'all','Only Paid','Only not paid'
+				z=(pt=='Only Paid'&&c.paid) || (pt=='Only not paid'&& !c.paid);
+			if(z){
+				if(s&&e)
+					z=s<=t&&f<=e;else
+				if(s)
+					z=f<=s&&s<=t;else
+				if(e)
+					z=f<=e&&e<=t
+				else 
+					z=0;
+			}else if(f ){
+				if(e)
+					z=f<=e;else
+				if(s)
+					z=f<=s
+			}else if(t){
+				if(s)
+					z=s<=t;else
+				if(e)
+					z=e<=t
+			}
+			if(z){
+				$scope.a.push(c);
 				for(var j in $scope.b){
-					var u=$scope.b[j],v=x[u.name]
+					var u=$scope.b[j],v=c[u.name]
 					if(!isNaN(v))
-					{	u.sum+=v;
-						if(!u.f)$scope.sum+=v;
-					}
+						u.sum+=v;
 				}
 			}
-		}
-		$scope.sum=$scope.sum.toFixed(3);
+		}catch(ex)//for i c
+		{console.error('cntrctReport.search',ex);}
 	}//function search
 	console.log('cntrctsReportCtrl:version=',$scope.version='cntrctsReportCtrl , app=',app )
 })
@@ -577,15 +618,10 @@ function cs(p){
 	
 	
 	1000000000000000000000 ZWD
-
 =
-
 8.3669521967394E+17 KWD
-
-
 	*/
 	}//a
-
 	function apnd(p){r.ar.push(p.ar);r.en.push(p.en);}
 	function ones(v){
 		if(v>19)
@@ -664,56 +700,45 @@ function cs(p){
 </script>
 <title>Aswan 2017, by mohamadjb@gmail.com</title>
 <style>
-
 .num0{font-size:small;color:silver}
 .num1{font-size:medium}
 .num2{font-size:large;color:green}
 .num3{font-size:x-large;color:blue}
 .num4{font-size:xx-large;font-weight:bold;color:deeppink}
 .num5{font-size:xx-large;font-weight:bold;color:red}
-
 .onUsrF{display:none}
 .onLoggedIn{display:none}
 .onLoggedOut{display:block}
-
 .bvl{
-  
     padding:10px 60px;
     -webkit-border-radius: 25px;
-  -moz-border-radius: 25px;
-border-radius: 25px;
+	-moz-border-radius: 25px;
+	border-radius: 25px;
     background: -moz-linear-gradient(top, #f6e6b4 0%, #ed9017 100%); /* firefox */
     border: solid #ccc 3px;
     box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
     -moz-box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
     -webkit-box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
     text-shadow: 0 1px 2px #fff;
-
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f6e6b4), color-stop(100%,#ed9017)); /* webkit */font-size:20px
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f6e6b4), color-stop(100%,#ed9017)); /* webkit */font-size:20px
 }
-
-	.ghost{color:white}
-
-	.grad {
-			background: #ae9018; /* For browsers that do not support gradients */
-			background: -webkit-linear-gradient(#ae9018, #6e5632); /* For Safari 5.1 to 6.0 */
-			background: -o-linear-gradient(#ae9018, #6e5632); /* For Opera 11.1 to 12.0 */
-			background: -moz-linear-gradient(#ae9018, #6e5632); /* For Firefox 3.6 to 15 */
-			background: linear-gradient(#ae9018, #6e5632); /* Standard syntax */
-		}
-
-
+.ghost{color:white}
+.grad {
+	background: #ae9018; /* For browsers that do not support gradients */
+	background: -webkit-linear-gradient(#ae9018, #6e5632); /* For Safari 5.1 to 6.0 */
+	background: -o-linear-gradient(#ae9018, #6e5632); /* For Opera 11.1 to 12.0 */
+	background: -moz-linear-gradient(#ae9018, #6e5632); /* For Firefox 3.6 to 15 */
+	background: linear-gradient(#ae9018, #6e5632); /* Standard syntax */
+}
 a, a:visited, a:hover, a:active {
   color: inherit;    text-decoration: none;
 }
-
-
 input, textarea, select, button, meter, progress {
     text-align: start;
 	background:rgba(240,240,240,0.2);
     -webkit-writing-mode: horizontal-tb;
-	    margin: 0;
-		padding: 8px;
+	margin: 0;
+	padding: 8px;
     /*display: block;*/
     border: none;
     border-bottom: 3px solid #444;
@@ -722,13 +747,9 @@ input, textarea, select, button, meter, progress {
 	transition: width 1s ease-in-out;
 	
 }
-
 progress:focus , textarea:focus , select:focus , button:focus , meter:focus
 {animation:fade 2s}@keyframes fade{0%{background:rgba(240,240,240,0.9)}100%{background:rgba(240,240,240,0.01);}}
-
-
-.tbl{
-display: grid;
+.tbl{display: grid;
     grid-gap: 3px;
     grid-auto-rows: minmax(16px,auto);
     grid-template-columns: repeat(6,1fr);
@@ -743,37 +764,31 @@ display: grid;
     text-align: center;
     vertical-align: middle;/* x-padding-top: 25; */
     margin: 2px;
-color:white;
--webkit-text-stroke: 1px black;
+	color:white;
+	-webkit-text-stroke: 1px black;
 	display: flex;
-  flex-direction: column;
-  justify-content: center;
+	flex-direction: column;
+	justify-content: center;
 }
-
 .hding{
     background: rgba(90, 73, 28, 0.44);
     border: 3px double rgba(70, 56, 20, 0.57);
     box-shadow: inset 2px 2px 2px rgba(255, 255, 255, .4), inset -2px -2px 2px rgba(0, 0, 0, .4);
 }
-
 .brdr{
     border: 1px solid rgba(97, 77, 24, 0.65);
     background: rgba(164, 133, 32, 0.55);
     border-radius: 6px;
 }
-
 .neon{
     color: #D0F8FF;
     text-shadow: 0 0 5px #A5F1FF, 0 0 10px #A5F1FF,
              0 0 20px #A5F1FF, 0 0 30px #A5F1FF,
              0 0 40px #A5F1FF;
 }
-
 .negRow {background: rgba(255, 73, 0, 0.24);}
 .negCell{background: rgba(255, 73, 0, 0.58);}
-
 .st3d{
-
     color: #CCCCCC;
     text-shadow: 0 1px 0 #999999, 0 2px 0 #888888,
              0 3px 0 #777777, 0 4px 0 #666666,
@@ -782,22 +797,20 @@ color:white;
              0 9px 10px rgba(0, 0, 0, 0.2);
 }
 body{
-color:white;
--webkit-text-stroke: 1px black;}
-	</style>
+	color:white;
+	-webkit-text-stroke: 1px black;}
+</style>
 </head>
 <body class="grad">
-<div style="position:absolute;top:0;left:0;width:1600px;height:847px;background-image:url(ab_left.png);z-index: -10"></div>
+<div style="position:absolute;top:0;left:0;x-width:1600px;min-width:250px;min-height:250px;x-height:847px;width:100%;height:100%;background-image:url(ab_left.png);z-index: -10"></div>
 <img class="onLoggedOut" src="logo.png">
-<span class="onLoggedIn"><div width="100%" style="
-    display:grid ;
+<span class="onLoggedIn"><div width="100%" style="display:grid ;
     grid-gap: 3px;
     grid-auto-rows: minmax(100px,auto);
     grid-template-columns: repeat({{app.usr.f?5:2}},1fr);
     background: rgba(240,240,255,.1);
     border-radius: 5px;
-    padding: 3px;
- ">
+    padding: 3px;">
 	<div class="menuItem" style="min-width:300px"><img src="logo.png"></div>
 	<div class="menuItem bvl"><a href="#!/main">Contracts</a></div>
 	<div class="menuItem bvl onUsrF" ><a href="#!/cntrctsReport">cntrctsReport</a></div>
@@ -827,7 +840,7 @@ color:white;
 		<div ng-if="app.usr.f" class="menuItem">Net Income</div>
 	</div>
 	<div ng-repeat="i in cntrcts">
-	 <a ng-click="app.cntrct=i" href="#!/cntrct" ng-class="i.ni<=0?'bvl negRow':'bvl'">
+	 <a ng-click="app.cntrct=i" href="#!/cntrct" ng-class="i.ni<=0?'bvl negRow':'bvl'" ng-if="!i.deleted">
 	  <div class="tbl" style="grid-template-columns: repeat({{app.usr.f?5:4}},1fr);" >
 		<div class="menuItem"><span ng-if="i.closed">&#128274;</span><sub ng-if="i.paid" style="color:red;font-size: small;" class="neon" >PAID</sub>{{i.jn}}</div>
 		<div class="menuItem"><h3>{{i.title}}</h3></div>
@@ -839,7 +852,7 @@ color:white;
 
 <template id="template.cntrct" >
 	<h2 class="ghost"><span class="neon">Contract:</span><span class="st3d"><span ng-if="i.closed">&#128274;</span>{{c.title}}</span></h2>
-
+ <input type="button" ng-if="!app.cntrct.closed" ng-click="app.deleteCntrct()" value="&#10062;Delete" />
  <div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
 	<div class="menuItem hding" style="text-align:right"><h3>Title</h3></div>
 	<div class="menuItem" style="text-align:left" ><h3><input ng-disabled="c.closed" ng-model="c.title" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></h3></div>
@@ -855,7 +868,7 @@ color:white;
 	<div class="menuItem" style="text-align:left" >{{dt(c.lastModified)|date:"yyyy/MM/dd HH:mm"}}</div>
 
 	<div class="menuItem hding" style="text-align:right">Started</div>
-	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" type="date" ng-model="c.start" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" type="date" ng-model="c.started" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
 
 	<div class="menuItem hding" style="text-align:right">Completed</div>
 	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" type="date" ng-model="c.completed" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
@@ -926,7 +939,7 @@ color:white;
 <template id="template.oh" >
 	<h2 class="st3d">Overheads</h2>
 	 <div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
-		
+
 	<div class="menuItem hding" style="text-align:right">Currect Rate</div>
 	<div class="menuItem brdr" style="text-align:left" ><input ng-model="app.ls.rate.v"
 		type="number" min="0.000" placeholder="0.000" step="0.001" 
@@ -936,18 +949,69 @@ color:white;
 
 <template id="template.profiles" >
 	<h2 class="st3d">Profiles</h2>
+ <input ng-click="app.selectedProfile=app.newProfile()" value="New Profile" type="button"/>
+ <select ng-model="app.selectedProfile" ng-options="i.Name for i in app.ls.profiles"></select>
+
+{{app.selectedProfile}}
+
+ <div class="tbl" style="grid-template-columns: repeat(2,1fr)"
+ 	ng-init="sp=app.selectedProfile" 
+ 	ng-init="pf=app.profileFields" >
+	<div class="menuItem hding" style="text-align:right">Name</div>
+	<div class="menuItem" style="text-align:left" >{{app.selectedProfile.Name[0]}}</div>
+ </div>
+ 
+ <div class="tbl" style="grid-template-columns: repeat(2,1fr)"
+ 	ng-init="sp=app.selectedProfile" 
+ 	ng-repeat="(i,c) in app.selectedProfile" ng-init="i=$index">
+ 	sp={{sp}}
+ 	<div class="menuItem hding" style="text-align:right">{{i}}</div>
+	<div class="menuItem" style="text-align:left" ng-if="pf[i].c">
+		<div class="tbl hding" style="grid-template-columns: repeat(2,1fr)" ng-repeat="i2 in sp[i].c">
+		</div>
+	</div>
+	<div class="menuItem" style="text-align:left" ng-if="!pf[i].c && pf[i].isArray">
+		<span ng-repeat="j in c">
+			<select 
+				ng-if=" pf[i].type=='select'" 
+				ng-model="c[i]" 
+				ng-options="o as o in pf[i].select" 
+				ng-change="chng(c)" 
+				ng-blur="blur(c)" /></select>
+			<input
+				ng-if="pf[i].type!='select'" 
+				ng-model="c[i]" 
+				type="{{pf[i].type}}"
+				ng-change="chng(c)"
+				ng-blur="blur(c)" />
+		</span> 
+		</div>
+	<div class="menuItem" style="text-align:left" 
+		ng-if="!pf[i].c && !pf[i].isArray && pf[i].type=='select'">
+		<select 
+			ng-model="c[i]" 
+			ng-options="o as o in pf[i].select" 
+			ng-change="chng(c)" 
+			ng-blur="blur(c)" /></select></div>
+	<div class="menuItem" style="text-align:left" 
+		ng-if="!pf[i].c && !pf[i].isArray && pf[i].type!='select'">
+		<input 
+			ng-model="c[i]" 
+			type="{{pf[i].type||'text'}}" 
+			ng-change="chng(c)" 
+			ng-blur="blur(c)" /></div>
+ </div>
 </template>
 
 <template id="template.cntrctsReport" >
 	<h2 class="st3d">cntrctsReport</h2>
 
-	<div class="tbl" style="grid-template-columns: repeat(3,1fr)">
+	<div class="tbl" style="grid-template-columns: repeat(4,1fr)">
 		<div class="menuItem"><label for="from">From</label><input id="from" type="date" ng-model="from"/></div>
 		<div class="menuItem"><label for="to">To</label><input id="to" type="date" ng-model="to"/></div>
+		<div class="menuItem"><label for="paid">Paid-statues</label><select ng-model="paid" id="paid" ng-options='i  for i in PType'></select></div>
 		<div class="menuItem bvl" ng-click="search()" >Search</div>
 	</div>
-	
-	
 
 	<div class="tbl hding" style="grid-template-columns: repeat(11,1fr)">
 		<div class="menuItem">Jobcard No.</div>
@@ -990,9 +1054,6 @@ color:white;
 		<div class="menuItem"><span title="{{b[6].sum|numberSpelling}}" ng-bind-html="b[6].sum|filtr:'currency'"></span></div>
 		<div ng-class="b[7].sum<=0?'menuItem negCell':'menuItem'"><span title="{{b[7].sum|numberSpelling}}" ng-bind-html="b[7].sum|filtr:'currency'"></span></div>
 	</div>
-	
-	
-	
 </template>
 
 </templates>
