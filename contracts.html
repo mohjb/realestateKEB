@@ -20,11 +20,12 @@ function cs(p){
 }
 (window.xa=app=(angular||{})
 .module('app', ['ngSanitize','angular-md5','ui.router'] ))
-.factory('app', ['$http', function appFactory($http) {
+.factory('app', ['$http','md5', function appFactory($http,md5) {
 	var p=window.xa||{}
 	p.ls={rate:{url:"rate",lastModified:0,v:333},usr:{
 			moh:{url:'user-moh',un:'moh',pw:'6f8f57715090da2632453988d9a1501b'
-				,firstName:'Mohammad',lastName:'Buhamad',email:'mohamadjb@gmail.com'
+				,firstName:'Mohammad',lastName:'Buhamad'
+				,tel:'99876454',email:'mohamadjb@gmail.com'
 				,level:'fullAccess',notes:'',created:'2017/06/20T21:05',f:1
 				,lastModified:'2017/06/20T21:05'}
 			,be:{url:'user-be',un:'be',pw:'92eb5ffee6ae2fec3ad71c777531578f'
@@ -49,6 +50,12 @@ function cs(p){
 		localStorage.aswan20170704=s
 		p.load(s);
 	}
+	p.kys=function(a,b){
+		var x=Object.keys(a);
+		for(var i in b)
+			if(a[i]==undefined)
+				x.push(i);
+		return  x;}
 	p.merge=function(a,b){
 		function disect(a,b){
 			var r=[{},{}]//0:in a & not in b, 1:in both , 2:not in a & in b
@@ -145,6 +152,25 @@ function cs(p){
 				
 		}
 	}
+
+	p.newUsr=function(){
+		var un=prompt('Please Enter User-Name')
+		,pw,u,d=new Date(),n=d.getTime();
+		if(!un)return null;
+		if(p.ls.usr[un] && !p.ls.usr[un].deleted ){
+			alert('can not use user-name:'+un);return null;}
+		pw=prompt('Please enter password')
+		if(!pw)return null;
+		pw=md5.createHash(pw)
+		p.ls.usr[un]=u={url:'user-'+un
+			,un:un,pw:pw,usr:app.usr.url
+			,firstName:'user '+Object.keys(p.ls.usr).length+1
+			,lastName:'-',email:'',notes:'',level:'',f:0,tel:''
+			,created:n,lastModified:n}
+		p.urls[u.url]={o:u,lastModified:n,chng:0}
+		p.save();
+		return u;}
+
 	p.compute=function(c){
 		c.oh=(c.rate||0)*(c.ppl||0)*(c.month||0);
 		c.tc=(c.dl||0)+(c.dm||0)+(c.sv||0)+(c.oh||0)
@@ -366,6 +392,17 @@ function cs(p){
 					//console.log('config:func3:cntrctsReport',cnn);
 					return cnn;
 				}, 100);}
+		}).state('usrs',{
+		  url:'/usrs',controller:'usrsCtrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:usrs');
+			return $timeout(function () 
+				{var x='template.usrs'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					//console.log('config:func3:cntrctsReport',cnn);
+					return cnn;
+				}, 100);}
 		})
 })//config
 .controller('loginCtrl',
@@ -456,7 +493,45 @@ function cs(p){
 		return location.hash='#!/login'
 	$scope.app=app
 	$scope.dt=dt
-	$scope.pf=app.profileFields
+	var pf=$scope.pf=app.profileFields
+	$scope.fld=function fld(path){
+		function pth(pi,prnt){
+			var n=path[pi]
+			,x=prnt[n];
+			return pi+1>=path.length//pi+2>=pth.length?[x,x[path[pi+1]]]
+				?x:pth(pi+1,path,x);}
+		var a=path instanceof Array
+		,n=a?path[0]:path
+		for(var i in pf)
+		{if(n==pf[i].name)
+			return a?pth(0,pf[i]):pf[i]
+		}
+	}
+	function f2(){
+		function pth(pi,prnt){
+			var n=path[pi]
+			,x=prnt[n];
+			return pi+1>=path.length//pi+2>=pth.length?[x,x[path[pi+1]]]
+				?x:pth(pi+1,path,x);}
+		var a=path instanceof Array
+		,n=a?path[0]:path
+		for(var i in pf)
+		{if(n==pf[i].name)
+			return a?pth(0,pf[i]):pf[i]
+		}
+	}
+	$scope.kys=function(a,b){
+		function cpy(o){var x=[];for(var i in o ){
+			x.push(o[i].c?cpy(o[i]):o[i])}}
+		var x=[],f
+		for(var i in a)
+		{	x.push(i)
+			f=fld();
+		}
+		return  x;}
+	$scope.chng=function(a){console.log('profilesCtrl.chng:',a);}
+	$scope.chng=function(a,x){console.log('profilesCtrl.chng:',a,x);}
+	$scope.blur=function(a,x){console.log('profilesCtrl.blur:',a,x);}
 	console.log('profilesCtrl:version=',$scope.version='profilesCtrl , app=',app )
 })
 .controller('cntrctsReportCtrl',
@@ -484,10 +559,6 @@ function cs(p){
 		,{name:'sp',sum:0}
 		,{name:'ni',sum:0}
 		];
-		if( s &&(!(s instanceof Date)) )
-			s=new Date(s)
-		if( e &&(!(e instanceof Date)) )
-			e=new Date(e)
 		if(f || t)
 		for(var i in app.ls.contracts)try{
 			var c=app.ls.contracts[i]
@@ -510,9 +581,13 @@ function cs(p){
 			  			||(e&& e<=t)
 					)
 			)*/
-			if(c.deleted)continue;
-			if(z && pt!='all')//'all','Only Paid','Only not paid'
-				z=(pt=='Only Paid'&&c.paid) || (pt=='Only not paid'&& !c.paid);
+			if(c.deleted|| (pt!='all' &&((pt=='Only Paid'&&
+				c.paid) || (pt=='Only not paid'&& !c.paid))))
+				continue;
+			if( s &&(!(s instanceof Date)) )
+				s=new Date(s)
+			if( e &&(!(e instanceof Date)) )
+				e=new Date(e)
 			if(z){
 				if(s&&e)
 					z=s<=t&&f<=e;else
@@ -545,6 +620,18 @@ function cs(p){
 		{console.error('cntrctReport.search',ex);}
 	}//function search
 	console.log('cntrctsReportCtrl:version=',$scope.version='cntrctsReportCtrl , app=',app )
+})
+.controller('usrsCtrl',
+ function profilesCtrlController($scope,app ) {
+	if(app instanceof Function)
+		app=app();
+	
+	if(!app || !app.usr || !app.usr.f)
+		return location.hash='#!/login'
+	$scope.app=app
+	$scope.editUsr=app.usr
+	app.usr.f=!!app.usr.f
+	console.log('usrsCtrl:version=',$scope.version='usrsCtrl , app=',app )
 })
 .filter('filtr',function(){
 	return function(p,op1){
@@ -807,7 +894,7 @@ body{
 <span class="onLoggedIn"><div width="100%" style="display:grid ;
     grid-gap: 3px;
     grid-auto-rows: minmax(100px,auto);
-    grid-template-columns: repeat({{app.usr.f?5:2}},1fr);
+    grid-template-columns: repeat({{app.usr.f?6:2}},1fr);
     background: rgba(240,240,255,.1);
     border-radius: 5px;
     padding: 3px;">
@@ -816,6 +903,7 @@ body{
 	<div class="menuItem bvl onUsrF" ><a href="#!/cntrctsReport">cntrctsReport</a></div>
 	<div class="menuItem bvl onUsrF" ><a href="#!/profiles">Profiles</a></div>
 	<div class="menuItem bvl onUsrF" ><a href="#!/oh">Overheads</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/usrs">Users</a></div>
 	<!--div class="menuItem bvl"><a ng-click="app.logout()" href="#!/login">Logout</a></div-->
 </div></span>
 <div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="app">
@@ -951,20 +1039,86 @@ body{
 	<h2 class="st3d">Profiles</h2>
  <input ng-click="app.selectedProfile=app.newProfile()" value="New Profile" type="button"/>
  <select ng-model="app.selectedProfile" ng-options="i.Name for i in app.ls.profiles"></select>
-
+<!--
 {{app.selectedProfile}}
 
  <div class="tbl" style="grid-template-columns: repeat(2,1fr)"
  	ng-init="sp=app.selectedProfile" 
  	ng-init="pf=app.profileFields" >
 	<div class="menuItem hding" style="text-align:right">Name</div>
-	<div class="menuItem" style="text-align:left" >{{app.selectedProfile.Name[0]}}</div>
- </div>
+	<div class="menuItem" style="text-align:left" ><input type="button" ng-click="app.deleteProfile()" value="&#10062;Delete" />
+		<span ng-repeat="nm in app.selectedProfile.Name"><br ng-if="$index > 0"/>{{$index+1}}
+		  <input 
+			ng-model="app.selectedProfile.Name[$index]" 
+			ng-change="chng([app.selectedProfile,'Name',$index])" 
+			ng-blur="blur([app.selectedProfile,'Name',$index])"/>
+			<input type="button" ng-click="app.deleteProfileName($index)" value="&#10062;" />
+		</span></div>
+	<div class="menuItem hding" style="text-align:right">CID</div>
+	<div class="menuItem" style="text-align:left" >
+		  <input 
+			ng-model="app.selectedProfile.CID" 
+			ng-change="chng([app.selectedProfile,'CID'])" 
+			ng-blur="blur([app.selectedProfile,'CID'])"/>
+		</div>
+
+	<div class="menuItem hding" style="text-align:right">Nationality</div>
+	<div class="menuItem" style="text-align:left" >
+		<span ng-repeat="nm in app.selectedProfile.Nationality"><br ng-if="$index > 0"/>{{$index+1}}
+		  <select ng-options="nt for nt in app.profileFields.Nationality.select"
+			ng-model="app.selectedProfile.Nationality[$index]" 
+			ng-change="chng([app.selectedProfile,'Nationality',$index])" 
+			ng-blur="blur([app.selectedProfile,'Nationality',$index])"/>
+			<input ng-if="$index > 0" type="button" ng-click="app.deleteProfileNationlity($index)" value="&#10062;" />
+		</span></div>
+<!-- 
+	p.profileFields=[
+		{name:'Name',isArray:true}
+		,{name:'CID',type:'integer'}
+		,{name:'Nationality',isArray:true,type:'select'
+			,select: ["AfgZimbabwe"]}
+		,{name:'contactInfo',c:[{name:'telNo',type:'tel',isArray:true}
+			,{name:'address',isArray:true}
+			,{name:'email',type:'email',isArray:true}]}
+		,{name:'PassportNo',isArray:true,type:'integer'}
+		,{name:'type',type:'select',select:['torctor']}
+		,{name:'JobCategory',isArray:true,type:'select',select:["Mecker"]}
+		,{name:'PunchID',type:'integer'}
+		,{name:'Date','type':'date',c:[{name:'Joining'},{name:'DOB'}]}
+		,{name:'Size',type:'integer',c:[{name:'shoe'},{name:'overall'}]}
+		,{name:'Expiry',type:'date',c:[
+			{name:'Passport'}
+			,{name:'CID'},{name:'Residency'}
+			,{name:'Contract',desc:'(ministry of labor)'}
+			,{name:'driverLicense'}]}
+		,{name:'freeAttendance',type:'checkbox' ,authorization:'TopLevel,Auditor'}
+		,{name:'BankAccountDetailes',isArray:true,authorization:'TopLevel,Auditor',c:[
+			{name:'cash',type:'checkbox'}
+			,{name:'bankName'}
+			,{name:'accountNumber'}
+			]}
+		,{name:'Salary',type:'currency'
+			,desc:'salary fields (each has change log)'
+			,authorization:'TopLevel,Auditor'
+			,c:[{name:'basic salary'}
+			,{name:'mobile'}
+			,{name:'fuel'}
+			,{name:'Increment'}
+			,{name:'CustomItems',isArray:true}]}
+		,{name:'Attachments',type:'file',c:[
+			 {name:'FacePic',isArray:true}
+			,{name:'cid',isArray:true}
+			,{name:'residency',isArray:true}
+			,{name:'passport',isArray:true}
+			,{name:'ministryLabor',isArray:true}
+			,{name:'driverLicense',isArray:true}]}
+		]//profileFields
+-- >	
+ </div-->
  
  <div class="tbl" style="grid-template-columns: repeat(2,1fr)"
- 	ng-init="sp=app.selectedProfile" 
- 	ng-repeat="(i,c) in app.selectedProfile" ng-init="i=$index">
- 	sp={{sp}}
+ 	ng-init="sp=app.selectedProfile;keys=kys(sp,pf)" 
+ 	ng-repeat="(i,c) in keys" >
  	<div class="menuItem hding" style="text-align:right">{{i}}</div>
 	<div class="menuItem" style="text-align:left" ng-if="pf[i].c">
 		<div class="tbl hding" style="grid-template-columns: repeat(2,1fr)" ng-repeat="i2 in sp[i].c">
@@ -1054,6 +1208,45 @@ body{
 		<div class="menuItem"><span title="{{b[6].sum|numberSpelling}}" ng-bind-html="b[6].sum|filtr:'currency'"></span></div>
 		<div ng-class="b[7].sum<=0?'menuItem negCell':'menuItem'"><span title="{{b[7].sum|numberSpelling}}" ng-bind-html="b[7].sum|filtr:'currency'"></span></div>
 	</div>
+</template>
+
+
+<template id="template.usrs" >
+	<h2 class="ghost"><span class="neon">Users:</span><span class="st3d">{{editUsr.un}}</span></h2>
+	<select ng-model="editUsr" ng-options="c.un for c in app.ls.usr"></select>
+	<input type="button" ng-click="editUsr=app.newUsr()" value="New User"/>
+ <div class="tbl" style="grid-template-columns: repeat(2,1fr)" ng-if="editUsr && !editUsr.deleted" >
+
+	<div class="menuItem hding" style="text-align:right">User-name</div>
+	<div class="menuItem" style="text-align:left" ><input type="button" ng-click="app.deleteEditUsr()" value="&#10062;Delete" /><h3>{{editUsr.un}}</h3></div>
+
+	<div class="menuItem hding" style="text-align:right">First-name</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.firstName" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></h3></div>
+
+	<div class="menuItem hding" style="text-align:right">Last-name</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.lastName" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">E-Mail</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.email" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Telephone</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.tel" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Super-user</div>
+	<div class="menuItem" style="text-align:left" ><input type="checkbox" ng-model="editUsr.f" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Remarks</div>
+	<div class="menuItem" style="text-align:left" ><textarea ng-model="editUsr.notes" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"></textarea></div>
+
+	<div class="menuItem hding" style="text-align:right">Last Modified</div>
+	<div class="menuItem" style="text-align:left" >{{dt(editUsr.lastModified)|date:"yyyy/MM/ddTHH:mm"}}</div>
+
+	<div class="menuItem hding" style="text-align:right">Created</div>
+	<div class="menuItem" style="text-align:left" >{{dt(editUsr.created)|date:"yyyy/MM/ddTHH:mm"}}</div>
+
+	<div class="menuItem hding" style="text-align:right">Created by</div>
+	<div class="menuItem" style="text-align:left" >{{editUsr.usr}}</div>
+</div>
 </template>
 
 </templates>
