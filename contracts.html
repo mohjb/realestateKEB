@@ -44,7 +44,6 @@ function cs(p){
 		cs('.onLoggedIn').display='none'
 		cs('.onLoggedOut').display='';}
 	p.dt=dt
-	p.goals=['dl','sv','cm','sp','ni']
 	p.save=function(){
 		var s=JSON.stringify(p.ls)
 		localStorage.aswan20170704=s
@@ -212,11 +211,12 @@ function cs(p){
 		location.hash='#!/main';
 	}}
 
+	p.profileSelects={}
 	p.profileFields=[
 		{name:'Name',isArray:true}
 		,{name:'CID',type:'integer'}
 		,{name:'Nationality',isArray:true,type:'select'
-			,select: ["Afghanistan","Albania","Algeria","Andorra","Angola","Anguilla","Antigua & Barbuda","Argentina","Armenia","Aruba","Australia","Austria","Azerbaijan","Bahamas"
+			,select:p.profileSelects.Nationality= ["Afghanistan","Albania","Algeria","Andorra","Angola","Anguilla","Antigua & Barbuda","Argentina","Armenia","Aruba","Australia","Austria","Azerbaijan","Bahamas"
 			,"Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bermuda","Bhutan","Bolivia","Bosnia & Herzegovina","Botswana","Brazil","British Virgin Islands"
 			,"Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon" ,"Canada","Cape Verde","Cayman Islands","Chad","Chile","China","Colombia","Congo","Cook Islands","Costa Rica"
 			,"Cote D Ivoire","Croatia","Cruise Ship","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea"
@@ -237,11 +237,11 @@ function cs(p){
 			,{name:'address',isArray:true}
 			,{name:'email',type:'email',isArray:true}]}
 		,{name:'PassportNo',isArray:true,type:'integer'}
-		,{name:'type',type:'select',select:[//enum
+		,{name:'type',type:'select',select:p.profileSelects.type=[//enum
 			'operator'
 			,'administrator'
 			,'contractor']}// (only commision)
-		,{name:'JobCategory',isArray:true,type:'select',select:["Mechanical Engineer"
+		,{name:'JobCategory',isArray:true,type:'select',select:p.profileSelects.JobCategory=["Mechanical Engineer"
 			, "Electrical Engineer", "Instrument Engineer"
 			, "Mechanical Supervisor", "Welder –TIG & ARC"
 			, "Fabricator", "Valve Technician", "Instrument Technician"
@@ -481,8 +481,7 @@ function cs(p){
 	console.log('ohCtrl:version=',$scope.version='ohCtrl , app=',app )
 	
 })
-.controller('profilesCtrl',
- function profilesCtrlController($scope,app ) {
+.controller('profilesCtrl',function profilesCtrlController($scope,app ) {
 	if(app instanceof Function)
 		app=app();
 	
@@ -491,6 +490,13 @@ function cs(p){
 	$scope.app=app
 	$scope.dt=dt
 	var pf=$scope.pf=app.profileFields
+	,ps=$scope.profileSelects=app.profileSelects
+	,sp=$scope.sp=app.selectedProfile=(
+		app.selectedProfile?app.selectedProfile
+		:((app.ls.profiles&&app.ls.profiles.length)?app.ls.profiles[0]
+		  :app.newProfile()
+		 )
+	)
 	
 	
 	$scope.fld=function fld(path,af){//get field
@@ -506,7 +512,7 @@ function cs(p){
 			return a?pth(0,af[i]):af[i]
 		}
 	}
-	$scope.sp=$scope.selectedProfile=app.selectedProfile||app.ls.profiles[0]||{}
+	
 	$scope.chngSlct=function(){
 		if(!$scope.selectedProfile)
 			$scope.selectedProfile=app.selectedProfile||app.ls.profiles[0]||{}
@@ -519,8 +525,7 @@ function cs(p){
 	$scope.blur=function(a,x){console.log('profilesCtrl.blur:',a,x);}
 	console.log('profilesCtrl:version=',$scope.version='profilesCtrl , app=',app )
 })
-.controller('cntrctsReportCtrl',
- function cntrctsReportCtrlController($scope,app ) {
+.controller('cntrctsReportCtrl',function cntrctsReportCtrlController($scope,app ) {
 	if(app instanceof Function)
 		app=app();
 	if(!app || !app.usr)
@@ -606,14 +611,14 @@ function cs(p){
 	}//function search
 	console.log('cntrctsReportCtrl:version=',$scope.version='cntrctsReportCtrl , app=',app )
 })
-.controller('usrsCtrl',
- function profilesCtrlController($scope,app ) {
+.controller('usrsCtrl',function profilesCtrlController($scope,app ) {
 	if(app instanceof Function)
 		app=app();
-	
+
 	if(!app || !app.usr || !app.usr.f)
 		return location.hash='#!/login'
 	$scope.app=app
+
 	$scope.chng=function chng(x){
 		if(!x)x=$scope.editUsr
 		else $scope.editUsr=x
@@ -1027,139 +1032,487 @@ body{
 	<h2 class="st3d">Profiles</h2>
  <input ng-click="app.selectedProfile=app.newProfile()" value="New Profile" type="button"/>
  <select ng-model="app.selectedProfile" ng-options="i.Name for i in app.ls.profiles" ng-change="chngSlct()"></select>
-<!--
-{ {app.selectedProfile}}
- <div class="tbl" style="grid-template-columns: repeat(2,1fr)"
- 	n g-init="sp=app.selectedProfile" 
- 	n g-init="pf=app.profileFields" >
-	<div class="menuItem hding" style="text-align:right">Name</div>
-	<div class="menuItem" style="text-align:left" ><input type="button" n g-click="app.deleteProfile()" value="&#10062;Delete" />
-		<span n g-repeat="nm in app.selectedProfile.Name"><br n g-if="$index > 0"/>{ {$index+1}}
-		  <input 
-			n g-model="app.selectedProfile.Name[$index]" 
-			n g-change="chng([app.selectedProfile,'Name',$index])" 
-			ng-blur="blur([app.selectedProfile,'Name',$index])"/>
-			<input type="button" ng-click="app.deleteProfileName($index)" value="&#10062;" />
-		</span></div>
-	<div class="menuItem hding" style="text-align:right">CID</div>
-	<div class="menuItem" style="text-align:left" >
-		  <input 
-			ng-model="app.selectedProfile.CID" 
-			ng-change="chng([app.selectedProfile,'CID'])" 
-			ng-blur="blur([app.selectedProfile,'CID'])"/>
-		</div>
-	<div class="menuItem hding" style="text-align:right">Nationality</div>
-	<div class="menuItem" style="text-align:left" >
-		<span ng-repeat="nm in app.selectedProfile.Nationality"><br ng-if="$index > 0"/>{ {$index+1}}
-		  <select ng-options="nt for nt in app.profileFields.Nationality.select"
-			ng-model="app.selectedProfile.Nationality[$index]" 
-			ng-change="chng([app.selectedProfile,'Nationality',$index])" 
-			ng-blur="blur([app.selectedProfile,'Nationality',$index])"/>
-			<input ng-if="$index > 0" type="button" ng-click="app.deleteProfileNationlity($index)" value="&#10062;" />
-		</span></div>
-<!-- 
-	p.profileFields=[
-		{name:'Name',isArray:true}
-		,{name:'CID',type:'integer'}
-		,{name:'Nationality',isArray:true,type:'select'
-			,select: ["AfgZimbabwe"]}
-		,{name:'contactInfo',c:[{name:'telNo',type:'tel',isArray:true}
-			,{name:'address',isArray:true}
-			,{name:'email',type:'email',isArray:true}]}
-		,{name:'PassportNo',isArray:true,type:'integer'}
-		,{name:'type',type:'select',select:['torctor']}
-		,{name:'JobCategory',isArray:true,type:'select',select:["Mecker"]}
-		,{name:'PunchID',type:'integer'}
-		,{name:'Date','type':'date',c:[{name:'Joining'},{name:'DOB'}]}
-		,{name:'Size',type:'integer',c:[{name:'shoe'},{name:'overall'}]}
-		,{name:'Expiry',type:'date',c:[
-			{name:'Passport'}
-			,{name:'CID'},{name:'Residency'}
-			,{name:'Contract',desc:'(ministry of labor)'}
-			,{name:'driverLicense'}]}
-		,{name:'freeAttendance',type:'checkbox' ,authorization:'TopLevel,Auditor'}
-		,{name:'BankAccountDetailes',isArray:true,authorization:'TopLevel,Auditor',c:[
-			{name:'cash',type:'checkbox'}
-			,{name:'bankName'}
-			,{name:'accountNumber'}
-			]}
-		,{name:'Salary',type:'currency'
-			,desc:'salary fields (each has change log)'
-			,authorization:'TopLevel,Auditor'
-			,c:[{name:'basic salary'}
-			,{name:'mobile'}
-			,{name:'fuel'}
-			,{name:'Increment'}
-			,{name:'CustomItems',isArray:true}]}
-		,{name:'Attachments',type:'file',c:[
-			 {name:'FacePic',isArray:true}
-			,{name:'cid',isArray:true}
-			,{name:'residency',isArray:true}
-			,{name:'passport',isArray:true}
-			,{name:'ministryLabor',isArray:true}
-			,{name:'driverLicense',isArray:true}]}
-		]//profileFields
--- >	
- </div-->
- 
- 
- <div class="tbl" style="grid-template-columns: repeat(2,1fr)"
-	ng-repeat="(i,v) in app.selectedProfile" 
-	ng-init="f=fld(i)"
-	
-	>
-	<div class="menuItem hding" style="text-align:right">{{i}}</div>
-	<div class="menuItem" style="text-align:left" ng-if="f.c">
-		<div class="tbl hding" style="grid-template-columns: repeat(2,1fr)" ng-repeat="i2 in f.c">
-		 (under-construction: i2={{i2}} )
-		</div>
-	</div>
-	<div class="menuItem" style="text-align:left" ng-if="!f.c && f.isArray">
-		<span ng-repeat="j in v">{{$index+1}}
-			<select 
-				ng-if=" f.type=='select'" 
-				ng-model="j"
-				ng-options="o as o in f.select" 
-				ng-change="chng([sp,f.name,v,j,$index])" 
-				ng-blur="blur([sp,f.name,v,j,$index])" /></select>
-			<input
-				ng-if="f.type!='select'"
-				ng-model="j"
-				type="{{f.type||'text'}}"
-				ng-change="chng([sp,f.name,v,j,$index])"
-				ng-blur="blur([sp,f.name,v,j,$index])" />
-			<input ng-if="$index > 0" type="button" ng-click="app.deleteProfileItem([sp,f.name,v,j,$index])" value="&#10062;" />
-		</span> 
-		<span >{{v.length}}
-			<select 
-				ng-if=" f.type=='select'"
-				ng-model="v[v.length]"
-				ng-options="o as o in f.select" 
-				ng-change="chng([sp,f.name,v,j,v.length])" 
-				ng-blur="blur([sp,f.name,v,j,v.length])" /></select>
-			<input
-				ng-if="f.type!='select'"
-				ng-model="v[v.length]"
-				type="{{f.type||'text'}}"
-				ng-change="chng([sp,f.name,v,j,v[v.length]])"
-				ng-blur="blur([sp,f.name,v,j,v[v.length]])" />
-		</span> 
-		</div>
-	<div class="menuItem" style="text-align:left" 
-		ng-if="!f.c && !f.isArray && f.type=='select'">
-		<select 
-			ng-model="v" 
-			ng-options="o as o in f.select" 
-			ng-change="chng([sp,f,f.name,v])" 
-			ng-blur="blur([sp,f,f.name,v])" /></select></div>
-	<div class="menuItem" style="text-align:left" 
-		ng-if="!f.c && !f.isArray && f.type!='select' ">
-		<input 
-			ng-model="v" 
-			type="{{f.type||'text'}}" 
-			ng-change="chng([sp,f,f.name,v])" 
-			ng-blur="blur([sp,f,f.name,v])" /></div>
- </div>
+
+{{app.selectedProfile}}
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">Name</div>
+<div class="menuItem" style="text-align:left" >{{sp.Name.length}}<input 
+	ng-model="sp.Name[0]" type="text" 
+	ng-change="chng(sp.Name[0])" 
+	ng-blur="blur(sp.Name[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">CID</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.CID" type="integer" 
+	ng-change="chng(sp.CID)" 
+	ng-blur="blur(sp.CID)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Nationality</div>
+<div class="menuItem" style="text-align:left" >{{sp.Nationality.length}}<select 
+	ng-model="sp.Nationality[0]" 
+	ng-change="chng(sp.Nationality[0])" 
+	ng-blur="blur(sp.Nationality[0])" >
+	<option>Afghanistan</option>
+	<option>Albania</option>
+	<option>Algeria</option>
+	<option>Andorra</option>
+	<option>Angola</option>
+	<option>Anguilla</option>
+	<option>Antigua & Barbuda</option>
+	<option>Argentina</option>
+	<option>Armenia</option>
+	<option>Aruba</option>
+	<option>Australia</option>
+	<option>Austria</option>
+	<option>Azerbaijan</option>
+	<option>Bahamas</option>
+	<option>Bahrain</option>
+	<option>Bangladesh</option>
+	<option>Barbados</option>
+	<option>Belarus</option>
+	<option>Belgium</option>
+	<option>Belize</option>
+	<option>Benin</option>
+	<option>Bermuda</option>
+	<option>Bhutan</option>
+	<option>Bolivia</option>
+	<option>Bosnia & Herzegovina</option>
+	<option>Botswana</option>
+	<option>Brazil</option>
+	<option>British Virgin Islands</option>
+	<option>Brunei</option>
+	<option>Bulgaria</option>
+	<option>Burkina Faso</option>
+	<option>Burundi</option>
+	<option>Cambodia</option>
+	<option>Cameroon</option>
+	<option>Canada</option>
+	<option>Cape Verde</option>
+	<option>Cayman Islands</option>
+	<option>Chad</option>
+	<option>Chile</option>
+	<option>China</option>
+	<option>Colombia</option>
+	<option>Congo</option>
+	<option>Cook Islands</option>
+	<option>Costa Rica</option>
+	<option>Cote D Ivoire</option>
+	<option>Croatia</option>
+	<option>Cruise Ship</option>
+	<option>Cuba</option>
+	<option>Cyprus</option>
+	<option>Czech Republic</option>
+	<option>Denmark</option>
+	<option>Djibouti</option>
+	<option>Dominica</option>
+	<option>Dominican Republic</option>
+	<option>Ecuador</option>
+	<option>Egypt</option>
+	<option>El Salvador</option>
+	<option>Equatorial Guinea</option>
+	<option>Estonia</option>
+	<option>Ethiopia</option>
+	<option>Falkland Islands</option>
+	<option>Faroe Islands</option>
+	<option>Fiji</option>
+	<option>Finland</option>
+	<option>France</option>
+	<option>French Polynesia</option>
+	<option>French West Indies</option>
+	<option>Gabon</option>
+	<option>Gambia</option>
+	<option>Georgia</option>
+	<option>Germany</option>
+	<option>Ghana</option>
+	<option>Gibraltar</option>
+	<option>Greece</option>
+	<option>Greenland</option>
+	<option>Grenada</option>
+	<option>Guam</option>
+	<option>Guatemala</option>
+	<option>Guernsey</option>
+	<option>Guinea</option>
+	<option>Guinea Bissau</option>
+	<option>Guyana</option>
+	<option>Haiti</option>
+	<option>Honduras</option>
+	<option>Hong Kong</option>
+	<option>Hungary</option>
+	<option>Iceland</option>
+	<option>India</option>
+	<option>Indonesia</option>
+	<option>Iran</option>
+	<option>Iraq</option>
+	<option>Ireland</option>
+	<option>Isle of Man</option>
+	<option>Israel</option>
+	<option>Italy</option>
+	<option>Jamaica</option>
+	<option>Japan</option>
+	<option>Jersey</option>
+	<option>Jordan</option>
+	<option>Kazakhstan</option>
+	<option>Kenya</option>
+	<option>Kuwait</option>
+	<option>Kyrgyz Republic</option>
+	<option>Laos</option>
+	<option>Latvia</option>
+	<option>Lebanon</option>
+	<option>Lesotho</option>
+	<option>Liberia</option>
+	<option>Libya</option>
+	<option>Liechtenstein</option>
+	<option>Lithuania</option>
+	<option>Luxembourg</option>
+	<option>Macau</option>
+	<option>Macedonia</option>
+	<option>Madagascar</option>
+	<option>Malawi</option>
+	<option>Malaysia</option>
+	<option>Maldives</option>
+	<option>Mali</option>
+	<option>Malta</option>
+	<option>Mauritania</option>
+	<option>Mauritius</option>
+	<option>Mexico</option>
+	<option>Moldova</option>
+	<option>Monaco</option>
+	<option>Mongolia</option>
+	<option>Montenegro</option>
+	<option>Montserrat</option>
+	<option>Morocco</option>
+	<option>Mozambique</option>
+	<option>Namibia</option>
+	<option>Nepal</option>
+	<option>Netherlands</option>
+	<option>Netherlands Antilles</option>
+	<option>New Caledonia</option>
+	<option>New Zealand</option>
+	<option>Nicaragua</option>
+	<option>Niger</option>
+	<option>Nigeria</option>
+	<option>Norway</option>
+	<option>Oman</option>
+	<option>Pakistan</option>
+	<option>Palestine</option>
+	<option>Panama</option>
+	<option>Papua New Guinea</option>
+	<option>Paraguay</option>
+	<option>Peru</option>
+	<option>Philippines</option>
+	<option>Poland</option>
+	<option>Portugal</option>
+	<option>Puerto Rico</option>
+	<option>Qatar</option>
+	<option>Reunion</option>
+	<option>Romania</option>
+	<option>Russia</option>
+	<option>Rwanda</option>
+	<option>Saint Pierre & Miquelon</option>
+	<option>Samoa</option>
+	<option>San Marino</option>
+	<option>Satellite</option>
+	<option>Saudi Arabia</option>
+	<option>Senegal</option>
+	<option>Serbia</option>
+	<option>Seychelles</option>
+	<option>Sierra Leone</option>
+	<option>Singapore</option>
+	<option>Slovakia</option>
+	<option>Slovenia</option>
+	<option>South Africa</option>
+	<option>South Korea</option>
+	<option>Spain</option>
+	<option>Sri Lanka</option>
+	<option>St Kitts & Nevis</option>
+	<option>St Lucia</option>
+	<option>St Vincent</option>
+	<option>St. Lucia</option>
+	<option>Sudan</option>
+	<option>Suriname</option>
+	<option>Swaziland</option>
+	<option>Sweden</option>
+	<option>Switzerland</option>
+	<option>Syria</option>
+	<option>Taiwan</option>
+	<option>Tajikistan</option>
+	<option>Tanzania</option>
+	<option>Thailand</option>
+	<option>Timor L'Este</option>
+	<option>Togo</option>
+	<option>Tonga</option>
+	<option>Trinidad & Tobago</option>
+	<option>Tunisia</option>
+	<option>Turkey</option>
+	<option>Turkmenistan</option>
+	<option>Turks & Caicos</option>
+	<option>Uganda</option>
+	<option>Ukraine</option>
+	<option>United Arab Emirates</option>
+	<option>United Kingdom</option>
+	<option>United States</option>
+	<option>United States Minor Outlying Islands</option>
+	<option>Uruguay</option>
+	<option>Uzbekistan</option>
+	<option>Venezuela</option>
+	<option>Vietnam</option>
+	<option>Virgin Islands (US)</option>
+	<option>Yemen</option>
+	<option>Zambia</option>
+	<option>Zimbabwe</option>
+	</select></div>
+
+<div class="menuItem hding" style="text-align:right">contactInfo</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">telNo</div>
+<div class="menuItem" style="text-align:left" >{{sp.contactInfo.telNo.length}}<input 
+	ng-model="sp.contactInfo.telNo[0]" type="tel" 
+	ng-change="chng(sp.contactInfo.telNo[0])" 
+	ng-blur="blur(sp.contactInfo.telNo[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">address</div>
+<div class="menuItem" style="text-align:left" >{{sp.contactInfo.address.length}}<input 
+	ng-model="sp.contactInfo.address[0]" type="text" 
+	ng-change="chng(sp.contactInfo.address[0])" 
+	ng-blur="blur(sp.contactInfo.address[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">email</div>
+<div class="menuItem" style="text-align:left" >{{sp.contactInfo.email.length}}<input 
+	ng-model="sp.contactInfo.email[0]" type="email" 
+	ng-change="chng(sp.contactInfo.email[0])" 
+	ng-blur="blur(sp.contactInfo.email[0])" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">PassportNo</div>
+<div class="menuItem" style="text-align:left" >{{sp.PassportNo.length}}<input 
+	ng-model="sp.PassportNo[0]" type="integer" 
+	ng-change="chng(sp.PassportNo[0])" 
+	ng-blur="blur(sp.PassportNo[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">type</div>
+<div class="menuItem" style="text-align:left" ><select 
+	ng-model="sp.type" 
+	ng-change="chng(sp.type)" 
+	ng-blur="blur(sp.type)" >
+	<option>operator</option>
+	<option>administrator</option>
+	<option>contractor</option>
+	</select></div>
+
+<div class="menuItem hding" style="text-align:right">JobCategory</div>
+<div class="menuItem" style="text-align:left" >{{sp.JobCategory.length}}<select 
+	ng-model="sp.JobCategory[0]" 
+	ng-change="chng(sp.JobCategory[0])" 
+	ng-blur="blur(sp.JobCategory[0])" >
+	<option>Mechanical Engineer</option>
+	<option>Electrical Engineer</option>
+	<option>Instrument Engineer</option>
+	<option>Mechanical Supervisor</option>
+	<option>Welder –TIG & ARC</option>
+	<option>Fabricator</option>
+	<option>Valve Technician</option>
+	<option>Instrument Technician</option>
+	<option>Machinist</option>
+	<option>Electrician</option>
+	<option>Pipe Fitter</option>
+	<option>CNC Operator</option>
+	<option>Store Keeper</option>
+	<option>General Manager</option>
+	<option>Project Manager</option>
+	<option>Accountant</option>
+	<option>Coordinator</option>
+	<option>Secretary</option>
+	<option>Receptionist</option>
+	<option>Draft man</option>
+	<option>Lison Officer (Mandoop)</option>
+	<option>Driver</option>
+	<option>Care Taker</option>
+	</select></div>
+
+<div class="menuItem hding" style="text-align:right">PunchID</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.PunchID" type="integer" 
+	ng-change="chng(sp.PunchID)" 
+	ng-blur="blur(sp.PunchID)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Date</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">Joining</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Date.Joining" type="date" 
+	ng-change="chng(sp.Date.Joining)" 
+	ng-blur="blur(sp.Date.Joining)" /></div>
+
+<div class="menuItem hding" style="text-align:right">DOB</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Date.DOB" type="date" 
+	ng-change="chng(sp.Date.DOB)" 
+	ng-blur="blur(sp.Date.DOB)" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">Size</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">shoe</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Size.shoe" type="integer" 
+	ng-change="chng(sp.Size.shoe)" 
+	ng-blur="blur(sp.Size.shoe)" /></div>
+
+<div class="menuItem hding" style="text-align:right">overall</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Size.overall" type="integer" 
+	ng-change="chng(sp.Size.overall)" 
+	ng-blur="blur(sp.Size.overall)" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">Expiry</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">Passport</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.Passport" type="date" 
+	ng-change="chng(sp.Expiry.Passport)" 
+	ng-blur="blur(sp.Expiry.Passport)" /></div>
+
+<div class="menuItem hding" style="text-align:right">CID</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.CID" type="date" 
+	ng-change="chng(sp.Expiry.CID)" 
+	ng-blur="blur(sp.Expiry.CID)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Residency</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.Residency" type="date" 
+	ng-change="chng(sp.Expiry.Residency)" 
+	ng-blur="blur(sp.Expiry.Residency)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Contract</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.Contract" type="date" 
+	ng-change="chng(sp.Expiry.Contract)" 
+	ng-blur="blur(sp.Expiry.Contract)" /></div>
+
+<div class="menuItem hding" style="text-align:right">driverLicense</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.driverLicense" type="date" 
+	ng-change="chng(sp.Expiry.driverLicense)" 
+	ng-blur="blur(sp.Expiry.driverLicense)" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">freeAttendance</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.freeAttendance" type="checkbox" 
+	ng-change="chng(sp.freeAttendance)" 
+	ng-blur="blur(sp.freeAttendance)" /></div>
+
+<div class="menuItem hding" style="text-align:right">BankAccountDetailes</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">cash</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.BankAccountDetailes.cash" type="checkbox" 
+	ng-change="chng(sp.BankAccountDetailes.cash)" 
+	ng-blur="blur(sp.BankAccountDetailes.cash)" /></div>
+
+<div class="menuItem hding" style="text-align:right">bankName</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.BankAccountDetailes.bankName" type="text" 
+	ng-change="chng(sp.BankAccountDetailes.bankName)" 
+	ng-blur="blur(sp.BankAccountDetailes.bankName)" /></div>
+
+<div class="menuItem hding" style="text-align:right">accountNumber</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.BankAccountDetailes.accountNumber" type="text" 
+	ng-change="chng(sp.BankAccountDetailes.accountNumber)" 
+	ng-blur="blur(sp.BankAccountDetailes.accountNumber)" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">Salary</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">basicSalary</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Salary.basicSalary" type="currency" 
+	ng-change="chng(sp.Salary.basicSalary)" 
+	ng-blur="blur(sp.Salary.basicSalary)" /></div>
+
+<div class="menuItem hding" style="text-align:right">mobile</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Salary.mobile" type="currency" 
+	ng-change="chng(sp.Salary.mobile)" 
+	ng-blur="blur(sp.Salary.mobile)" /></div>
+
+<div class="menuItem hding" style="text-align:right">fuel</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Salary.fuel" type="currency" 
+	ng-change="chng(sp.Salary.fuel)" 
+	ng-blur="blur(sp.Salary.fuel)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Increment</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Salary.Increment" type="currency" 
+	ng-change="chng(sp.Salary.Increment)" 
+	ng-blur="blur(sp.Salary.Increment)" /></div>
+
+<div class="menuItem hding" style="text-align:right">CustomItems</div>
+<div class="menuItem" style="text-align:left" >{{sp.Salary.CustomItems.length}}<input 
+	ng-model="sp.Salary.CustomItems[0]" type="currency" 
+	ng-change="chng(sp.Salary.CustomItems[0])" 
+	ng-blur="blur(sp.Salary.CustomItems[0])" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">Attachments</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">FacePic</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.FacePic.length}}<input 
+	ng-model="sp.Attachments.FacePic[0]" type="file" 
+	ng-change="chng(sp.Attachments.FacePic[0])" 
+	ng-blur="blur(sp.Attachments.FacePic[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">cid</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.cid.length}}<input 
+	ng-model="sp.Attachments.cid[0]" type="file" 
+	ng-change="chng(sp.Attachments.cid[0])" 
+	ng-blur="blur(sp.Attachments.cid[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">residency</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.residency.length}}<input 
+	ng-model="sp.Attachments.residency[0]" type="file" 
+	ng-change="chng(sp.Attachments.residency[0])" 
+	ng-blur="blur(sp.Attachments.residency[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">passport</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.passport.length}}<input 
+	ng-model="sp.Attachments.passport[0]" type="file" 
+	ng-change="chng(sp.Attachments.passport[0])" 
+	ng-blur="blur(sp.Attachments.passport[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">ministryLabor</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.ministryLabor.length}}<input 
+	ng-model="sp.Attachments.ministryLabor[0]" type="file" 
+	ng-change="chng(sp.Attachments.ministryLabor[0])" 
+	ng-blur="blur(sp.Attachments.ministryLabor[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">driverLicense</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.driverLicense.length}}<input 
+	ng-model="sp.Attachments.driverLicense[0]" type="file" 
+	ng-change="chng(sp.Attachments.driverLicense[0])" 
+	ng-blur="blur(sp.Attachments.driverLicense[0])" /></div></div>
+</div>
+</div>
 </template>
 
 <template id="template.cntrctsReport" >
