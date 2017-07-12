@@ -1,0 +1,12 @@
+CACHE MANIFEST
+#version y2017
+# m40 h13 d11 M7
+CACHE:
+exportImport.html
+/angular-1.6.4/angular.min.js
+/angular-1.6.4/angular-sanitize.min.js
+/angular-1.6.4/angular-md5.js
+/angular-1.6.4/angular-ui-router.js
+logo.png
+ab_left.png
+favic32.ico
