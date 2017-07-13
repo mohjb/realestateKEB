@@ -1,42 +1,3 @@
-<%@ page import=" java.io.IOException
-,java.io.ObjectInputStream
-,java.io.OutputStream
-,java.io.OutputStreamWriter
-,java.io.PipedInputStream
-,java.io.PipedOutputStream
-,java.io.PrintWriter
-,java.io.StringWriter
-,java.io.Writer
-,java.io.File
-,java.lang.reflect.Array
-,java.lang.reflect.Field
-,java.lang.annotation.Annotation
-,java.net.URL
-,java.sql.Connection
-,java.sql.PreparedStatement
-,java.sql.ResultSet
-,java.sql.ResultSetMetaData
-,java.sql.SQLException
-,java.sql.Statement
-,java.util.Collection
-,java.util.Date
-,java.util.Enumeration
-,java.util.HashMap
-,java.util.Iterator
-,java.util.LinkedList
-,java.util.List
-,java.util.Map
-,java.nio.charset.Charset 
-,javax.servlet.ServletConfig
-,javax.servlet.ServletContext
-,javax.servlet.http.Cookie
-,javax.servlet.http.HttpServletRequest
-,javax.servlet.http.HttpSession
-,com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource
-,org.apache.commons.fileupload.FileItem
-,org.apache.commons.fileupload.disk.DiskFileItemFactory
-,org.apache.commons.fileupload.servlet.ServletFileUpload"
-%><%App.jsp(request, response, session, out, pageContext);%><%!
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
@@ -2222,21 +2183,116 @@ static final String SsnNm="App"
  * , if param"getIds" present then call getIds
  * , if param"getEntities" present then call getEntities
  */
-public static @TL.Op boolean poll
-(@TL.Op(prmName="lastPoll")long lastPoll
-,@TL.Op(prmName="updateCols")List updateCols
-,@TL.Op(prmName="putEntities")List putEntities
-,@TL.Op(prmName="getIds")List getIds
-,@TL.Op(prmName="getEntities")List getEntities
-,TL tl)throws IOException{
+public static @TL.Op Map poll
+(//@TL.Op(prmName="lastPoll")long lastPoll
+@TL.Op(prmName="getLogs")List logs
+,@TL.Op(prmName="update")List update//,@TL.Op(prmName="updateCols")List updateCols//,@TL.Op(prmName="putEntities")List putEntities
+,@TL.Op(prmName="distinct")List distinct//,@TL.Op(prmName="getIds")List getIds,@TL.Op(prmName="getEntities")List getEntities
+,TL tl){Map m=new HashMap();
+	if(lastPoll!=null)m.put("lastPoll",lastPoll( lastPoll,tl ));
+	if(updateCols !=null)m.put("updateCols", updateCols(updateCols ,tl ));
+	if(putEntities !=null)m.put("putEntities", putEntities( putEntities,tl ));
+	if( getIds!=null)m.put("getIds", getIds( getIds,tl ));
+	if( getEntities!=null)m.put("getEntities", getEntities( getEntities,tl ));
 
-	return true;}
+	return m;}
 
-static void lastPoll(long lastPoll){}
-static void updateCols(List updateCols){}
-static void putEntities(List putEntities){}
-static void getIds(List getIds){}
-static void getEntities(List getEntities){}
+static List getLogs(List lastPoll,TL tl){
+
+
+}
+
+/**all cases domain must be specified, or usr is in only one domain
+ * param:pagenation
+ *	cases
+ *		first request and results over 1023rows, then, include in return pagenation:{ref:<int>,page:<int>}
+ *		later requests, in request included pagenation:{ref:<int>,page:<int:optional>}
+ *		last response, includes pagenation:{ref:<int>,page:<int>,count:<int>,closed:true}
+ *		case, reqest include pagenation:{ref:<int>,cancel:true}
+ *
+ * cases for dates
+ * 1.param afterDate
+ *
+ * 2.param beforeDate
+ *
+ * 3.param from-to dates
+ *
+ *
+ * cases for entityship
+ * 0. no entityship, (in cases only dates, or pagenation ref)
+ * 1.params entity+id+col
+ *
+ * 2.param entity+id+col , req usr
+ *
+ * 3.param domain , req usr
+ * */
+static Map getLog(Map p,TL tl){
+ try{Map pg=(Map)p.get("pagenation");
+	 Object ref=pg!=null?pg.get("ref"):null;
+	 if(ref!=null){
+	 	Map x=(Map)tl.s("pagenation");
+	 	x=x!=null?(Map)x.get(ref):null;
+	 	ResultSet rs=x==null?null:(ResultSet)x.get(ref);
+	 	if(rs==null){pg.put("closed",true);return p;}
+	 	List a=new LinkedList();
+	 	Domain d=new Domain();
+	 	p.put("a",a);boolean b=false;
+	 	while((b=rs.next()) && a.size()<999)
+	    {   d.load(rs);
+	    	a.add(d.asMap());
+	    }
+	    if(b){
+
+	    }
+	    return p;
+	 }
+ }catch(Exception ex){tl.error("getLog",ex);}}
+
+static List updateCols(List rows,TL tl){
+	Date now=new Date();List x=new LinkedList();
+	Domain d=new Domain();
+	for(Object o:rows)try{
+		Map m=(Map)o;
+		d.fromMap();
+		d.logTime=now;
+		d.save();
+		m.put(Domain.C.logTime.toString(),d.logTime);
+		x.add(m);
+	}catch(Exception ex){tl.error("updateCols",ex);}
+	return x;}
+
+//static void putEntities(List putEntities,TL tl){}
+static List getIds(List rows,TL tl){
+	Domain d=new Domain();List x=new LinkedList();
+	for(Object o:rows)try{
+		Map m=(Map)o;d.fromMap( ( Map ) o );
+		Domain p=new Domain();p.fromMap(m);
+		Domain.C[]c=d.columns();
+		Field[]a=Domain.fields();
+		StringBuilder sql=new StringBuilder(
+		"select `").append(c[0])//no
+		.append("`,`").append(c[1])//domain
+		.append("`,max(`").append(c[2])//logTime
+		.append("`,`").append(c[3])//usr
+		.append("`,`").append(c[4])//entity
+		.append("`,`").append(c[5])//id
+		.append("`,`").append(c[6])//col
+		.append("`,`").append(c[7])//val
+		.append("`) from `").append(Domain.getName())
+		.append("` ");
+		Object[]where=d.where(d.C.domain,d.domain,d.C.entity,d.entity, d.C.id,d.id);
+		Cols.where(sql, where);
+		sql.append(" group by `domain`,`entity`,`id`,`col`");
+		try{rs=DB.R(sql.toString(), where);}
+		catch(Exception x){tl().error(x,"TL.DB.Tbl(",this,").Itrtr.<init>:where=",where);}
+
+		for(TL.DB.Tbl t:d.query(d.where()))
+			x.add(t.asMap());
+	}catch(Exception ex){tl.error("updateCols",ex);}
+	return x;}
+
+static List getEntities(List getEntities,TL tl){}
+static List getEntities(List getEntities,TL tl){}
 
 static{TL.registerOp( App.class);}
 
@@ -2247,7 +2303,8 @@ public static class Domain extends Tbl {//implements Serializable
 	@Override public String getName(){return dbtName;}//public	Ssn(){super(Name);}
 	@F public Integer no,domain;
 	@F public Date logTime;//lastModified
-	@F public String usr,entity,id,col,val;
+	@F public String usr,entity,id,col;
+	@F(json=true) public Object val;
 
 
 	public enum C implements CI{no,domain,logTime,usr,entity,id,col,val;//,lastModified;
@@ -2304,9 +2361,34 @@ CREATE TABLE `domain` (
 	}
 
 	static{registered.add(Domain.class);}
+	/**retrieve from the db table all the rows that match
+	 * the conditions in < where > , create an iterator
+	 * , e.g.<code>for(Tbl row:query(
+	 * 		Tbl.where( CI , < val > ) ))</code>*/
+	public Itrtr query(Object[]where){
+		Itrtr r=new Itrtr(where);
+		return r;}
 
+	public class Itrtr implements Iterator<Tbl>,Iterable<Tbl>{
+		public ResultSet rs=null;public int i=0;Field[]a;
+		//public Itrtr(Object[]where){}
+
+		@Override public Iterator<Tbl>iterator(){return this;}
+
+		@Override public boolean hasNext(){boolean b=false;
+			try {b = rs!=null&&rs.next();} catch (SQLException x)
+			{tl().error(x,"TL.DB.Tbl(",this,").Itrtr.hasNext:i=",i,",rs=",rs);}
+			if(!b&&rs!=null){DB.closeRS(rs);rs=null;}
+			return b;}
+
+		@Override public Tbl next(){i++;
+			try{load(rs,a);}catch(Exception x){tl().error(x,"TL.DB.Tbl("
+					,this,").Itrtr.next:i=",i,":",rs);rs=null;}
+			return Tbl.this;}
+
+		@Override public void remove(){throw new UnsupportedOperationException();}
+
+	}//Itrtr
 }//class Domain
 
 }//class App
-
-%>
