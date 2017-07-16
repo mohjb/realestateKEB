@@ -1,4 +1,4 @@
-//package aswan2017;
+package aswan2017;
 
 /**
  * Created by moh on 14/7/17.
@@ -1991,6 +1991,7 @@ public static class TL {
 }//class TL //TL tl=null;try{tl=TL.Enter(request,out);
 //public class App
 static final String SsnNm="App",UploadPth="/aswan/uploads/";
+
 /**http-get-method , poll-server
  * , of param"lastPoll" is present, then call lastPoll
  * , if param"updateCols" present then call updateCols
@@ -2000,9 +2001,9 @@ static final String SsnNm="App",UploadPth="/aswan/uploads/";
  */
 public static @TL.Op(urlPath = "*") Map poll
 (@TL.Op(prmName="getLogs")List getLogs
-		,@TL.Op(prmName="updates")List update
-		,@TL.Op(prmName="getDistinct")List distinct
-		,TL tl)
+	,@TL.Op(prmName="updates")List update
+	,@TL.Op(prmName="getDistinct")List distinct
+	,TL tl)
 {Map m=new HashMap();
 	if( getLogs!=null){List<Map>a=new LinkedList<>();
 		m.put("getLogs",a);
@@ -2081,38 +2082,37 @@ static Map getLog(Map p,TL tl){
 	return p;}
 static List updateDomains(List rows,TL tl){
 	List x=new LinkedList();
-	Pciod d=new Pciod();
+	PINVULt d=new PINVULt();
 	for(Object o:rows)try{
 		Map m=(Map)o;
 		d.fromMap(m);
 		d.logTime=tl.now;
 		d.save();
-		m.put(Pciod.C.logTime.toString(),d.logTime);
+		m.put(PINVULt.C.logTime.toString(),d.logTime);
 		x.add(m);
 	}catch(Exception ex){tl.error(ex,"updateDomn");}
 	return x;}
 //static void putEntities(List putEntities,TL tl){}
 //static List getEntities(List getEntities,TL tl){return null;}
 static List distinct(Map p,TL tl){return null;}
-
- static StringBuilder sql(StringBuilder sql,Object[]where,TL.DB.Tbl t) {
+static StringBuilder sql(StringBuilder sql,Object[]where,TL.DB.Tbl t) {
 	PINVULt d=new PINVULt();
 	Field[]a=t.fields(t.getClass());//.fields();
 	if(sql==null)sql=new StringBuilder();
 	sql.append("select `")
-		.append(c[0])//no
-		.append("`,`").append(c[1])//domain
-		.append("`,max(`").append(c[2])//logTime
-		.append("`),`").append(c[3])//usr
-		.append( "`,`").append(c[4])//entity
-		.append( "`,`").append(c[5])//id
-		.append( "`,`").append(c[6])//col
-		.append( "`,`").append(c[7])//val
-		.append("` from `").append(t.getName()).append("` ");
+			.append(a[0])//no
+			.append("`,`").append(a[1])//domain
+			.append("`,max(`").append(a[2])//logTime
+			.append("`),`").append(a[3])//usr
+			.append( "`,`").append(a[4])//entity
+			.append( "`,`").append(a[5])//id
+			.append( "`,`").append(a[6])//col
+			.append( "`,`").append(a[7])//val
+			.append("` from `").append(t.getName()).append("` ");
 	TL.DB.Tbl.Cols.where(sql, where);
 	sql.append(" group by `proto`,`id`,`n`");
 	return sql;
- }
+}
 
 static List getIds(List rows,TL tl){
 	PINVULt d=new PINVULt();
@@ -2123,18 +2123,18 @@ static List getIds(List rows,TL tl){
 		PINVULt.C[]c=d.columns();
 		Field[]a=PINVULt.fields(PINVULt.class);//.fields();
 		StringBuilder sql=new StringBuilder("select `")
-				                  .append(c[0])//no
-				                  .append("`,`").append(c[1])//domain
-				                  .append("`,max(`").append(c[2])//logTime
-				                  .append("`),`").append(c[3])//usr
-				                  .append( "`,`").append(c[4])//entity
-				                  .append( "`,`").append(c[5])//id
-				                  .append( "`,`").append(c[6])//col
-				                  .append( "`,`").append(c[7])//val
-				                  .append("` from `").append(p.getName()).append("` ");
-		Object[]where=d.where(PINVULt.C.domain,d.domain,PINVULt.C.entity,d.entity, PINVULt.C.id,d.id);
+			.append(c[0])//no
+			.append("`,`").append(c[1])//domain
+			.append("`,max(`").append(c[2])//logTime
+			.append("`),`").append(c[3])//usr
+			.append( "`,`").append(c[4])//entity
+			.append( "`,`").append(c[5])//id
+			.append( "`,`").append(c[6])//col
+			.append( "`,`").append(c[7])//val
+			.append("` from `").append(p.getName()).append("` ");
+		Object[]where=d.where(PINVULt.C.proto,d.proto, PINVULt.C.id,d.id);
 		TL.DB.Tbl.Cols.where(sql, where);
-		sql.append(" group by `domain`,`entity`,`id`,`col`");
+		sql.append(" group by `proto`,`id`,`n`");
 		try{ResultSet rs=TL.DB.R(sql.toString(), where);}
 		catch(Exception ex){tl.error(ex,"aswan2017.App.PINVULt.getIds:where=",where);}
 		for(TL.DB.Tbl t:d.query(d.where()))
@@ -2159,6 +2159,7 @@ static Map list(Map m,Map pg,TL tl){
 	ResultSet rs=(ResultSet)ps.get("rs");
 	if(rs==null)return m;
 	return list(m,rs,pg,ps,tl);}
+
 /**
  * pg is pagenation, a js-obj from client-http-request of the
  * ps is pagenation, a js-obj from session
@@ -2211,7 +2212,9 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 		}
 	}catch(Exception ex){tl.error(ex,"list",pg,rs);}
 	return m;}
+
 static{TL.registerOp( App.class);}
+
 /**
  * Proto_Id_Name_Val_Usr_LogTime P.I.N.V.U.LT)
  * */
@@ -2219,7 +2222,7 @@ public static class PINVULt extends TL.DB.Tbl {//implements Serializable
 	public static final String dbtName="PINVULt";
 	@Override public String getName(){return dbtName;}
 	@F public Integer no;
-	@F(gropu=true) public Integer proto
+	@F(group=true) public Integer proto;
 	@F public Integer /**user that made the change*/uid;
 	@F(max=true) public Date logTime;//cancelled:lastModified
 	@F(group=true) public String /**Object Id*/id,/**propertyName*/n;
@@ -2278,15 +2281,9 @@ CREATE TABLE `PINVULt` (
 	 * domainMember
 	 *
 	 * */
-	static List<Map>usrMemberships(int uid){
-		List<Map>lm=new LinkedList<Map>();
-		List l=new LinkedList();
-		PINVULt p=new PINVULt();
-		//domain=0, col="usrMembership" , val=uid ,
-		return null;}
-	static Map domainDef(int did){return null;}
-	static List<Map>rolesDef(List<String>roleNames){return null;}
+
 }//class PINVULt
+
 /**
  * for Domain&Proto vs userRole Access-Control
  * in dbTbl-PINVULt(domain=0 and col=uid and val=<uid>) will be noted-in-this-javadoc as the0domains
@@ -2297,16 +2294,16 @@ CREATE TABLE `PINVULt` (
 public static class ProDURAC extends TL.DB.Tbl {//implements Serializable
 	public static final String dbtName="ProDoRAC";
 	@Override public String getName(){return dbtName;}//public	Ssn(){super(Name);}
-	@F public Integer no
-	@F(group=true) public Integer proto
+	@F public Integer no;
+	@F(group=true) public Integer proto;
 	@F public Integer domain;
 	@F public Date logTime;//cancelled:lastModified
 	@F public String /**user that made the change*/uid;
 	@F(group=true) public String /**Object id / dbRow pk*/id
-		,/**propertyName*/n;
+	,/**propertyName*/n;
 	@F(json=true) public Object /**propertyValue*/v;
 	public enum C implements CI{no,proto,domain,logTime,uid,id,n,v;//,lastModified;
-		@Override public Class<? extends TL.DB.Tbl>cls(){return ProDoRAC.class;}
+		@Override public Class<? extends TL.DB.Tbl>cls(){return ProDURAC.class;}
 		@Override public Class<? extends TL.Form>clss(){return cls();}
 		@Override public String text(){return name();}
 		@Override public Field f(){return Cols.f(name(), cls());}
@@ -2332,16 +2329,20 @@ public static class ProDURAC extends TL.DB.Tbl {//implements Serializable
 				,"varchar(255) NOT NULL default '-'"//propertyName
 				,"text"//propertyValue
 			)
-			,TL.Util.lst(TL.Util.lst(C.domain,C.proto,C.logTime)
-				,TL.Util.lst(C.domain,C.proto,C.n,C.logTime)
+			,TL.Util.lst(TL.Util.lst(C.domain,C.proto ,C.logTime)
+				,TL.Util.lst(C.domain,C.proto,C.n ,C.logTime)
+				,TL.Util.lst(C.domain,C.proto,C.id,C.logTime)
 				,TL.Util.lst(C.uid,C.domain,C.proto,C.n,C.logTime)
 				,TL.Util.lst(C.domain,C.proto,C.n,C.v,C.logTime) )
+				,TL.Util.lst(C.n,C.v,C.domain,C.proto ,C.logTime)
 		);
 /*
 must create foundational prototypes(classes)
-domain(Def)
+domain(Def::= name:<str>,proto:<int>,super:<int:superclass-prototype>)
 Usr(Def)
-Role(Def(Resource:array
+Role(Def::=name:<str> , proto:<int>, super:<int:superclass-prototype> ,
+
+(Resource:array
 			deleted_in_log[array:id , or *] , domain[array:id , or *]
 			, role[array:id , or *], lock[array:id , or *]
 			, proto[array:id , or *], id[array:id , or *], prop[array:str , or *]
@@ -2379,6 +2380,7 @@ CREATE TABLE `ProDURAC` (
   `v` text,  --`lastModified` timestamp NOT NULL ,
   key(`domain`,`proto`,`logTime`),
   key(`domain`,`proto`,`n`,`logTime`),
+  key(`n`,`domain`,`proto`,`logTime`),
   key(`uid`,`domain`,`proto`,`logTime`),
   key(`domain`,`proto`,`n`,`v`(250),`logTime`),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -2386,38 +2388,137 @@ CREATE TABLE `ProDURAC` (
 	}
 	static{registered.add(ProDURAC.class);}
 	/**
+	 * user Roles
 	 * uidMembership
 	 * domainMember
 	 *
-	 * */
-	static List<Map>usrMemberships(int uid,TL tl){
-		List<Map>lm=new LinkedList<Map>();
-		List l=new LinkedList();
-		ProDURAC p=new ProDURAC();
+	 * * /
+	 List<Map<String,ProDURAC>>usrMemberships(int uid,TL tl){
+	 List<Map<String,ProDURAC>>lm=new LinkedList<Map<String,ProDURAC>>();
+	 List<ProDURAC>l=new LinkedList<ProDURAC>();
+	 ProDURAC p=this;//new ProDURAC();
+	 //domain=0, col="usrMembership" , val=uid ,
+	 Object[]where=TL.DB.Tbl.where(C.n,"usrMembership",C.v,uid);
+	 TL.DB.Tbl.Itrtr it=new TL.DB.Tbl.Itrtr(
+	 sql(null,where,this).toString()
+	 ,where,true);
+	 for(TL.DB.Tbl t:it)
+	 {	p=(ProDURAC) t;
+	 l.add(p);
+	 }
+	 for(ProDURAC i:l)
+	 lm.add(i.loadObjct());
+	 return lm;}*/
+
+	List<Map<String,ProDURAC>>objProp(int id,String pn,TL tl){
+		List<Map<String,ProDURAC>>lm=new LinkedList<Map<String,ProDURAC>>();
+		List<ProDURAC>l=new LinkedList<ProDURAC>();
+		ProDURAC p=this;//new ProDURAC();
 		//domain=0, col="usrMembership" , val=uid ,
-		for(TL.DB.Tbl t:p.query(p.where(C.n,"usrMembership",C.v,uid)))
-			l.add(t.asMap());
+		Object[]where=TL.DB.Tbl.where(C.n,pn,C.v,uid);
+		TL.DB.Tbl.Itrtr it=new TL.DB.Tbl.Itrtr(
+			sql(null,where,this).toString()
+			,where,true);
+		for(TL.DB.Tbl t:it)
+		{	p=(ProDURAC) t;
+			l.add(p);
+		}
+		for(ProDURAC i:l)
+			lm.add(i.loadObjct());
 		return lm;}
 
-	Map loadObj(){
-		Map<String,ProDURAC>m=new HashMapMap<String,ProDURAC>();
-		TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(sql(),TL.DB.Tbl.where( C.proto,proto ),true);
-		for (TL.DB.Tbl t:  )
+	Map<String,ProDURAC>loadObjct(){
+		Map<String,ProDURAC>m=new HashMap<String,ProDURAC>();
+		Object[]where=TL.DB.Tbl.where( C.proto,proto );
+		TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(
+				                                     sql(null,where,this).toString()
+				                                     ,where,true);
+		for (TL.DB.Tbl t: i )
 		{ProDURAC p=(ProDURAC)t;
 			m.put(p.n,p);
 		}
+		return m;}
+
+	Map<String,Object>loadObj(){
+		Map<String,Object>m=new HashMap<String,Object>();
+		Object[]where=TL.DB.Tbl.where( C.proto,proto );
+		TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(
+				                                     sql(null,where,this).toString()
+				                                     ,where,false);
+		for (TL.DB.Tbl t: i )
+		{ProDURAC p=(ProDURAC)t;
+			m.put(p.n,p.v);
+		}
 		return m;
 	}
-	
+
 	boolean hasAccess(int uid
 		,int resourceProto
 		,String resourceId
 		,Integer resourcePN
 		,String operation){
-		
+		return false;
 	}
-	
+
 	static Map domainDef(int did){return null;}
 	static List<Map>rolesDef(List<String>roleNames){return null;}
+
+	List subProtos0() {
+		List<Map<String,ProDURAC>>lm=new LinkedList<Map<String,ProDURAC>>();
+		List<ProDURAC>l=new LinkedList<ProDURAC>();
+		ProDURAC p=this;//new ProDURAC();
+		//domain=0, col="usrMembership" , val=uid ,
+		Object[]where=TL.DB.Tbl.where(C.n,"*",C.v,uid);
+		StringBuilder sql=new StringBuilder(
+				                                   "select `id`,max(`logTime`) from `").append(dbtName )
+				                  .append( "` where `proto`=? group by `proto`,`id`" );
+		TL.DB.Tbl.Itrtr it=new TL.DB.Tbl.Itrtr(
+				                                      sql.toString()
+				                                      ,where,true);
+		for(TL.DB.Tbl t:it)
+		{	p=(ProDURAC) t;
+			l.add(p);
+		}
+		for(ProDURAC i:l)
+			lm.add(i.loadObjct());
+		return lm;}
+
+	Map<String,Map<Integer,List<Integer>>> idsAndProto() {
+		Map<String,Map<Integer,List<Integer>>>m=new HashMap<String,Map<Integer,List<Integer>>>();
+		Map<Integer,List<Integer>>i2p,decendents;
+		List<Integer>path,kids;
+		ProDURAC p=this;
+		//domain=0, col="usrMembership" , val=uid ,
+		Object[]where=TL.DB.Tbl.where(C.n,"*",C.v,uid);
+		StringBuilder sql=new StringBuilder(
+			"select `id`,max(`logTime`),`proto','domain` from `").append(dbtName )
+			.append( "` where `proto`=? group by `proto`,`id`" );
+		TL.DB.Tbl.Itrtr it=new TL.DB.Tbl.Itrtr(
+				                                      sql.toString()
+				                                      ,where,true);
+		for(TL.DB.Tbl t:it)
+		{	p=(ProDURAC) t;
+			l.add(p);
+		}
+		for(ProDURAC i:l)
+			lm.add(i.loadObjct());
+		return lm;}
+
+	/**
+	 * for param-user load:
+	 * list-roles(ops,resources,usrs)
+	 * list-protos(def)
+	 * list-locks()
+	 *
+	 * */
+	Map<String,List<Map<String,ProDURAC>>>loadURPL(int uid,TL tl){
+		Map<String,List<Map<String,ProDURAC>>>m=new HashMap<String,List<Map<String,ProDURAC>>>();
+		List<Map<String,ProDURAC>>l=objProp(uid,"usrMembership",tl);
+		m.put("roles",l);
+		l=objProp(uid,"usrLock",tl);
+		m.put("locks",l);
+
+		return m;
+	}
 }//class ProDURAC
 }//class App
