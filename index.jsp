@@ -1,4 +1,8 @@
-import java.io.IOException;
+package aswan2017;
+
+/**
+ * Created by moh on 14/7/17.
+ */import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -31,22 +35,25 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.xml.transform.Result;
+
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import com.sun.org.apache.regexp.internal.RE;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 //%><%App.jsp(request, response, session, out, pageContext);%><%!
-
 /**
  * Created by Moh'd on 2/22/2017.
  */
 public class App {
 public static class TL {
 	enum context{ROOT(
-			                 "/public_html/i1io/"
-			                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-			                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+		"/public_html/i1io/"
+		,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+		,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 	);
 		String str,a[];context(String...p){str=p[0];a=p;}
 		enum DB{
@@ -58,7 +65,6 @@ public static class TL {
 			,pw("theblue","","qwerty")
 			;String str,a[];DB(String...p){str=p[0];a=p;}
 		}
-
 		static String getRealPath(TL t,String path){
 			String real=t.getServletContext().getRealPath(path);
 			boolean b=true;
@@ -73,7 +79,6 @@ public static class TL {
 			}catch(Exception ex){
 				t.error(ex,"aswan2017.TL.context.getRealPath:",path);}
 			return real==null?"./"+path:real;}
-
 		static int getContextIndex(TL t){
 			try{File f=null;
 				int i=ROOT.a.length-1;
@@ -87,7 +92,6 @@ public static class TL {
 			return -1;}
 		//***/static Map<DB,String> getContextPack(TL t,List<Map<DB,String>>a){return null;}
 	}//context
-
 	//TL member variables
 	public String ip;
 	public DB.Tbl.Usr usr;
@@ -96,29 +100,23 @@ public static class TL {
 	public Date now;
 	/**wrapping JspWriter or any other servlet writer in "out" */
 	Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
-
 	/**the static/class variable "tl"*/ static ThreadLocal<TL> tl=new ThreadLocal<TL>();
-
 	public boolean logOut=false;
 	public static final String CommentHtml[]={"\n<!--","-->\n"},CommentJson[]={"\n/*","\n*/"};
 	public String comments[]=CommentJson;
 	public HttpServletRequest req;//App a;
 	public HttpServletResponse rspns;
-
 	public TL(HttpServletRequest r,HttpServletResponse n,Writer o){req=r;rspns=n;out=new Json.Output(o);}
-
 	public Json.Output jo(){if(jo==null)try{jo=new Json.Output();}catch(Exception x){error(x,"moh.TL.jo:IOEx:");}return jo;}
 	public Json.Output getOut() throws IOException{return out;}
 	public HttpServletRequest getRequest(){return req;}
 	public HttpSession getSession(){return req.getSession();}
 	public ServletContext getServletContext(){return getSession().getServletContext();}
 	/**sets a new TL-instance to the localThread*/
-
 	public static TL Enter(HttpServletRequest r,HttpServletResponse response,Writer out) throws IOException{
-	TL p;tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));
+		TL p;tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));
 		p.onEnter();
 		return p;}
-
 	private void onEnter()throws IOException
 	{ip=getRequest().getRemoteAddr();
 		now=new Date();
@@ -127,7 +125,6 @@ public static class TL {
 				:o.toString().contains("json")?Json.Parser.parse(req)
 				:o.toString().contains("part")?getMultiParts():null;
 			json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
-
 			logOut=var("logOut",logOut);
 			if(getSession().isNew())DB.Tbl.check(this);
 			DB.Tbl.Ssn.onEnter();
@@ -135,25 +132,20 @@ public static class TL {
 		//if(pages==null){rsp.setHeader("Retry-After", "60");rsp.sendError(503,"pages null");throw new Exception("pages null");}
 		if(logOut)out.w(comments[0]).w("TL.tl.onEnter:\n").o(this).w(comments[1]);
 	}//onEnter
-
 	private void onExit(){usr=null;ssn=null;ip=null;now=null;req=null;json=null;out=jo=null;rspns=null;}
-
 	/**unsets the localThread, and unset local variables*/
 	public static void Exit()//throws Exception
 	{TL p=TL.tl();if(p==null)return;
-		DB.close((Connection)p.r(context.DB.reqCon.str));
+		DB.close(p);//changed 2017.7.17
 		p.onExit();tl.set(null);}
-
 	Map getMultiParts(){
 		Map<Object,Object>m=null;
 		if(ServletFileUpload.isMultipartContent(req))try
 		{DiskFileItemFactory factory=new DiskFileItemFactory();
 			factory.setSizeThreshold(40000000);//MemoryThreshold);
-
 			String path=App.UploadPth;//app(this).getUploadPath();
 			String real=TL.context.getRealPath(this, path);//getServletContext().getRealPath(path);
 			File f=null,uploadDir;
-
 			uploadDir=new File(real);
 			if( ! uploadDir.exists() )
 				uploadDir.mkdirs();//mkDir();
@@ -180,11 +172,9 @@ public static class TL {
 							f=new File(uploadDir,nm);
 							while(f.exists())
 								f=new File(uploadDir,(count++)+'.'+nm);
-
 							m.put(fieldNm,Util.mapCreate(//"name",fieldNm,
 									"contentType",ct,"size",sz
 									,"fileName",path+f.getName()
-
 							));
 							item.write(f);
 						}//if sz > 0
@@ -196,21 +186,15 @@ public static class TL {
 		//if(ServletFileUpload.isMultipartContent(req))
 		return m;
 	}//Map getMultiParts()
-
 	public static class Util{//utility methods
-
 		public static Map<Object, Object> mapCreate(Object...p)
 		{Map<Object, Object> m=new HashMap<Object,Object>();//null;
 			return p.length>0?maPSet(m,p):m;}
-
 		public static Map<Object, Object> mapSet(Map<Object, Object> m,Object...p){return maPSet(m,p);}
-
 		public static Map<Object, Object> maPSet(Map<Object, Object> m,Object[]p)
 		{for(int i=0;i<p.length;i+=2)m.put(p[i],p[i+1]);return m;}
-
 		public final static java.text.SimpleDateFormat
 				dateFormat=new java.text.SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
-
 		public static Integer[]parseInts(String s){
 			java.util.Scanner b=new java.util.Scanner(s),
 					c=b.useDelimiter("[\\s\\.\\-/\\:A-Za-z,]+");
@@ -221,7 +205,6 @@ public static class TL {
 			}c.close();b.close();
 			Integer[]a=new Integer[l.size()];l.toArray(a);
 			return a;}
-
 		static Date parseDate(String s){
 			Integer[]a=parseInts(s);int n=a.length;
 			if(n<2){long l=Long.parseLong(s);
@@ -230,11 +213,9 @@ public static class TL {
 			java.util.GregorianCalendar c=new java.util.GregorianCalendar();
 			c.set(n>0?a[0]:0,n>1?a[1]-1:0,n>2?a[2]:0,n>3?a[3]:0,n>4?a[4]:0);
 			return c.getTime();}
-
 		/**returns a format string of the date as yyyy/MM/dd hh:mm:ss*/
 		public static String formatDate(Date p)
 		{return p==null?"":dateFormat.format(p);}
-
 		static String format(Object o)throws Exception
 		{if(o==null)return null;StringBuilder b=new StringBuilder("\"");
 			String a=o.getClass().isArray()?new String((byte[])o):o.toString();
@@ -246,16 +227,12 @@ public static class TL {
 			else if(c=='\t')b.append('\\').append('t');
 			else if(c=='\'')b.append('\\').append('\'');
 			else b.append(c);}return b.append('"').toString();}
-
 		/**return the integer-index of the occurrence of element-e in the array-a, or returns -1 if not found*/
 		public static int indexOf(Object[]a,Object e){int i=a.length;while(--i>-1&&(e!=a[i])&&(e==null||!e.equals(a[i])));return i;}
-
 		static boolean eq(Object a,Object e)
 		{if(a==e||(a!=null&&a.equals(e)))return true;//||(a==null&&e==null)
 			return (a==null)?false:a.getClass().isArray()?indexOf((Object[])a,e)!=-1:false;}
-
 		public static List<Object>lst(Object...p){List<Object>r=new LinkedList<Object>();for(Object o:p)r.add(o);return r;}
-
 		public static boolean isNum(String v){
 			int i=-1,n=v!=null?v.length():0;
 			char c='\0';
@@ -275,7 +252,6 @@ public static class TL {
 		catch(Exception ex){//changed 2016.06.27 18:28
 			TL.tl().error(ex, "TL.Util.parseInt:",v,dv);
 		}return dv;}
-
 		public static <T>T parse(String s,T defval){
 			if(s!=null)try{
 				Class<T> ct=(Class<T>) defval.getClass();
@@ -289,7 +265,6 @@ public static class TL {
 				}}catch(Exception x){//changed 2016.06.27 18:28
 				TL.tl().error(x, "TL.Util.<T>T parse(String s,T defval):",s,defval);}
 			return defval;}
-
 		public static Object parse(String s,Class c){
 			if(s!=null)try{if(String.class.equals(c))return s;
 			else if(Number.class.isAssignableFrom(c)||c.isPrimitive()) {
@@ -318,31 +293,21 @@ public static class TL {
 			}catch(Exception x){//changed 2016.06.27 18:28
 				TL.tl().error(x, "TL.Util.<T>T parse(String s,Class):",s,c);}
 			return s;}
-
 	}//class util
-
 	/**get the TL-instance for the current Thread*/
 	public static TL tl(){Object o=tl.get();return o instanceof TL?(TL)o:null;}
-
 	/**get a request-scope attribute*/
 	public Object r(Object n){return req.getAttribute(String.valueOf(n));}
-
 	/**set a request-scope attribute*/
 	public Object r(Object n,Object v){req.setAttribute(String.valueOf(n),v);return v;}
-
 	/**get a session-scope attribute*/
 	public Object s(Object n){return getSession().getAttribute(String.valueOf(n));}
-
 	/**set a session-scope attribute*/
 	public Object s(Object n,Object v){getSession().setAttribute(String.valueOf(n),v);return v;}
-
 	/**get an application-scope attribute*/
 	public Object a(Object n){return getServletContext().getAttribute(String.valueOf(n));}
-
 	/**set an application-scope attribute*/
 	public void a(Object n,Object v){getServletContext().setAttribute(String.valueOf(n),v);}
-
-
 	/**get variable, a variable is considered
 	 1: a parameter from the http request
 	 2: if the request-parameter is not null then set it in the session with the attribute-name pn
@@ -359,16 +324,12 @@ public static class TL {
 		}
 		else if(sVal!=null){r=sVal; //logo("TL.var(",pn,")sessionVal=",r);
 		}}catch(Exception ex){ex.printStackTrace();}return r;}
-
 	public Number var(String pn,Number r)
 	{Object x=var(pn);return x==null?r:x instanceof Number?(Number)x:Double.parseDouble(x.toString());}
-
 	public String var(String pn,String r)
 	{Object x=var(pn);return x==null?r:String.valueOf(x);}
-
 	public boolean var(String pn,boolean r)
 	{Object x=var(pn);return x==null?r:x instanceof Boolean?(Boolean)x:Boolean.parseBoolean(x.toString());}
-
 	/**mostly used for enums , e.g. "enum Screen"*/
 	public <T>T var(String n,T defVal) {
 		String r=req(n);
@@ -386,7 +347,6 @@ public static class TL {
 			}
 		}return defVal;
 	}
-
 	public String req(String n){
 		if(json!=null )
 		{Object o=json.get(n);if(o!=null)return o.toString();}
@@ -394,32 +354,26 @@ public static class TL {
 		if(r==null)r=req.getHeader(n);
 		if(logOut)log("TL.req(",n,"):",r);
 		return r;}
-
 	public int req(String n,int defval)
 	{String s=req(n);
 		int r=Util.parseInt(s, defval);
 		return r;}
-
 	public Date req(String n,Date defval)
 	{String s=req(n);if(s!=null)
 		defval=Util.parseDate(s);
 		return defval;}
-
 	public double req(String n,double defval)
 	{String s=req(n);if(s!=null)
 		try{defval=Double.parseDouble(s);}catch(Exception x){}
 		return defval;}
-
 	public <T>T req(String n,T defVal)
 	{String s=req(n);if(s!=null)
 		defVal=Util.parse(s,defVal);
 		return defVal;}
-
 	public Object req(String n,Class c)
 	{String s=req(n);
 		Object o=Util.parse(s,c);
 		return o;}
-
 	////////////////////////////////
 	public String logo(Object...a){String s=null;
 		if(a!=null&&a.length>0)
@@ -431,7 +385,6 @@ public static class TL {
 						                      w(comments[0]//"\n/*"
 						                      ).w(s).w(comments[1]//"*/\n"
 				);}}catch(Exception ex){ex.printStackTrace();}return s;}
-
 	/**calls the servlet log method*/
 	public void log(Object...s){logA(s);}
 	public void logA(Object[]s){try{
@@ -441,7 +394,6 @@ public static class TL {
 		getServletContext().log(t);
 		if(logOut)out.flush().w(comments[0]).w(t).w(comments[1]);
 	}catch(Exception ex){ex.printStackTrace();}}
-
 	public void error(Throwable x,Object...p){try{
 		String s=jo().clrSW().w("error:").o(p,x).toString();
 		getServletContext().log(s);
@@ -450,14 +402,14 @@ public static class TL {
 				          .w("\n---\n").o(x).w(comments[1]
 				);if(x!=null)x.printStackTrace();}
 	catch(Exception ex){ex.printStackTrace();}}
-
 	/**get a pooled jdbc-connection for the current Thread, calling the function dbc()*/
 	Connection dbc()throws SQLException
-	{TL p=this;Object s=context.DB.reqCon.str,o=p.r(s);
-		if(o==null||!(o instanceof Connection))
-			p.r(s,o=DB.c());
-		return (Connection)o;}
-
+	{TL p=this;//Object s=context.DB.reqCon.str,o=p.s(s);
+		Object[]a=DB.stack(p,null);//o instanceof Object[]?(Object[])o:null;
+		//o=a==null?null:a[0];
+		if(a[0]==null)//o==null||!(o instanceof Connection))
+			a[0]=DB.c();
+		return (Connection)a[0];}
 	public static class DB
 	{
 		/**returns a jdbc pooled Connection.
@@ -465,41 +417,43 @@ public static class TL {
 		 sets the pool as an application-scope attribute named context.DB.pool.str
 		 when first time called, all next calls uses this context.DB.pool.str*/
 		public static synchronized Connection c()throws SQLException
-		{ TL t=tl();Connection r=(Connection)t.r(context.DB.reqCon.str);if(r!=null)return r;
-			Object[]a={0,0,0};
+		{ TL t=tl();
+			Object[]p=null,a=stack(t,null);//Object[])t.s(context.DB.reqCon.str);
+			Connection r=(Connection)a[0];//a ==null?null:
+			if(r!=null)return r;
 			MysqlConnectionPoolDataSource d=(MysqlConnectionPoolDataSource)t.a(context.DB.pool.str);
 			r=d==null?null:d.getPooledConnection().getConnection();
-			if(r!=null)//changed 2016.07.18
-				t.r(context.DB.reqCon.str,r);
+			if(r!=null)
+				a[0]=r;//changed 2017.07.14
 			else try
-			{try{int x=context.getContextIndex(t);t.log("TL.DB.c:1:getContextIndex:",x);
+			{try{int x=context.getContextIndex(t);
+				t.log("TL.DB.c:1:getContextIndex:",x);
 				if(x!=-1)
-				{	a=c(t,x,x,x,x);t.log("TL.DB.c:1:c2:",a);
-					r=(Connection)a[1];
+				{	p=c(t,x,x,x,x);t.log("TL.DB.c:1:c2:",p);
+					r=(Connection)p[1];
 					return r;}
-			}catch(Exception e){t.log("TL.DB.MysqlConnectionPoolDataSource:1:",e);}
+			  }catch(Exception e){t.log("TL.DB.MysqlConnectionPoolDataSource:1:",e);}
 				String[]dba=context.DB.dbName.a
-						,sra=context.DB.server.a
-						,una=context.DB.un.a
-						,pwa=context.DB.pw.a;//CHANGED: 2016.02.18.10.32
+					,sra=context.DB.server.a
+					,una=context.DB.un.a
+					,pwa=context.DB.pw.a;//CHANGED: 2016.02.18.10.32
 				for(int idb=0;r==null&&idb<dba.length;idb++)
 					for(int iun=0;r==null&&iun<una.length;iun++)
 						for(int ipw=0;r==null&&ipw<pwa.length;ipw++)//n=context.DB.len()
 							for(int isr=0;r==null&&isr<sra.length;isr++)try
-							{	a=c(t,idb,iun,ipw,isr);
-
-								r=(Connection)a[1];
-								if(t.logOut)t.log("new "+context.DB.pool.str+":"+a[0]);
-							}catch(Exception e){t.log("TL.DB.MysqlConnectionPoolDataSource:",idb,",",isr,",",iun,ipw,t.logOut?a[2]:"",",",e);}
+							{	p=c(t,idb,iun,ipw,isr);
+								r=(Connection)p[1];
+								if(t.logOut)t.log("new "+context.DB.pool.str+":"+p[0]);
+							}catch(Exception e){t.log("TL.DB.MysqlConnectionPoolDataSource:",idb,",",isr,",",iun,ipw,t.logOut?p[2]:"",",",e);}
 			}catch(Throwable e){t.error(e,"TL.DB.MysqlConnectionPoolDataSource:throwable:");}//ClassNotFoundException
-			if(t.logOut)t.log(context.DB.pool.str+":"+a[0]);
+			if(t.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 			if(r==null)try
 			{r=java.sql.DriverManager.getConnection
-					                          ("jdbc:mysql://"+context.DB.server.str
-							                           +"/"+context.DB.dbName.str
-							                          ,context.DB.un.str,context.DB.pw.str
-					                          );
-				t.r(context.DB.reqCon.str,r);
+					("jdbc:mysql://"+context.DB.server.str
+						+"/"+context.DB.dbName.str
+						,context.DB.un.str,context.DB.pw.str
+					);Object[]b={r,null};
+				t.s(context.DB.reqCon.str,b);
 			}catch(Throwable e){t.error(e,"TL.DB.DriverManager:");}
 			return r;}
 
@@ -518,16 +472,14 @@ public static class TL {
 			d.setPassword(s);
 			Connection r=d.getPooledConnection().getConnection();
 			t.a(context.DB.pool.str,d);
-			t.r(context.DB.reqCon.str,r);
-			Object[]a={d,r,ss};
+			Object[]a={d,r,ss};//,b={r,null};t.s(context.DB.reqCon.str,b);
+			stack(t,r);
 			return a;}
 
 		/**returns a jdbc-PreparedStatement, setting the variable-length-arguments parameters-p, calls dbP()*/
 		public static PreparedStatement p(String sql,Object...p)throws SQLException{return P(sql,p);}
-
 		/**returns a jdbc-PreparedStatement, setting the values array-parameters-p, calls TL.dbc() and log()*/
 		public static PreparedStatement P(String sql,Object[]p)throws SQLException{return P(sql,p,true);}
-
 		public static PreparedStatement P(String sql,Object[]p,boolean odd)throws SQLException
 		{TL t=tl();Connection c=t.dbc();
 			PreparedStatement r=c.prepareStatement(sql);if(t.logOut)
@@ -540,46 +492,99 @@ public static class TL {
 				for(int i=0;p!=null&&i<p.length;i++)
 				{r.setObject(i+1,p[i]);if(t.logOut)t.log("dbP:"+i+":"+p[i]);}
 			if(t.logOut)t.log("dbP:sql="+sql+":n="+(p==null?-1:p.length)+":"+r);return r;}
-
-		/**@return a jdbc-PreparedStatement stored in the application-scope, when first time called,this function creates the PreparedStatement and set it in the application scope with the attribute-name nm parameter*/
+		/**@return a jdbc-PreparedStatement stored in the application-scope,
+		 * when first time called,this function creates the PreparedStatement and set it in the
+		 * application scope with the attribute-name nm parameter* /
 		public static PreparedStatement Ps(String nm,String sql)throws Exception
 		{TL tl=TL.tl();Object[]a=(Object[])tl.a(nm);
 			if(a==null){a=new Object[2];a[0]=c().prepareStatement(sql);tl.a(nm,a);}
-			else {tl.log("Ps:1:else:tl.now="+tl.now+", a[1]="+a[1]);
-				if( (tl.now.getTime()-((java.util.Date)a[1]).getTime()) >1000*60*5)
+			else {tl.log("TL.DB.Ps:1:else:tl.now="+tl.now+", a[1]="+a[1]);
+				if( (tl.now.getTime()-((Date)a[1]).getTime()) >1000*60*5)
 				{try{((PreparedStatement)a[0]).getConnection().close();}
 				catch(Exception ex){tl.log("",ex);}
 					a[0]=c().prepareStatement(sql);}}
-			a[1]=tl.now;return(PreparedStatement)a[0];}
+			a[1]=tl.now;return(PreparedStatement)a[0];}*/
 
 		/**returns a jdbc-ResultSet, setting the variable-length-arguments parameters-p, calls dbP()*/
-		public static ResultSet r(String sql,Object...p)throws SQLException{return P(sql,p,true).executeQuery();}
+		public static ResultSet r(String sql,Object...p)throws SQLException{return R(sql,p);}//changed 2017.7.17
 
 		/**returns a jdbc-ResultSet, setting the values array-parameters-p, calls dbP()*/
 		public static ResultSet R(String sql,Object[]p)throws SQLException{
 			PreparedStatement x=P(sql,p,true);
 			ResultSet r=x.executeQuery();
+			push(r,tl());
 			return r;}
 
+		static Object[]stack(TL tl,Connection c){return stack(tl,c,true);}
+		static Object[]stack(TL tl,Connection c,boolean createIfNotExists){
+			return stack(tl,c,createIfNotExists,false);}
+		static Object[]stack(TL tl,Connection c,boolean createIfNotExists,boolean deleteArray){
+			if(tl==null)tl=tl();Object o=context.DB.reqCon.str;
+			Object[]a=(Object[])tl.s(o);
+			if(deleteArray)
+				tl.s(o,a=null);
+			else if(a==null&&createIfNotExists)
+			{Object[]b={c,null};
+				tl.s(o,a=b);}
+			return a;}
+
+		static List<ResultSet>stack(TL tl){return stack(tl,true);}
+		static List<ResultSet>stack(TL tl,boolean createIfNotExists){
+			Object[]a=stack(tl,null,createIfNotExists);
+			List<ResultSet>l=a==null||a.length<2?null:(List<ResultSet>)a[1];
+			if(l==null&&createIfNotExists)
+				a[1]=l=new LinkedList<ResultSet>();
+			return l;}
+
+		static void push(ResultSet r,TL tl){try{//2017.07.14
+			List<ResultSet>l=stack(tl);//if(l==null){stack(tl,null)[1]=l=new LinkedList<ResultSet>();l.add(r);}else
+			if(!l.contains(r))
+				l.add(r);
+		}catch (Exception ex){tl.error(ex,"TL.DB.push");}}
+
 		/**closes the resultSet-r and the statement, but DOES-NOT close the connection*/
-		public static void closeRS(ResultSet r)//,Connection c
-		{if(r!=null)try{Statement s=r.getStatement();r.close();s.close();}catch(Exception e){e.printStackTrace();}}
-		public void close(ResultSet r){if(r!=null)try{Statement s=r.getStatement();r.close();close(s);}catch(Exception e){e.printStackTrace();}}
-		public static void close(Statement s){try{Connection c=s.getConnection();s.close();close(c);}catch(Exception e){e.printStackTrace();}}
-		public static void close(Connection c){
+		//static void _closeRS(ResultSet r)//,Connection c //2017.07.14:changed name to underscore
+		//{if(r!=null)try{Statement s=r.getStatement();r.close();s.close();}catch(Exception e){e.printStackTrace();}}
+		//static void _close(ResultSet r){if(r!=null)try{Statement s=r.getStatement();r.close();_close(s);}catch(Exception e){e.printStackTrace();}}
+		//static void _close(Statement s){try{Connection c=s.getConnection();s.close();close(c);}catch(Exception e){e.printStackTrace();}}
+		public static void close(Connection c){close(c,tl());}
+		public static void close(Connection c,TL tl){
 			try{if(c!=null){
-				tl().r("java.sql.Connection",null);
-				c.close();}
+				List<ResultSet>a=stack(tl,false);
+				if(a!=null&&a.size()>0)
+					tl.s(context.DB.reqCon.str,a=null);
+				if(a==null)
+					c.close();}
 			}catch(Exception e){e.printStackTrace();}}
+		public static void close(TL tl){
+			try{Object[]a=stack(tl,null,false);
+				Connection c=a==null?null:(Connection) a[1];
+				if(c!=null)close(c,tl);
+			}catch(Exception e){e.printStackTrace();}}
+
+
+		public static void close(ResultSet r,boolean closeC){close(r,tl(),closeC);}
+		//public static void close(ResultSet r,TL tl){close(r,tl,true);}
+		public static void close(ResultSet r,TL tl,boolean closeC){
+			if(r!=null)try{
+				Statement s=r.getStatement();
+				Connection c=closeC?s.getConnection():null;
+			List<ResultSet>l=stack(tl,false);
+			if(l!=null){l.remove(r);
+					if( l.size()<1 )
+						l=null;
+			}
+			r.close();s.close();
+			if(l==null&&closeC)close(c,tl);
+			}catch(Exception e){e.printStackTrace();}
+		}
 
 		/**returns a string or null, which is the result of executing sql,
 		 calls dpR() to set the variable-length-arguments parameters-p*/
 		public static String q1str(String sql,Object...p)throws SQLException{return q1Str(sql,p);}
 		public static String q1Str(String sql,Object[]p)throws SQLException
-		{String r=null;ResultSet s=null;try{s=R(sql,p);r=s.next()?s.getString(1):null;}finally{closeRS(s);}return r;}//CHANGED:2015.10.23.16.06:closeRS ; CHANGED:2011.01.24.04.07 ADDED close(s,dbc());
-
+		{String r=null;ResultSet s=null;try{s=R(sql,p);r=s.next()?s.getString(1):null;}finally{close(s,false);}return r;}//CHANGED:2015.10.23.16.06:closeRS ; CHANGED:2011.01.24.04.07 ADDED close(s,dbc());
 		public static String newUuid()throws SQLException{return q1str("select uuid();");}
-
 		/**returns an java obj, which the result of executing sql,
 		 calls dpR() to set the variable-length-arguments parameters-p*/
 		public static Object q1obj(String sql,Object...p)throws SQLException{return q1Obj(sql,p);}
@@ -587,38 +592,30 @@ public static class TL {
 		{ResultSet s=null;try{
 			s=R(sql,p);
 			return s.next()?s.getObject(1):null;
-		}finally{closeRS(s);}}
+		}finally{close(s,false);}}
 		public static <T>T q1(String sql,Class<T>t,Object[]p)throws SQLException
 		{ResultSet s=null;try{s=R(sql,p);
 			return s.next()?s.getObject(1,t):null;
-		}finally{closeRS(s);}}
-
+		}finally{close(s,false);}}
 		/**returns an integer or df, which the result of executing sql,
 		 calls dpR() to set the variable-length-arguments parameters-p*/
 		public static int q1int(String sql,int df,Object
 				                                          ...p)throws SQLException{return q1Int(sql,df,p);}
-
 		public static int q1Int(String sql,int df,Object[]p)throws SQLException
-		{ResultSet s=null;try{s=R(sql,p);return s.next()?s.getInt(1):df;}finally{closeRS(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
-
+		{ResultSet s=null;try{s=R(sql,p);return s.next()?s.getInt(1):df;}finally{close(s,false);}}//CHANGED:2015.10.23.16.06:closeRS ;
 		/**returns a double or df, which is the result of executing sql,
 		 calls dpR() to set the variable-length-arguments parameters-p*/
 		public static double q1dbl(String sql,double df,Object...p)throws SQLException
-		{ResultSet s=null;try{s=R(sql,p);return s.next()?s.getDouble(1):df;}finally{closeRS(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
-
+		{ResultSet s=null;try{s=R(sql,p);return s.next()?s.getDouble(1):df;}finally{close(s,false);}}//CHANGED:2015.10.23.16.06:closeRS ;
 		/**returns as an array of rows of arrays of columns of values of the results of the sql
 		 , calls dbL() setting the variable-length-arguments values parameters-p*/
 		public static Object[][]q(String sql,Object...p)throws SQLException{return Q(sql,p);}
-
 		public static Object[][]Q(String sql,Object[]p)throws SQLException
 		{List<Object[]>r=L(sql,p);Object b[][]=new Object[r.size()][];r.toArray(b);r.clear();return b;}
-
 		/**return s.getMetaData().getColumnCount();*/
 		public static int cc(ResultSet s)throws SQLException{return s.getMetaData().getColumnCount();}
-
 		/**calls L()*/
 		public static List<Object[]> l(String sql,Object...p)throws SQLException{return L(sql,p);}
-
 		/**returns a new linkedList of the rows of the results of the sql
 		 ,each row/element is an Object[] of the columns
 		 ,calls dbR() and dbcc() and dbclose(ResultSet,TL.dbc())*/
@@ -626,33 +623,28 @@ public static class TL {
 		{TL t=tl();ResultSet s=null;List<Object[]> r=null;try{s=R(sql,p);Object[]a;r=new LinkedList<Object[]>();
 			int cc=cc(s);while(s.next()){r.add(a=new Object[cc]);
 				for(int i=0;i<cc;i++){a[i]=s.getObject(i+1);
-				}}return r;}finally{closeRS(s);//CHANGED:2015.10.23.16.06:closeRS ;
+				}}return r;}finally{close(s,false);//CHANGED:2015.10.23.16.06:closeRS ;
 			if(t.logOut)try{t.log(t.jo().o("TL.DB.L:sql=")
 					                      .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){t.error(x,"TL.DB.List:",sql);}}}
-
 		public static List<Object> q1colList(String sql,Object...p)throws SQLException
 		{ResultSet s=null;List<Object> r=null;try{s=R(sql,p);r=new LinkedList<Object>();
 			while(s.next())r.add(s.getObject(1));return r;}
-		finally{closeRS(s);TL t=tl();if(t.logOut)
+		finally{close(s,false);TL t=tl();if(t.logOut)
 			try{t.log(t.jo().o("TL.DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
 					          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){t.error(x,"TL.DB.q1colList:",sql);}}}
-
 		public static <T>List<T> q1colTList(String sql,Class<T>t,Object...p)throws SQLException
 		{ResultSet s=null;List<T> r=null;try{s=R(sql,p);r=new LinkedList<T>();//Class<T>t=null;
 			while(s.next())r.add(
 					s.getObject(1,t)
 					//s.getObject(1)
 			);return r;}
-		finally{closeRS(s);TL tl=tl();if(tl.logOut)
+		finally{close(s,false);TL tl=tl();if(tl.logOut)
 			try{tl.log(tl.jo().o("TL.DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
 					           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,"TL.DB.q1colList:",sql);}}}
-
 		public static Object[] q1col(String sql,Object...p)throws SQLException
 		{List<Object> l=q1colList(sql,p);Object r[]=new Object[l.size()];l.toArray(r);l.clear();return r;}
-
 		public static <T>T[] q1colT(String sql,Class<T>t,Object...p)throws SQLException
 		{List<T> l=q1colTList(sql,t,p);T[]r=(T[])Array.newInstance(t,l.size());l.toArray(r);l.clear();return r;}
-
 		/**returns a row of columns of the result of sql
 		 ,calls dbR(),dbcc(),and dbclose(ResultSet,TL.dbc())*/
 		public static Object[] q1row(String sql,Object...p)throws SQLException{return q1Row(sql,p);}
@@ -660,63 +652,51 @@ public static class TL {
 		{ResultSet s=null;try{s=R(sql,p);Object[]a=null;int cc=cc(s);if(s.next())
 		{a=new Object[cc];for(int i=0;i<cc;i++)try{a[i]=s.getObject(i+1);}
 		catch(Exception ex){tl().error(ex,"TL.DB.q1Row:",sql);a[i]=s.getString(i+1);}}
-			return a;}finally{closeRS(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
-
+			return a;}finally{close(s,false);}}//CHANGED:2015.10.23.16.06:closeRS ;
 		/**returns the result of (e.g. insert/update/delete) sql-statement
 		 ,calls dbP() setting the variable-length-arguments values parameters-p
 		 ,closes the preparedStatement*/
 		public static int x(String sql,Object...p)throws SQLException{return X(sql,p);}
-
 		public static int X(String sql,Object[]p)throws SQLException
 		{int r=-1;try{PreparedStatement s=P(sql,p,false);r=s.executeUpdate();s.close();return r;}
 		finally{TL t=tl();if(t.logOut)try{
 			t.log(t.jo().o("TL.DB.x:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 		catch(IOException x){t.error(x,"TL.DB.X:",sql);}}}
-
 		/**output to tl.out the Json.Output.oRS() of the query*/
 		public static void q2json(String sql,Object...p)throws SQLException
-		{ResultSet s=null;try{s=R(sql,p);try{tl().getOut()
-				                                     //(new Json.Output())//TODO:investigate where the Json.Output.w goes
-				                                     .o(s);
+		{ResultSet s=null;TL tl=tl();try{s=R(sql,p);try{tl.getOut()
+				//(new Json.Output())//TODO:investigate where the Json.Output.w goes
+				.o(s);
 		}catch (IOException e) {e.printStackTrace();}}
-		finally{closeRS(s);TL t=tl();if(t.logOut)try{t.log(t.jo().o(
+		finally{close(s,tl,false);if(tl.logOut)try{tl.log(tl.jo().o(
 				"TL.DB.L:q2json=").o(sql).w(",prms=").o(p).toStrin_());
-		}catch(IOException x){t.error(x,"TL.DB.q1json:",sql);}}}
-
+		}catch(IOException x){tl.error(x,"TL.DB.q1json:",sql);}}}
 		/**return a list of maps , each map has as a key a string the name of the column, and value obj*/
 		static List<Map<String,Object>>json(String sql,Object...p) throws SQLException{return Lst(sql,p);}
 		static List<Map<String,Object>>Lst(String sql,Object[ ]p) throws SQLException{
 			List<Map<String,Object>>l=new LinkedList
-					                              < Map < String ,Object>>();ItTbl i=new ItTbl(sql,p);
+				< Map < String ,Object>>();ItTbl i=new ItTbl(sql,p);
 			List<String>cols=new LinkedList<String>();
 			for(int j=1;j<=i.row.cc;j++)cols.add(i.row.m.getColumnLabel(j));
 			for(ItTbl.ItRow w:i){Map<String,Object>m=
 					                     new HashMap<String,Object>();l.add(m);
 				for(Object o:w)m.put(cols.get(w.col-1),o);
 			}return l;}
-
 		public static class ItTbl implements Iterator<ItTbl.ItRow>,Iterable<ItTbl.ItRow>{
 			public ItRow row=new ItRow();
-
 			public ItRow getRow(){return row;}
-
 			public static ItTbl it(String sql,Object...p){return new ItTbl(sql,p);}
-
 			public ItTbl(String sql,Object[]p){
 				try {init(TL.DB.R(sql, p));}
 				catch (Exception e) {tl().logo("TL.DB.ItTbl.<init>:Exception:sql=",sql,",p=",p," :",e);}}
-
 			public ItTbl(ResultSet o) throws SQLException{init(o);}
-
 			public ItTbl init(ResultSet o) throws SQLException
 			{row.rs=o;row.m=o.getMetaData();row.row=row.col=0;
 				row.cc=row.m.getColumnCount();return this;}
-
 			static final String ErrorsList="TL.DB.ItTbl.errors";
-
 			@Override public boolean hasNext(){
 				boolean b=false;try {if(b=row!=null&&row.rs!=null&&row.rs.next())row.row++;
-				else TL.DB.closeRS(row.rs);//CHANGED:2015.10.23.16.06:closeRS
+				else TL.DB.close(row.rs,false);//CHANGED:2015.10.23.16.06:closeRS ; 2017.7.17
 				}catch (SQLException e) {//e.printStackTrace();
 					TL t=TL.tl();//changed 2016.06.27 18:05
 					final String str="TL.DB.ItTbl.next";
@@ -725,21 +705,16 @@ public static class TL {
 					if(l==null)t.json.put(ErrorsList,l=new LinkedList());//t.response
 					l.add(Util.lst(str,row!=null?row.row:-1,e));
 				}return b;}
-
 			@Override public ItRow next() {if(row!=null)row.col=0;return row;}
 			@Override public void remove(){throw new UnsupportedOperationException();}
-
 			@Override public Iterator<ItRow>iterator(){return this;}
-
 			public class ItRow implements Iterator<Object>,Iterable<Object>{
 				ResultSet rs;int cc,col,row;ResultSetMetaData m;
 				public int getCc(){return cc;}
 				public int getCol(){return col;}
 				public int getRow(){return row;}
 				@Override public Iterator<Object>iterator(){return this;}
-
 				@Override public boolean hasNext(){return col<cc;}
-
 				@Override public Object next(){
 					try {return rs==null?null:rs.getObject(++col);}
 					catch (SQLException e) {//changed 2016.06.27 18:05
@@ -751,9 +726,7 @@ public static class TL {
 						l.add(Util.lst(str,row,col,e));
 					}//.printStackTrace();}
 					return null;}
-
 				@Override public void remove(){throw new UnsupportedOperationException();}
-
 				public int nextInt(){
 					try {return rs==null?-1:rs.getInt(++col);}
 					catch (SQLException e) {e.printStackTrace();}
@@ -762,11 +735,8 @@ public static class TL {
 					try {return rs==null?null:rs.getString(++col);}
 					catch (SQLException e) {e.printStackTrace();}
 					return null;}
-
 			}//ItRow
-
 		}//ItTbl
-
 		/**represents one entity , one row from a table in a relational database*/
 		public abstract static class Tbl extends Form{
 			static final String StrSsnTbls="TL.DB.Tbl.tbls";
@@ -776,10 +746,8 @@ public static class TL {
 				Map<Class<? extends Tbl>,Tbl>tbls=o instanceof Map?(Map)o:null;
 				if(tbls==null)t.s(StrSsnTbls,tbls=new HashMap<Class<? extends Tbl>,Tbl>());
 				Tbl r=tbls.get(p);if(r==null)try {tbls.put(p, r=p.newInstance());}
-
 				catch(Exception ex){t.error(ex,"TL.DB.Tbl.tbl(Class<TL.DB.Tbl>",p,"):Exception:");}
 				return r;}
-
 			/**Sql-Column Interface, for enum -items that represent columns in sql-tables
 			 * the purpose of creating this interface is to centerlize
 			 * the definition of the names of columns in java source code*/
@@ -797,16 +765,12 @@ public static class TL {
 				public Class<? extends Tbl>cls();
 				public Tbl tbl();
 			}//interface CI
-
 			public static CI[]cols(CI...p){return p;}
 			public static Object[]where(Object...p){return p;}
-
 			public abstract CI pkc();
 			public abstract Object pkv();
 			public abstract CI[]columns();
-
 			@Override public FI[]flds(){return columns();}
-
 			/** returns a list of 3 lists,
 			 * the 1st is a list for the db-table columns-CI
 			 * the 2nd is a list for the db-table-key-indices
@@ -826,7 +790,6 @@ public static class TL {
 			 * is a list of values to be inserted into the created table
 			 */
 			public abstract List creationDBTIndices(TL tl);
-
 			public void checkDBTCreation(TL tl){
 				String dtn=getName();Object o=null;
 				try {o=TL.DB.q("desc "+dtn);} catch (SQLException ex) {
@@ -837,7 +800,6 @@ public static class TL {
 									.append(dtn).append("` (\n");
 					CI[]ci=columns();int an,x=0;
 					List a=creationDBTIndices(tl),b=(List)a.get(0);
-
 					for(CI i:ci){
 						if(x>0 )
 							sql.append("\n,");
@@ -870,7 +832,6 @@ public static class TL {
 						}else
 							sql.append(bo);
 					}
-
 					sql.append(") ENGINE=InnoDB DEFAULT CHARSET=utf8 ;");
 					tl.log("TL.DB.Tbl.checkTableCreation:before:sql=",sql);
 					int r=TL.DB.x(sql.toString());
@@ -888,47 +849,41 @@ public static class TL {
 				} catch (SQLException ex) {
 					tl.error(ex, "TL.DB.Tbl.checkTableCreation:errMain:",dtn);}
 			}//checkTableCreation
-
 			/**where[]={col-name , param}*/
 			public int count(Object[]where) throws Exception{
 				StringBuilder sql=new StringBuilder(
-						                                   "select count(*) from `")
-						                  .append(getName())
-						                  .append("` where `")
-						                  .append(where[0])
-						                  .append("`=").append(Cols.M.m(where[0]).txt);//where[0]instanceof CI?m((CI)where[0]):'?');
+					"select count(*) from `")
+					.append(getName())
+					.append("` where `")
+					.append(where[0])
+					.append("`=").append(Cols.M.m(where[0]).txt);//where[0]instanceof CI?m((CI)where[0]):'?');
 				return DB.q1int(sql.toString(),-1,where[0],where[1]);}
-
 			/**where[]={col-name , param}*/public
 			int maxPlus1(CI col) throws Exception{
 				StringBuilder sql=new StringBuilder(
-						                                   "select max(`"+col+"`)+1 from `")
-						                  .append(getName()).append("`");
+					"select max(`"+col+"`)+1 from `")
+					.append(getName()).append("`");
 				return DB.q1int(sql.toString(),1);}
-
 			/**returns one object from the db-query*/
 			public Object obj(CI col,Object[]where) throws Exception{
 				StringBuilder sql=new StringBuilder("select `")
-						                  .append(col).append("` from `")
-						                  .append(getName()).append('`');
+					.append(col).append("` from `")
+					.append(getName()).append('`');
 				Cols.where(sql, where);
 				return DB.q1Obj(sql.toString(),where);}
-
 			/**returns one string*/
 			public String select(CI col,Object[]where) throws Exception{
 				StringBuilder sql=new StringBuilder("select `")
-						                  .append(col).append("` from `")
-						                  .append(getName()).append('`');
+					.append(col).append("` from `")
+					.append(getName()).append('`');
 				Cols.where(sql, where);
 				return DB.q1Str(sql.toString(),where);}
-
 			/**returns one column, where:array of two elements:1st is column param, 2nd value of param*/
 			Object[]column(CI col,Object...where) throws Exception{
 				return DB.q1col("select `"+col+"` from `"+getName()
-						                +"` where `"+where[0]+"`="
-						                +Cols.M.m(where[0]).txt//(where[0]instanceof CI?m((CI)where[0]):Cols.M.prm)
-						,where[0],where[1]);}//at
-
+					+"` where `"+where[0]+"`="
+					+Cols.M.m(where[0]).txt//(where[0]instanceof CI?m((CI)where[0]):Cols.M.prm)
+					,where[0],where[1]);}//at
 			/**returns a table*/
 			public Object[][]select(CI[]col,Object[]where)throws Exception{
 				StringBuilder sql=new StringBuilder("select ");
@@ -936,15 +891,12 @@ public static class TL {
 				sql.append(" from `").append(getName()).append('`');
 				Cols.where(sql,where);
 				return DB.Q(sql.toString(), where);}
-
 			/**loads one row from the table*/
 			Tbl load(ResultSet rs)throws Exception{return load(rs,fields());}
-
 			/**loads one row from the table*/
 			Tbl load(ResultSet rs,Field[]a)throws Exception{
 				int c=0;for(Field f:a)v(f,rs.getObject(++c));
 				return this;}
-
 			/**loads one row from the table*/
 			public Tbl load(Object pk){
 				ResultSet r=null;TL t=tl();
@@ -952,30 +904,25 @@ public static class TL {
 					if(r.next())load(r);
 					else{t.error(null,"TL.DB.Tbl(",this,").load(pk=",pk,"):resultset.next=false");nullify();}}
 				catch(Exception x){t.error(x,"TL.DB.Tbl(",this,"):",pk);}
-				finally{DB.closeRS(r);}
+				finally{DB.close(r,false);}
 				return this;}
-
 			public Tbl nullify(){return nullify(fields());}
 			public Tbl nullify(Field[]a){for(Field f:a)v(f,null);return this;}
-
 			/**loads one row from the table*/
 			Tbl load(){return load(pkv());}
-
 			/**loads one object from column CI c ,from one row of primary-key value pkv ,from the table*/
 			Object load(CI c){Object pkv=pkv();
 				Object o=null;try{o=DB.q1obj("select `"+c+"` from `"+getName()+"` where `"+pkc()+"`="+Cols.M.m(c).txt,pkv);
 					v(c,o);}
 				catch(Exception x){tl().error(x,"TL.DB.Tbl(",this,").load(CI ",c,"):",pkv);}
 				return o;}//load
-
 			/**loads one row using column CI c */
 			Tbl loadBy(CI c,Object v){
 				try{Object[]a=DB.q1row("select * from `"
-						                       +getName()+"` where `"+c+"`="+Cols.M.m(c).txt,v);
+					+getName()+"` where `"+c+"`="+Cols.M.m(c).txt,v);
 					vals(a);}
 				catch(Exception x){tl().error(x,"TL.DB.Tbl(",this,").loadBy(",c,",",v,")");}
 				return this;}//loadBy
-
 			Tbl save(CI c){// throws Exception
 				CI pkc=pkc();
 				Object cv=v(c),pkv=pkv();TL t=TL.tl();
@@ -983,28 +930,27 @@ public static class TL {
 				{String j=t.jo().clrSW().o(cv).toString();cv=j;}
 				catch (IOException e) {t.error(e,"TL.DB.Tbl.save(CI:",c,"):");}
 				try{DB.x("replace into `"+getName()+"` (`"+pkc+
-						         "`,`"+c+"`) values("+Cols.M.m(pkc).txt
-						         +","+Cols.M.m(c).txt+")",pkv,cv);
+						"`,`"+c+"`) values("+Cols.M.m(pkc).txt
+						+","+Cols.M.m(c).txt+")",pkv,cv);
 					Integer k=(Integer)pkv;
 					TL.DB.Tbl.Log.log(
-							TL.DB.Tbl.Log.Entity.valueOf(getName())
-							, k, TL.DB.Tbl.Log.Act.Update
-							, TL.Util.mapCreate(c,v(c)) );
+						TL.DB.Tbl.Log.Entity.valueOf(getName())
+						, k, TL.DB.Tbl.Log.Act.Update
+						, TL.Util.mapCreate(c,v(c)) );
 				}catch(Exception x){tl().error(x
 						,"TL.DB.Tbl(",this,").save(",c,"):pkv=",pkv);}
 				return this;}//save
-
 			/**store this entity in the dbt , if pkv is null , this method uses the max+1 */
 			public Tbl save() throws Exception{
 				Object pkv=pkv();CI pkc=pkc();boolean nw=pkv==null;//Map old=asMap();
 				if(nw){
 					int x=DB.q1int("select max(`"
-							               +pkc+"`)+1 from `"+getName()+"`",1);
+						+pkc+"`)+1 from `"+getName()+"`",1);
 					v(pkc,pkv=x);
 					tl().log("TL.DB.Tbl(",toJson(),").save-new:max(",pkc,") + 1:",x);
 				}CI[]cols=columns();
 				StringBuilder sql=new StringBuilder("replace into`")
-						                  .append(getName()).append("`( ");
+					.append(getName()).append("`( ");
 				Cols.generate(sql, cols);//.toString();
 				sql.append(")values(").append(Cols.M.m(cols[0]).txt);//Cols.M.prm);
 				for(int i=1;i<cols.length;i++)
@@ -1013,7 +959,6 @@ public static class TL {
 				DB.X( sql.toString(), vals() ); //TODO: investigate vals() for json columns
 				log(nw?TL.DB.Tbl.Log.Act.New:TL.DB.Tbl.Log.Act.Update);
 				return this;}//save
-
 			public Tbl readReq_save() throws Exception{
 				Map old=asMap();
 				readReq("");
@@ -1026,12 +971,10 @@ public static class TL {
 				//log(TL.DB.Tbl.Log.Act.Update,old);
 				return this;
 			}//readReq_save
-
 			public Tbl readReq_saveNew() throws Exception{
 				Object pkv=pkv();readReq("");if(pkv()==null&&pkv!=null)v(pkc(),pkv);
 				return save();//log(TL.DB.Tbl.Log.Act.Update,old);
 			}//readReq_save
-
 			@Override public Object[] vals() {
 				Object[]r=super.vals();
 				for(int i=0;i<r.length;i++)
@@ -1041,20 +984,17 @@ public static class TL {
 					} catch (IOException e) {e.printStackTrace();}}
 				return r;
 			}
-
 			void log(TL.DB.Tbl.Log.Act act)//,Map old)
 			{	Map val=asMap();
 				Integer k=(Integer)pkv();
 				TL.DB.Tbl.Log.log(
 						TL.DB.Tbl.Log.Entity.valueOf(getName())
 						, k, act, val);}
-
 			public int delete() throws SQLException{
 				Object pkv=pkv();
 				int x=TL.DB.x("delete from `"+getName()+"` where `"+pkc()+"`=?", pkv);
 				log(TL.DB.Tbl.Log.Act.Delete);
 				return x;}
-
 			/**retrieve from the db table all the rows that match
 			 * the conditions in < where > , create an iterator
 			 * , e.g.<code>for(Tbl row:query(
@@ -1062,7 +1002,6 @@ public static class TL {
 			public Itrtr query(Object[]where){
 				Itrtr r=new Itrtr(where);
 				return r;}
-
 			public class Itrtr implements Iterator<Tbl>,Iterable<Tbl>{
 				public ResultSet rs=null;public int i=0;Field[]a;
 				public Itrtr(Object[]where){a=fields();
@@ -1071,28 +1010,20 @@ public static class TL {
 						Cols.where(sql, where);
 					try{rs=DB.R(sql.toString(), where);}
 					catch(Exception x){tl().error(x,"TL.DB.Tbl(",this,").Itrtr.<init>:where=",where);}}
-
 				@Override public Iterator<Tbl>iterator(){return this;}
-
 				@Override public boolean hasNext(){boolean b=false;
 					try {b = rs!=null&&rs.next();} catch (SQLException x)
 					{tl().error(x,"TL.DB.Tbl(",this,").Itrtr.hasNext:i=",i,",rs=",rs);}
-					if(!b&&rs!=null){DB.closeRS(rs);rs=null;}
+					if(!b&&rs!=null){DB.close(rs,false);rs=null;}
 					return b;}
-
 				@Override public Tbl next(){i++;
 					try{load(rs,a);}catch(Exception x){tl().error(x,"TL.DB.Tbl("
 							,this,").Itrtr.next:i=",i,":",rs);rs=null;}
 					return Tbl.this;}
-
 				@Override public void remove(){throw new UnsupportedOperationException();}
-
 			}//Itrtr
-
-
 			/**Class for Utility methods on set-of-columns, opposed to operations on a single column*/
 			public static class Cols {//Marker ,sql-preparedStatement-parameter
-
 				public enum M implements CI{
 					uuid("uuid()")
 					,now("now()")
@@ -1121,29 +1052,23 @@ public static class TL {
 					public static M m(CI p){return m(p.f());}
 					public static M m(Field p){
 						return p.getAnnotation(F.class).prmPw()?password:prm;}
-
 				}//enum M
-
 				public static Field f(String name,Class<? extends Tbl>c){
 					//for(Field f:fields(c))if(name.equals(f.getName()))return f;return null;
 					Field r=null;try{r=c.getField(name);}catch(Exception x)
 					{tl().error(x,"TL.DB.Tbl.f(",name,c,"):");}
 					return r;}
-
 				/**generate Sql into the StringBuilder*/
 				public static StringBuilder generate(StringBuilder b,CI[]col){
 					return generate(b,col,",");}
-
 				static StringBuilder generate(StringBuilder b,CI[]col,String separator){
 					if(separator==null)separator=",";
 					for(int n=col.length,i=0;i<n;i++){
 						if(i>0)b.append(separator);
 						if(col[i] instanceof Cols.M)
 							b.append(col[i]);
-
 						else b.append("`").append(col[i]).append("`");}
 					return b;}
-
 				static StringBuilder where(StringBuilder b,Object[]where){b.append(" where ");
 					for(int n=where.length,i=0;i<n;i++){Object o=where[i];
 						if(i>0)b.append(" and ");
@@ -1158,12 +1083,9 @@ public static class TL {
 						i++;
 					}//for
 					return b;}
-
 			}//class Cols
-
 			/**output to jspOut one row of json of this row*/
 			public void outputJson(){try{TL.tl().getOut().o(this);}catch(IOException x){tl().error(x,"moh.TL.DB.Tbl.outputJson:IOEx:");}}
-
 			/**output to jspOut rows of json that meet the 'where' conditions*/
 			public void outputJson(Object...where){try{
 				TL.Json.Output o=TL.tl().getOut();
@@ -1175,7 +1097,6 @@ public static class TL {
 			} catch (IOException e){tl().error(e,"TL.DB.Tbl.outputJson:");}
 			}//outputJson(Object...where)
 			public static List<Class<? extends Tbl>>registered=new LinkedList<Class<? extends Tbl>>();
-
 			static void check(TL tl){
 				for(Class<? extends Tbl>c:registered)try
 				{String n=c.getName(),n2=".checkDBTCreation."+n;
@@ -1185,7 +1106,6 @@ public static class TL {
 						tl.a(n2,tl.now);
 					}}catch(Exception ex){}
 			}
-
 			/**represents a row in the `usr` mysql table ,
 			 * a sub class from TL.DB.Tbl,
 			 * hence has built-in methods to operate with
@@ -1194,13 +1114,11 @@ public static class TL {
 				static final String dbtName="Usr";
 				/**the attribute-name	in the session*/
 				public final static String prefix=dbtName;
-
 				@Override public String getName(){return dbtName;}
 				@F public Integer uid;
 				@F public String un;
 				@F(prmPw=true) public String pw;
 				@F(json=true) public Map json;
-
 				/**load uid by un,pw , load from mysql*/
 				public Integer loadUid()throws Exception{
 					TL tl=TL.tl();tl.logo("Usr.loadUid:",this);
@@ -1210,7 +1128,6 @@ public static class TL {
 					if(o instanceof Number)uid=((Number)o).intValue();
 					else uid=Integer.parseInt(o.toString());
 					return uid;}
-
 				/**returns null if the credentials are invalid,
 				 * the credentials are username and password
 				 * which are read from the http-request
@@ -1223,7 +1140,6 @@ public static class TL {
 					if(u!=null&&u.uid!=null)u.load();
 					else u=null;tl.logo("Usr.login:4:",u);
 					return u;}
-
 				/**update the member variables , load from the mysql table*/
 				public void onLogin()throws Exception{
 					TL tl=TL.tl();tl.logo("Usr.onLogin:1:",this);
@@ -1231,22 +1147,19 @@ public static class TL {
 					Ssn n=tl.ssn=new Ssn();
 					n.sid=null;//0;
 					n.uid=uid;
-					n.auth=n.dt=
-							       n.last=new Date();
+					n.auth=n.dt=n.last=new Date();
 					n.save();
 					n.usr=this;
 					tl.s(Ssn.SessionAttrib,n);
 					Object o=tl.s(StrSsnTbls);
 					Map<Class<? extends TL.DB.Tbl>,TL.DB.Tbl>
-							tbls=o instanceof Map?(Map)o:null;
+						tbls=o instanceof Map?(Map)o:null;
 					if(tbls==null)tl.s(StrSsnTbls,tbls=new
-							                                   java.util.HashMap<Class<? extends TL.DB.Tbl>,TL.DB.Tbl>());
+						HashMap<Class<? extends TL.DB.Tbl>,TL.DB.Tbl>());
 					tbls.put(Usr.class, tl.usr);
 					tbls.put(Ssn.class, n);tl.logo("Usr.onLogin:n:",this);}
-
 				/**update the member variables , save to the mysql table*/
 				public void onSignup()throws Exception{onLogin();save();}
-
 				public enum C implements CI{uid,un,pw,json;//,flags,full,tel,email,dob,gender,img;
 					@Override public Class<? extends TL.DB.Tbl>cls(){return Usr.class;}
 					@Override public Class<? extends TL.Form>clss(){return cls();}
@@ -1260,7 +1173,6 @@ public static class TL {
 					@Override public Object val(TL.Form f){return f.v(this);}
 					@Override public Object val(TL.Form f,Object v){return f.v(this,v);}
 				}//C
-
 				@Override public CI pkc(){return C.uid;}
 				@Override public Object pkv(){return uid;}
 				@Override public C[]columns(){return C.values();}
@@ -1276,23 +1188,19 @@ public static class TL {
 					);}
 				static{registered.add(Usr.class);}
 			}//class Usr
-
 			public static class Ssn extends Tbl {//implements Serializable
 				public static final String dbtName="ssn";
 				static final String SessionAttrib="TL.DB.Tbl."+dbtName;
 				Usr usr;
-
 				@Override public String getName(){return dbtName;}
 				@F public Integer sid,uid;
 				@F public Date dt,auth,last;
-
 				public void onLogout()throws Exception{
 					TL tl=TL.tl();tl.ssn=null;tl.usr=null;
 					tl.s(Ssn.SessionAttrib,null);
 					HttpSession s=tl.getSession();
 					s.setMaxInactiveInterval(1);
 				}
-
 				public static void onEnter(){
 					TL tl=TL.tl();Object o=tl.s(Ssn.SessionAttrib);
 					if(o instanceof Ssn){
@@ -1300,7 +1208,6 @@ public static class TL {
 						tl.ssn=n;tl.usr=n.usr;
 						tl.ssn.last=tl.now;
 						n.save(C.last);}}
-
 				public enum C implements CI{sid,uid,dt,auth,last;
 					@Override public Class<? extends TL.DB.Tbl>cls(){return Ssn.class;}
 					@Override public Class<? extends TL.Form>clss(){return cls();}
@@ -1313,9 +1220,7 @@ public static class TL {
 					@Override public Object value(Object v){return val(tbl(),v);}
 					@Override public Object val(TL.Form f){return f.v(this);}
 					@Override public Object val(TL.Form f,Object v){return f.v(this,v);}
-
 				}//C
-
 				@Override public CI pkc(){return C.sid;}
 				@Override public Object pkv(){return sid;}
 				@Override public C[]columns(){return C.values();}
@@ -1330,24 +1235,22 @@ public static class TL {
 					);}
 				static{registered.add(Ssn.class);}
 			}//class Ssn
-
 			public static class Log extends Tbl {//implements Serializable
 				public static final String dbtName="log";
-
 				@Override public List creationDBTIndices(TL tl){
 					return Util.lst(
 							Util.lst("int(11) PRIMARY KEY NOT NULL AUTO_INCREMENT"//no
-									,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//dt
-									,"int(11) NOT NULL"//uid
-									,"enum('projects','usr','sheets','json','ssn','log','buildings','floors')"//entity
-									,"int(11) NOT NULL"//pk
-									,"enum('New','Update','Delete','Login','Logout','Log','Error')"//act
-									,"text"//json
+								,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//dt
+								,"int(11) NOT NULL"//uid
+								,"enum('projects','usr','sheets','json','ssn','log','buildings','floors')"//entity
+								,"int(11) NOT NULL"//pk
+								,"enum('New','Update','Delete','Login','Logout','Log','Error')"//act
+								,"text"//json
 							)
 							,Util.lst(Util.lst(C.uid,C.dt)
-									,C.dt
-									,Util.lst(C.entity,C.act,C.dt)
-									,Util.lst(C.entity,C.pk,C.dt))
+								,C.dt
+								,Util.lst(C.entity,C.act,C.dt)
+								,Util.lst(C.entity,C.pk,C.dt))
 					);}
 				@Override public String getName(){return dbtName;}//public	Ssn(){super(Name);}
 				@F public Integer no;
@@ -1359,7 +1262,6 @@ public static class TL {
 				public enum Act{New,Update,Delete,Login,Logout,Log,Error}
 				@F public Act act;
 				@F public String json;//,old;
-
 				public enum C implements CI{no,dt,uid,entity,pk,act,json;//,old;
 					@Override public Class<? extends TL.DB.Tbl>cls(){return Log.class;}
 					@Override public Class<? extends TL.Form>clss(){return cls();}
@@ -1373,75 +1275,66 @@ public static class TL {
 					@Override public Object val(TL.Form f){return f.v(this);}
 					@Override public Object val(TL.Form f,Object v){return f.v(this,v);}
 				}//C
-
 				@Override public CI pkc(){return C.no;}
 				@Override public Object pkv(){return no;}
 				@Override public C[]columns(){return C.values();}
-
 				public static int log(Entity e,Integer pk,Act act,Map val){return log(TL.tl(),e,pk,act,val);}
-
 				public static int log(TL t,Entity e,Integer pk,Act act,Map val){//,Map old
 					int r=-1;try{//throws SQLException, IOException
 						r= TL.DB.x(
-								"insert into `"+dbtName+"`(`"+C.uid+"`,`"+C.entity+"`,`"+C.pk+"`,`"+C.act+"`,`"+C.json+"`) values(?,?,?,?,?)"
-								,t.usr!=null?t.usr.uid:-1,e.toString(),pk , act.toString()
-								, t.jo().clrSW().o(val).toString()
-								//, null//t.jo().clrSW().o(old).toString()
-						);}
-					catch(Exception x){t.error(x,"TL.DB.Tbl.Log.log:ex:");}return r;}
-
-				public static int log_(TL t,Entity e,Integer pk,Act act,Object val){//,Map old
-					int r=-1;try{r= TL.DB.x(
 							"insert into `"+dbtName+"`(`"+C.uid+"`,`"+C.entity+"`,`"+C.pk+"`,`"+C.act+"`,`"+C.json+"`) values(?,?,?,?,?)"
 							,t.usr!=null?t.usr.uid:-1,e.toString(),pk , act.toString()
 							, t.jo().clrSW().o(val).toString()
 							//, null//t.jo().clrSW().o(old).toString()
+						);}
+					catch(Exception x){t.error(x,"TL.DB.Tbl.Log.log:ex:");}return r;}
+				public static int log_(TL t,Entity e,Integer pk,Act act,Object val){//,Map old
+					int r=-1;try{r= TL.DB.x(
+						"insert into `"+dbtName+"`(`"+C.uid+"`,`"+C.entity+"`,`"+C.pk+"`,`"+C.act+"`,`"+C.json+"`) values(?,?,?,?,?)"
+						,t.usr!=null?t.usr.uid:-1,e.toString(),pk , act.toString()
+						, t.jo().clrSW().o(val).toString()
+						//, null//t.jo().clrSW().o(old).toString()
 					);t.log("TL.DB.Tbl.Log.log_:",e,",",pk,",",act,",",val);}
 					catch(Exception x){t.error(x,"TL.DB.Tbl.Log.log:ex:");}
 					return r;}
 				static{registered.add(Log.class);}
 			}//class Log
-
 		}//class Tbl
 	}//class DB
-
 	/**encapsulating Html-form fields, use annotation Form.F for defining/mapping member-variables to html-form-fields*/
 	public abstract static class Form{
-
 		@Override public String toString(){return toJson();}
 		public abstract String getName();
 		public String toJson(){Json.Output o= tl().jo().clrSW();
 			try {o.oForm(this, "", "");}
 			catch (IOException ex) {}return o.toString();}
-
-			/*public String[]prmsReq(String prefix){return prefix==null||prefix.length()<1?prmsReq(fields()):prmsReq(prefix,fields());}
-			public static String[]prmsReq (String prefix,Field[]a){
-				if(prefix==null||prefix.length()<1)return prmsReq(a);
-				String[]r=new String[a.length];int i=-1;TL t=tl();
-				for(Object e:a)r[++i]=t.req(prefix+e);
-				return r;}
-			public static String[]prmsReq (Field[]a){
-				String[]r=new String[a.length];int i=-1;TL t=tl();
-				for(Object e:a)r[++i]=t.req(e.toString());
-				return r;}
-			public static Object parse(String p,Class<?> c){
-				TL t=tl();if(c.isEnum()){
-					for(Object i:c.getEnumConstants())
-						if(i!=null&&i.toString().equals(p))
-							return i;}else
-				if(c.isAssignableFrom(Float.class))return Float.parseFloat(p);else
-				if(c.isAssignableFrom(Double.class))return Double.parseDouble(p);else
-				if(c.isAssignableFrom(Integer.class))return Integer.parseInt(p);else
-				if(c.isAssignableFrom(URL.class))try {return new URL("file:" +t.getServletContext().getContextPath()+'/'+p);}
-				catch (Exception ex) {t.error(ex,"TL.Form.parse:URL:p=",p," ,c=",c);}else
-				if(c.isAssignableFrom(String.class))return p;else
-				if(c.isAssignableFrom(Date.class))try {return Util.parseDate(p);}//Util.dateFormat.parse(p);}
-				catch (Exception ex) {t.error(ex,"TL.Form.parse:Date:p=",p," ,c=",c);}
-				else//if(c.isAssignableFrom(Map.class))
-					try{return Json.Parser.parse(p);}
-					catch (Exception ex) {t.error(ex,"TL.Form.parse:Json.Parser.parse:p=",p," ,c=",c);}
-				return null;}*/
-
+		/*public String[]prmsReq(String prefix){return prefix==null||prefix.length()<1?prmsReq(fields()):prmsReq(prefix,fields());}
+		public static String[]prmsReq (String prefix,Field[]a){
+			if(prefix==null||prefix.length()<1)return prmsReq(a);
+			String[]r=new String[a.length];int i=-1;TL t=tl();
+			for(Object e:a)r[++i]=t.req(prefix+e);
+			return r;}
+		public static String[]prmsReq (Field[]a){
+			String[]r=new String[a.length];int i=-1;TL t=tl();
+			for(Object e:a)r[++i]=t.req(e.toString());
+			return r;}
+		public static Object parse(String p,Class<?> c){
+			TL t=tl();if(c.isEnum()){
+				for(Object i:c.getEnumConstants())
+					if(i!=null&&i.toString().equals(p))
+						return i;}else
+			if(c.isAssignableFrom(Float.class))return Float.parseFloat(p);else
+			if(c.isAssignableFrom(Double.class))return Double.parseDouble(p);else
+			if(c.isAssignableFrom(Integer.class))return Integer.parseInt(p);else
+			if(c.isAssignableFrom(URL.class))try {return new URL("file:" +t.getServletContext().getContextPath()+'/'+p);}
+			catch (Exception ex) {t.error(ex,"TL.Form.parse:URL:p=",p," ,c=",c);}else
+			if(c.isAssignableFrom(String.class))return p;else
+			if(c.isAssignableFrom(Date.class))try {return Util.parseDate(p);}//Util.dateFormat.parse(p);}
+			catch (Exception ex) {t.error(ex,"TL.Form.parse:Date:p=",p," ,c=",c);}
+			else//if(c.isAssignableFrom(Map.class))
+				try{return Json.Parser.parse(p);}
+				catch (Exception ex) {t.error(ex,"TL.Form.parse:Json.Parser.parse:p=",p," ,c=",c);}
+			return null;}*/
 		public Form readReq(String prefix){
 			TL t=tl();FI[]a=flds();for(FI f:a){
 				String s=t.req(prefix==null||prefix.length()<1?prefix+f:f.toString());
@@ -1453,9 +1346,7 @@ public static class TL {
 					t.error(ex,"TL.Form.readReq:t=",this," ,field="
 							,f+" ,c=",c," ,s=",s," ,v=",v);}}
 			return this;}
-
 		public abstract FI[]flds();
-
 		public Object[]vals(){
 			Field[]a=fields();
 			Object[]r=new Object[a.length];
@@ -1463,16 +1354,13 @@ public static class TL {
 			for(Field f:a){i++;
 				r[i]=v(a[i]);
 			}return r;}
-
 		public Form vals (Object[]p){
 			Field[]a=fields();int i=-1;
 			for(Field f:a)
 				v(f,p[++i]);
 			return this;}
-
 		public Map asMap(){
 			return asMap(null);}
-
 		public Map asMap(Map r){
 			Field[]a=fields();
 			if(r==null)r=new HashMap();
@@ -1480,15 +1368,12 @@ public static class TL {
 			for(Field f:a){i++;
 				r.put(f.getName(),v(a[i]));
 			}return r;}
-
 		public Form fromMap (Map p){
 			Field[]a=fields();
 			for(Field f:a)
 				v(f,p.get(f.getName()));
 			return this;}
-
 		public Field[]fields(){return fields(getClass());}
-
 		public static Field[]fields(Class<?> c){//this is beautiful(tear running down cheek)
 			Field[]a=c.getDeclaredFields();
 			List<Field>l=new LinkedList<Field>();
@@ -1497,10 +1382,8 @@ public static class TL {
 			Field[]r=new Field[l.size()];
 			l.toArray(r);
 			return r;}
-
 		public Form v(FI p,Object v){return v(p.f(),v);}//this is beautiful(tear running down cheek)
 		public Object v(FI p){return v(p.f());}//this is beautiful(tear running down cheek)
-
 		public Form v(Field p,Object v){//this is beautiful(tear running down cheek)
 			try{Class <?>t=p.getType();
 				if(v!=null && !t.isAssignableFrom( v.getClass() ))//t.isEnum()||t.isAssignableFrom(URL.class))
@@ -1508,18 +1391,13 @@ public static class TL {
 				p.set(this,v);
 			}catch (Exception ex) {tl().error(ex,"TL.Form.v(",this,",",p,",",v,")");}
 			return this;}
-
 		public Object v(Field p){//this is beautiful(tear running down cheek)
 			try{return p.get(this);}
 			catch (Exception ex) {//IllegalArgumentException,IllegalAccessException
 				tl().error(ex,"TL.Form.v(",this,",",p,")");return null;}}
-
-
 		/**Field annotation to designate a java member for use in a Html-Form-field/parameter*/
 		@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
-		public @interface F{	boolean prmPw() default false;boolean json() default false; }
-
-
+		public @interface F{	boolean prmPw() default false;boolean max() default false;boolean json() default false; }
 		/**Interface for enum-items from different forms and sql-tables ,
 		 * the enum items represent a reference Column Fields for identifing the column and selection.*/
 		public interface FI{//<T>
@@ -1532,12 +1410,8 @@ public static class TL {
 			public Object val(Form f);
 			public Object val(Form f,Object p);
 		}//interface I
-
 	}//public abstract static class Form
-
-
 	public Json.Output o(Object...a)throws IOException{if(out!=null&&out.w!=null)for(Object s:a)out.w.write(s instanceof String?(String)s:String.valueOf(s));return out;}
-
 	public static class Json{
 		public static class Output
 		{ public Writer w;
@@ -1556,23 +1430,19 @@ public static class TL {
 			public Output(boolean initCache,boolean includeObj){this(new StringWriter(),initCache,includeObj);}
 			public Output(String p)throws IOException{w=new StringWriter();w(p);}
 			public Output(OutputStream p)throws Exception{w=new OutputStreamWriter(p);}
-
 			public String toString(){return w==null?null:w.toString();}
 			public String toStrin_(){String r=w==null?null:w.toString();clrSW();return r;}
 			public Output w(char s)throws IOException{if(w!=null)w.write(s);return this;}
 			public Output w(String s)throws IOException{if(w!=null)w.write(s);return this;}
-
 			public Output p(String s)throws IOException{return w(s);}
 			public Output p(char s)throws IOException{return w(s);}
 			public Output p(long s)throws IOException{return w(String.valueOf(s));}
 			public Output p(int s)throws IOException{return w(String.valueOf(s));}
 			public Output p(boolean s)throws IOException{return w(String.valueOf(s));}
-
 			public Output o(Object...a)throws IOException{return o("","",a);}
 			public Output o(Object a,String indentation)throws IOException{return o(a,indentation,"");}
 			public Output o(String ind,String path,Object[]a)throws IOException
 			{for(Object i:a)o(i,ind,path);return this;}
-
 			public Output o(Object a,String ind,String path)throws IOException
 			{if(cache!=null&&a!=null&&((!includeObj&&path!=null&&path.length()<1)||cache.containsKey(a)))
 			{Object p=cache.get(a);if(p!=null){o(p.toString());o("/*cacheReference*/");return this;}}
@@ -1603,7 +1473,6 @@ public static class TL {
 						     .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
 					if(c)w("}//Object&cachePath=\"").p(path).w("\"\n").p(ind);
 					else w("}");}return this;}
-
 			public Output oFormFlds(TL.Form p,String ind,String path)throws IOException{
 				Field[]a=p.fields();String i2=ind+'\n';
 				w("\"name\":").oStr(p.getName(),ind);
@@ -1612,20 +1481,17 @@ public static class TL {
 							 .o(p.v(f),ind,comment?path+'.'+f.getName():path);
 					if(comment)w("//").w(f.toString()).w("\n").p(i2);
 				}return this;}
-
 			public Output oForm(TL.Form p,String ind,String path)throws IOException{
 				if(p instanceof TL.DB.Tbl)return oDbTbl((TL.DB.Tbl)p,ind,path);
 				if(comment)w("{//TL.Form:").w(p.getClass().toString()).w('\n').p(ind);
 				else w('{');
 				oFormFlds(p,ind,path);
 				return (comment?w("}//TL.Form&cachePath=\"").p(path).w("\"\n").p(ind):w('}'));}
-
 			public Output oDbTbl(TL.DB.Tbl p,String ind,String path)throws IOException{
 				if(comment)w("{//TL.DB.Tbl:pkc=").o(p.pkc()).w(':')
 						           .w(p.getClass().toString()).w("\n").p(ind);else w('{');
 				oFormFlds(p,ind,path);
 				return comment?w("}//TL.DB.Tbl&cachePath=\"").p(path).w("\"\n").p(ind):w('}');}
-
 			public Output oStr(String a,String indentation)throws IOException
 			{final boolean m=comment;if(a==null)return w(m?" null //String\n"+indentation:"null");
 				w('"');for(int n=a.length(),i=0;i<n;i++)
@@ -1636,21 +1502,18 @@ public static class TL {
 			else if(c=='\t')w('\\').w('t');
 			else if(c=='\'')w('\\').w('\'');
 			else p(c);}return w('"');}
-
 			public Output oDt(java.util.Date a,String indentation)throws IOException
 			{if(a==null)return w(comment?" null //Date\n":"null");
 				w("{\"class\":\"Date\",\"time\":").p(a.getTime())
 						.w(",\"str\":").oStr(a.toString(),indentation);
 				if(comment)w("}//Date\n").p(indentation);else w("}");
 				return this;}
-
 			public Output oThrbl(Throwable x,String indentation)throws IOException
 			{w("{\"message\":").oStr(x.getMessage(),indentation).w(",\"stackTrace\":");
 				try{StringWriter sw=new StringWriter();
 					x.printStackTrace(new PrintWriter(sw));
 					oStr(sw.toString(),indentation);}catch(Exception ex)
 				{TL.tl().log("Json.Output.x("+x+"):",ex);}return w("}");}
-
 			public Output oEnumrtn(Enumeration a,String ind,String path)throws IOException
 			{final boolean c=comment;
 				if(a==null)return c?w(" null //Enumeration\n").p(ind):w("null");
@@ -1660,7 +1523,6 @@ public static class TL {
 				while(a.hasMoreElements()){if(comma)w(" , ");else comma=true;
 					o(a.nextElement(),i2,c?path+(i++):path);}
 				return c?w("]//Enumeration&cachePath=\"").p(path).w("\"\n").p(ind):w("]");}
-
 			public Output oItrtr(Iterator a,String ind,String path)throws IOException
 			{final boolean c=comment;if(a==null)return c?w(" null //Iterator\n").p(ind):w("null");
 				boolean comma=false;String i2=c?ind+"\t":ind;
@@ -1669,7 +1531,6 @@ public static class TL {
 				else w("[");int i=0;
 				while(a.hasNext()){if(comma)w(" , ");else comma=true;o(a.next(),i2,c?path+(i++):path);}
 				return c?w("]//Iterator&cachePath=\"").p(path).w("\"\n").p(ind):w("]");}
-
 			public Output oArray(Object[]a,String ind,String path)throws IOException
 			{final boolean c=comment;
 				if(a==null)return c?w(" null //array\n").p(ind):w("null");
@@ -1678,7 +1539,6 @@ public static class TL {
 					if(path==null)path="";if(path.length()>0)path+=".";}else w("[");
 				for(int i=0;i<a.length;i++){if(i>0)w(" , ");o(a[i],i2,c?path+i:path);}
 				return c?w("]//cachePath=\"").p(path).w("\"\n").p(ind):w("]");}
-
 			public Output oarray(Object a,String ind,String path)throws IOException
 			{final boolean c=comment;
 				if(a==null)return c?w(" null //array\n").p(ind):w("null");
@@ -1687,7 +1547,6 @@ public static class TL {
 					if(path==null)path="";if(path.length()>0)path+=".";}else w("[");
 				for(int i=0;i<n;i++){if(i>0)w(" , ");o(Array.get(a,i),i2,c?path+i:path);}
 				return c?w("]//cachePath=\"").p(path).w("\"\n").p(ind):w("]");}
-
 			public Output oCollctn(Collection o,String ind,String path)throws IOException
 			{if(o==null)return w("null");final boolean c=comment;
 				if(c){w("[//").p(o.getClass().getName()).w(":Collection:size=").p(o.size()).w("\n").p(ind);
@@ -1700,7 +1559,6 @@ public static class TL {
 					while(e.hasNext()){w(",");o(e.next(),ind,c?path+(i++):path);}}
 				return c?w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
 						       :w("]");}
-
 			public Output oMap(Map o,String ind,String path) throws IOException
 			{if(o==null)return w("null");final boolean c=comment;
 				if(c){w("{//").p(o.getClass().getName()).w(":Map\n").p(ind);
@@ -1719,7 +1577,6 @@ public static class TL {
 						      .w("\"\n")
 						      .p(ind);else w("}");
 				return this;}
-
 			public Output oReq(HttpServletRequest r,String ind,String path)throws IOException
 			{final boolean c=comment;try{boolean comma=false,c2;//,d[]
 				String k,i2=c?ind+"\t":ind,ct;int j;Enumeration e,f;
@@ -1785,7 +1642,6 @@ public static class TL {
 				if(c)w("}//").p(r.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 				else w("}");
 				return this;}
-
 			Output oSession(HttpSession s,String ind,String path)throws IOException
 			{final boolean c=comment;try{if(s==null)w("null");else
 			{String i2=c?ind+"\t":ind;
@@ -1801,7 +1657,6 @@ public static class TL {
 				if(c)w("}//").p(s.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 				else w("}");
 				return this;}
-
 			public Output oCookie(Cookie y,String ind,String path)throws IOException
 			{final boolean c=comment;try{(c?w("{//")
 					                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
@@ -1817,7 +1672,6 @@ public static class TL {
 				if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 				}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
 				return this;}
-
 			Output oTL(TL y,String ind,String path)throws IOException
 			{final boolean c=comment;try{String i2=c?ind+"\t":ind;
 				(c?w("{//").p(y.getClass().getName()).w(":PageContext\n").p(ind):w("{"))
@@ -1839,7 +1693,6 @@ public static class TL {
 				catch(Exception ex){TL.tl().error(ex,"Json.Output.oTL:closing:");}
 				else w("}");
 				return this;}
-
 			Output oSC(ServletContext y,String ind,String path)
 			{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
 					                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
@@ -1850,7 +1703,6 @@ public static class TL {
 				else w("}");
 			}catch(Exception ex){TL.tl().error(ex,"Json.Output.ServletContext:");}
 				return this;}
-
 			Output oSCnfg(ServletConfig y,String ind,String path)throws IOException
 			{final boolean c=comment;try{if(c)w("{//").p(y.getClass().getName()).w(":ServletConfiguration\n").p(ind);
 			else w("{");
@@ -1861,7 +1713,6 @@ public static class TL {
 			}catch(Exception ex){TL.tl().error(ex,"Json.Output.ServletConfiguration:");}
 				return c?w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
 						       :w("}");}
-
 			Output oBean(Object o,String ind,String path)
 			{final boolean c=comment;try{String i2=c?ind+"\t":ind,i3=c?i2+"\t":ind;Class z=o.getClass();
 				(c?w("{//").p(z.getName()).w(":Bean\n").p(ind):w("{"))
@@ -1874,7 +1725,6 @@ public static class TL {
 						w("\n").w(i2).w(",").p(n).w(':').o(m.invoke(o), i3, path+'.'+n);}
 				if(c)w("}//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
 						     ;else w("}");}catch(Exception ex){TL.tl().error(ex,"Json.Output.Bean:");}return this;}
-
 			Output oResultSet(ResultSet o,String ind,String path)
 			{final boolean c=comment;try{String i2=c?ind+"\t":ind;
 				TL.DB.ItTbl it=new TL.DB.ItTbl(o);
@@ -1883,7 +1733,6 @@ public static class TL {
 						.w("\n").p(ind).w(",\"a\":").o(it,i2,c?path+".a":path)
 				;if(c)w("}//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
 						      ;else w("}");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSet:");}return this;}
-
 			Output oResultSetMetaData(ResultSetMetaData o,String ind,String path)
 			{final boolean c=comment;try{String i2=c?ind+"\t":ind;
 				int cc=o.getColumnCount();
@@ -1901,38 +1750,29 @@ public static class TL {
 						     ;else w("]");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSetMetaData:");}return this;}
 			Output clrSW(){if(w instanceof StringWriter){((StringWriter)w).getBuffer().setLength(0);}return this;}
 			Output flush() throws IOException{w.flush();return this;}
-
-
 		} //class Output
-
 		public static class Parser
 		{public String p,comments=null;
 			public int offset,len,row,col;
 			public char c;Map<String,Object>cache=null;
 			//XmlTokenizer t;
 			public final static Object NULL="null";
-
 			public static Object parse(HttpServletRequest req)throws Exception{return parse(servletRequest_content2str(req));}
-
 			public static Object parse(String p)throws Exception{Json.Parser j=new Json.Parser(p);return j.parse();}
-
 			public static String servletRequest_content2str(HttpServletRequest req)throws Exception
-			{int n=req.getContentLength(),i=0;byte[]ba;if(n<=0)return"{}";ba=new byte[n];java.io.InputStream is=req
-					                                                                                                    .getInputStream();while(n>0&&i>=0){i=is.read(ba,i,n);n-=i;}is.close();return new String(ba,"utf8");}
-
+			{int n=req.getContentLength(),i=0;byte[]ba;if(n<=0)return"{}";ba=new byte[n];
+				java.io.InputStream is=req.getInputStream();
+				while(n>0&&i>=0){i=is.read(ba,i,n);n-=i;}is.close();
+				return new String(ba,"utf8");}
 			public Parser(String p){init(p);}
 			public void init(String p){this.p=p;offset=-1;len=p.length();row=col=1;c=peek();offset++;}
-
 			public char peek(){return (offset+1<len)?p.charAt(offset+1):'\0';}
-
 			public char next()
 			{char c2=peek();if(c2=='\0'){if(offset<len)offset++;return c=c2;}
 				if(c=='\n'||c=='\r'){row++;col=1;
 					if(c!=c2&&(c2=='\n'||c2=='\r'))offset++;c=peek();offset++;}
 				else{col++;offset++;c=c2;}return c;}
-
 			public Object parse()throws Exception{Object r=null;while(c!='\0')r=parseItem();return r;}
-
 			public Object parseItem()throws Exception
 			{Object r=null;int i;skipWhiteSpace();switch(c)
 			{case '"':case '\'':case '`':r=extractStringLiteral();break;
@@ -1953,12 +1793,10 @@ public static class TL {
 				{if(i!=-1){if(cache==null)cache=new HashMap<String,Object>();int j=comments.indexOf
 						                                                                            ("\"",i+=11);cache.put(comments.substring(i,j!=-1?j:comments.length()),r);}
 				else r=cache.get(r);comments=null;}return r;}
-
 			public void skipWhiteSpace()
 			{boolean b=false;do{b=c==' '||c=='\t'||c=='\n'||c=='\r';
 				while(c==' '||c=='\t'||c=='\n'||c=='\r')next();
 				b=b||(c=='/'&&skipComments());}while(b);}
-
 			public boolean skipComments()
 			{char c2=peek();if(c2=='/'||c2=='*'){next();next();StringBuilder b=new StringBuilder();if(c2=='/')
 			{while(c!='\0'&&c!='\n'&&c!='\r'){b.append(c);next();}
@@ -1967,7 +1805,6 @@ public static class TL {
 			{while(c!='\0'&&c2!='/'){b.append(c);next();if(c=='*')c2=peek();}
 				if(c=='*'&&c2=='/'){b.deleteCharAt(b.length()-1);next();next();}
 			}comments=b.toString();return true;}return false;}
-
 			public String extractStringLiteral()throws Exception
 			{char first=c;next();boolean b=c!=first&&c!='\0';
 				StringBuilder r=new StringBuilder();while(b)
@@ -1989,7 +1826,6 @@ public static class TL {
 			else r.append(c);
 				next();b=c!=first&&c!='\0';
 			}if(c==first)next();return r.toString();}
-
 			public Object extractIdentifier()
 			{int i=offset;
 				while(!Character.isUnicodeIdentifierStart(c))
@@ -2000,7 +1836,6 @@ public static class TL {
 				return "true".equals(r)?new Boolean(true)
 						       :"false".equals(r)?new Boolean(false)
 								        :"null".equals(r)||"undefined".equals(r)?NULL:r;}
-
 			public Object extractDigits()
 			{int i=offset,iRow=row,iCol=col;boolean dot=c=='.';
 				if(c=='0'&&offset+1<len)
@@ -2024,13 +1859,11 @@ public static class TL {
 				String s=p.substring(i,offset);
 				if(!dot)try{return Long.parseLong(s);}catch(Exception ex){}
 				try{return Double.parseDouble(s);}catch(Exception ex){}return s;}
-
 			public List<Object> extractArray()throws Exception
 			{if(c!='[')return null;next();LinkedList<Object> r=new LinkedList<Object>();skipWhiteSpace();
 				if(c!='\0'&&c!=']')r.add(parseItem());while(c!='\0'&&c!=']')
 			{if(c!=',')throw new IllegalArgumentException("Array:("+row+","+col+") expected ','");
 				next();r.add(parseItem());}if(c==']')next();return r;}
-
 			public Map<Object,Object> extractObject()throws Exception{
 				if(c=='{')next();
 				else return null;skipWhiteSpace();HashMap<Object,Object> r=new HashMap<Object,Object>();
@@ -2042,11 +1875,8 @@ public static class TL {
 					}r.put(k,v);} // {
 				if(c=='}')next();return r;
 			}
-
 		}//class Json.Parser
 	}//class Json
-
-
 	/** annotation to designate a java method as an ajax/xhr entry point of execution*/
 	@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
 	public static @interface Op{
@@ -2057,12 +1887,10 @@ public static class TL {
 		String urlPath() default "\n"; //if no method name match from parameters, then this string is mathed with the requested url, "*" means method will match any request path
 		String prmName() default "";
 	}//Op
-
 	static Map<String,java.lang.reflect.Method>
 			ops=new HashMap<String,java.lang.reflect.Method>(),
 			mth=new HashMap<String,java.lang.reflect.Method>(),
 			url=new HashMap<String,java.lang.reflect.Method>();
-
 	public static void registerOp(Class p){
 		java.lang.reflect.Method[]b=p.getMethods();
 		String cn=p.getSimpleName();
@@ -2078,13 +1906,10 @@ public static class TL {
 			}
 		}
 	}//registerOp
-
-
 	void respond(String contentType,String content){
 		try{r("responseDone",true);
 			rspns.setContentType(contentType);
 			o(content);}catch(Exception ex){error(ex,"TL.respond:");}}
-
 	public static void run(HttpServletRequest request,HttpServletResponse response,Writer out)throws IOException{
 		TL tl=null;try
 		{tl=TL.Enter(request,response,out);
@@ -2092,7 +1917,6 @@ public static class TL {
 			java.lang.reflect.Method op=ops.get(tl.req("op"));//Prm.op.toString()));
 			if(op==null)
 				op=mth.get(tl.req.getMethod());
-
 			if(op==null) {String p=tl.req.getContextPath();
 				for (String s : url.keySet())
 					if ( p.startsWith(s) || "*".equals(s) ) {//s == null || s.length() < 1 ||
@@ -2102,7 +1926,6 @@ public static class TL {
 			}
 			tl.log("jsp:version2017.02.09.17.10:op=",op);
 			//if((tl.usr!=null||tl.logOut)|| op==Op.login || op==Op.none)//TODO: AFTER TESTING DEVELOPMENT, REMOVE from if: logOut
-
 			//op.doOp(App.app(tl),tl.json);
 			Object retVal=null;
 			if(op!=null){
@@ -2168,14 +1991,9 @@ public static class TL {
 				x.printStackTrace();
 		}finally{TL.Exit();}
 	}//run op servlet.service
-
 }//class TL //TL tl=null;try{tl=TL.Enter(request,out);
-
 //public class App
-
-static final String SsnNm="App"
-		,UploadPth="/aswan/ploads/";
-
+static final String SsnNm="App",UploadPth="/aswan/uploads/";
 /**http-get-method , poll-server
  * , of param"lastPoll" is present, then call lastPoll
  * , if param"updateCols" present then call updateCols
@@ -2183,24 +2001,30 @@ static final String SsnNm="App"
  * , if param"getIds" present then call getIds
  * , if param"getEntities" present then call getEntities
  */
-public static @TL.Op Map poll
-(//@TL.Op(prmName="lastPoll")long lastPoll
-@TL.Op(prmName="getLogs")List logs
-,@TL.Op(prmName="update")List update//,@TL.Op(prmName="updateCols")List updateCols//,@TL.Op(prmName="putEntities")List putEntities
-,@TL.Op(prmName="distinct")List distinct//,@TL.Op(prmName="getIds")List getIds,@TL.Op(prmName="getEntities")List getEntities
-,TL tl){Map m=new HashMap();
-	if(lastPoll!=null)m.put("lastPoll",lastPoll( lastPoll,tl ));
-	if(updateCols !=null)m.put("updateCols", updateCols(updateCols ,tl ));
-	if(putEntities !=null)m.put("putEntities", putEntities( putEntities,tl ));
-	if( getIds!=null)m.put("getIds", getIds( getIds,tl ));
-	if( getEntities!=null)m.put("getEntities", getEntities( getEntities,tl ));
+public static @TL.Op(urlPath = "*") Map poll
+(@TL.Op(prmName="getLogs")List getLogs
+	,@TL.Op(prmName="updates")List update
+	,@TL.Op(prmName="getDistinct")List distinct
+	,TL tl)
+ {Map m=new HashMap();
+	if( getLogs!=null){List<Map>a=new LinkedList<>();
+		m.put("getLogs",a);
+		for (Object o:getLogs) {
+			Map x=(Map)o;
+			a.add(getLog(x,tl));
+		}
+	}
+	 if( update!=null)
+		 m.put("updates",updateDomains(update,tl));
 
+	 if( distinct!=null){List a=new LinkedList<>();
+		 m.put("getDistinct",a);
+		 for (Object o:distinct) {
+			 Map x=(Map)o;
+			 a.add(distinct(x,tl));
+		 }
+	 }
 	return m;}
-
-static List getLogs(List lastPoll,TL tl){
-
-
-}
 
 /**all cases domain must be specified, or usr is in only one domain
  * param:pagenation
@@ -2211,11 +2035,11 @@ static List getLogs(List lastPoll,TL tl){
  *		case, reqest include pagenation:{ref:<int>,cancel:true}
  *
  * cases for dates
- * 1.param afterDate
+ * 1.param "from" //afterDate
  *
- * 2.param beforeDate
+ * 2.param "to" //beforeDate
  *
- * 3.param from-to dates
+ * 3.param "from"-"to" dates
  *
  *
  * cases for entityship
@@ -2226,89 +2050,177 @@ static List getLogs(List lastPoll,TL tl){
  *
  * 3.param domain , req usr
  * */
-static Map getLog(Map p,TL tl){
- try{Map pg=(Map)p.get("pagenation");
-	 Object ref=pg!=null?pg.get("ref"):null;
-	 if(ref!=null){
-	 	Map x=(Map)tl.s("pagenation");
-	 	x=x!=null?(Map)x.get(ref):null;
-	 	ResultSet rs=x==null?null:(ResultSet)x.get(ref);
-	 	if(rs==null){pg.put("closed",true);return p;}
-	 	List a=new LinkedList();
-	 	Domain d=new Domain();
-	 	p.put("a",a);boolean b=false;
-	 	while((b=rs.next()) && a.size()<999)
-	    {   d.load(rs);
-	    	a.add(d.asMap());
-	    }
-	    if(b){
+ static Map getLog(Map p,TL tl){
+  try{Map pg=(Map)p.get("pagenation");
+	Object ref=pg!=null?pg.get("ref"):null;
+	if(ref!=null){
+		Map ps=(Map)tl.s("pagenation");
+		ps=ps!=null?(Map)ps.get(ref):null;
+		ResultSet rs=ps==null?null:(ResultSet)ps.get(ref);
+		if(rs==null){pg.put("closed",true);return p;}
+		return list(p,rs,pg,ps,tl);
+	}
+	ref=p.get("from");
+	Long to,from=ref instanceof Number?((Number)ref).longValue():null;
+	ref=p.get("to");
+	to=ref instanceof Number?((Number)ref).longValue():null;//Double.NaN;
+	StringBuilder sql=new StringBuilder("select * from `").append(Pciod.dbtName).append("`");
+	Object[]where=null;//TL.DB.Tbl.Cols.where(sql,TL.DB.Tbl.where())
+	if(from!=null && to!=null)TL.DB.Tbl.Cols.where(sql
+		,where=TL.DB.Tbl.where(
+			  TL.Util.lst(Pciod.C.logTime,">="),from
+			, TL.Util.lst(Pciod.C.logTime,"<="),to
+		));
+	else if(from!=null )TL.DB.Tbl.Cols.where(sql
+		,where=TL.DB.Tbl.where(
+			TL.Util.lst(Pciod.C.logTime,">="),from
+		));
+	else if(to!=null )TL.DB.Tbl.Cols.where(sql
+		,where=TL.DB.Tbl.where(
+			TL.Util.lst(Pciod.C.logTime,"<="),to
+		));
+	else {tl.log("aswan2017.App.getLog:no from nor to",p);
+		return p;}
+	return list(p,sql.toString(),where,tl);
+  }catch(Exception ex){tl.error(ex,"getLog");}
+  return p;}
 
-	    }
-	    return p;
-	 }
- }catch(Exception ex){tl.error("getLog",ex);}}
-
-static List updateCols(List rows,TL tl){
-	Date now=new Date();List x=new LinkedList();
-	Domain d=new Domain();
+static List updateDomains(List rows,TL tl){
+	List x=new LinkedList();
+	Pciod d=new Pciod();
 	for(Object o:rows)try{
 		Map m=(Map)o;
-		d.fromMap();
-		d.logTime=now;
+		d.fromMap(m);
+		d.logTime=tl.now;
 		d.save();
-		m.put(Domain.C.logTime.toString(),d.logTime);
+		m.put(Pciod.C.logTime.toString(),d.logTime);
 		x.add(m);
-	}catch(Exception ex){tl.error("updateCols",ex);}
+	}catch(Exception ex){tl.error(ex,"updateDomn");}
 	return x;}
 
 //static void putEntities(List putEntities,TL tl){}
+//static List getEntities(List getEntities,TL tl){return null;}
+
+static List distinct(Map p,TL tl){return null;}
+
+static StringBuilder cols(TL.DB.Tbl t) {}
+
 static List getIds(List rows,TL tl){
-	Domain d=new Domain();List x=new LinkedList();
+	PINVULt d=new PINVULt();
+	List x=new LinkedList();
 	for(Object o:rows)try{
 		Map m=(Map)o;d.fromMap( ( Map ) o );
-		Domain p=new Domain();p.fromMap(m);
-		Domain.C[]c=d.columns();
-		Field[]a=Domain.fields();
-		StringBuilder sql=new StringBuilder(
-		"select `").append(c[0])//no
-		.append("`,`").append(c[1])//domain
-		.append("`,max(`").append(c[2])//logTime
-		.append("`,`").append(c[3])//usr
-		.append("`,`").append(c[4])//entity
-		.append("`,`").append(c[5])//id
-		.append("`,`").append(c[6])//col
-		.append("`,`").append(c[7])//val
-		.append("`) from `").append(Domain.getName())
-		.append("` ");
-		Object[]where=d.where(d.C.domain,d.domain,d.C.entity,d.entity, d.C.id,d.id);
-		Cols.where(sql, where);
+		PINVULt p=new PINVULt();p.fromMap(m);
+		PINVULt.C[]c=d.columns();
+		Field[]a=PINVULt.fields(PINVULt.class);//.fields();
+		StringBuilder sql=new StringBuilder("select `")
+			.append(c[0])//no
+			.append("`,`").append(c[1])//domain
+			.append("`,max(`").append(c[2])//logTime
+			.append("`),`").append(c[3])//usr
+			.append( "`,`").append(c[4])//entity
+			.append( "`,`").append(c[5])//id
+			.append( "`,`").append(c[6])//col
+			.append( "`,`").append(c[7])//val
+			.append("` from `").append(p.getName()).append("` ");
+		Object[]where=d.where(PINVULt.C.domain,d.domain,PINVULt.C.entity,d.entity, PINVULt.C.id,d.id);
+		TL.DB.Tbl.Cols.where(sql, where);
 		sql.append(" group by `domain`,`entity`,`id`,`col`");
-		try{rs=DB.R(sql.toString(), where);}
-		catch(Exception x){tl().error(x,"TL.DB.Tbl(",this,").Itrtr.<init>:where=",where);}
-
+		try{ResultSet rs=TL.DB.R(sql.toString(), where);}
+		catch(Exception ex){tl.error(ex,"aswan2017.App.PINVULt.getIds:where=",where);}
 		for(TL.DB.Tbl t:d.query(d.where()))
 			x.add(t.asMap());
-	}catch(Exception ex){tl.error("updateCols",ex);}
+	}catch(Exception ex){tl.error(ex,"updateCols");}
 	return x;}
 
-static List getEntities(List getEntities,TL tl){}
-static List getEntities(List getEntities,TL tl){}
+
+static Map list(Map m,String sql,Object[]where,TL tl){
+	try{ResultSet rs=TL.DB.R(sql, where);
+		m=list(m,rs,null,null,tl);
+	}catch(Exception ex){tl.error(ex
+		,"aswan2017.App.list(sql",sql,":where=",where,m);}
+	return m;}
+
+
+static Map list(Map m,Map pg,TL tl){
+	if(pg==null)return m;
+	Object ref=pg.get("pagenation");
+	if(ref==null)return m;
+	Map pgs=(Map)tl.s("pagenation");
+	if(pgs==null)return m;
+	Map ps=(Map)pgs.get(ref);
+	if(ps==null)return m;
+	ResultSet rs=(ResultSet)ps.get("rs");
+	if(rs==null)return m;
+	return list(m,rs,pg,ps,tl);}
+
+/**
+ * pg is pagenation, a js-obj from client-http-request of the
+ * ps is pagenation, a js-obj from session
+ * */
+static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
+	PINVULt d=new PINVULt();
+	if(m==null)m=new HashMap();
+	List a=new LinkedList();
+	m.put("a",a);
+	try{boolean b=false;
+		Field[]f=d.fields();
+		while((b=rs.next()) && a.size()<1000)
+		{	d.load(rs,f);
+			a.add(d.asMap());
+		}
+		if(b){
+			if(pg==null)pg=new HashMap();
+			m.put("pagenation",pg);
+			Object ref=pg.get("ref");
+			if(ref==null)
+				pg.put("ref",ref=new Date().getTime());
+			Map pgs=(Map)tl.s("pagenation");
+			if(pgs==null)
+				tl.s("pagenation", pgs = new HashMap());
+			if(ps==null) {
+				pgs.put(ref, ps = new HashMap());
+				ps.put("ref",ref);
+				ps.put("rs",rs);
+			}
+			Object o=ps.get("page");
+			o=o==null?1:((Number)o).intValue()+1;
+			ps.put("page",o);
+			pg.put("page",o);
+			o=pg.get("count");
+			o=o==null?1:((Number)o).intValue()+a.size();
+			pg.put("count",o);
+			pg.put("count",o);
+		}else{if(pg!=null){
+			pg.put("closed",true);
+			m.put("pagenation",pg);
+			Object ref=pg.get("ref");
+			if(ref!=null){
+				Map pgs=(Map)tl.s("pagenation");
+				if(pgs!=null)//try
+					pgs.remove(ref);
+				//catch (Exception ex){tl.error(ex,"App.list:close:",pg,rs);}
+				}
+			}
+			TL.DB.close(rs,false);
+		}
+	}catch(Exception ex){tl.error(ex,"list",pg,rs);}
+	return m;}
 
 static{TL.registerOp( App.class);}
 
-/**property of a column/field/variable of a id/entry/row in a entity/table/object in a domain */
-public static class Domain extends Tbl {//implements Serializable
-	public static final String dbtName="domain";
-
-	@Override public String getName(){return dbtName;}//public	Ssn(){super(Name);}
-	@F public Integer no,domain;
-	@F public Date logTime;//lastModified
-	@F public String usr,entity,id,col;
-	@F(json=true) public Object val;
-
-
-	public enum C implements CI{no,domain,logTime,usr,entity,id,col,val;//,lastModified;
-		@Override public Class<? extends TL.DB.Tbl>cls(){return Domain.class;}
+/**
+ * Proto_Id_Name_Val_Usr_LogTime P.I.N.V.U.LT)
+ * */
+public static class PINVULt extends TL.DB.Tbl {//implements Serializable
+	public static final String dbtName="PINVULt";
+	@Override public String getName(){return dbtName;}
+	@F public Integer no,proto,/**user that made the change*/uid;
+	@F(max=true) public Date logTime;//cancelled:lastModified
+	@F public String /**Object Id*/id,/**propertyName*/n;
+	@F(json=true) public Object /**propertyValue*/v;
+	public enum C implements CI{no,proto,uid,logTime,id,n,v;
+		@Override public Class<? extends TL.DB.Tbl>cls(){return PINVULt.class;}
 		@Override public Class<? extends TL.Form>clss(){return cls();}
 		@Override public String text(){return name();}
 		@Override public Field f(){return Cols.f(name(), cls());}
@@ -2320,75 +2232,180 @@ public static class Domain extends Tbl {//implements Serializable
 		@Override public Object val(TL.Form f){return f.v(this);}
 		@Override public Object val(TL.Form f,Object v){return f.v(this,v);}
 	}//C
-
 	@Override public CI pkc(){return C.no;}
 	@Override public Object pkv(){return no;}
 	@Override public C[]columns(){return C.values();}
-
 	@Override public List creationDBTIndices(TL tl){
-		return Util.lst(
-				Util.lst("int(24) PRIMARY KEY NOT NULL AUTO_INCREMENT"//no
-					,"int(4) NOT NULL DEFAULT 1"//domain
-					,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
-					,"INT(6) DEFAULT NULL"//uid
-					,"varchar(255) NOT NULL default '-'"//entity
-					,"varchar(255) NOT NULL default '-'"//id
-					,"varchar(255) NOT NULL default '-'"//col
-					,"text"//val
-				)
-				,Util.lst(Util.lst(C.domain,C.entity,C.logTime)
-					,Util.lst(C.domain,C.entity,C.id,C.logTime)
-					,Util.lst(C.domain,C.entity,C.col,C.logTime)
-					,Util.lst(C.uid,C.domain,C.entity,C.logTime) )
+		return TL.Util.lst(
+			TL.Util.lst("int(24) PRIMARY KEY NOT NULL AUTO_INCREMENT"//no
+				,"int(8) NOT NULL DEFAULT 1"//proto
+				,"int(8) NOT NULL DEFAULT 1"//uid
+				,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
+				,"varchar(255) NOT NULL default '-'"//id
+				,"varchar(255) NOT NULL default '-'"//propertyName
+				,"text"//propertyValue
+			)
+			,TL.Util.lst(TL.Util.lst(C.proto,C.logTime)
+				,TL.Util.lst(C.proto,C.id,C.logTime)
+				,TL.Util.lst(C.proto,C.n,C.logTime)
+				,TL.Util.lst(C.uid,C.proto,C.logTime) )
 		);
-		/*
-CREATE TABLE `domain` (
-  `no` int(24) NOT NULL,
-  `domain` int(4) NOT NULL,
+/*
+CREATE TABLE `PINVULt` (
+  `no` int(24) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  `proto` int(8) NOT NULL,
   `logTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `uid` int(6) not null default -1 , -- `usr` varchar(255) DEFAULT NULL,
-  `entity` varchar(255) DEFAULT NULL,
   `id` varchar(255) DEFAULT NULL,
-  `col` varchar(255) DEFAULT NULL,
-  `val` text,
-  --`lastModified` timestamp NOT NULL ,
-  key(`domain`,`entity`,`logTime`),
-  key(`domain`,`entity`,`id`,`logTime`),
-  key(`domain`,`entity`,`col`,`logTime`),
-  key(`uid`,`domain`,`entity`,`logTime`) -- ,  key(`usr`,`domain`,`entity`,`id`,`col`,`logTime`),  key(`domain`,`entity`,`col`,`val`(250),`logTime`),
+  `n` varchar(255) DEFAULT NULL,
+  `v` text,  --`lastModified` timestamp NOT NULL ,
+  key(`proto`,`logTime`),
+  key(`proto`,`id`,`logTime`),
+  key(`proto`,`n`,`logTime`),
+  key(`uid`,`proto`,`logTime`), -- key(`usr`,`domain`,`entity`,`id`,`col`,`logTime`)
+  key(`proto`,`n`,`v`(250),`logTime`),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-		*/
+
+*/
+	}
+	static{registered.add(PINVULt.class);}
+
+/**
+ * uidMembership
+ * domainMember
+ *
+ * */
+	static List<Map>usrMemberships(int uid){
+		List<Map>lm=new LinkedList<Map>();
+		List l=new LinkedList();
+		PINVULt p=new PINVULt();
+		//domain=0, col="usrMembership" , val=uid ,
+
+		return null;}
+
+	static Map domainDef(int did){return null;}
+	static List<Map>rolesDef(List<String>roleNames){return null;}
+}//class PINVULt
+
+/**
+ * for Domain&Proto vs userRole Access-Control
+ * in dbTbl-PINVULt(domain=0 and col=uid and val=<uid>) will be noted-in-this-javadoc as the0domains
+ *  //-- cancelled-this-line: in the json-col dbTbl-usr.json , a property"domains" , will be noted-in-this-javadoc as usrDomains --//
+ *
+ * Prototype_Domain_UserRole_AccessControl
+ * */
+public static class ProDURAC extends TL.DB.Tbl {//implements Serializable
+	public static final String dbtName="ProDoRAC";
+	@Override public String getName(){return dbtName;}//public	Ssn(){super(Name);}
+	@F public Integer no,proto,domain;
+	@F public Date logTime;//cancelled:lastModified
+	@F public String /**user that made the change*/uid,/**propertyName*/n;
+	@F(json=true) public Object /**propertyValue*/v;
+	public enum C implements CI{no,proto,domain,logTime,uid,id,n,v;//,lastModified;
+		@Override public Class<? extends TL.DB.Tbl>cls(){return ProDoRAC.class;}
+		@Override public Class<? extends TL.Form>clss(){return cls();}
+		@Override public String text(){return name();}
+		@Override public Field f(){return Cols.f(name(), cls());}
+		@Override public TL.DB.Tbl tbl(){return TL.DB.Tbl.tbl(cls());}
+		@Override public void save(){tbl().save(this);}
+		@Override public Object load(){return tbl().load(this);}
+		@Override public Object value(){return val(tbl());}
+		@Override public Object value(Object v){return val(tbl(),v);}
+		@Override public Object val(TL.Form f){return f.v(this);}
+		@Override public Object val(TL.Form f,Object v){return f.v(this,v);}
+	}//C
+	@Override public CI pkc(){return C.no;}
+	@Override public Object pkv(){return no;}
+	@Override public C[]columns(){return C.values();}
+	@Override public List creationDBTIndices(TL tl){
+		return TL.Util.lst(
+			TL.Util.lst("int(24) PRIMARY KEY NOT NULL AUTO_INCREMENT"//no
+				,"int(8) NOT NULL DEFAULT 1"//proto
+				,"int(8) NOT NULL DEFAULT 1"//domain
+				,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
+				,"INT(6) DEFAULT NULL"//uid
+				,"varchar(255) NOT NULL default '-'"//propertyName
+				,"text"//propertyValue
+			)
+			,TL.Util.lst(TL.Util.lst(C.domain,C.proto,C.logTime)
+				,TL.Util.lst(C.domain,C.proto,C.n,C.logTime)
+				,TL.Util.lst(C.uid,C.domain,C.proto,C.n,C.logTime)
+				,TL.Util.lst(C.domain,C.proto,C.n,C.v,C.logTime) )
+		);
+/*
+must create foundational prototypes(classes)
+domain(Def)
+Usr(Def)
+Role(Def(Resource:array
+			deleted_in_log[array:id , or *] , domain[array:id , or *]
+			, role[array:id , or *], lock[array:id , or *]
+			, proto[array:id , or *], id[array:id , or *], prop[array:str , or *]
+			,allRsrcLevels ,allinRLevel
+
+		, ops:array<str>
+			view, create, edit, delete, undelete, close, unclose,login,chngPw
+		)
+	, all-and-any classes&objects are locked, and roles allow user-access)
+UsrRoleMembership(Role in domain, granting access defined inside the role)
+UsrsLocked( excluding usr/s rights from Resource(id and/or prop,,,ect)&ops
+    ,overwrite any role grants )
+Contract(Def)
+Overhead(Def)
+Profile(Def)
+Session(Def)
+Account(Def)
+AccEntry(Def)
+AccEntTrans(Def)
+Architecture(selection of prototypes and properties
+	, example uasages are:
+		template data-entry, e.g. new check
+			, new contract default fields values
+			, default vals of fields of new profile of different jobCats
+		, creating new company-branch
+		,pipedream:code-base like for new application
+		)
+
+
+-- prototype, domain, UsrRole-AccessControl
+CREATE TABLE `ProDURAC` (
+  `no` int(24) NOT NULL,
+  `domain` int(8) NOT NULL,
+  `proto` int(8) NOT NULL,
+  `logTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `uid` int(8) not null default -1 , -- `usr` varchar(255) DEFAULT NULL,
+  `n` varchar(255) DEFAULT NULL,
+  `v` text,  --`lastModified` timestamp NOT NULL ,
+  key(`domain`,`proto`,`logTime`),
+  key(`domain`,`proto`,`n`,`logTime`),
+  key(`uid`,`domain`,`proto`,`logTime`),
+  key(`domain`,`proto`,`n`,`v`(250),`logTime`),
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+*/
+	}
+	static{registered.add(ProDURAC.class);}
+
+	/**
+	 * uidMembership
+	 * domainMember
+	 *
+	 * */
+	static List<Map>usrMemberships(int uid,TL tl){
+		List<Map>lm=new LinkedList<Map>();
+		List l=new LinkedList();
+		ProDURAC p=new ProDURAC();
+		//domain=0, col="usrMembership" , val=uid ,
+		for(TL.DB.Tbl t:p.query(p.where(C.n,"usrMembership",C.v,uid)))
+			l.add(t.asMap());
+
+		return lm;}
+
+	static Map loadObj(int proto){
+
 	}
 
-	static{registered.add(Domain.class);}
-	/**retrieve from the db table all the rows that match
-	 * the conditions in < where > , create an iterator
-	 * , e.g.<code>for(Tbl row:query(
-	 * 		Tbl.where( CI , < val > ) ))</code>*/
-	public Itrtr query(Object[]where){
-		Itrtr r=new Itrtr(where);
-		return r;}
-
-	public class Itrtr implements Iterator<Tbl>,Iterable<Tbl>{
-		public ResultSet rs=null;public int i=0;Field[]a;
-		//public Itrtr(Object[]where){}
-
-		@Override public Iterator<Tbl>iterator(){return this;}
-
-		@Override public boolean hasNext(){boolean b=false;
-			try {b = rs!=null&&rs.next();} catch (SQLException x)
-			{tl().error(x,"TL.DB.Tbl(",this,").Itrtr.hasNext:i=",i,",rs=",rs);}
-			if(!b&&rs!=null){DB.closeRS(rs);rs=null;}
-			return b;}
-
-		@Override public Tbl next(){i++;
-			try{load(rs,a);}catch(Exception x){tl().error(x,"TL.DB.Tbl("
-					,this,").Itrtr.next:i=",i,":",rs);rs=null;}
-			return Tbl.this;}
-
-		@Override public void remove(){throw new UnsupportedOperationException();}
-
-	}//Itrtr
-}//class Domain
+	static Map domainDef(int did){return null;}
+	static List<Map>rolesDef(List<String>roleNames){return null;}
+}//class PINVULt
 
 }//class App
