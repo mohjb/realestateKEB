@@ -607,7 +607,6 @@ public static class TL {
 		public static int cc(ResultSet s)throws SQLException{return s.getMetaData().getColumnCount();}
 		/**calls L()*/
 		public static List<Object[]> l(String sql,Object...p)throws SQLException{return L(sql,p);}
-
 		/**returns a new linkedList of the rows of the results of the sql
 		 ,each row/element is an Object[] of the columns
 		 ,calls dbR() and dbcc() and dbclose(ResultSet,TL.dbc())*/
@@ -617,17 +616,36 @@ public static class TL {
 				for(int i=0;i<cc;i++){a[i]=s.getObject(i+1);
 				}}return r;}finally{close(s,false);//CHANGED:2015.10.23.16.06:closeRS ;
 			if(t.logOut)try{t.log(t.jo().o("TL.DB.L:sql=")
-				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
-				catch(IOException x){t.error(x,"TL.DB.List:",sql);}}}
+					                      .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+			catch(IOException x){t.error(x,"TL.DB.List:",sql);}}}
 
-		/**returns a new linkedList of the rows of the results of the sql
+	public static List<Integer[]>qLInt(String sql,Object...p)throws SQLException{return qLInt(sql,p);}//2017.07.14
+	public static List<Integer[]>QLInt(String sql,Object[]p)throws SQLException{//2017.07.14
+	TL tl=tl();
+		ResultSet s=null;
+		List< Integer[]> r=null;
+		try{s=R(sql,p);
+			Integer[]a;
+			r=new LinkedList<Integer[]>();
+			int cc=cc(s);
+			while(s.next()){
+				r.add(a=new Integer[cc]);
+				for(int i=0;i<cc;i++)
+					a[i]=s.getInt(i+1);
+			}return r;
+		}finally
+		{close(s,false);
+			if(tl.logOut)try{tl.log(tl.jo().o("TL.DB.Lt:sql=")
+			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+			catch(IOException x){tl.error(x,"TL.DB.Lt:",sql);}
+		}
+/* *returns a new linkedList of the rows of the results of the sql
 		 ,each row/element is an Object[] of the columns
-		 ,calls dbR() and dbcc() and dbclose(ResultSet,TL.dbc())*/
+		 ,calls dbR() and dbcc() and dbclose(ResultSet,TL.dbc())* /
 		public static  <T>[][] lt(String sql,Class<T>t,//2017.07.14
-			Object...p)throws SQLException{return Lt(sql,t,p);}
-
-	public static <T> List< <T>[] > Lt(String sql
-		,Class<T>c,Object[]p)throws SQLException//2017.07.14
+		                          Object...p)throws SQLException{return Lt(sql,t,p);}
+		public static <T> List< <T>[] > Lt(String sql
+				                                  ,Class<T>c,Object[]p)throws SQLException//2017.07.14
 	{TL tl=tl();
 		ResultSet s=null;
 		List< <T> []> r=null;
@@ -643,24 +661,24 @@ public static class TL {
 		}finally
 		{close(s,false);
 			if(tl.logOut)try{tl.log(tl.jo().o("TL.DB.Lt:sql=")
-				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+					                        .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 			catch(IOException x){t.error(x,"TL.DB.Lt:",sql);}
 		}
 	}
-
-	public static <T>List<T> xq1colTList(String sql,Class<T>t,Object...p)throws SQLException
-	{ResultSet s=null;List<T> r=null;
-	try{s=R(sql,p);
-		r=new LinkedList<T>();//Class<T>t=null;
-		while(s.next())
-			r.add(
-				s.getObject(1,t)
-			);
-		return r;
-	}
-		finally{close(s,false);TL tl=tl();if(tl.logOut)
-			try{tl.log(tl.jo().o("TL.DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-					           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,"TL.DB.q1colList:",sql);}}
+		public static <T>List<T> xq1colTList(String sql,Class<T>t,Object...p)throws SQLException
+		{ResultSet s=null;List<T> r=null;
+			try{s=R(sql,p);
+				r=new LinkedList<T>();//Class<T>t=null;
+				while(s.next())
+					r.add(
+							s.getObject(1,t)
+					);
+				return r;
+			}
+			finally{close(s,false);TL tl=tl();if(tl.logOut)
+				try{tl.log(tl.jo().o("TL.DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
+						           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,"TL.DB.q1colList:",sql);}}
+		}*/
 	}
 
 		public static List<Object> q1colList(String sql,Object...p)throws SQLException
@@ -1060,8 +1078,8 @@ public static class TL {
 					if(!b&&rs!=null){DB.close(rs,false);rs=null;}
 					return b;}
 				@Override public Tbl next(){i++;Tbl t=Tbl.this;
-					if(makeClones)
-						t=t.getClass().newInstance();
+					if(makeClones)try{t=Tbl.this;
+						t=t.getClass().newInstance();}catch(Exception ex){}
 					try{t.load(rs,a);}catch(Exception x){tl().error(x,"TL.DB.Tbl("
 							,this,").Itrtr.next:i=",i,":",rs);rs=null;}
 					return t;}
@@ -2107,20 +2125,20 @@ static Map getLog(Map p,TL tl){
 		Long to,from=ref instanceof Number?((Number)ref).longValue():null;
 		ref=p.get("to");
 		to=ref instanceof Number?((Number)ref).longValue():null;//Double.NaN;
-		StringBuilder sql=new StringBuilder("select * from `").append(Pciod.dbtName).append("`");
+		StringBuilder sql=new StringBuilder("select * from `").append(PINVULt.dbtName).append("`");
 		Object[]where=null;//TL.DB.Tbl.Cols.where(sql,TL.DB.Tbl.where())
 		if(from!=null && to!=null)TL.DB.Tbl.Cols.where(sql
 				,where=TL.DB.Tbl.where(
-						TL.Util.lst(Pciod.C.logTime,">="),from
-						, TL.Util.lst(Pciod.C.logTime,"<="),to
+						TL.Util.lst(PINVULt.C.logTime,">="),from
+						, TL.Util.lst(PINVULt.C.logTime,"<="),to
 				));
 		else if(from!=null )TL.DB.Tbl.Cols.where(sql
 				,where=TL.DB.Tbl.where(
-						TL.Util.lst(Pciod.C.logTime,">="),from
+						TL.Util.lst(PINVULt.C.logTime,">="),from
 				));
 		else if(to!=null )TL.DB.Tbl.Cols.where(sql
 				,where=TL.DB.Tbl.where(
-						TL.Util.lst(Pciod.C.logTime,"<="),to
+						TL.Util.lst(PINVULt.C.logTime,"<="),to
 				));
 		else {tl.log("aswan2017.App.getLog:no from nor to",p);
 			return p;}
@@ -2513,24 +2531,70 @@ CREATE TABLE `ProDURAC` (
 			lm.add(i.loadObjct());
 		return lm;}
 
-	/**1st map-level is for domains
-	 * 2nd level is map of all id's , within domain
-	 * 3rd level is array of three:0 is id, 1:is ref to proto arr3, 2:is map of all descendents
+	/**1st map-level is for domains, key-in-the-map is the domain-int and the data-from-the-key is a 2ndLevelMap
+	 * 2ndLevelMap keys are all id's within the specified domain
+	 * at level 3 are nodes( array of four)
+	 *		index0 is id
+	 *		, index1 is ref to (proto-node) or (3element array:ref to proto-node , domain-id, proto-domain-id)
+	 *		, index2 is a Map of direct sub protos, where the key is subProto-id-int and val is subProto-node
+	 *		, index3 is a map of all descendants,where the key is an subProto-id-int and val is subProto-node
 	 * */
-	Map<Integer,Map<Integer,Object[]> > idsAndProto() {
-		Map<Integer,Map<Integer,Object[]>>m=new HashMap<Integer,Map<Integer,Object[]>>();
-		Map<Integer,List<Integer>>i2p,decendents;
-		List<Integer>path,kids;
-
+	Map<Integer,Map<Integer,Object[]> > domains_protos_ids(TL tl) {
+		Map<Integer,Map<Integer,Object[]>>domains=new HashMap<Integer,Map<Integer,Object[]>>();
+		Map<Integer,Object[]>all=new HashMap<Integer,Object[]>();
 		StringBuilder sql=new StringBuilder(
-			"select `domain`,`proto',`id`,max(`logTime`) from `").append(dbtName )
-			.append( "` group by `proto`,`id`" );
-		Integer[][]a=TL.DB.lt(sql.toString(),Integer.class);
-		for(Integer[]x:a) {
-			int dom=x[0];
-
-		}
-		return m;}
+			"select `domain`,`proto',`id`,max(`logTime`) from `")
+			.append(dbtName ).append( "` group by `proto`,`id`" );
+		try{List<Integer[]>a0=TL.DB.qLInt( sql.toString() );//lt(sql.toString(),Integer.class);
+		for(Integer[]x:a0) {
+			Integer dId=x[0],pi=x[1],id=x[2];
+			Map<Integer,Object[]>dmx,desc,dom=domains.get(dId);
+			if(dom==null)
+				domains.put(dId,dom=new HashMap<Integer,Object[]>());
+			Object[]pnode,node=dom.get( id );
+			if(node==null){
+				node=all.get(id);
+				if(node==null){
+					all.put(id,node=new Object[4]);
+					node[0]=id;
+					node[1]=pi;
+					dom.put(id,node);//node[2]=new HashMap<Integer,Object[]>();//node[3]=new HashMap<Integer,Object[]>();
+				}else{
+					dom.put(id,node);
+					if(node[2]!=null)
+					{desc=(Map<Integer,Object[]>)node[2];
+						//for(Object[]:desc.values())console.log()
+					}
+				}
+			}
+			pnode=dom.get(pi);
+			if(pnode==null){
+				pnode=all.get(pi);
+				if(pnode==null)
+				{   all.put(pi,pnode=new Object[4]);
+					pnode[0]=pi;//pnode[2]=desc=new HashMap<Integer,Object[]>( );
+				}else
+				{   for(Integer dx:domains.keySet()){
+						dmx=domains.get( dx );
+						if(dmx.containsKey( pi ))
+						{	tl.log();//must tell all the subProtos , the parent is in another domain, by changing node[1] from pnode to {dId,pnode}
+						}
+					}
+				}
+			}if(node[1]==null)
+				node[1]=pnode;
+			else if(node[1] instanceof Number)
+				tl.log();
+			else
+				tl.log();
+			if(pnode[2] instanceof Map)
+			desc=(Map<Integer,Object[]>)pnode[2];
+				else desc=null;
+			if(desc==null)
+				pnode[2]=desc=new HashMap<Integer,Object[]>( );
+			desc.put( id,node );
+		}}catch(Exception ex){}
+		return domains;}
 	/**
 	 * for param-user load:
 	 * list-roles(ops,resources,usrs)
