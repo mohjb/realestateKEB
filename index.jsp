@@ -2548,7 +2548,7 @@ CREATE TABLE `ProDURAC` (
 		try{List<Integer[]>a0=TL.DB.qLInt( sql.toString() );//lt(sql.toString(),Integer.class);
 		for(Integer[]x:a0) {
 			Integer dId=x[0],pi=x[1],id=x[2];
-			Map<Integer,Object[]>dmx,desc,dom=domains.get(dId);
+			Map<Integer,Object[]>dmx,desc=null,dom=domains.get(dId);
 			if(dom==null)
 				domains.put(dId,dom=new HashMap<Integer,Object[]>());
 			Object[]pnode,node=dom.get( id );
@@ -2562,8 +2562,9 @@ CREATE TABLE `ProDURAC` (
 				}else{
 					dom.put(id,node);
 					if(node[2]!=null)
-					{desc=(Map<Integer,Object[]>)node[2];
+					{//desc=(Map<Integer,Object[]>)node[2];
 						//for(Object[]:desc.values())console.log()
+						tl.log("line2567:parent loaded after children:",node[2],node[3]);
 					}
 				}
 			}
@@ -2578,23 +2579,41 @@ CREATE TABLE `ProDURAC` (
 						dmx=domains.get( dx );
 						if(dmx.containsKey( pi ))
 						{	tl.log();//must tell all the subProtos , the parent is in another domain, by changing node[1] from pnode to {dId,pnode}
+							Object[]aux={pnode,dId,dx};
+							node[1]=aux;
+							break;
 						}
 					}
 				}
 			}if(node[1]==null)
 				node[1]=pnode;
 			else if(node[1] instanceof Number)
-				tl.log();
+				tl.log("line2589");
 			else
-				tl.log();
+				tl.log("line2591");
 			if(pnode[2] instanceof Map)
-			desc=(Map<Integer,Object[]>)pnode[2];
-				else desc=null;
+				desc=(Map<Integer,Object[]>)pnode[2];
+			else tl.log("line2595");//desc=null;
 			if(desc==null)
 				pnode[2]=desc=new HashMap<Integer,Object[]>( );
 			desc.put( id,node );
-		}}catch(Exception ex){}
+		}//for
+		for(Integer x:all.keySet()){
+			
+		}
+		
+		}catch(Exception ex){}
 		return domains;}
+
+
+	private void domains_protos_ids(TL tl,Map<Integer,Object[]>node,Map<Integer,Object[]>desc ){//,Map<Integer,Object[]>all,Map<Integer,Map<Integer,Object[]>>domains
+		for(Integer i:desc.keySet()){
+			Object[]x=desc.get(i);
+			node.put( i,x );
+			if(x[2] instanceof Map)
+				domains_protos_ids(tl,node,(Map<Integer,Object[]>)x[2]);
+	}}
+		
 	/**
 	 * for param-user load:
 	 * list-roles(ops,resources,usrs)
