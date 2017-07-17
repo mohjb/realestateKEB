@@ -44,6 +44,8 @@ import com.sun.org.apache.regexp.internal.RE;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+
+import static javafx.scene.input.KeyCode.T;
 //%><%App.jsp(request, response, session, out, pageContext);%><%!
 /**
  * Created by Moh'd on 2/22/2017.
@@ -605,6 +607,7 @@ public static class TL {
 		public static int cc(ResultSet s)throws SQLException{return s.getMetaData().getColumnCount();}
 		/**calls L()*/
 		public static List<Object[]> l(String sql,Object...p)throws SQLException{return L(sql,p);}
+
 		/**returns a new linkedList of the rows of the results of the sql
 		 ,each row/element is an Object[] of the columns
 		 ,calls dbR() and dbcc() and dbclose(ResultSet,TL.dbc())*/
@@ -614,7 +617,52 @@ public static class TL {
 				for(int i=0;i<cc;i++){a[i]=s.getObject(i+1);
 				}}return r;}finally{close(s,false);//CHANGED:2015.10.23.16.06:closeRS ;
 			if(t.logOut)try{t.log(t.jo().o("TL.DB.L:sql=")
-					                      .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){t.error(x,"TL.DB.List:",sql);}}}
+				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+				catch(IOException x){t.error(x,"TL.DB.List:",sql);}}}
+
+		/**returns a new linkedList of the rows of the results of the sql
+		 ,each row/element is an Object[] of the columns
+		 ,calls dbR() and dbcc() and dbclose(ResultSet,TL.dbc())*/
+		public static  <T>[][] lt(String sql,Class<T>t,//2017.07.14
+			Object...p)throws SQLException{return Lt(sql,t,p);}
+
+	public static <T> List< <T>[] > Lt(String sql
+		,Class<T>c,Object[]p)throws SQLException//2017.07.14
+	{TL tl=tl();
+		ResultSet s=null;
+		List< <T> []> r=null;
+		try{s=R(sql,p);
+			<T>[]a;
+			r=new LinkedList< <T> []>();
+			int cc=cc(s);
+			while(s.next()){
+				r.add(a=new <T>[cc]);
+				for(int i=0;i<cc;i++)
+					a[i]=s.getObject(i+1,c);
+			}return r;
+		}finally
+		{close(s,false);
+			if(tl.logOut)try{tl.log(tl.jo().o("TL.DB.Lt:sql=")
+				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+			catch(IOException x){t.error(x,"TL.DB.Lt:",sql);}
+		}
+	}
+
+	public static <T>List<T> xq1colTList(String sql,Class<T>t,Object...p)throws SQLException
+	{ResultSet s=null;List<T> r=null;
+	try{s=R(sql,p);
+		r=new LinkedList<T>();//Class<T>t=null;
+		while(s.next())
+			r.add(
+				s.getObject(1,t)
+			);
+		return r;
+	}
+		finally{close(s,false);TL tl=tl();if(tl.logOut)
+			try{tl.log(tl.jo().o("TL.DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
+					           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,"TL.DB.q1colList:",sql);}}
+	}
+
 		public static List<Object> q1colList(String sql,Object...p)throws SQLException
 		{ResultSet s=null;List<Object> r=null;try{s=R(sql,p);r=new LinkedList<Object>();
 			while(s.next())r.add(s.getObject(1));return r;}
@@ -1991,7 +2039,6 @@ public static class TL {
 }//class TL //TL tl=null;try{tl=TL.Enter(request,out);
 //public class App
 static final String SsnNm="App",UploadPth="/aswan/uploads/";
-
 /**http-get-method , poll-server
  * , of param"lastPoll" is present, then call lastPoll
  * , if param"updateCols" present then call updateCols
@@ -2001,9 +2048,9 @@ static final String SsnNm="App",UploadPth="/aswan/uploads/";
  */
 public static @TL.Op(urlPath = "*") Map poll
 (@TL.Op(prmName="getLogs")List getLogs
-	,@TL.Op(prmName="updates")List update
-	,@TL.Op(prmName="getDistinct")List distinct
-	,TL tl)
+		,@TL.Op(prmName="updates")List update
+		,@TL.Op(prmName="getDistinct")List distinct
+		,TL tl)
 {Map m=new HashMap();
 	if( getLogs!=null){List<Map>a=new LinkedList<>();
 		m.put("getLogs",a);
@@ -2113,7 +2160,6 @@ static StringBuilder sql(StringBuilder sql,Object[]where,TL.DB.Tbl t) {
 	sql.append(" group by `proto`,`id`,`n`");
 	return sql;
 }
-
 static List getIds(List rows,TL tl){
 	PINVULt d=new PINVULt();
 	List x=new LinkedList();
@@ -2123,15 +2169,15 @@ static List getIds(List rows,TL tl){
 		PINVULt.C[]c=d.columns();
 		Field[]a=PINVULt.fields(PINVULt.class);//.fields();
 		StringBuilder sql=new StringBuilder("select `")
-			.append(c[0])//no
-			.append("`,`").append(c[1])//domain
-			.append("`,max(`").append(c[2])//logTime
-			.append("`),`").append(c[3])//usr
-			.append( "`,`").append(c[4])//entity
-			.append( "`,`").append(c[5])//id
-			.append( "`,`").append(c[6])//col
-			.append( "`,`").append(c[7])//val
-			.append("` from `").append(p.getName()).append("` ");
+				                  .append(c[0])//no
+				                  .append("`,`").append(c[1])//domain
+				                  .append("`,max(`").append(c[2])//logTime
+				                  .append("`),`").append(c[3])//usr
+				                  .append( "`,`").append(c[4])//entity
+				                  .append( "`,`").append(c[5])//id
+				                  .append( "`,`").append(c[6])//col
+				                  .append( "`,`").append(c[7])//val
+				                  .append("` from `").append(p.getName()).append("` ");
 		Object[]where=d.where(PINVULt.C.proto,d.proto, PINVULt.C.id,d.id);
 		TL.DB.Tbl.Cols.where(sql, where);
 		sql.append(" group by `proto`,`id`,`n`");
@@ -2141,7 +2187,6 @@ static List getIds(List rows,TL tl){
 			x.add(t.asMap());
 	}catch(Exception ex){tl.error(ex,"updateCols");}
 	return x;}
-
 static Map list(Map m,String sql,Object[]where,TL tl){
 	try{ResultSet rs=TL.DB.R(sql, where);
 		m=list(m,rs,null,null,tl);
@@ -2159,7 +2204,6 @@ static Map list(Map m,Map pg,TL tl){
 	ResultSet rs=(ResultSet)ps.get("rs");
 	if(rs==null)return m;
 	return list(m,rs,pg,ps,tl);}
-
 /**
  * pg is pagenation, a js-obj from client-http-request of the
  * ps is pagenation, a js-obj from session
@@ -2212,9 +2256,7 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 		}
 	}catch(Exception ex){tl.error(ex,"list",pg,rs);}
 	return m;}
-
 static{TL.registerOp( App.class);}
-
 /**
  * Proto_Id_Name_Val_Usr_LogTime P.I.N.V.U.LT)
  * */
@@ -2281,9 +2323,7 @@ CREATE TABLE `PINVULt` (
 	 * domainMember
 	 *
 	 * */
-
 }//class PINVULt
-
 /**
  * for Domain&Proto vs userRole Access-Control
  * in dbTbl-PINVULt(domain=0 and col=uid and val=<uid>) will be noted-in-this-javadoc as the0domains
@@ -2294,15 +2334,12 @@ CREATE TABLE `PINVULt` (
 public static class ProDURAC extends TL.DB.Tbl {//implements Serializable
 	public static final String dbtName="ProDoRAC";
 	@Override public String getName(){return dbtName;}//public	Ssn(){super(Name);}
-	@F public Integer no;
-	@F(group=true) public Integer proto;
-	@F public Integer domain;
-	@F public Date logTime;//cancelled:lastModified
-	@F public String /**user that made the change*/uid;
-	@F(group=true) public String /**Object id / dbRow pk*/id
-	,/**propertyName*/n;
+	@F public Integer no,domain,/**user that made the change*/uid;
+	@F(group=true) public Integer proto,/**Object id / dbRow pk*/id;
+	@F(group=true) public String /**propertyName*/n;
+	@F public Date logTime;
 	@F(json=true) public Object /**propertyValue*/v;
-	public enum C implements CI{no,proto,domain,logTime,uid,id,n,v;//,lastModified;
+	public enum C implements CI{no,domain,uid,proto,id,n,logTime,v;//,lastModified;
 		@Override public Class<? extends TL.DB.Tbl>cls(){return ProDURAC.class;}
 		@Override public Class<? extends TL.Form>clss(){return cls();}
 		@Override public String text(){return name();}
@@ -2320,20 +2357,20 @@ public static class ProDURAC extends TL.DB.Tbl {//implements Serializable
 	@Override public C[]columns(){return C.values();}
 	@Override public List creationDBTIndices(TL tl){
 		return TL.Util.lst(
-			TL.Util.lst("int(24) PRIMARY KEY NOT NULL AUTO_INCREMENT"//no
-				,"int(8) NOT NULL DEFAULT 1"//proto
-				,"int(8) NOT NULL DEFAULT 1"//domain
-				,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
-				,"INT(6) DEFAULT NULL"//uid
-				,"varchar(255) NOT NULL default '-'"//id
-				,"varchar(255) NOT NULL default '-'"//propertyName
-				,"text"//propertyValue
-			)
-			,TL.Util.lst(TL.Util.lst(C.domain,C.proto ,C.logTime)
-				,TL.Util.lst(C.domain,C.proto,C.n ,C.logTime)
-				,TL.Util.lst(C.domain,C.proto,C.id,C.logTime)
-				,TL.Util.lst(C.uid,C.domain,C.proto,C.n,C.logTime)
-				,TL.Util.lst(C.domain,C.proto,C.n,C.v,C.logTime) )
+				TL.Util.lst("int(24) PRIMARY KEY NOT NULL AUTO_INCREMENT"//no
+						,"int(8) NOT NULL DEFAULT 1"//proto
+						,"int(8) NOT NULL DEFAULT 1"//domain
+						,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
+						,"INT(6) DEFAULT NULL"//uid
+						,"varchar(255) NOT NULL default '-'"//id
+						,"varchar(255) NOT NULL default '-'"//propertyName
+						,"text"//propertyValue
+				)
+				,TL.Util.lst(TL.Util.lst(C.domain,C.proto ,C.logTime)
+						,TL.Util.lst(C.domain,C.proto,C.n ,C.logTime)
+						,TL.Util.lst(C.domain,C.proto,C.id,C.logTime)
+						,TL.Util.lst(C.uid,C.domain,C.proto,C.n,C.logTime)
+						,TL.Util.lst(C.domain,C.proto,C.n,C.v,C.logTime) )
 				,TL.Util.lst(C.n,C.v,C.domain,C.proto ,C.logTime)
 		);
 /*
@@ -2341,7 +2378,6 @@ must create foundational prototypes(classes)
 domain(Def::= name:<str>,proto:<int>,super:<int:superclass-prototype>)
 Usr(Def)
 Role(Def::=name:<str> , proto:<int>, super:<int:superclass-prototype> ,
-
 (Resource:array
 			deleted_in_log[array:id , or *] , domain[array:id , or *]
 			, role[array:id , or *], lock[array:id , or *]
@@ -2409,7 +2445,6 @@ CREATE TABLE `ProDURAC` (
 	 for(ProDURAC i:l)
 	 lm.add(i.loadObjct());
 	 return lm;}*/
-
 	List<Map<String,ProDURAC>>objProp(int id,String pn,TL tl){
 		List<Map<String,ProDURAC>>lm=new LinkedList<Map<String,ProDURAC>>();
 		List<ProDURAC>l=new LinkedList<ProDURAC>();
@@ -2417,8 +2452,8 @@ CREATE TABLE `ProDURAC` (
 		//domain=0, col="usrMembership" , val=uid ,
 		Object[]where=TL.DB.Tbl.where(C.n,pn,C.v,uid);
 		TL.DB.Tbl.Itrtr it=new TL.DB.Tbl.Itrtr(
-			sql(null,where,this).toString()
-			,where,true);
+				                                      sql(null,where,this).toString()
+				                                      ,where,true);
 		for(TL.DB.Tbl t:it)
 		{	p=(ProDURAC) t;
 			l.add(p);
@@ -2426,7 +2461,6 @@ CREATE TABLE `ProDURAC` (
 		for(ProDURAC i:l)
 			lm.add(i.loadObjct());
 		return lm;}
-
 	Map<String,ProDURAC>loadObjct(){
 		Map<String,ProDURAC>m=new HashMap<String,ProDURAC>();
 		Object[]where=TL.DB.Tbl.where( C.proto,proto );
@@ -2438,7 +2472,6 @@ CREATE TABLE `ProDURAC` (
 			m.put(p.n,p);
 		}
 		return m;}
-
 	Map<String,Object>loadObj(){
 		Map<String,Object>m=new HashMap<String,Object>();
 		Object[]where=TL.DB.Tbl.where( C.proto,proto );
@@ -2451,7 +2484,6 @@ CREATE TABLE `ProDURAC` (
 		}
 		return m;
 	}
-
 	boolean hasAccess(int uid
 		,int resourceProto
 		,String resourceId
@@ -2459,10 +2491,8 @@ CREATE TABLE `ProDURAC` (
 		,String operation){
 		return false;
 	}
-
 	static Map domainDef(int did){return null;}
 	static List<Map>rolesDef(List<String>roleNames){return null;}
-
 	List subProtos0() {
 		List<Map<String,ProDURAC>>lm=new LinkedList<Map<String,ProDURAC>>();
 		List<ProDURAC>l=new LinkedList<ProDURAC>();
@@ -2483,27 +2513,24 @@ CREATE TABLE `ProDURAC` (
 			lm.add(i.loadObjct());
 		return lm;}
 
-	Map<String,Map<Integer,List<Integer>>> idsAndProto() {
-		Map<String,Map<Integer,List<Integer>>>m=new HashMap<String,Map<Integer,List<Integer>>>();
+	/**1st map-level is for domains
+	 * 2nd level is map of all id's , within domain
+	 * 3rd level is array of three:0 is id, 1:is ref to proto arr3, 2:is map of all descendents
+	 * */
+	Map<Integer,Map<Integer,Object[]> > idsAndProto() {
+		Map<Integer,Map<Integer,Object[]>>m=new HashMap<Integer,Map<Integer,Object[]>>();
 		Map<Integer,List<Integer>>i2p,decendents;
 		List<Integer>path,kids;
-		ProDURAC p=this;
-		//domain=0, col="usrMembership" , val=uid ,
-		Object[]where=TL.DB.Tbl.where(C.n,"*",C.v,uid);
-		StringBuilder sql=new StringBuilder(
-			"select `id`,max(`logTime`),`proto','domain` from `").append(dbtName )
-			.append( "` where `proto`=? group by `proto`,`id`" );
-		TL.DB.Tbl.Itrtr it=new TL.DB.Tbl.Itrtr(
-				                                      sql.toString()
-				                                      ,where,true);
-		for(TL.DB.Tbl t:it)
-		{	p=(ProDURAC) t;
-			l.add(p);
-		}
-		for(ProDURAC i:l)
-			lm.add(i.loadObjct());
-		return lm;}
 
+		StringBuilder sql=new StringBuilder(
+			"select `domain`,`proto',`id`,max(`logTime`) from `").append(dbtName )
+			.append( "` group by `proto`,`id`" );
+		Integer[][]a=TL.DB.lt(sql.toString(),Integer.class);
+		for(Integer[]x:a) {
+			int dom=x[0];
+
+		}
+		return m;}
 	/**
 	 * for param-user load:
 	 * list-roles(ops,resources,usrs)
@@ -2517,7 +2544,6 @@ CREATE TABLE `ProDURAC` (
 		m.put("roles",l);
 		l=objProp(uid,"usrLock",tl);
 		m.put("locks",l);
-
 		return m;
 	}
 }//class ProDURAC
