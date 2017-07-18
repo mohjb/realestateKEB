@@ -53,9 +53,9 @@ import static javafx.scene.input.KeyCode.T;
 public class App {
 public static class TL {
 	enum context{ROOT(
-			                 "/public_html/i1io/"
-			                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-			                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+		"/public_html/i1io/"
+		,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+		,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 	);
 		String str,a[];context(String...p){str=p[0];a=p;}
 		enum DB{
@@ -124,8 +124,8 @@ public static class TL {
 		now=new Date();
 		try{Object o=req.getContentType();
 			o=o==null?null
-					  :o.toString().contains("json")?Json.Parser.parse(req)
-							   :o.toString().contains("part")?getMultiParts():null;
+				:o.toString().contains("json")?Json.Parser.parse(req)
+				:o.toString().contains("part")?getMultiParts():null;
 			json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 			logOut=var("logOut",logOut);
 			if(getSession().isNew())DB.Tbl.check(this);
@@ -2187,15 +2187,15 @@ static List getIds(List rows,TL tl){
 		PINVULt.C[]c=d.columns();
 		Field[]a=PINVULt.fields(PINVULt.class);//.fields();
 		StringBuilder sql=new StringBuilder("select `")
-				                  .append(c[0])//no
-				                  .append("`,`").append(c[1])//domain
-				                  .append("`,max(`").append(c[2])//logTime
-				                  .append("`),`").append(c[3])//usr
-				                  .append( "`,`").append(c[4])//entity
-				                  .append( "`,`").append(c[5])//id
-				                  .append( "`,`").append(c[6])//col
-				                  .append( "`,`").append(c[7])//val
-				                  .append("` from `").append(p.getName()).append("` ");
+			.append(c[0])//no
+			.append("`,`").append(c[1])//domain
+			.append("`,max(`").append(c[2])//logTime
+			.append("`),`").append(c[3])//usr
+			.append( "`,`").append(c[4])//entity
+			.append( "`,`").append(c[5])//id
+			.append( "`,`").append(c[6])//col
+			.append( "`,`").append(c[7])//val
+			.append("` from `").append(p.getName()).append("` ");
 		Object[]where=d.where(PINVULt.C.proto,d.proto, PINVULt.C.id,d.id);
 		TL.DB.Tbl.Cols.where(sql, where);
 		sql.append(" group by `proto`,`id`,`n`");
@@ -2441,6 +2441,7 @@ CREATE TABLE `ProDURAC` (
 */
 	}
 	static{registered.add(ProDURAC.class);}
+
 	/**
 	 * user Roles
 	 * uidMembership
@@ -2470,59 +2471,8 @@ CREATE TABLE `ProDURAC` (
 		//domain=0, col="usrMembership" , val=uid ,
 		Object[]where=TL.DB.Tbl.where(C.n,pn,C.v,uid);
 		TL.DB.Tbl.Itrtr it=new TL.DB.Tbl.Itrtr(
-				                                      sql(null,where,this).toString()
-				                                      ,where,true);
-		for(TL.DB.Tbl t:it)
-		{	p=(ProDURAC) t;
-			l.add(p);
-		}
-		for(ProDURAC i:l)
-			lm.add(i.loadObjct());
-		return lm;}
-	Map<String,ProDURAC>loadObjct(){
-		Map<String,ProDURAC>m=new HashMap<String,ProDURAC>();
-		Object[]where=TL.DB.Tbl.where( C.proto,proto );
-		TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(
-				                                     sql(null,where,this).toString()
-				                                     ,where,true);
-		for (TL.DB.Tbl t: i )
-		{ProDURAC p=(ProDURAC)t;
-			m.put(p.n,p);
-		}
-		return m;}
-	Map<String,Object>loadObj(){
-		Map<String,Object>m=new HashMap<String,Object>();
-		Object[]where=TL.DB.Tbl.where( C.proto,proto );
-		TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(
-				                                     sql(null,where,this).toString()
-				                                     ,where,false);
-		for (TL.DB.Tbl t: i )
-		{ProDURAC p=(ProDURAC)t;
-			m.put(p.n,p.v);
-		}
-		return m;
-	}
-	boolean hasAccess(int uid
-		,int resourceProto
-		,String resourceId
-		,Integer resourcePN
-		,String operation){
-		return false;
-	}
-	static Map domainDef(int did){return null;}
-	static List<Map>rolesDef(List<String>roleNames){return null;}
-	List subProtos0() {
-		List<Map<String,ProDURAC>>lm=new LinkedList<Map<String,ProDURAC>>();
-		List<ProDURAC>l=new LinkedList<ProDURAC>();
-		ProDURAC p=this;//new ProDURAC();
-		//domain=0, col="usrMembership" , val=uid ,
-		Object[]where=TL.DB.Tbl.where(C.n,"*",C.v,uid);
-		StringBuilder sql=new StringBuilder(
-				                                   "select `id`,max(`logTime`) from `").append(dbtName )
-				                  .append( "` where `proto`=? group by `proto`,`id`" );
-		TL.DB.Tbl.Itrtr it=new TL.DB.Tbl.Itrtr(
-				                                      sql.toString()
-				                                      ,where,true);
+			sql(null,where,this).toString()
+			,where,true);
 		for(TL.DB.Tbl t:it)
 		{	p=(ProDURAC) t;
 			l.add(p);
@@ -2531,7 +2481,93 @@ CREATE TABLE `ProDURAC` (
 			lm.add(i.loadObjct());
 		return lm;}
 
-	/**1st map-level is for domains, key-in-the-map is the domain-int and the data-from-the-key is a 2ndLevelMap
+		Map<String,ProDURAC>loadObjct(){
+		Map<String,ProDURAC>m=new HashMap<String,ProDURAC>();
+		Object[]where=TL.DB.Tbl.where( C.proto,proto );
+		TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(
+			sql(null,where,this).toString()
+			,where,true);
+		for (TL.DB.Tbl t: i )
+		{ProDURAC p=(ProDURAC)t;
+			m.put(p.n,p);
+		}
+		return m;}
+
+		Map<String,Object>loadObj(){
+		Map<String,Object>m=new HashMap<String,Object>();
+		Object[]where=TL.DB.Tbl.where( C.proto,proto );
+		TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(
+			sql(null,where,this).toString()
+			,where,false);
+		for (TL.DB.Tbl t: i )
+		{ProDURAC p=(ProDURAC)t;
+			m.put(p.n,p.v);
+		}
+		return m;
+	}
+
+	boolean hasAccess(int uid
+		,int resourceProto
+		,String resourceId
+		,Integer resourcePN
+		,String operation){
+		return false;
+	}
+
+	//static Map domainDef(int did){return null;}
+	static List<Map>rolesDef(List<String>roleNames){return null;}
+
+	List subProtos0() {
+		List<Map<String,ProDURAC>>lm=new LinkedList<Map<String,ProDURAC>>();
+		List<ProDURAC>l=new LinkedList<ProDURAC>();
+		ProDURAC p=this;//new ProDURAC();
+		//domain=0, col="usrMembership" , val=uid ,
+		Object[]where=TL.DB.Tbl.where(C.n,"*",C.v,uid);
+		StringBuilder sql=new StringBuilder(
+			"select `id`,max(`logTime`) from `").append(dbtName )
+			.append( "` where `proto`=? group by `proto`,`id`" );
+		TL.DB.Tbl.Itrtr it=new TL.DB.Tbl.Itrtr(
+			sql.toString(),where,true);
+		for(TL.DB.Tbl t:it)
+		{	p=(ProDURAC) t;
+			l.add(p);
+		}
+		for(ProDURAC i:l)
+			lm.add(i.loadObjct());
+		return lm;}
+
+		/**
+		 * obj no=0, has properties:
+		 *{roles:[<proto-int>,,,]
+		 *		{	id:<int>,proto:<int>,domain:<int>
+		 *			,roleName:<str>
+		 *			,usrs:[<uid>,,,]
+		 *			,ops:[<str>,,,]
+		 *			,resources:[ {id:<str >},,, ]
+		 *		},,,
+		 *
+		 * ,protos:[<int:proto>,,,]
+		 * ,locks:[<int:proto>,,,]
+		 * ,usrs:[]
+		 * ,domains:[]
+		 *}
+		 * */
+	Map loadDomain0(TL tl){
+		no=0;
+		Map m=loadObj();
+		return m;
+	}
+
+	/** load from dbTbl roles
+	 * a role is found by propertyName:"roleName"
+	 * a role object is defined by the following three rules:
+	 *	1- proto referes to the role-proto
+	 *	2- a role obj must have a propertyName"roleName" ( and only a role obj must have a propertyName"roleName")
+	 *	3- the properties:roleName,
+	 * */
+
+	/**load from dbTbl
+	 * 1st map-level is for domains, key-in-the-map is the domain-int and the data-from-the-key is a 2ndLevelMap
 	 * 2ndLevelMap keys are all id's within the specified domain
 	 * at level 3 are nodes( array of four)
 	 *		index0 is id
@@ -2572,10 +2608,10 @@ CREATE TABLE `ProDURAC` (
 			if(pnode==null){
 				pnode=all.get(pi);
 				if(pnode==null)
-				{   all.put(pi,pnode=new Object[4]);
+				{	 all.put(pi,pnode=new Object[4]);
 					pnode[0]=pi;//pnode[2]=desc=new HashMap<Integer,Object[]>( );
 				}else
-				{   for(Integer dx:domains.keySet()){
+				{	 for(Integer dx:domains.keySet()){
 						dmx=domains.get( dx );
 						if(dmx.containsKey( pi ))
 						{	tl.log();//must tell all the subProtos , the parent is in another domain, by changing node[1] from pnode to {dId,pnode}
@@ -2599,21 +2635,27 @@ CREATE TABLE `ProDURAC` (
 			desc.put( id,node );
 		}//for
 		for(Integer x:all.keySet()){
-			
-		}
-		
+			Object[]node=all.get(x);
+			Map<Integer,Object[]>sub=(Map<Integer,Object[]>)node[2];
+			Map<Integer,Object[]>desc=(Map<Integer,Object[]>)node[3];
+			if(sub!=null){
+				if(desc==null)
+					node[3]=desc=new HashMap<Integer,Object[]>();
+				domains_protos_ids(tl,0,desc,sub);
+		}}
+
 		}catch(Exception ex){}
 		return domains;}
 
 
-	private void domains_protos_ids(TL tl,Map<Integer,Object[]>node,Map<Integer,Object[]>desc ){//,Map<Integer,Object[]>all,Map<Integer,Map<Integer,Object[]>>domains
-		for(Integer i:desc.keySet()){
+	private void domains_protos_ids(TL tl,int depth,Map<Integer,Object[]>node,Map<Integer,Object[]>desc ){//,Map<Integer,Object[]>all,Map<Integer,Map<Integer,Object[]>>domains
+		depth++;for(Integer i:desc.keySet()){
 			Object[]x=desc.get(i);
-			node.put( i,x );
+			if(depth>1)node.put( i,x );
 			if(x[2] instanceof Map)
-				domains_protos_ids(tl,node,(Map<Integer,Object[]>)x[2]);
+				domains_protos_ids(tl,depth,node,(Map<Integer,Object[]>)x[2]);
 	}}
-		
+
 	/**
 	 * for param-user load:
 	 * list-roles(ops,resources,usrs)
