@@ -4,17 +4,14 @@ package aswan2017;
  * Created by moh on 14/7/17.
  */
 import java.sql.ResultSet;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.lang.reflect.Field;
 
-//%><%App.jsp(request, response, session, out, pageContext);%><%!
+//%><%aswan2017.TL.run(request, response, session, out, pageContext);%><%!
 /**
  * Created by Moh'd on 2/22/2017.
  */
@@ -321,7 +318,6 @@ public static class ProDURAC extends TL.DB.Tbl {//implements Serializable
 	@F(group=true) public String /**propertyName*/n;
 	@F public Date logTime;
 	@F(json=true) public Object /**propertyValue*/v;
-
 	public enum C implements CI{no,domain,uid,proto,id,n,logTime,v;//,lastModified;
 		@Override public Class<? extends TL.DB.Tbl>cls(){return ProDURAC.class;}
 		@Override public Class<? extends TL.Form>clss(){return cls();}
@@ -406,7 +402,6 @@ CREATE TABLE `ProDURAC` (
 */
 	}
 	static{registered.add(ProDURAC.class);}
-
 	List<Map<String,ProDURAC>>objProp(int id,String pn,TL tl){
 		List<Map<String,ProDURAC>>lm=new LinkedList<Map<String,ProDURAC>>();
 		List<ProDURAC>l=new LinkedList<ProDURAC>();
@@ -423,7 +418,6 @@ CREATE TABLE `ProDURAC` (
 		for(ProDURAC i:l)
 			lm.add(i.loadObjct());
 		return lm;}
-
 	Map<String,ProDURAC>loadObjct(){
 		Map<String,ProDURAC>m=new HashMap<String,ProDURAC>();
 		Object[]where=TL.DB.Tbl.where( C.proto,proto );
@@ -435,7 +429,6 @@ CREATE TABLE `ProDURAC` (
 			m.put(p.n,p);
 		}
 		return m;}
-
 	Map<String,Object>loadObj(){
 		Map<String,Object>m=new HashMap<String,Object>();
 		Object[]where=TL.DB.Tbl.where( C.proto,proto );
@@ -449,37 +442,22 @@ CREATE TABLE `ProDURAC` (
 			"domain",domain,"proto",proto ,"id",id));
 		return m;}
 
-	boolean hasAccess(int uid
-		,int resourceProto
-		,String resourceId
-		,Integer resourcePN
-		,String operation){
-		return false;
-	}
-
 }//class ProDURAC
-
 public static class Domain extends ProDURAC{
-	Map<String,Map>roles,usrs,protos;
-
+	Map<String,Map>roles,protos;
+	Map<String,Usr>usrs;
 	Map<Integer,Object[]>props;
-
 	/**as returned from method domains_protos_ids, a heirarchy of prototype chains*/
 	static Map<Integer,Domain>domains;
-
 	/**all nodes ,i.e. all protos, and nodes*/
 	static Map<Integer,Object[]>all;
-
 	/**as returned from method loadRoot*/
 	static Domain domain0;
 	public Domain domain(){return domains!=null?domains.get(domain):null;}
-
 	/** */
-	static Map<Integer,Map>usrsAll;
-
+	static Map<Integer,Usr>usrsAll;
 	//static Map domainDef(int did){return null;}
 	static List<Map>rolesDef(List<String>roleNames){return null;}
-
 	/**
 	 * obj no=0, has properties(references to abstract classes):
 	 *{Role:<proto-int>
@@ -488,7 +466,6 @@ public static class Domain extends ProDURAC{
 	 * ,UsrRole:<int:proto>
 	 *
 	 *,,,<otherApp-protos>
-
 	 *	*	{	id:<int>,proto:<int>,domain:<int>
 	 *	*		,roleName:<str>
 	 *	*		,usrs:[<uid>,,,]
@@ -506,7 +483,6 @@ public static class Domain extends ProDURAC{
 		Map m=loadObj();
 		return m;
 	}
-
 	/** load from dbTbl roles
 	 * a role is found by propertyName:"roleName"
 	 * a role object is defined by the following three rules:
@@ -600,6 +576,19 @@ public static class Domain extends ProDURAC{
 			if(x[2] instanceof Map)
 				domains_protos_ids(tl,depth,node,(Map<Integer,Object[]>)x[2]);
 		}}
+
+public class Usr {
+	Map<String,Map>roles,resources;Map props;
+	public String un(){return(String)(props.get( "un" ));}
+	public Integer uid(){return(Integer)(props.get( "uid" ));}
+	public Domain domain(){return Domain.this;}
+	boolean hasAccess(
+		int resourceProto
+		,String resourceId
+		,Integer resourcePN//PropertyName
+		,String operation){
+		return false;
+	}
 	/**
 	 * for param-user load:
 	 * list-roles(ops,resources,usrs)
@@ -607,13 +596,12 @@ public static class Domain extends ProDURAC{
 	 * list-locks()
 	 * */
 	Map<String,List<Map<String,ProDURAC>>>loadURPL(int uid,TL tl){
-		Map<String,List<Map<String,ProDURAC>>>m=new
-				                                        HashMap<String,List<Map<String,ProDURAC>>>();
+		Map<String,List<Map<String,ProDURAC>>>m=new HashMap<String,List<Map<String,ProDURAC>>>();
 		List<Map<String,ProDURAC>>l=objProp(uid,"usrMembership",tl);
 		m.put("roles",l);
 		l=objProp(uid,"usrLock",tl);
 		m.put("locks",l);
 		return m;}
-
+}//class Usr
 }//Domain
 }//class App
