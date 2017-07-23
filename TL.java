@@ -58,7 +58,7 @@ enum context{ROOT(
 		;String str,a[];DB(String...p){str=p[0];a=p;}
 	}
 	static String getRealPath(TL t,String path){
-		String real=t.getServletContext().getRealPath(path);
+		String real=t.h.getServletContext().getRealPath(path);
 		boolean b=true;
 		try{File f=null;
 			if(real==null){int i=0;
@@ -85,98 +85,45 @@ enum context{ROOT(
 	//***/static Map<DB,String> getContextPack(TL t,List<Map<DB,String>>a){return null;}
 }//context
 //TL member variables
-public String ip;
+public H h=new H();
 public App.Domain.Usr usr;//DB.Tbl.Usr//public DB.Tbl.Ssn ssn;
 public Map<String,Object> json;//accessing request in json-format
 public Date now;
 /**wrapping JspWriter or any other servlet writer in "out" */
 Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
 /**the static/class variable "tl"*/ static ThreadLocal<TL> tl=new ThreadLocal<TL>();
-public boolean logOut=false;
 public static final String CommentHtml[]={"\n<!--","-->\n"},CommentJson[]={"\n/*","\n*/"};
-public String comments[]=CommentJson;
-public HttpServletRequest req;//App a;
-public HttpServletResponse rspns;
-public TL(HttpServletRequest r,HttpServletResponse n,Writer o){req=r;rspns=n;out=new Json.Output(o);}
+public TL(HttpServletRequest r,HttpServletResponse n,Writer o){h.req=r;h.rspns=n;out=new Json.Output(o);}
 public Json.Output jo(){if(jo==null)try{jo=new Json.Output();}catch(Exception x){error(x,"moh.TL.jo:IOEx:");}return jo;}
 public Json.Output getOut() throws IOException {return out;}
-public HttpServletRequest getRequest(){return req;}
-public HttpSession getSession(){return req.getSession();}
-public ServletContext getServletContext(){return getSession().getServletContext();}
+
 /**sets a new TL-instance to the localThread*/
 public static TL Enter(HttpServletRequest r,HttpServletResponse response,HttpSession session,Writer out,PageContext pc) throws IOException{
 	TL p;tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));
 	p.onEnter();
 	return p;}
 private void onEnter()throws IOException
-{ip=getRequest().getRemoteAddr();
+{h.ip=h.getRequest().getRemoteAddr();
 	now=new Date();
-	try{Object o=req.getContentType();
+	try{Object o=h.req.getContentType();
 		o=o==null?null
-				  :o.toString().contains("json")?Json.Parser.parse(req)
-						   :o.toString().contains("part")?getMultiParts():null;
+				  :o.toString().contains("json")?Json.Parser.parse(h.req)
+						   :o.toString().contains("part")?h.getMultiParts():null;
 		json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
-		logOut=var("logOut",logOut);
-		if(getSession().isNew())DB.Tbl.check(this);
+		h.logOut=h.var("logOut",h.logOut);
+		if(h.getSession().isNew())DB.Tbl.check(this);
 		//DB.Tbl.Ssn.onEnter();
 	}catch(Exception ex){error(ex,"TL.onEnter");}
 	//if(pages==null){rsp.setHeader("Retry-After", "60");rsp.sendError(503,"pages null");throw new Exception("pages null");}
-	if(logOut)out.w(comments[0]).w("TL.tl.onEnter:\n").o(this).w(comments[1]);
+	if(h.logOut)out.w(h.comments[0]).w("TL.tl.onEnter:\n").o(this).w(h.comments[1]);
 }//onEnter
-private void onExit(){usr=null;ip=null;now=null;req=null;json=null;out=jo=null;rspns=null;}//ssn=null;
+private void onExit(){usr=null;h.ip=null;now=null;h.req=null;json=null;out=jo=null;h.rspns=null;}//ssn=null;
 /**unsets the localThread, and unset local variables*/
 public static void Exit()//throws Exception
 {TL p=TL.tl();if(p==null)return;
 	DB.close(p);//changed 2017.7.17
 	p.onExit();tl.set(null);}
-Map getMultiParts(){
-	Map<Object,Object>m=null;
-	if( ServletFileUpload.isMultipartContent(req))try
-	{DiskFileItemFactory factory=new DiskFileItemFactory();
-		factory.setSizeThreshold(40000000);//MemoryThreshold);
-		String path=App.UploadPth;//app(this).getUploadPath();
-		String real=TL.context.getRealPath(this, path);//getServletContext().getRealPath(path);
-		File f=null,uploadDir;
-		uploadDir=new File(real);
-		if( ! uploadDir.exists() )
-			uploadDir.mkdirs();//mkDir();
-		factory.setRepository(uploadDir);
-		ServletFileUpload upload=new ServletFileUpload(factory);
-		List<FileItem> formItems=upload.parseRequest(req);
-		if(formItems!=null && formItems.size()>0 )
-		{	m=new HashMap<Object,Object>();
-			for(FileItem item:formItems)
-			{	String fieldNm=item.getFieldName();
-				boolean fld=item.isFormField();//mem=item.isInMemory(),
-				if(fld)
-				{String v=item.getString();
-					Object o=v;
-					if(fieldNm.indexOf("json")!=-1)
-						o=Json.Parser.parse(v);
-					m.put(fieldNm, o);
-				}else{
-					long sz=item.getSize();
-					if(sz>0){
-						String ct=item.getContentType()
-								,nm=item.getName();
-						int count=0;
-						f=new File(uploadDir,nm);
-						while(f.exists())
-							f=new File(uploadDir,(count++)+'.'+nm);
-						m.put(fieldNm,Util.mapCreate(//"name",fieldNm,
-								"contentType",ct,"size",sz
-								,"fileName",path+f.getName()
-						));
-						item.write(f);
-					}//if sz > 0
-				}//if isField else
-			}//for(FileItem item:formItems)
-		}//if(formItems!=null && formItems.size()>0 )
-	}catch(Exception ex){
-		error(ex,"TL.getMultiParts");}
-	//if(ServletFileUpload.isMultipartContent(req))
-	return m;
-}//Map getMultiParts()
+
 public static class Util{//utility methods
 	public static Map<Object, Object> mapCreate(Object...p)
 	{Map<Object, Object> m=new HashMap<Object,Object>();//null;
@@ -271,7 +218,7 @@ public static class Util{//utility methods
 		else if(Character.class.isAssignableFrom(c)||(c.isPrimitive()&&"char".equals(c.getName())))
 			return s.length()<1?'\0':s.charAt(0);
 		else if(URL.class.isAssignableFrom(c))try {return new URL(
-				                                                         "file:" +TL.tl().getServletContext().getContextPath()+'/'+s);}
+				                                                         "file:" +TL.tl().h.getServletContext().getContextPath()+'/'+s);}
 		catch (Exception ex) {TL.tl().error(ex,"TL.Util.parse:URL:p=",s," ,c=",c);}
 			boolean b=c==null?false:c.isEnum();
 			if(!b){Class ct=c.getEnclosingClass();b=ct==null?false:ct.isEnum();if(b)c=ct;}
@@ -284,10 +231,68 @@ public static class Util{//utility methods
 		}catch(Exception x){//changed 2016.06.27 18:28
 			TL.tl().error(x, "TL.Util.<T>T parse(String s,Class):",s,c);}
 		return s;}
-}//class util
-/**get the TL-instance for the current Thread*/
-public static TL tl(){Object o=tl.get();return o instanceof TL?(TL)o:null;}
-/**get a request-scope attribute*/
+}//class Util
+
+public class H{
+ public boolean logOut=false;
+ public String ip;
+
+ public String comments[]=CommentJson;
+ public HttpServletRequest req;//App a;
+ public HttpServletResponse rspns;
+ public HttpServletRequest getRequest(){return req;}
+ public HttpSession getSession(){return req.getSession();}
+ public ServletContext getServletContext(){return getSession().getServletContext();}
+ Map getMultiParts(){
+	Map<Object,Object>m=null;
+	if( ServletFileUpload.isMultipartContent(req))try
+	{DiskFileItemFactory factory=new DiskFileItemFactory();
+		factory.setSizeThreshold(40000000);//MemoryThreshold);
+		String path=App.UploadPth;//app(this).getUploadPath();
+		String real=TL.context.getRealPath(TL.this, path);//getServletContext().getRealPath(path);
+		File f=null,uploadDir;
+		uploadDir=new File(real);
+		if( ! uploadDir.exists() )
+			uploadDir.mkdirs();//mkDir();
+		factory.setRepository(uploadDir);
+		ServletFileUpload upload=new ServletFileUpload(factory);
+		List<FileItem> formItems=upload.parseRequest(req);
+		if(formItems!=null && formItems.size()>0 )
+		{	m=new HashMap<Object,Object>();
+			for(FileItem item:formItems)
+			{	String fieldNm=item.getFieldName();
+				boolean fld=item.isFormField();//mem=item.isInMemory(),
+				if(fld)
+				{String v=item.getString();
+					Object o=v;
+					if(fieldNm.indexOf("json")!=-1)
+						o=Json.Parser.parse(v);
+					m.put(fieldNm, o);
+				}else{
+					long sz=item.getSize();
+					if(sz>0){
+						String ct=item.getContentType()
+								,nm=item.getName();
+						int count=0;
+						f=new File(uploadDir,nm);
+						while(f.exists())
+							f=new File(uploadDir,(count++)+'.'+nm);
+						m.put(fieldNm,Util.mapCreate(//"name",fieldNm,
+								"contentType",ct,"size",sz
+								,"fileName",path+f.getName()
+						));
+						item.write(f);
+					}//if sz > 0
+				}//if isField else
+			}//for(FileItem item:formItems)
+		}//if(formItems!=null && formItems.size()>0 )
+	}catch(Exception ex){
+		error(ex,"TL.getMultiParts");}
+	//if(ServletFileUpload.isMultipartContent(req))
+	return m;
+}//Map getMultiParts()
+
+ /**get a request-scope attribute*/
 public Object r(Object n){return req.getAttribute(String.valueOf(n));}
 /**set a request-scope attribute*/
 public Object r(Object n,Object v){req.setAttribute(String.valueOf(n),v);return v;}
@@ -365,16 +370,22 @@ public Object req(String n,Class c)
 {String s=req(n);
 	Object o=Util.parse(s,c);
 	return o;}
+
+}//class H
+
+/**get the TL-instance for the current Thread*/
+public static TL tl(){Object o=tl.get();return o instanceof TL?(TL)o:null;}
+
 ////////////////////////////////
 public String logo(Object...a){String s=null;
 	if(a!=null&&a.length>0)
 		try{Json.Output o=tl().jo().clrSW();
 			for(Object i:a)o.o(i);
 			s=o.toStrin_();
-			getServletContext().log(s);//CHANGED 2016.08.17.10.00
-			if(logOut){out.flush().
-					                      w(comments[0]//"\n/*"
-					                      ).w(s).w(comments[1]//"*/\n"
+			h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
+			if(h.logOut){out.flush().
+				w(h.comments[0]//"\n/*"
+				).w(s).w(h.comments[1]//"*/\n"
 			);}}catch(Exception ex){ex.printStackTrace();}return s;}
 /**calls the servlet log method*/
 public void log(Object...s){logA(s);}
@@ -382,15 +393,15 @@ public void logA(Object[]s){try{
 	jo().clrSW();
 	for(Object t:s)jo.w(String.valueOf(t));
 	String t=jo.toStrin_();
-	getServletContext().log(t);
-	if(logOut)out.flush().w(comments[0]).w(t).w(comments[1]);
+	h.getServletContext().log(t);
+	if(h.logOut)out.flush().w(h.comments[0]).w(t).w(h.comments[1]);
 }catch(Exception ex){ex.printStackTrace();}}
 public void error(Throwable x,Object...p){try{
 	String s=jo().clrSW().w("error:").o(p,x).toString();
-	getServletContext().log(s);
-	if(logOut)out.w(comments[0]//"\n/*
+	h.getServletContext().log(s);
+	if(h.logOut)out.w(h.comments[0]//"\n/*
 	).w("error:").w(s.replaceAll("<", "&lt;"))
-			          .w("\n---\n").o(x).w(comments[1]
+			          .w("\n---\n").o(x).w(h.comments[1]
 			);if(x!=null)x.printStackTrace();}
 catch(Exception ex){ex.printStackTrace();}}
 /**get a pooled jdbc-connection for the current Thread, calling the function dbc()*/
@@ -411,7 +422,7 @@ public static class DB {
 		Object[]p=null,a=stack(t,null);//Object[])t.s(context.DB.reqCon.str);
 		Connection r=(Connection)a[0];//a ==null?null:
 		if(r!=null)return r;
-		MysqlConnectionPoolDataSource d=(MysqlConnectionPoolDataSource)t.a(context.DB.pool.str);
+		MysqlConnectionPoolDataSource d=(MysqlConnectionPoolDataSource)t.h.a(context.DB.pool.str);
 		r=d==null?null:d.getPooledConnection().getConnection();
 		if(r!=null)
 			a[0]=r;//changed 2017.07.14
@@ -433,33 +444,33 @@ public static class DB {
 						for(int isr=0;r==null&&isr<sra.length;isr++)try
 						{	p=c(t,idb,iun,ipw,isr);
 							r=(Connection)p[1];
-							if(t.logOut)t.log("new "+context.DB.pool.str+":"+p[0]);
-						}catch(Exception e){t.log("TL.DB.MysqlConnectionPoolDataSource:",idb,",",isr,",",iun,ipw,t.logOut?p[2]:"",",",e);}
+							if(t.h.logOut)t.log("new "+context.DB.pool.str+":"+p[0]);
+						}catch(Exception e){t.log("TL.DB.MysqlConnectionPoolDataSource:",idb,",",isr,",",iun,ipw,t.h.logOut?p[2]:"",",",e);}
 		}catch(Throwable e){t.error(e,"TL.DB.MysqlConnectionPoolDataSource:throwable:");}//ClassNotFoundException
-		if(t.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
+		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
 			("jdbc:mysql://"+context.DB.server.str
 				 +"/"+context.DB.dbName.str
 				,context.DB.un.str,context.DB.pw.str
 			);Object[]b={r,null};
-			t.s(context.DB.reqCon.str,b);
+			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){t.error(e,"TL.DB.DriverManager:");}
 		return r;}
 	public static synchronized Object[]c(TL t,int idb,int iun,int ipw,int isr) throws SQLException{
 		MysqlConnectionPoolDataSource d=new MysqlConnectionPoolDataSource();
 		String ss=null,s=context.DB.dbName.a[Math.min(context.DB.dbName.a.length-1,idb)];
-		if(t.logOut)ss="\ndb:"+s;
+		if(t.h.logOut)ss="\ndb:"+s;
 		d.setDatabaseName(s);d.setPort(3306);
 		s=context.DB.server.a[Math.min(context.DB.server.a.length-1,isr)];
-		if(t.logOut)ss+="\nsrvr:"+s;
+		if(t.h.logOut)ss+="\nsrvr:"+s;
 		d.setServerName(s);
-		s=context.DB.un.a[Math.min(context.DB.un.a.length-1,iun)];if(t.logOut)ss+="user:"+s;
+		s=context.DB.un.a[Math.min(context.DB.un.a.length-1,iun)];if(t.h.logOut)ss+="user:"+s;
 		d.setUser(s);
-		s=context.DB.pw.a[Math.min(context.DB.pw.a.length-1,ipw)];if(t.logOut)ss+="\npw:"+s;
+		s=context.DB.pw.a[Math.min(context.DB.pw.a.length-1,ipw)];if(t.h.logOut)ss+="\npw:"+s;
 		d.setPassword(s);
 		Connection r=d.getPooledConnection().getConnection();
-		t.a(context.DB.pool.str,d);
+		t.h.a(context.DB.pool.str,d);
 		Object[]a={d,r,ss};//,b={r,null};t.s(context.DB.reqCon.str,b);
 		stack(t,r);
 		return a;}
@@ -469,7 +480,7 @@ public static class DB {
 	public static PreparedStatement P(String sql,Object[]p)throws SQLException{return P(sql,p,true);}
 	public static PreparedStatement P(String sql,Object[]p,boolean odd)throws SQLException {
 		TL t=tl();Connection c=t.dbc();
-		PreparedStatement r=c.prepareStatement(sql);if(t.logOut)
+		PreparedStatement r=c.prepareStatement(sql);if(t.h.logOut)
 		t.log("TL("+t+").DB.P(sql="+sql+",p="+p+",odd="+odd+")");
 		if(odd){if(p.length==1)
 			r.setObject(1,p[0]);else
@@ -477,8 +488,8 @@ public static class DB {
 				r.setObject(i/2+1,p[i]);//if(t.logOut)TL.log("dbP:"+i+":"+p[i]);
 		}else
 			for(int i=0;p!=null&&i<p.length;i++)
-			{r.setObject(i+1,p[i]);if(t.logOut)t.log("dbP:"+i+":"+p[i]);}
-		if(t.logOut)t.log("dbP:sql="+sql+":n="+(p==null?-1:p.length)+":"+r);return r;}
+			{r.setObject(i+1,p[i]);if(t.h.logOut)t.log("dbP:"+i+":"+p[i]);}
+		if(t.h.logOut)t.log("dbP:sql="+sql+":n="+(p==null?-1:p.length)+":"+r);return r;}
 
 	/**returns a jdbc-ResultSet, setting the variable-length-arguments parameters-p, calls dbP()*/
 	public static ResultSet r( String sql, Object...p)throws SQLException{return R(sql,p);}//changed 2017.7.17
@@ -493,12 +504,12 @@ public static class DB {
 		return stack(tl,c,createIfNotExists,false);}
 	static Object[]stack(TL tl,Connection c,boolean createIfNotExists,boolean deleteArray){
 		if(tl==null)tl=tl();Object o=context.DB.reqCon.str;
-		Object[]a=(Object[])tl.s(o);
+		Object[]a=(Object[])tl.h.s(o);
 		if(deleteArray)
-			tl.s(o,a=null);
+			tl.h.s(o,a=null);
 		else if(a==null&&createIfNotExists)
 		{Object[]b={c,null};
-			tl.s(o,a=b);}
+			tl.h.s(o,a=b);}
 		return a;}
 	static List<ResultSet>stack(TL tl){return stack(tl,true);}
 	static List<ResultSet>stack(TL tl,boolean createIfNotExists){
@@ -518,7 +529,7 @@ public static class DB {
 		try{if(c!=null){
 			List<ResultSet>a=stack(tl,false);
 			if(a!=null&&a.size()>0)
-				tl.s(context.DB.reqCon.str,a=null);
+				tl.h.s(context.DB.reqCon.str,a=null);
 			if(a==null)
 				c.close();}
 		}catch(Exception e){e.printStackTrace();}}
@@ -580,7 +591,7 @@ public static class DB {
 		int cc=cc(s);while(s.next()){r.add(a=new Object[cc]);
 			for(int i=0;i<cc;i++){a[i]=s.getObject(i+1);
 			}}return r;}finally{close(s,false);//CHANGED:2015.10.23.16.06:closeRS ;
-		if(t.logOut)try{t.log(t.jo().o("TL.DB.L:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+		if(t.h.logOut)try{t.log(t.jo().o("TL.DB.L:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 		catch(IOException x){t.error(x,"TL.DB.List:",sql);}}}
 
 	public static List<Integer[]>qLInt(String sql,Object...p)throws SQLException{return qLInt(sql,p);}//2017.07.14
@@ -599,7 +610,7 @@ public static class DB {
 			}return r;
 		}finally
 		{close(s,false);
-			if(tl.logOut)try{tl.log(tl.jo().o("TL.DB.Lt:sql=")
+			if(tl.h.logOut)try{tl.log(tl.jo().o("TL.DB.Lt:sql=")
 					                        .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 			catch(IOException x){tl.error(x,"TL.DB.Lt:",sql);}
 		}
@@ -608,7 +619,7 @@ public static class DB {
 	public static List<Object> q1colList(String sql,Object...p)throws SQLException
 	{ResultSet s=null;List<Object> r=null;try{s=R(sql,p);r=new LinkedList<Object>();
 		while(s.next())r.add(s.getObject(1));return r;}
-	finally{close(s,false);TL t=tl();if(t.logOut)
+	finally{close(s,false);TL t=tl();if(t.h.logOut)
 		try{t.log(t.jo().o("TL.DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
 				          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){t.error(x,"TL.DB.q1colList:",sql);}}}
 	public static <T>List<T> q1colTList(String sql,Class<T>t,Object...p)throws SQLException
@@ -617,7 +628,7 @@ public static class DB {
 				s.getObject(1,t)
 				//s.getObject(1)
 		);return r;}
-	finally{close(s,false);TL tl=tl();if(tl.logOut)
+	finally{close(s,false);TL tl=tl();if(tl.h.logOut)
 		try{tl.log(tl.jo().o("TL.DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
 				           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,"TL.DB.q1colList:",sql);}}}
 	public static Object[] q1col(String sql,Object...p)throws SQLException
@@ -638,7 +649,7 @@ public static class DB {
 	public static int x(String sql,Object...p)throws SQLException{return X(sql,p);}
 	public static int X(String sql,Object[]p)throws SQLException {
 	 int r=-1;try{PreparedStatement s=P(sql,p,false);r=s.executeUpdate();s.close();return r;}
-	 finally{TL t=tl();if(t.logOut)try{
+	 finally{TL t=tl();if(t.h.logOut)try{
 		t.log(t.jo().o("TL.DB.x:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 	 catch(IOException x){t.error(x,"TL.DB.X:",sql);}}}
 	/**output to tl.out the Json.Output.oRS() of the query*/
@@ -653,7 +664,7 @@ public static class DB {
 		}
 		finally
 		{close(s,tl,false);
-			if(tl.logOut)try{
+			if(tl.h.logOut)try{
 				tl.log(tl.jo().o("TL.DB.L:q2json=")
 				.o(sql).w(",prms=").o(p).toStrin_());
 		 }catch(IOException x){tl.error(x,"TL.DB.q1json:",sql);}
@@ -728,9 +739,9 @@ public static class DB {
 		static final String StrSsnTbls="TL.DB.Tbl.tbls";
 		//public Map<Class<? extends DB.Tbl.Sql>,DB.Tbl.Sql>tbls;
 		public static Tbl tbl(Class<? extends Tbl>p){
-			TL t=tl();Object o=t.s(StrSsnTbls);
+			TL t=tl();Object o=t.h.s(StrSsnTbls);
 			Map<Class<? extends Tbl>,Tbl>tbls=o instanceof Map?(Map)o:null;
-			if(tbls==null)t.s(StrSsnTbls,tbls=new HashMap<Class<? extends Tbl>,Tbl>());
+			if(tbls==null)t.h.s(StrSsnTbls,tbls=new HashMap<Class<? extends Tbl>,Tbl>());
 			Tbl r=tbls.get(p);if(r==null)try {tbls.put(p, r=p.newInstance());}
 			catch(Exception ex){t.error(ex,"TL.DB.Tbl.tbl(Class<TL.DB.Tbl>",p,"):Exception:");}
 			return r;}
@@ -1084,7 +1095,9 @@ public static class DB {
 						b.append(col[i]);
 					else b.append(pre).append(col[i]).append(suf);}
 				return b;}
-			static StringBuilder where(StringBuilder b,Object[]where){b.append(" where ");
+			static StringBuilder where(StringBuilder b,Object[]where){
+				if(where==null || where.length<1)return b;
+				b.append(" where ");
 				for(int n=where.length,i=0;i<n;i++){Object o=where[i];
 					if(i>0)b.append(" and ");
 					if(o instanceof Cols.M)b.append(o);else
@@ -1116,10 +1129,10 @@ public static class DB {
 		static void check(TL tl){
 			for(Class<? extends Tbl>c:registered)try
 			{String n=c.getName(),n2=".checkDBTCreation."+n;
-				if( tl.a(n2)==null){
+				if( tl.h.a(n2)==null){
 					Tbl t=c.newInstance();
 					t.checkDBTCreation(tl);
-					tl.a(n2,tl.now);
+					tl.h.a(n2,tl.now);
 				}}catch(Exception ex){}
 		}
 	}//class Tbl
@@ -1160,7 +1173,7 @@ public abstract static class Form{
 		return null;}*/
 	public Form readReq(String prefix){
 		TL t=tl();FI[]a=flds();for(FI f:a){
-			String s=t.req(prefix==null||prefix.length()<1?prefix+f:f.toString());
+			String s=t.h.req(prefix==null||prefix.length()<1?prefix+f:f.toString());
 			Class <?>c=s==null?null:f.f().getType();
 			Object v=null;try {
 				if(s!=null)v=Util.parse(s,c);
@@ -1498,15 +1511,15 @@ public static class Json{
 		Output oTL(TL y,String ind,String path)throws IOException
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;
 			(c?w("{//").p(y.getClass().getName()).w(":PageContext\n").p(ind):w("{"))
-					.w("\"ip\":").o(y.ip,i2,c?path+".ip":path)
-					.w(",\"usr\":").o(y.usr,i2,c?path+".usr":path)//.w(",uid:").o(y.uid,i2,c?path+".uid":path)
+					.w("\"ip\":").o(y.h.ip,i2,c?path+".ip":path)
+				//	.w(",\"usr\":").o(y.usr,i2,c?path+".usr":path)//.w(",uid:").o(y.uid,i2,c?path+".uid":path)
 					//.w(",\"ssn\":").o(y.ssn,i2,c?path+".ssn":path)//.w(",sid:").o(y.sid,i2,c?path+".sid":path)
 					.w(",\"now\":").o(y.now,i2,c?path+".now":path)
 					.w(",\"json\":").o(y.json,i2,c?path+".json":path)
 					//.w(",\"response\":").o(y.response,i2,c?path+".response":path)
-					.w(",\"Request\":").o(y.getRequest(),i2,c?path+".request":path)
+					.w(",\"Request\":").o(y.h.getRequest(),i2,c?path+".request":path)
 					//.w(",\"Session\":").o(y.getSession(false))
-					.w(",\"application\":").o(y.getServletContext(),i2,c?path+".application":path)
+					.w(",\"application\":").o(y.h.getServletContext(),i2,c?path+".application":path)
 			//.w(",\"config\":").o(y.req.getServletContext().getServletConfig(),i2,c?path+".config":path)
 			//.w(",\"Page\":").o(y.srvlt,i2,c?path+".Page":path)
 			//.w(",\"Response\":").o(y.rspns,i2,c?path+".Response":path)
@@ -1730,17 +1743,17 @@ public static void registerOp(Class p){
 	}
 }//registerOp
 void respond(String contentType,String content){
-	try{r("responseDone",true);
-		rspns.setContentType(contentType);
+	try{h.r("responseDone",true);
+		h.rspns.setContentType(contentType);
 		o(content);}catch(Exception ex){error(ex,"TL.respond:");}}
 public static void run(HttpServletRequest request,HttpServletResponse response,HttpSession session,Writer out,PageContext pc)throws IOException{
 	TL tl=null;try
 	{tl=TL.Enter(request,response,session,out,pc);
-		tl.r("contentType","text/json");//tl.logOut=tl.var("logOut",false);
-		java.lang.reflect.Method op=ops.get(tl.req("op"));//Prm.op.toString()));
+		tl.h.r("contentType","text/json");//tl.logOut=tl.var("logOut",false);
+		java.lang.reflect.Method op=ops.get(tl.h.req("op"));//Prm.op.toString()));
 		if(op==null)
-			op=mth.get(tl.req.getMethod());
-		if(op==null) {String p=tl.req.getContextPath();
+			op=mth.get(tl.h.req.getMethod());
+		if(op==null) {String p=tl.h.req.getContextPath();
 			for (String s : url.keySet())
 				if ( p.startsWith(s) || "*".equals(s) ) {//s == null || s.length() < 1 ||
 					op = url.get(s);
@@ -1780,7 +1793,7 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 						&&(nm.indexOf("p")!=-1)
 						&&(nm.indexOf("r")!=-1)
 						&&(nm.indexOf("m")!=-1)?tl.json
-						:tl.req(nm,c);
+						:tl.h.req(nm,c);
 			}catch(Exception ex){tl.error(ex,"TL.run:arg:i=",i);}
 			retVal=n==0?op.invoke(cl)
 				:n==1?op.invoke(cl,args[0])
@@ -1796,9 +1809,9 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 				tl.json.put("return",retVal);retVal=tl.json;}
 		}
 		// else TL.Util.mapSet(tl.response,"msg","Operation not authorized ,or not applicable","return",false);
-		if(tl.r("responseDone")==null)
-		{if(tl.r("responseContentTypeDone")==null)
-			response.setContentType(String.valueOf(tl.r("contentType")));
+		if(tl.h.r("responseDone")==null)
+		{if(tl.h.r("responseContentTypeDone")==null)
+			response.setContentType(String.valueOf(tl.h.r("contentType")));
 			tl.getOut().o(retVal);
 			tl.log("App.TL.run:xhr-response:",tl.jo().o(retVal).toString());}
 		tl.getOut().flush();
