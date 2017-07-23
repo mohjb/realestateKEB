@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.lang.reflect.Field;
+import aswan2017.TL.DB.Tbl;
 
 //%><%aswan2017.TL.run(request, response, session, out, pageContext);%><%!
 /**
@@ -18,12 +19,9 @@ import java.lang.reflect.Field;
 public class App {
 //public static class TL//public class App
 static final String SsnNm="App",UploadPth="/aswan/uploads/";
-
-
  public static @TL.Op Map login
 	(@TL.Op(prmName="un")String un
 	,@TL.Op(prmName="pw")String pw,TL tl){return null;}
-
 /**http-get-method , poll-server
  * , of param"lastPoll" is present, then call lastPoll
  * , if param"updateCols" present then call updateCols
@@ -83,7 +81,7 @@ static Map getLog(Map p,TL tl){
 	try{Map pg=(Map)p.get("pagenation");
 		Object ref=pg!=null?pg.get("ref"):null;
 		if(ref!=null){
-			Map ps=(Map)tl.s("pagenation");
+			Map ps=(Map)tl.h.s("pagenation");
 			ps=ps!=null?(Map)ps.get(ref):null;
 			ResultSet rs=ps==null?null:(ResultSet)ps.get(ref);
 			if(rs==null){pg.put("closed",true);return p;}
@@ -95,18 +93,18 @@ static Map getLog(Map p,TL tl){
 		ref=p.get("domain");
 		StringBuilder sql=new StringBuilder("select * from `").append
 			(ref==null?ObjProperty.dbtName:ObjHead.dbtName).append("`");
-		Object[]where=null;//TL.DB.Tbl.Cols.where(sql,TL.DB.Tbl.where())
-		if(from!=null && to!=null)TL.DB.Tbl.Cols.where(sql
-			,where=TL.DB.Tbl.where(
+		Object[]where=null;//Tbl.Cols.where(sql,Tbl.where())
+		if(from!=null && to!=null)Tbl.Cols.where(sql
+			,where=Tbl.where(
 				TL.Util.lst(ObjProperty.C.logTime,">="),from
 				, TL.Util.lst(ObjProperty.C.logTime,"<="),to
 			));
-		else if(from!=null )TL.DB.Tbl.Cols.where(sql
-			,where=TL.DB.Tbl.where(
+		else if(from!=null )Tbl.Cols.where(sql
+			,where=Tbl.where(
 					TL.Util.lst(ObjProperty.C.logTime,">="),from
 			));
-		else if(to!=null )TL.DB.Tbl.Cols.where(sql
-			,where=TL.DB.Tbl.where(
+		else if(to!=null )Tbl.Cols.where(sql
+			,where=Tbl.where(
 				TL.Util.lst(ObjProperty.C.logTime,"<="),to
 			));
 		else {tl.log("aswan2017.App.getLog:no from nor to",p);
@@ -129,36 +127,21 @@ static List updateDomains(List rows,TL tl){
 //static void putEntities(List putEntities,TL tl){}
 //static List getEntities(List getEntities,TL tl){return null;}
 static List distinct(Map p,TL tl){return null;}
-
 static List getIds(List rows,TL tl){
-	ObjProperty d=new ObjProperty();
+	ObjProperty d=new ObjProperty(0);
 	List x=new LinkedList();
 	for(Object o:rows)try{
 		Map m=(Map)o;
 		d.fromMap( ( Map ) o );
-		ObjProperty p=new ObjProperty();
+		ObjProperty p=new ObjProperty(0);
 		p.fromMap(m);
 		//ObjProperty.C[]c=d.columns();
 		//Field[]a=ObjProperty.fields(ObjProperty.class);//.fields();
 		Object [ ] w = d.where(ObjProperty.C.id,d.id);
-		StringBuilder sql=/*new StringBuilder("select `")
-.append(c[0])//no
-.append("`,`").append(c[1])//domain
-.append("`,max(`").append(c[2])//logTime
-.append("`),`").append(c[3])//usr
-.append( "`,`").append(c[4])//entity
-.append( "`,`").append(c[5])//id
-.append( "`,`").append(c[6])//col
-.append( "`,`").append(c[7])//val
-.append("` from `").append(p.getName()).append("` ");
-		Object[]where=d.where(ObjProperty.C.proto,d.proto, ObjProperty.C.id,d.id);
-		TL.DB.Tbl.Cols.where(sql, where);
-		sql.append(" group by `proto`,`id`,`n`");
-		*/
-		d.sql(d.columns(),w, TL.DB.Tbl.Cols.cols(ObjProperty.C.id,ObjProperty.C.n));
+		String sql=d.sql(d.columns(),w, Tbl.Cols.cols(ObjProperty.C.id,ObjProperty.C.n));
 		try{ResultSet rs=TL.DB.R(sql.toString(), w);}
 		catch(Exception ex){tl.error(ex,"aswan2017.App.ObjProperty.getIds:where=",w);}
-		for(TL.DB.Tbl t:d.query(d.where()))
+		for(Tbl t:d.query(d.where()))
 			x.add(t.asMap());
 	}catch(Exception ex){tl.error(ex,"updateCols");}
 	return x;}
@@ -172,7 +155,7 @@ static Map list(Map m,Map pg,TL tl){
 	if(pg==null)return m;
 	Object ref=pg.get("pagenation");
 	if(ref==null)return m;
-	Map pgs=(Map)tl.s("pagenation");
+	Map pgs=(Map)tl.h.s("pagenation");
 	if(pgs==null)return m;
 	Map ps=(Map)pgs.get(ref);
 	if(ps==null)return m;
@@ -200,9 +183,9 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 			Object ref=pg.get("ref");
 			if(ref==null)
 				pg.put("ref",ref=new Date().getTime());
-			Map pgs=(Map)tl.s("pagenation");
+			Map pgs=(Map)tl.h.s("pagenation");
 			if(pgs==null)
-				tl.s("pagenation", pgs = new HashMap());
+				tl.h.s("pagenation", pgs = new HashMap());
 			if(ps==null) {
 				pgs.put(ref, ps = new HashMap());
 				ps.put("ref",ref);
@@ -221,7 +204,7 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 			m.put("pagenation",pg);
 			Object ref=pg.get("ref");
 			if(ref!=null){
-				Map pgs=(Map)tl.s("pagenation");
+				Map pgs=(Map)tl.h.s("pagenation");
 				if(pgs!=null)//try
 					pgs.remove(ref);
 				//catch (Exception ex){tl.error(ex,"App.list:close:",pg,rs);}
@@ -232,10 +215,11 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 	}catch(Exception ex){tl.error(ex,"list",pg,rs);}
 	return m;}
 static{TL.registerOp( App.class);}
+
 /**
  * Proto_Id_Name_Val_Usr_LogTime P.I.N.V.U.LT)
  * */
-public static class ObjProperty extends TL.DB.Tbl {//implements Serializable
+public static class ObjProperty extends Tbl {//implements Serializable
 	public static final String dbtName="ObjProperty";
 	@Override public String getName(){return dbtName;}
 	@F public Integer no, /**user that made the change*/uid;
@@ -244,11 +228,11 @@ public static class ObjProperty extends TL.DB.Tbl {//implements Serializable
 	@F(group=true) public String /**propertyName*/n;
 	@F(json=true) public Object /**propertyValue*/v;
 	public enum C implements CI{no,uid,logTime,id,n,v;
-		@Override public Class<? extends TL.DB.Tbl>cls(){return ObjProperty.class;}
+		@Override public Class<? extends Tbl>cls(){return ObjProperty.class;}
 		@Override public Class<? extends TL.Form>clss(){return cls();}
 		@Override public String text(){return name();}
 		@Override public Field f(){return Cols.f(name(), cls());}
-		@Override public TL.DB.Tbl tbl(){return TL.DB.Tbl.tbl(cls());}
+		@Override public Tbl tbl(){return Tbl.tbl(cls());}
 		@Override public void save(){tbl().save(this);}
 		@Override public Object load(){return tbl().load(this);}
 		@Override public Object value(){return val(tbl());}
@@ -296,20 +280,17 @@ CREATE TABLE `ObjProperty` (
 */
 	}
 	static{registered.add(ObjProperty.class);}
-
-
 	Map<String,ObjProperty>loadObj(){
 		Map<String,ObjProperty>m=new HashMap<String,ObjProperty>();
-		//Object[]where=;TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(sql(columns(),where),where,true);
-		for (TL.DB.Tbl t: query( TL.DB.Tbl.where( C.id,id) ,true  ) )
+		//Object[]where=;Tbl.Itrtr i=new Tbl.Itrtr(sql(columns(),where),where,true);
+		for (Tbl t: query( Tbl.where( C.id,id) ,true  ) )
 		{ObjProperty p=(ObjProperty)t;
 			m.put(p.n,p);}
 		return m;}
-
 	Map<String,Object>loadMap(){
 		Map<String,Object>m=new HashMap<String,Object>();
-		//Object[]where=TL.DB.Tbl.where( C.id,id );TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(sql(null,where,this).toString(),where,false);
-		for (TL.DB.Tbl t: query(TL.DB.Tbl.where( C.id,id )) )//TODO:might want to put oldest and newest logTime
+		//Object[]where=Tbl.where( C.id,id );Tbl.Itrtr i=new Tbl.Itrtr(sql(null,where,this).toString(),where,false);
+		for (Tbl t: query(Tbl.where( C.id,id )) )//TODO:might want to put oldest and newest logTime
 		{ObjProperty p=(ObjProperty)t;
 			m.put(p.n,p.v);}
 		ObjHead h=ObjHead.all!=null?ObjHead.all.get(id):null;
@@ -317,23 +298,22 @@ CREATE TABLE `ObjProperty` (
 				,"parent",h.parent,"proto",h.proto,"domain",h.domain));
 		else m.put("$",TL.Util.mapCreate("id",id));
 		return m;}
-
 	static List<Integer>idsByPName(String pn,Object pv,TL tl)throws Exception{
 		return TL.DB.q1colTList("select `"+C.id
 		+"`,max(`"+C.logTime+"`) from `"+dbtName+"` where `"
 		+C.n+"`=? and `"+C.v+"`=? group by `"
 		+C.id +"`,`"+C.n +"`",Integer.class,pn,pv);}
-
 	static List<Integer>idsByPName(String pn,TL tl)throws Exception{
 		return TL.DB.q1colTList("select `"+C.id
 		 +"`,max(`"+C.logTime+"`) from `"+dbtName+"` where `"
 		 +C.n+"`=? group by `" +C.id +"`,`"+C.n +"`",Integer.class,pn);}
-
+	public ObjProperty(Integer id){this.id=id;}
 }//class ObjProperty
+
 /**
  * for Domain&Proto vs userRole Access-Control
  * */
-public static class ObjHead extends TL.DB.Tbl {//implements Serializable
+public static class ObjHead extends Tbl {//implements Serializable
 	public static final String dbtName="ObjHead";
 	@Override public String getName(){return dbtName;}
 	@F public Integer id,/**parent-object*/parent
@@ -341,18 +321,21 @@ public static class ObjHead extends TL.DB.Tbl {//implements Serializable
 	,/**belongs to which domain/company/realm/accessControlContext */domain
 	,/**user that made the change*/uid;
 	@F(max=true) public Date logTime;
+
 	public enum C implements CI{id,parent,proto,domain,uid,logTime;
-		@Override public Class<? extends TL.DB.Tbl>cls(){return ObjHead.class;}
+		@Override public Class<? extends Tbl>cls(){return ObjHead.class;}
 		@Override public Class<? extends TL.Form>clss(){return cls();}
 		@Override public String text(){return name();}
 		@Override public Field f(){return Cols.f(name(), cls());}
-		@Override public TL.DB.Tbl tbl(){return TL.DB.Tbl.tbl(cls());}
+		@Override public Tbl tbl(){return Tbl.tbl(cls());}
 		@Override public void save(){tbl().save(this);}
 		@Override public Object load(){return tbl().load(this);}
 		@Override public Object value(){return val(tbl());}
 		@Override public Object value(Object v){return val(tbl(),v);}
 		@Override public Object val(TL.Form f){return f.v(this);}
 		@Override public Object val(TL.Form f,Object v){return f.v(this,v);}
+		public String prefix(){return this==logTime?"max(`":"`";}
+		public String suffix(){return this==logTime?"`)":"`";}
 	}//C
 	@Override public CI pkc(){return C.id;}
 	@Override public Object pkv(){return id;}
@@ -420,18 +403,20 @@ CREATE TABLE `ObjHead` (
 */
 	}
 	static{registered.add(ObjHead.class);}
-
 	/** all protos in all domains*/
 	static Map<Integer,ObjHead>all;
+
+	/**roles is the list of access control, if a user doesnt have any of the roles then the user has no access
+	 *,if a user is in locks ,even if the user has a role for access, the user is locked-out and has no access*/
+	Map<String,Domain.Role>roles,locks;
+
 	Map<Integer,ObjHead>sub,children;//,descendents;
-	Map<String,Object>props=new HashMap<String,Object>();
+	Map<String,Object>props;//=new HashMap<String,Object>();
 
 	ObjHead(Integer id,Integer parent,Integer proto,Integer domain){this.id=id;this.parent=parent;this.proto=proto;this.domain=domain;}
-
 	ObjHead parent(){return all==null?null:all.get(parent);}
 	ObjHead proto(){return all==null?null:all.get(proto);}
-	Domain domain(){return  Domain.domains==null?null: Domain.domains.get(domain);}
-
+	Domain domain(){return  all==null?null: (Domain)(all.get(domain));}//Domain.domains
 	//isDomain::= if proto refers to Domain
 	boolean isInstanceOf(ObjHead p){ObjHead o=this,q=null;
 		while(p!=o && q!=o && o!=null)
@@ -449,24 +434,36 @@ CREATE TABLE `ObjHead` (
 		while(o!=null&&p!=o.id && q!=o && o!=null)
 		{q=o;o=o.parent();}
 		return o!=null&&o.id==p;}
-
 }//class ObjHead
 
 public static class Domain extends ObjHead{
-	Map<String,ObjHead>roles;//key:String is n=Name and proto=<id:proto isDescendentOf Role>
-	Map<String,Usr>usrs;
-
-	/**as returned from method domains_protos_ids, a heirarchy of prototype chains*/
+	Integer rolesDeclarations,usersDeclarations,protosDeclarations,locksDelarations;
+	Domain(Integer id,Integer parent,Integer proto){super(id,parent,proto,id);}//Domain(){this(0,0);}
 	static Map<Integer,Domain>domains;
-	static Map<Integer,Usr>usrsAll;
+	static Domain loadDomain0(){
+		domains=new HashMap<Integer,Domain>();
+		Domain d=new Domain(0,0,0);
+		domains.put( d.id,d );
+		for(Tbl t:d.query( d.sql(Tbl.Cols.cols( C.domain ),null),null,true )){
 
+		}
+		return domains.get(0);}
+
+}
+
+public static class oldDomain{
+	Map<String,ObjHead>protos;//all id of ObjHead in this domain
+
+	Map<String,Usr>usrs;
+	/**the objHeads in this domain*/
+	Map<Integer,Domain>domains;
+	/**as returned from method domains_protos_ids, a heirarchy of prototype chains*/
+	static Map<Integer,Domain>allDomains;
+	static Map<Integer,Usr>usrsAll;
 	/**as returned from method loadRoot*/
 	static Domain domain0;
 
-	Domain(Integer id,Integer parent,Integer proto,Integer domain ){super(id,parent,proto,domain);}//Domain(){this(0,0);}
-
 	//static Map domainDef(int did){return null;}static List<Map>rolesDef(List<String>roleNames){return null;}
-
 	/**
 	 * obj no=0, has properties(references to abstract classes):
 	 *{Role:<proto-int>
@@ -488,14 +485,12 @@ public static class Domain extends ObjHead{
 	 * and
 	 * */
 	static Map loadRoot(TL tl){
-		domain0=new Domain(0,0);domain0.proto=0;
-
-		domain0.props=domain0.loadObj();
-
+		domain0=new Domain(0,0,0,0);domain0.proto=0;
+		ObjProperty p=new ObjProperty( 0 );
+		domain0.props=p.loadMap();
 		if(domains==null)
-			domains_protos_ids(tl);
+			loadAll(tl);
 		Domain root=domains.get(0);
-
 		//load all ObjHead that have domain equal to this.id , they should be prototypes, then each proto should have prop name
 		//then each proto has sub-proto, but at the first proto level,
 		// look for n='Name' and v= 'User','Role','MemberShip','Lock','usrs','locks','roles',
@@ -505,29 +500,21 @@ public static class Domain extends ObjHead{
 	}
 	/**load from dbTbl-ObjHead
 	 *
-	 * 	Map<String,ObjProperty>loadObj(){
-	 Map<String,ObjProperty>m=new HashMap<String,ObjProperty>();
-	 Object[]where=TL.DB.Tbl.where( C.id,id);
-	 TL.DB.Tbl.Itrtr i=new TL.DB.Tbl.Itrtr(
-	 sql(null,where,this).toString()
-	 ,where,true);
-	 for (TL.DB.Tbl t: i )
-	 {ObjProperty p=(ObjProperty)t;
-	 m.put(p.n,p);}
-	 return m;}
-
 	 * */
 	static Map<Integer,Domain > loadAll(TL tl) {
 		domains=new HashMap<Integer,Domain>();
 		all=new HashMap<Integer,ObjHead>();
-		StringBuilder sql=new StringBuilder(
-"select `id`,`parent`,`proto',`domain`,`uid`,max(`logTime`) from `")
-			.append(dbtName ).append( "` group by `id`" );
-		try{
-			for(Integer[]x:a0) {
-				Integer dId=x[0],pi=x[1],id=x[2];
-				Map<Integer,ObjHead>desc=null;
-				Domain dmx,dom=domains.get(dId);
+		ObjHead x,o=new ObjHead( 0,0,0,0 );
+		//StringBuilder sql=new StringBuilder( "select `id`,`parent`,`proto',`domain`,`uid`,max(`logTime`) from `").append(dbtName ).append( "` group by `id`" ); // Integer[]x:a0
+		try{Object[]where=o.where();CI[]group=Tbl.Cols.cols( C.id );
+			for(Tbl t:o.query( o.sql(o.columns(),where,group),where,true )) {
+				x=(ObjHead)t;//Integer dId=x[0],pi=x[1],id=x[2];Map<Integer,ObjHead>desc=null;
+				Domain dmx,dom=domains.get(x.domain);
+				if(x.domain==x.id){
+					x=dom=new Domain( x.id,x.parent,x.proto,x.domain );
+					domains.put( dom.id,dom );
+					all.put( x.id,x );
+				}
 				if(dom==null)
 					domains.put(dId,dom=new Domain(id,dId));
 				ObjHead pnode,node=dom.props==null?null:dom.props.get( id );
@@ -588,6 +575,7 @@ public static class Domain extends ObjHead{
 				}}
 		}catch(Exception ex){}
 		return domains;}
+
 	private void domains_protos_ids(TL tl,int depth,Map<Integer,Object[]>node,Map<Integer,Object[]>desc ){//,Map<Integer,Object[]>all,Map<Integer,Map<Integer,Object[]>>domains
 		depth++;for(Integer i:desc.keySet()){
 			Object[]x=desc.get(i);
@@ -595,7 +583,6 @@ public static class Domain extends ObjHead{
 			if(x[2] instanceof Map)
 				domains_protos_ids(tl,depth,node,(Map<Integer,Object[]>)x[2]);
 		}}
-
 	public class Usr extends ObjHead{
 		Map<String,Map>roles,resources;Map props;Usr(Integer id,Integer domain){super(id,domain);}
 		public String un(){return(String)(props.get( "un" ));}
@@ -606,7 +593,6 @@ public static class Domain extends ObjHead{
 			,String resourceId
 			,Integer resourcePN//PropertyName
 			,String operation){return false;}
-
 		/**
 		 * for param-user load:
 		 * list-roles(ops,resources,usrs)
@@ -621,7 +607,14 @@ public static class Domain extends ObjHead{
 			m.put("locks",l);
 			return m;}
 	}//class Usr
+
+	public class Role extends ObjHead{
+		Role(Integer id,Integer parent, Integer proto){super(id,parent,proto,Domain.this.id);}
+		Map<Integer,Usr>members;
+		List<String>operations;
+		Map<Integer,ObjHead>resourcesId;
+		Map<String,String>resourcesProps;
+	}//class Role
+
 }//Domain
-
-
 }//class App
