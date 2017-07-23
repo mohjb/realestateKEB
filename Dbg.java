@@ -24,12 +24,12 @@ static final String Name="aswan2017.Dbg";
 //////////////////////////////////////////////////////////////////////
 
 public static class Req implements HttpServletRequest {
-	Ssn ssn=new Ssn();
+	Ssn ssn;//=new Ssn();
 	String contentType="text/json"
-		,protocolVersion
-		,uri,bodyData//,data
-		,queryString
-		;//,method="POST";//
+			,protocolVersion
+			,uri,bodyData//,data
+			,queryString
+					 ;//,method="POST";//
 	PC pc;Req(PC p){pc=p;}Req(PC p,String data){pc=p;init(data);}
 	InputStream inps;// from Http.Response.data
 	BufferedReader bufr;
@@ -145,7 +145,7 @@ public static class Req implements HttpServletRequest {
 				throw new Exception("BAD REQUEST: Missing URI. ");//Status.BAD_REQUEST,
 
 
-			 uri = st.nextToken();//String
+			uri = st.nextToken();//String
 
 			// Decode parameters from the URI
 			int qmi = uri.indexOf('?');
@@ -163,22 +163,22 @@ public static class Req implements HttpServletRequest {
 				protocolVersion = st.nextToken();
 			} else {
 				protocolVersion = "HTTP/1.1";
-				 TL.tl().log("no protocol version specified, strange. Assuming HTTP/1.1.");//NanoHTTPD.LOG.log(Level.FINE,
+				TL.tl().log("no protocol version specified, strange. Assuming HTTP/1.1.");//NanoHTTPD.LOG.log(Level.FINE,
 			}
 			line = in.readLine();
 			while (line != null && !line.trim().isEmpty()) {
 				int p = line.indexOf(':');
 				if (p >= 0) {
 					String hname=line.substring(0, p).trim().toLowerCase(Locale.US)
-						,hval=line.substring(p + 1).trim();
+							,hval=line.substring(p + 1).trim();
 					if("cookie".equals(hval))
 						cookieHeaders.add( hval );else
-					headers.put(hname, hval);
+						headers.put(hname, hval);
 				}
 				line = in.readLine();
 			}
 
-			 //uri;//pre.put("uri",);
+			//uri;//pre.put("uri",);
 		} catch (IOException ioe) {
 			throw new Exception( "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage(), ioe);//Status.INTERNAL_ERROR,
 		}
@@ -476,8 +476,8 @@ public static class Req implements HttpServletRequest {
 		@Override	public boolean hasMoreElements() {	return i.hasNext();}
 		@Override	public String nextElement() {return i.next();}};}
 	@Override public String getCharacterEncoding() {return "utf8";}
-	@Override public int getContentLength() {return bodyData.length();}
-	@Override public long getContentLengthLong() {return bodyData.length();}
+	@Override public int getContentLength() {return bodyData==null?0:bodyData.length();}
+	@Override public long getContentLengthLong() {return bodyData==null?0:bodyData.length();}
 	@Override public String getContentType() {p("Req.getContentType:",contentType);return contentType;}
 	@Override public String getContextPath() {return uri;}
 	@Override public DispatcherType getDispatcherType() {return null;}
@@ -639,7 +639,7 @@ public static class Rsp implements HttpServletResponse{
 
 	}
 
-	PrintWriter out=new PrintWriter(new SrvltWrtr());//System.out//strW);StringWriter strW=new StringWriter();
+	PrintWriter out=new PrintWriter(new SrvltWrtr());//System.out//strW);StringWriter strW=new StringWriter(); //TODO: with the server, must not initialize out, instead should remove the member-variable
 	@Override public void flushBuffer() throws IOException {if(out!=null)out.flush();if(sos!=null)sos.flush();}
 	@Override public int getBufferSize() {p(Name,".getBufferSize:0");return 0;}
 	@Override public String getCharacterEncoding() {p(Name,".getCharacterEcoding");return null;}
@@ -679,7 +679,7 @@ public static class Rsp implements HttpServletResponse{
 	@Override public void setStatus(int p, String p2) {p(Name,".setStatus:",p,",",p2);}
 
 	public static class Sos extends ServletOutputStream{
-		StringBuilder sb=new StringBuilder(); java.io.OutputStream o;
+		java.io.OutputStream o;StringBuilder sb=new StringBuilder();
 		Sos(java.io.OutputStream p){p("\n------------------------------\nSos.<init>:",o=p);}
 		@Override public boolean isReady() {return true;}
 		@Override public void setWriteListener(WriteListener p) {}//super.setWriteListener(p);}
@@ -854,34 +854,34 @@ public static class SrvltContxt implements ServletContext{//static SrvltContxt s
 		final String def="application/octet-stream";
 		Map m=(Map)attribs.get( "mapFileExt2MimeType" );
 		if(m==null) {m=TL.Util.mapCreate(
-			"woff","application/font-woff"
-			,"woff2","application/font-woff2"
-			,"jar"  ,"application/java-archive"
-			,"js"   ,"application/javascript"
-			,"json" ,"application/json"
-			,"exe"  ,def
-			,"pdf"  ,"application/pdf"
-			,"7z"   ,"application/x-7z-compressed"
-			,"tgz"  ,"application/x-compressed"
-			,"gz"   ,"application/x-gzip"
-			,"tar"  ,"application/x-tar"
-			,"xhtml","application/xhtml+xml"
-			,"zip"  ,"application/zip"
-			,"mp3"  ,"audio/mpeg"
-			,"gif"  ,"image/gif"
-			,"jpg"  ,"image/jpeg"
-			,"jpeg" ,"image/jpeg"
-			,"png"  ,"image/png"
-			,"svg"  ,"image/svg+xml"
-			,"ico"  ,"image/x-icon"
-			,"css"  ,"text/css"
-			,"csv"  ,"text/csv"
-			,"htm"  ,"text/html; charset=utf-8"
-			,"html" ,"text/html; charset=utf-8"
-			,"txt"  ,"text/plain"
-			,"text" ,"text/plain"
-			,"log"  ,"text/plain"
-			,"xml"  ,"text/xml" );
+				"woff","application/font-woff"
+				,"woff2","application/font-woff2"
+				,"jar"  ,"application/java-archive"
+				,"js"   ,"application/javascript"
+				,"json" ,"application/json"
+				,"exe"  ,def
+				,"pdf"  ,"application/pdf"
+				,"7z"   ,"application/x-7z-compressed"
+				,"tgz"  ,"application/x-compressed"
+				,"gz"   ,"application/x-gzip"
+				,"tar"  ,"application/x-tar"
+				,"xhtml","application/xhtml+xml"
+				,"zip"  ,"application/zip"
+				,"mp3"  ,"audio/mpeg"
+				,"gif"  ,"image/gif"
+				,"jpg"  ,"image/jpeg"
+				,"jpeg" ,"image/jpeg"
+				,"png"  ,"image/png"
+				,"svg"  ,"image/svg+xml"
+				,"ico"  ,"image/x-icon"
+				,"css"  ,"text/css"
+				,"csv"  ,"text/csv"
+				,"htm"  ,"text/html; charset=utf-8"
+				,"html" ,"text/html; charset=utf-8"
+				,"txt"  ,"text/plain"
+				,"text" ,"text/plain"
+				,"log"  ,"text/plain"
+				,"xml"  ,"text/xml" );
 		}p=p==null?null:(String)m.get(p);
 		return p==null?def:p;}
 	@Override public RequestDispatcher getNamedDispatcher(String p){return null;}
@@ -914,21 +914,21 @@ public static class SrvltContxt implements ServletContext{//static SrvltContxt s
 
 	void startServer(int port){
 		servrThread=new Thread( new Runnable() {public void run(){
-		try{ServerSocket servrSocket = new ServerSocket( port );
-			while(servrThread!=null){
-				Socket socket=servrSocket.accept();
-				PC pc=new PC();
-				pc.q.inps=socket.getInputStream();
-				pc.p.sos=new Rsp.Sos( socket.getOutputStream());
-				pc.q.initFromInputStream(  );
-				Servlet s=getServlet(pc.q.uri);
-				if(s==null)
-					s=new FSrvlt();
-				s.service( pc.q,pc.p );
-			}
-		}catch(Exception ex )
-		{p( "startServer:ex", ex );
-		}}});
+			try{ServerSocket servrSocket = new ServerSocket( port );
+				while(servrThread!=null){
+					Socket socket=servrSocket.accept();
+					PC pc=new PC();
+					pc.q.inps=socket.getInputStream();
+					pc.p.sos=new Rsp.Sos( socket.getOutputStream());
+					pc.q.initFromInputStream(  );
+					Servlet s=getServlet(pc.q.uri);
+					if(s==null)
+						s=new FSrvlt();
+					s.service( pc.q,pc.p );
+				}
+			}catch(Exception ex )
+			{p( "startServer:ex", ex );
+			}}});
 		servrThread.start();
 	}//startServer
 
@@ -940,9 +940,11 @@ public static void p(Object...p){for(Object s:p)System.out.print(s);System.out.p
 public static void pa(String...p){for(String s:p)System.out.print(s);}
 
 public static void main(String[]args)throws Exception{
-	Dbg.Srvlt s=new Dbg.Srvlt();
+	Dbg.Srvlt s=Srvlt.sttc;
 	s.pc=new PC();
 	s.pc.a=SrvltContxt.sttc();
+	s.pc.q.ssn=new Ssn();
+	s.pc.q.init("{op:'poll',getLogs:[{from:'2017-01-01'},{from:'2016-01-01',to:'2016-02-02'},{from:'2016-01-01',to:'2016-02-02',domain:0}],update:[],getDistinct:[]}");
 	TL.run( s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.getWriter(),s.pc );
 }
 
@@ -969,6 +971,6 @@ static void oldMain() {
 			TL.run(s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.out,s.pc);//AppEU059S.jsp(s.q,s.p,s.p.out);
 		}catch (Exception e) {e.printStackTrace();}}
 	Dbg.p("Dbg.main:end");
-}//main
+}//oldMain
 
 }//class Dbg
