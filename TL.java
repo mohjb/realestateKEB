@@ -102,17 +102,18 @@ public static TL Enter(HttpServletRequest r,HttpServletResponse response,HttpSes
 	TL p;tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));
 	p.onEnter();
 	return p;}
-private void onEnter()throws IOException
-{h.ip=h.getRequest().getRemoteAddr();
+private void onEnter()throws IOException {
+	h.ip=h.getRequest().getRemoteAddr();
 	now=new Date();
 	try{Object o=h.req.getContentType();
 		o=o==null?null
-				  :o.toString().contains("json")?Json.Parser.parse(h.req)
-						   :o.toString().contains("part")?h.getMultiParts():null;
+		:o.toString().contains("json")?Json.Parser.parse(h.req)
+		:o.toString().contains("part")?h.getMultiParts():null;
 		json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 		h.logOut=h.var("logOut",h.logOut);
 		if(h.getSession().isNew())DB.Tbl.check(this);
 		//DB.Tbl.Ssn.onEnter();
+		usr=(App.Domain.Usr)h.s("usr");
 	}catch(Exception ex){error(ex,"TL.onEnter");}
 	//if(pages==null){rsp.setHeader("Retry-After", "60");rsp.sendError(503,"pages null");throw new Exception("pages null");}
 	if(h.logOut)out.w(h.comments[0]).w("TL.tl.onEnter:\n").o(this).w(h.comments[1]);
@@ -770,8 +771,18 @@ public static class DB {
 		public abstract Object pkv();
 		public abstract CI[]columns();
 		@Override public FI[]flds(){return columns();}
-		public String sql(CI[]cols,Object[]where) {return sql( cols, where,null);}//StringBuilder sql,
-		public String sql(CI[]cols,Object[]where,CI[]groupBy) {return sql(cols,where,groupBy,null);}
+
+		public String sql(CI[]cols,Object[]where){
+			return sql(cols,where,null,null,getName());}
+
+		public static String sql(CI[]cols,Object[]where,String name){
+			return sql( cols, where,null,null,name);}//StringBuilder sql,
+
+		public String sql(CI[]cols,Object[]where,CI[]groupBy){
+			return sql(cols,where,groupBy,null,getName());}
+
+		public static String sql(CI[]cols,Object[]where,CI[]groupBy,String name) {
+			return sql(cols,where,groupBy,null,name);}
 
 
 		public String sql(String cols,Object[]where,CI[]groupBy,CI[]orderBy) {
@@ -788,11 +799,15 @@ public static class DB {
 				Cols.generate(sql,orderBy);}
 			return sql.toString();}
 
-		public String sql(CI[]cols,Object[]where,CI[]groupBy,CI[]orderBy) {
+		public String sql(CI[]cols,Object[]where,CI[]groupBy,CI[]orderBy){
 			if(cols==null)cols=columns();
+			return sql(cols,where,groupBy,orderBy,getName());}
+
+		public static String sql(CI[]cols,Object[]where,CI[]groupBy,CI[]orderBy,String name) {
+			//if(cols==null)cols=columns();
 			StringBuilder sql=new StringBuilder("select ");
 			sql.append(cols);
-			sql.append(" from `").append(getName()).append("` ");
+			sql.append(" from `").append(name).append("` ");
 			if(where!=null&&where.length>0)
 				TL.DB.Tbl.Cols.where(sql, where);
 			if(groupBy!=null && groupBy.length>0){
@@ -881,8 +896,9 @@ public static class DB {
 				tl.error(ex, "TL.DB.Tbl.checkTableCreation:errMain:",dtn);}
 		}//checkTableCreation
 		/**where[]={col-name , param}*/
-		public int count(Object[]where) throws Exception{
-			String sql=sql(Cols.cols(Cols.M.count),where);//new StringBuilder("select count(*) from `").append(getName()).append("` where `").append(where[0]).append("`=").append(Cols.M.m(where[0]).txt);//where[0]instanceof CI?m((CI)where[0]):'?');
+		public int count(Object[]where) throws Exception{return count(where,getName());}
+		public static int count(Object[]where,String name) throws Exception{
+			String sql=sql(Cols.cols(Cols.M.count),where,name);//new StringBuilder("select count(*) from `").append(getName()).append("` where `").append(where[0]).append("`=").append(Cols.M.m(where[0]).txt);//where[0]instanceof CI?m((CI)where[0]):'?');
 			return DB.q1int(sql,-1,where[0],where[1]);}
 		/**where[]={col-name , param}*/public
 		int maxPlus1(CI col) throws Exception{
@@ -952,8 +968,9 @@ public static class DB {
 			{String j=t.jo().clrSW().o(cv).toString();cv=j;}
 			catch (IOException e) {t.error(e,"TL.DB.Tbl.save(CI:",c,"):");}
 			try{DB.x("replace into `"+getName()+"` (`"+pkc+
-				"`,`"+c+"`) values("+Cols.M.m(pkc).txt
-				+","+Cols.M.m(c).txt+")",pkv,cv);
+				"`,`"+c+"`) values(?"//+Cols.M.m(pkc).txt
+				+",?"//+Cols.M.m(c).txt
+				+")",pkv,cv);
 				Integer k=(Integer)pkv;
 				//TL.DB.Tbl.Log.log( TL.DB.Tbl.Log.Entity.valueOf(getName()), k, TL.DB.Tbl.Log.Act.Update, TL.Util.mapCreate(c,v(c)) );
 			}catch(Exception x){tl().error(x
@@ -971,9 +988,9 @@ public static class DB {
 			}CI[]cols=columns();
 			StringBuilder sql=new StringBuilder("replace into`").append(getName()).append("`( ");
 			Cols.generate(sql, cols);//.toString();
-			sql.append(")values(").append(Cols.M.m(cols[0]).txt);//Cols.M.prm);
+			sql.append(")values(").append(Cols.M.prm.txt);//Cols.M.m(cols[0]).txt
 			for(int i=1;i<cols.length;i++)
-				sql.append(",").append(Cols.M.m(cols[i]).txt);
+				sql.append(",").append(Cols.M.prm.txt);//Cols.M.m(cols[i]).txt
 			sql.append(")");//int x=
 			DB.X( sql.toString(), vals() ); //TODO: investigate vals() for json columns
 			//log(nw?TL.DB.Tbl.Log.Act.New:TL.DB.Tbl.Log.Act.Update);
@@ -1056,7 +1073,7 @@ public static class DB {
 				,password("password(?)")
 				,Null("null")
 				,lt("<"),le("<="),ne("<>"),gt(">"),ge(">=")
-				,or("or"),like("like")//,and("and"),prnthss("("),max("max(?)")
+				,or("or"),like("like"),in("in")//,and("and"),prnthss("("),max("max(?)")
 				;String txt;
 				private M(String p){txt=p;}
 				public List of(CI c){return Util.lst(c,this);}
@@ -1073,10 +1090,6 @@ public static class DB {
 				public void save(){}
 				public String prefix(){return "`";}
 				public String suffix(){return "`";}
-				public static M m(Object p){return p instanceof CI?m((CI)p):p instanceof Field?m((Field)p):prm;}
-				public static M m(CI p){return m(p.f());}
-				public static M m(Field p){
-					return p.getAnnotation(F.class).prmPw()?password:prm;}
 			}//enum M
 			public static Field f(String name,Class<? extends Tbl>c){
 				//for(Field f:fields(c))if(name.equals(f.getName()))return f;return null;
@@ -1103,10 +1116,34 @@ public static class DB {
 					if(o instanceof Cols.M)b.append(o);else
 					if(o instanceof CI)
 						b.append('`').append(o).append("`=")
-								.append(Cols.M.m(o).txt);
-					else if(o instanceof List){List l=(List)o;o=l.get(0);
-						b.append('`').append(o).append("`").append(l.get(1))
-								.append(Cols.M.m(o).txt);}
+								.append('?');//Cols.M.m(o).txt
+					else if(o instanceof List){List l=(List)o;
+						o=l.size()>1?l.get(1):null;
+						if(o ==Cols.M.in && i+1<n && where[i+1] instanceof List){
+							b.append('`').append(l.get(0)).append("` ").append(o);
+							l=(List)where[i+1];
+							b.append(" (");boolean comma=false;
+							for(Object z:l){
+								if(comma)b.append( ',' );else comma=true;
+								if(z instanceof Number)
+									b.append( z );else
+								b.append( '\'' )
+								.append(
+									(z instanceof String?(String)z:z.toString()
+									).replaceAll( "'","''" )
+								)
+								.append( '\'' );
+							}b.append(")");
+						}else if(o instanceof Cols.M)//o!=null)//if(ln==2 && )
+						{	Cols.M m=(Cols.M)o;o=l.get(0);
+							if(o instanceof CI || o instanceof Cols.M)
+								b.append('`').append(o).append('`');
+							else
+								tl().log("TL.DB.Tbl.Cols.where:unknown where-clause item:o=",o);
+							b.append(m.txt).append("?");
+						}else
+							tl().log("TL.DB.Tbl.Cols.where:unknown where-clause item: o=",o);
+					}
 					else tl().error(null,"TL.DB.Tbl.Col.where:for:",o);
 					i++;
 				}//for
