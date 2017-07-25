@@ -17,9 +17,23 @@ import aswan2017.TL.DB.Tbl;
 public class App {
 
 static final String SsnNm="App",UploadPth="/aswan/uploads/";
+
 public static @TL.Op Map login
 	(@TL.Op(prmName="un")String un
-	,@TL.Op(prmName="pw")String pw,TL tl){return null;}
+	,@TL.Op(prmName="pw")String pw,TL tl){
+	Domain d=Domain.loadDomain0();
+	Domain.Usr u=d.allUsrs.get( un );
+	if(u!=null && pw!=null && pw.equals( u.propStr( "pw" ) )){
+		tl.usr=u;
+		tl.h.s( "usr",u );
+		Map m=u.asMap();
+		TL.Util.mapSet( m
+			,"have",u.have
+			,"props",u.props );
+		return m;
+	}
+	return null;}
+
 /**http-get-method , poll-server
  * , of param"lastPoll" is present, then call lastPoll
  * , if param"updateCols" present then call updateCols
@@ -29,7 +43,7 @@ public static @TL.Op Map login
  */
  public static @TL.Op(urlPath = "*") Map poll
  (@TL.Op(prmName="getLogs")List getLogs
-	//,@TL.Op(prmName="updates")List update
+	,@TL.Op(prmName="updates")List update
 	//,@TL.Op(prmName="getDistinct")List distinct
 	,TL tl)
  {if(tl.usr==null)return null;
@@ -42,17 +56,17 @@ public static @TL.Op Map login
 		}
 	}
 	if( update!=null)
-		m.put("updates",updateDomains(update,tl));
-	if( distinct!=null){List a=new LinkedList<>();
+		m.put("updates",update(update,tl));
+	/*if( distinct!=null){List a=new LinkedList<>();
 		m.put("getDistinct",a);
 		for (Object o:distinct) {
 			Map x=(Map)o;
 			a.add(distinct(x,tl));
 		}
-	}
+	}*/
 	return m;}
 
- /*op methods:
+ /**op methods:
 	* create new domain
 	* create new usr
 	* create new role
@@ -85,9 +99,9 @@ public static @TL.Op Map login
 	*	lock
 	*	proto
 	*
- */
+ * /
 
-/**all cases domain must be specified, or usr is in only one domain
+/ **
  * param:pagenation
  *	cases
  *		first request and results over 1023rows, then, include in return pagenation:{ref:<int>,page:<int>}
@@ -109,7 +123,7 @@ public static @TL.Op Map login
  *
  * 2.param entity+id+col , req usr
  *
- * 3.param domain , req usr
+ * 3.param parent , getLog of all children and descendants
  * */
 static Map getLog(Map p,TL tl){
 	try{Map pg=(Map)p.get("pagenation");
@@ -124,29 +138,46 @@ static Map getLog(Map p,TL tl){
 		Long to,from=ref instanceof Number?((Number)ref).longValue():TL.Util.parseDate(String.valueOf(ref)).getTime();
 		ref=p.get("to");
 		to=ref instanceof Number?((Number)ref).longValue():TL.Util.parseDate(String.valueOf(ref)).getTime();//Double.NaN;
+
+		ref=p.get("headLog");
+		boolean headLog=ref instanceof Boolean?((Boolean)ref)
+			:ref==null?false:"true".equalsIgnoreCase( ref.toString() );
+
 		ref=p.get("domain");
-		StringBuilder sql=new StringBuilder("select * from `").append
-			(ref==null?ObjProperty.dbtName:ObjHead.dbtName).append("`");
-		Object[]where=null;//Tbl.Cols.where(sql,Tbl.where())
-		if(from!=null && to!=null)Tbl.Cols.where(sql
-				,where=Tbl.where(
-					TL.Util.lst(ObjProperty.C.logTime,">="),from
-					, TL.Util.lst(ObjProperty.C.logTime,"<="),to
-				));
-		else if(from!=null )Tbl.Cols.where(sql
-				,where=Tbl.where(
-					TL.Util.lst(ObjProperty.C.logTime,">="),from
-				));
-		else if(to!=null )Tbl.Cols.where(sql
-				,where=Tbl.where(
-					TL.Util.lst(ObjProperty.C.logTime,"<="),to
-				));
-		else {tl.log("aswan2017.App.getLog:no from nor to",p);
+		//StringBuilder sql=new StringBuilder("select * from `").append(headLog?ObjHead.dbtName:ObjProperty.dbtName).append("`");
+		List w=new LinkedList();
+
+		if(from==null&&to==null) {
+			p.put("msg","aswan2017.App.getLog:no parameter 'from' nor 'to'");
 			return p;}
-		return list(p,sql.toString(),where,tl);
+		if(from!=null){
+			w.add( TL.Util.lst(ObjProperty.C.logTime,Tbl.Cols.M.ge));w.add(from );}
+		if(to!=null){
+			w.add( TL.Util.lst(ObjProperty.C.logTime,Tbl.Cols.M.le));w.add(to );}
+		Tbl.CI[]a= {
+			ObjProperty.C.id
+			,ObjProperty.C.uid
+			,ObjProperty.C.n//PropertyName
+			,ObjHead.C.domain
+			,ObjHead.C.proto
+			,ObjHead.C.parent };
+		for(Tbl.CI s:a) {
+			ref = p.get( s+"List" );
+			if ( ref != null ) {
+				List l = ( List ) ref;
+				w.add(TL.Util.lst( s,Tbl.Cols.M.in));
+				w.add(l );
+			}
+		}
+		Object[]where=new Object[w.size()];
+		w.toArray( where );
+		Tbl t=headLog?new ObjHead( 0,0,0,0 ):new ObjProperty( 0 );
+		return list(p,t.sql(null,where),where,tl);
 	}catch(Exception ex){tl.error(ex,"getLog");}
 	return p;}
-static List updateDomains(List rows,TL tl){
+
+
+static List update(List rows,TL tl){
 	List x=new LinkedList();
 	ObjProperty d=new ObjProperty(0);
 	for(Object o:rows)try{
@@ -159,7 +190,26 @@ static List updateDomains(List rows,TL tl){
 	}catch(Exception ex){tl.error(ex,"updateDomn");}
 	return x;}
 
-static List distinct(Map p,TL tl){return null;}
+static Map list(Map m,String sql,Object[]where,TL tl){
+	try{ResultSet rs=TL.DB.R(sql, where);
+		m=list(m,rs,null,null,tl);
+	}catch(Exception ex){tl.error(ex
+			,"aswan2017.App.list(sql",sql,":where=",where,m);}
+	return m;
+/*
+static Map list(Map m,Map pg,TL tl){
+	if(pg==null)return m;
+	Object ref=pg.get("pagenation");
+	if(ref==null)return m;
+	Map pgs=(Map)tl.h.s("pagenation");
+	if(pgs==null)return m;
+	Map ps=(Map)pgs.get(ref);
+	if(ps==null)return m;
+	ResultSet rs=(ResultSet)ps.get("rs");
+	if(rs==null)return m;
+	return list(m,rs,pg,ps,tl);}
+
+
 static List getIds(List rows,TL tl){
 	ObjProperty d=new ObjProperty(0);
 	List x=new LinkedList();
@@ -178,29 +228,23 @@ static List getIds(List rows,TL tl){
 			x.add(t.asMap());
 	}catch(Exception ex){tl.error(ex,"updateCols");}
 	return x;}
-static Map list(Map m,String sql,Object[]where,TL tl){
-	try{ResultSet rs=TL.DB.R(sql, where);
-		m=list(m,rs,null,null,tl);
-	}catch(Exception ex){tl.error(ex
-			,"aswan2017.App.list(sql",sql,":where=",where,m);}
-	return m;}
-static Map list(Map m,Map pg,TL tl){
-	if(pg==null)return m;
-	Object ref=pg.get("pagenation");
-	if(ref==null)return m;
-	Map pgs=(Map)tl.h.s("pagenation");
-	if(pgs==null)return m;
-	Map ps=(Map)pgs.get(ref);
-	if(ps==null)return m;
-	ResultSet rs=(ResultSet)ps.get("rs");
-	if(rs==null)return m;
-	return list(m,rs,pg,ps,tl);}
+*/
+}
+
+
 /**
  * pg is pagenation, a js-obj from client-http-request of the
  * ps is pagenation, a js-obj from session
  * */
 static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
-	ObjProperty d=new ObjProperty(0);
+	Object o=m.get("headLog");if(o==null){if(ps!=null)
+		o=ps.get("headLog");if(o==null&&pg!=null)
+		o=ps.get("headLog");}
+	boolean headLog=o instanceof Boolean?((Boolean)o)
+		:o==null?false:"true".equalsIgnoreCase( o.toString() );
+
+	Tbl d=headLog?new ObjHead( 0 ,0,0,0)
+		:new ObjProperty(0);//ObjProperty d=new ObjProperty(0);
 	if(m==null)m=new HashMap();
 	List a=new LinkedList();
 	m.put("a",a);
@@ -208,7 +252,8 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 		Field[]f=d.fields();
 		while((b=rs.next()) && a.size()<1000)
 		{	d.load(rs,f);
-			a.add(d.asMap());
+			if(tl.usr.hasAccess( "view",headLog?((ObjHead)d).id:((ObjProperty)d).id ))
+				a.add(d.asMap());
 		}
 		if(b){
 			if(pg==null)pg=new HashMap();
@@ -223,8 +268,9 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 				pgs.put(ref, ps = new HashMap());
 				ps.put("ref",ref);
 				ps.put("rs",rs);
+				ps.put("headLog",headLog);
 			}
-			Object o=ps.get("page");
+			o=ps.get("page");
 			o=o==null?1:((Number)o).intValue()+1;
 			ps.put("page",o);
 			pg.put("page",o);
@@ -247,6 +293,7 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 		}
 	}catch(Exception ex){tl.error(ex,"list",pg,rs);}
 	return m;}
+
 static{TL.registerOp( App.class);}
 /**
  * Proto_Id_Name_Val_Usr_LogTime P.I.N.V.U.LT)
@@ -348,7 +395,7 @@ CREATE TABLE `ObjProperty` (
 /**
  * for Domain&Proto vs userRole Access-Control
  * */
-public static class ObjHead extends Tbl {//implements Serializable
+public static class ObjHead extends Tbl {
 	public static final String dbtName="ObjHead";
 	@Override public String getName(){return dbtName;}
 	@F public Integer id,/**parent-object*/parent
@@ -441,8 +488,8 @@ CREATE TABLE `ObjHead` (
 	static Map<Integer,ObjHead>all;
 	/**roles is the list of access control, if a user doesnt have any of the roles then the user has no access
 	 *,if a user is in locks ,even if the user has a role for access, the user is locked-out and has no access*/
-	Map<String,Domain.Role>roles,locks;
-	Map<Integer,ObjHead>sub,children;//,descendents;
+	//Map<String,Domain.Role>roles=new HashMap<String,Domain.Role>();//,locks=new HashMap<String,Domain.Role>();
+	Map<Integer,ObjHead>children;//,sub,descendents;
 	Map<String,ObjProperty>props;
 	ObjHead(Integer id,Integer parent,Integer proto,Integer domain){this.id=id;this.parent=parent;this.proto=proto;this.domain=domain;}
 	ObjHead parent(){return all==null?null:all.get(parent);}
@@ -472,6 +519,24 @@ CREATE TABLE `ObjHead` (
 		Object v=p==null?p:p.v;
 		return v;}
 
+	public void setProps(Object...a)throws Exception{
+		if(a==null||a.length<2)return;
+		if(props==null)props=new HashMap<>(  );
+		for(int i=0;i<a.length;i+=2){
+			String n=String.valueOf( a[i] );
+			ObjProperty p=props.get( n );
+			if(p==null){
+				p=new ObjProperty( id );
+				p.n=n;
+				props.put( n,p );
+			}
+			p.v=a[i+1];
+			TL tl=TL.tl();
+			p.uid=tl.usr.id;
+			p.logTime=tl.now;
+			p.save();
+		}}
+
 	public String propStr(String pn){
 		Object p=propo( pn );
 		String v=p instanceof String?(String)p:p==null?null:p.toString();
@@ -488,9 +553,18 @@ CREATE TABLE `ObjHead` (
 		:p==null?null:Double.parseDouble( p.toString() );
 		return v;}
 
+ public boolean exists(){return exists( id );}
+ public static boolean exists(Integer id){
+ 	boolean b=false;
+ 	int n=0;
+ 	try{n=count( where(C.id,id  ),dbtName );}catch ( Exception ex ){}
+ 	b=n>0;
+	return b;
+ }
+
 }//class ObjHead
 
-public static class Domain extends ObjHead{
+ public static class Domain extends ObjHead{
 	public enum Proto{Role,Usr,Proto,Lock,Membership;
 	ObjHead get(){Domain d0=domains.get( 0 );
 		for(ObjHead o:d0.children.values()){
@@ -499,6 +573,7 @@ public static class Domain extends ObjHead{
 				return o;}
 		return null;}
 	}//Integer rolesDeclarations,usersDeclarations,protosDeclarations,locksDelarations;
+	public enum Oper{all,view,create,edit,delete,app}
 	Domain(Integer id,Integer parent,Integer proto){super(id,parent,proto,id);}//Domain(){this(0,0);}
 
 	public static Map<Integer,Domain>domains=new HashMap<Integer,Domain>();
@@ -507,7 +582,11 @@ public static class Domain extends ObjHead{
 	public Map<String,Role>roles=new HashMap<String,Role>();
 	public Map<String,Usr>usrs=new HashMap<String,Usr>();
 
- public Domain loadDomain(){
+  public Domain loadDomain(){
+	load();
+	loadProps();
+	domains.put( id,this );
+	all.put( id,this );
 	ObjHead o=new ObjHead( 0,id,id,id );
 	Map<Integer,ObjHead>prots=new HashMap<Integer,ObjHead>();
 	for(Tbl t:o.query( o.where( C.domain,id ,C.parent,id) ,true)) {
@@ -591,88 +670,191 @@ public static class Domain extends ObjHead{
 			all.put(d.id,d);
 		}}
 		return domains.get(0);}*/
- }//loadDomain
- public Domain initNew(){
-	/*two cases:1.new domain0 , 2. domain0 exists
+  }//loadDomain
 
-	create Role,Usr,Lock,Proto
-	//create a user
-	//create a role, and add the new domain as resource, add user as member, add the default operations
-	changePW
-	createUsr
+  public static Domain loadDomain(Integer id){
+	Domain d=domains.get( id );
+	if(d==null){
+		d=new Domain( id,0,0 );
+		if(d.exists()){
+			d.loadDomain();
+			domains.put( d.id,d );
+			all.put( d.id,d );
+	}else d=null;}return d;}
 
-	domain
-	usrs
-	roles
-	locks
-	protos
+  public static Domain loadDomain0(){
+	Domain d=domains.get( 0 );
+	if(d==null){
+		if(exists(0))
+			d.loadDomain();
+		else d=initNew();
+		domains.put( d.id,d );
+		all.put( d.id,d );
+	}
+	return d;
+  }
 
-	 view
-	 create
-	 edit
-	 delete
+	public static Domain initNew(){Domain d =null;try
+	  {/*two cases:1.new domain0 , 2. domain0 exists
 
-	 login
-	 logout
-	 timeout
-	 changePW
-	*/
-	return this;
- }
-	public class Usr extends ObjHead{
-		Map<String,Role>has;
+		create Role,Usr,Lock,Proto
+		//create a user
+		//create a role, and add the new domain as resource, add user as member, add the default operations
+		changePW
+		createUsr
 
-		Usr(Integer id,Integer parent,Integer proto){
-			super(id,parent,proto,Domain.this.id);}
+		domain
+		usrs
+		roles
+		locks
+		protos
 
-		public String un(){return propStr("un");}
+		 view
+		 create
+		 edit
+		 delete
 
-		public Domain domain(){return Domain.this;}
-		boolean hasAccess(String operation,Integer resourceId,String resourcePN//PropertyName
-			){return false;}
-		/**
+		 login
+		 logout
+		 timeout
+		 changePW
+		*/
+
+
+		d = new Domain( 0, 0, 0 );
+		int n = d.maxPlus1( C.id ),x=n;
+		d.id=n==1?n=0:n;
+		domains.put( n,d );
+		all.put( n,d );
+		d.save();ObjHead o=null;
+		Map<Proto,ObjHead>m=new HashMap<Proto,ObjHead>();
+		for(Proto prt:Proto.values()) {
+			o = new ObjHead( prt.ordinal()+n, d.id, prt.ordinal()+n, d.id );
+			o.save();m.put( prt,o );
+			all.put( o.id,o );
+			o.loadProps();
+			ObjProperty p = new ObjProperty( o.id );
+			p.n = "name";
+			p.v = prt.name();
+			o.props.put( p.n, p );
+			p.save();
+			x=o.id;
+		}
+		TL tl = TL.tl();
+		Usr u = tl.usr;
+		//create user admin admin
+		if(n==0 || u==null) {
+			o = m.get( Proto.Usr );
+			u = d.new Usr( ++x, d.id, o.id );
+			u.save();
+			if ( u.props == null )
+				 u.props = new HashMap<>();
+			ObjProperty p=u.props.get("un");
+			if(p==null)u.setProps(
+				"un","admin"
+				,"pw","6f8f57715090da2632453988d9a1501b"
+			);
+		 }
+		//create role admin for admin
+		o=m.get( Proto.Role);
+		String rn="domain"+d.id+".admin";
+		Role r=d.new Role( ++x,d.id,o.id );
+		r.save();
+		r.setProps( "name",rn
+			,"member1",u.id
+			,"resource1",d.id
+			,"operation1",Oper.all.toString()
+		);
+		d.roles.put( rn,r );
+		u.have.put( rn,r );//r.roles.put( rn,r );u.roles.put( rn,r );
+	  }catch ( Exception ex ){}
+	  return d;}
+
+
+  public class Role extends ObjHead{
+	Role(Integer id,Integer parent, Integer proto){super(id,parent,proto,Domain.this.id);}
+	Map<Integer,Usr>members;boolean lock;
+	List<Object>operations;
+	Map<Integer,ObjHead>resources;//Id;Map<String,String>resourcesProps;
+
+	void init(){String name=propStr( "name" );if(props!=null)
+		for(ObjProperty p:props.values()){
+			Object v=p.v;
+			if(p.n.startsWith( "member" ))
+			{	Integer i=v instanceof Integer
+				?(Integer)v:v instanceof Number?((Number)v).intValue()
+				:v!=null?TL.Util.parseInt( v.toString(),-1 ):-1;
+				Usr u=usrs.get( i );
+				if(u==null){
+					v=all.get( i );
+					if(v instanceof Usr)
+						u=(Usr)v;}
+				if(u!=null){
+					u.have.put(name,this);
+					members.put( u.id,u );}
+			}
+			else if(p.n.startsWith( "resource" )){
+				Integer i=v instanceof Integer
+				?(Integer)v:v instanceof Number?((Number)v).intValue()
+				:v!=null?TL.Util.parseInt( v.toString(),-1 ):-1;
+				ObjHead o=all.get( i );
+				if(o!=null){
+					//o.roles.put(name,this);
+					resources.put( o.id,o );}
+			}
+			else if(p.n.startsWith( "operation" ))
+				operations.add( v );
+		}
+	}//init
+
+  }//class Role
+
+
+  public class Usr extends ObjHead{
+	Map<String,Role>have=new HashMap<String,Domain.Role>()
+		,locks;//=new HashMap<String,Domain.Role>();
+
+	Usr(Integer id,Integer parent,Integer proto){
+		super(id,parent,proto,Domain.this.id);}
+
+	public String un(){return propStr("un");}
+
+	public Domain domain(){return Domain.this;}
+
+	boolean hasAccess(String operation,Integer resourceId){//,String resourcePN//PropertyName
+		ObjHead c=all.get( resourceId );if(c==null)return false;
+		for(Role r:have.values()){
+			for (ObjHead o: r.resources.values())
+			{if((o.id==c.id || c.isInstanceOf( o ))
+			 &&(r.operations.contains( operation )
+			  ||r.operations.contains( Oper.all.toString() )))
+			 {if(locks==null)return true;
+				for(Role x:locks.values()){
+					for (ObjHead z: x.resources.values())
+					{if((z.id==c.id || c.isInstanceOf( z ))
+					 &&(x.operations.contains( operation )
+					  ||x.operations.contains( Oper.all.toString() )))
+					    return false;
+					}
+				}
+				return true;
+			 }
+			}
+		}
+		return false;
+		/*
+			/**
 		 * for param-user load:
 		 * list-roles(ops,resources,usrs)
 		 * list-protos(def)
 		 * list-locks()
-		 * */
+		 * * /
 		//Usr init(){return this;}
-	}//class Usr
+		*/
+	}
 
-	public class Role extends ObjHead{
-		Role(Integer id,Integer parent, Integer proto){super(id,parent,proto,Domain.this.id);}
-		Map<Integer,Usr>members;boolean lock;
-		List<Object>operations;
-		Map<Integer,ObjHead>resources;//Id;Map<String,String>resourcesProps;
+  }//class Usr
 
-		void init(){String name=propStr( "name" );if(props!=null)
-			for(ObjProperty p:props.values()){
-				Object v=p.v;
-				if(p.n.startsWith( "member" ))
-				{	Integer i=v instanceof Integer
-					?(Integer)v:v instanceof Number?((Number)v).intValue()
-					:v!=null?TL.Util.parseInt( v.toString(),-1 ):-1;
-					Usr u=usrs.get( i );if(u==null){v=all.get( i );if(v instanceof Usr)u=(Usr)v;}
-					if(u!=null){
-						u.has.put(name,this);
-						members.put( u.id,u );}
-				}
-				else if(p.n.startsWith( "resource" )){
-					Integer i=v instanceof Integer
-					?(Integer)v:v instanceof Number?((Number)v).intValue()
-					:v!=null?TL.Util.parseInt( v.toString(),-1 ):-1;
-					ObjHead o=all.get( i );
-					if(o!=null){
-						o.roles.put(name,this);
-						resources.put( o.id,o );}
-				}
-				else if(p.n.startsWith( "operation" ))
-					operations.add( v );
-			}
-		}//init
-
-	}//class Role
-
-}//class Domain
+ }//class Domain
 
 }//class App
