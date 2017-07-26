@@ -99,7 +99,11 @@ public Json.Output getOut() throws IOException {return out;}
 
 /**sets a new TL-instance to the localThread*/
 public static TL Enter(HttpServletRequest r,HttpServletResponse response,HttpSession session,Writer out,PageContext pc) throws IOException{
-	TL p;tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));
+	TL p;tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));//Class c=App.class;c=App.ObjProperty.class;c=App.ObjHead.class;
+	if(App.ObjHead.sttc==null)
+		p.log( "TL.Enter:App.ObjHead.sttc=",App.ObjHead.sttc );
+	if(App.ObjProperty.sttc==null)
+		p.log( "TL.Enter:App.ObjProperty.sttc=",App.ObjProperty.sttc );
 	p.onEnter();
 	return p;}
 private void onEnter()throws IOException {
@@ -111,8 +115,9 @@ private void onEnter()throws IOException {
 		:o.toString().contains("part")?h.getMultiParts():null;
 		json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 		h.logOut=h.var("logOut",h.logOut);
-		if(h.getSession().isNew())DB.Tbl.check(this);
-		//DB.Tbl.Ssn.onEnter();
+		if(h.getSession().isNew()){
+			DB.Tbl.check(this);
+			App.Domain.loadDomain0();}
 		usr=(App.Domain.Usr)h.s("usr");
 	}catch(Exception ex){error(ex,"TL.onEnter");}
 	//if(pages==null){rsp.setHeader("Retry-After", "60");rsp.sendError(503,"pages null");throw new Exception("pages null");}
@@ -740,12 +745,13 @@ public static class DB {
 		static final String StrSsnTbls="TL.DB.Tbl.tbls";
 		//public Map<Class<? extends DB.Tbl.Sql>,DB.Tbl.Sql>tbls;
 		public static Tbl tbl(Class<? extends Tbl>p){
-			TL t=tl();Object o=t.h.s(StrSsnTbls);
+			return App.tbl( p );
+			/*TL t=tl();Object o=t.h.s(StrSsnTbls);
 			Map<Class<? extends Tbl>,Tbl>tbls=o instanceof Map?(Map)o:null;
 			if(tbls==null)t.h.s(StrSsnTbls,tbls=new HashMap<Class<? extends Tbl>,Tbl>());
 			Tbl r=tbls.get(p);if(r==null)try {tbls.put(p, r=p.newInstance());}
 			catch(Exception ex){t.error(ex,"TL.DB.Tbl.tbl(Class<TL.DB.Tbl>",p,"):Exception:");}
-			return r;}
+			return r;*/}
 		/**Sql-Column Interface, for enum -items that represent columns in sql-tables
 		 * the purpose of creating this interface is to centerlize
 		 * the definition of the names of columns in java source code*/
@@ -806,7 +812,7 @@ public static class DB {
 		public static String sql(CI[]cols,Object[]where,CI[]groupBy,CI[]orderBy,String name) {
 			//if(cols==null)cols=columns();
 			StringBuilder sql=new StringBuilder("select ");
-			sql.append(cols);
+			Cols.generate( sql,cols );//sql.append(cols);
 			sql.append(" from `").append(name).append("` ");
 			if(where!=null&&where.length>0)
 				TL.DB.Tbl.Cols.where(sql, where);
@@ -1105,7 +1111,7 @@ public static class DB {
 					if(i>0)b.append(separator);
 					String pre=col[i].prefix(),suf=col[i].suffix();
 					if(col[i] instanceof Cols.M)
-						b.append(col[i]);
+						b.append(((Cols.M)col[i]).txt);
 					else b.append(pre).append(col[i]).append(suf);}
 				return b;}
 			static StringBuilder where(StringBuilder b,Object[]where){
@@ -1167,10 +1173,10 @@ public static class DB {
 			for(Class<? extends Tbl>c:registered)try
 			{String n=c.getName(),n2=".checkDBTCreation."+n;
 				if( tl.h.a(n2)==null){
-					Tbl t=c.newInstance();
+					Tbl t=App.tbl( c );//c==App.ObjProperty.class?:c.newInstance();
 					t.checkDBTCreation(tl);
 					tl.h.a(n2,tl.now);
-				}}catch(Exception ex){}
+				}}catch(Exception ex){tl.error( ex,"TL.DB.Tbl.check" );}
 		}
 	}//class Tbl
 }//class DB
