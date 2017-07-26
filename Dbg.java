@@ -26,9 +26,9 @@ static final String Name="aswan2017.Dbg";
 public static class Req implements HttpServletRequest {
 	Ssn ssn;//=new Ssn();
 	String contentType="text/json"
-			,protocolVersion
-			,uri,bodyData//,data
-			,queryString
+			,protocolVersion=""
+			,uri="",bodyData//,data
+			,queryString=""
 					 ;//,method="POST";//
 	PC pc;Req(PC p){pc=p;}Req(PC p,String data){pc=p;init(data);}
 	InputStream inps;// from Http.Response.data
@@ -37,7 +37,7 @@ public static class Req implements HttpServletRequest {
 	boolean chunkedTransfer;// from Http.Response
 	boolean keepAlive;      // from Http.Response
 	List<String> cookieHeaders;// from Http.Response
-	Method method;// from Http.Response.requestMethod
+	Method method=Method.GET;// from Http.Response.requestMethod
 	/**
 	 * HTTP Request methods, with the ability to decode a <code>String</code> back
 	 * to its enum value.
@@ -73,7 +73,7 @@ public static class Req implements HttpServletRequest {
 
 	//public void addCookieHeader(String cookie) {cookieHeaders.add(cookie);}
 
-	Req init( String data) {
+	Req init( String data) {contentLength=(bodyData=data).length();
 		inps = new ByteArrayInputStream(data.getBytes());
 		return this;}
 
@@ -288,7 +288,6 @@ public static class Req implements HttpServletRequest {
 		}
 		return decoded;
 /*
-
 	/**
 	 * Decodes the Multipart Body data and put it into Key/Value pairs.
 	 * /
@@ -299,7 +298,6 @@ public static class Req implements HttpServletRequest {
 				if (boundaryIdxs.length < 2) {
 					throw new NanoHTTPD.ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Content type is multipart/form-data but contains less than two boundary strings.");
 				}
-
 				byte[] partHeaderBuff = new byte[MAX_HEADER_SIZE];
 				for (int boundaryIdx = 0; boundaryIdx < boundaryIdxs.length - 1; boundaryIdx++) {
 					fbuf.position(boundaryIdxs[boundaryIdx]);
@@ -307,7 +305,6 @@ public static class Req implements HttpServletRequest {
 					fbuf.get(partHeaderBuff, 0, len);
 					BufferedReader in =
 							new BufferedReader(new InputStreamReader(new ByteArrayInputStream(partHeaderBuff, 0, len), Charset.forName(contentType.getEncoding())), len);
-
 					int headerLines = 0;
 					// First line is boundary string
 					String mpline = in.readLine();
@@ -315,7 +312,6 @@ public static class Req implements HttpServletRequest {
 					if (mpline == null || !mpline.contains(contentType.getBoundary())) {
 						throw new NanoHTTPD.ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Content type is multipart/form-data but chunk does not start with boundary.");
 					}
-
 					String partName = null, fileName = null, partContentType = null;
 					// Parse the reset of the header lines
 					mpline = in.readLine();
@@ -359,20 +355,16 @@ public static class Req implements HttpServletRequest {
 					}
 					int partDataStart = boundaryIdxs[boundaryIdx] + partHeaderLength;
 					int partDataEnd = boundaryIdxs[boundaryIdx + 1] - 4;
-
 					fbuf.position(partDataStart);
-
 					List<String> values = parms.get(partName);
 					if (values == null) {
 						values = new ArrayList<String>();
 						parms.put(partName, values);
 					}
-
 					if (partContentType == null) {
 						// Read the part into a string
 						byte[] data_bytes = new byte[partDataEnd - partDataStart];
 						fbuf.get(data_bytes);
-
 						values.add(new String(data_bytes, contentType.getEncoding()));
 					} else {
 						// Read it into a file
@@ -395,15 +387,12 @@ public static class Req implements HttpServletRequest {
 				throw new NanoHTTPD.ResponseException(Status.INTERNAL_ERROR, e.toString());
 			}
 		}
-
-
 	public void parseBody(Map<String, String> files) throws IOException, NanoHTTPD.ResponseException {
 		RandomAccessFile randomAccessFile = null;
 		try {
 			long size = getBodySize();
 			ByteArrayOutputStream baos = null;
 			DataOutput requestDataOutput = null;
-
 			// Store the request in memory or a file, depending on size
 			if (size < MEMORY_STORE_LIMIT) {
 				baos = new ByteArrayOutputStream();
@@ -412,7 +401,6 @@ public static class Req implements HttpServletRequest {
 				randomAccessFile = getTmpBucket();
 				requestDataOutput = randomAccessFile;
 			}
-
 			// Read all the body and write it to request_data_output
 			byte[] buf = new byte[REQUEST_BUFFER_LEN];
 			while (this.rlen >= 0 && size > 0) {
@@ -422,7 +410,6 @@ public static class Req implements HttpServletRequest {
 					requestDataOutput.write(buf, 0, this.rlen);
 				}
 			}
-
 			ByteBuffer fbuf = null;
 			if (baos != null) {
 				fbuf = ByteBuffer.wrap(baos.toByteArray(), 0, baos.size());
@@ -430,7 +417,6 @@ public static class Req implements HttpServletRequest {
 				fbuf = randomAccessFile.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, randomAccessFile.length());
 				randomAccessFile.seek(0);
 			}
-
 			// If the method is POST, there may be parameters
 			// in data section, too, read it:
 			if (Method.POST.equals(this.method)) {
@@ -476,7 +462,7 @@ public static class Req implements HttpServletRequest {
 		@Override	public boolean hasMoreElements() {	return i.hasNext();}
 		@Override	public String nextElement() {return i.next();}};}
 	@Override public String getCharacterEncoding() {return "utf8";}
-	@Override public int getContentLength() {return bodyData==null?0:bodyData.length();}
+	@Override public int getContentLength() {return bodyData==null?(int)contentLength:bodyData.length();}
 	@Override public long getContentLengthLong() {return bodyData==null?0:bodyData.length();}
 	@Override public String getContentType() {p("Req.getContentType:",contentType);return contentType;}
 	@Override public String getContextPath() {return uri;}
@@ -790,7 +776,7 @@ public static class FSrvlt extends Srvlt{
 //////////////////////////////////////////////////////////////////////
 
 public static class Ssn implements HttpSession {
-	HashMap<String,Object> attribs=new HashMap<String,Object>();long expir;
+	HashMap<String,Object> attribs=new HashMap<String,Object>();long expir;boolean newlySsn=true;
 	public static Map<String,Ssn>sessions=new HashMap<String,Ssn>();
 
 	@Override public Object getAttribute(String p){return attribs.get(p);}
@@ -807,7 +793,7 @@ public static class Ssn implements HttpSession {
 	@Override public Object getValue(String p){return null;}
 	@Override public String[] getValueNames() {return null;}
 	@Override public void invalidate(){}
-	@Override public boolean isNew() {return false;}
+	@Override public boolean isNew() {return newlySsn;}
 	@Override public void putValue(String p, Object p2){}
 	@Override public void removeAttribute(String p){}
 	@Override public void removeValue(String p){}
@@ -944,9 +930,34 @@ public static void main(String[]args)throws Exception{
 	s.pc=new PC();
 	s.pc.a=SrvltContxt.sttc();
 	s.pc.q.ssn=new Ssn();
-	s.pc.q.init("{op:'poll',getLogs:[{from:'2017-01-01'},{from:'2016-01-01',to:'2016-02-02'},{from:'2016-01-01',to:'2016-02-02',domain:0}],update:[],getDistinct:[]}");
-	TL.run( s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.getWriter(),s.pc );
-}
+	String[]prms=
+{"{op:'login',un:'moh',pw:'x',logOut:true}"
+,"{op:'login',un:'admin',pw:'6f8f57715090da2632453988d9a1501b'}"
+,"{op:'poll',getLogs:[" +
+"{from:50},{to:50}" +
+",{from:50,to:100}" +
+",{from:50,to:100,idList:[0,1,2]}" +
+",{from:50,to:100,idList:[0,1,2],nList:['a','b']}" +
+",{from:50,to:100,idList:[0,1,2],nList:['a','b'],uidList:[0,1,2]}" +
+",{from:50,to:100,uidList:[0,1,2]}" +
+",{from:50,to:100,nList:['a','b'],uidList:[0,1,2]}" +
+",{from:50,to:100,idList:[0,1,2],uidList:[0,1,2]}" +
+
+",{headLog:true,to:100}" +
+",{headLog:true,from:50}" +
+",{headLog:true,from:50,to:100}" +
+",{headLog:true,from:50,to:100,idList:[0,1,2]}" +
+",{headLog:true,from:50,to:100,domainList:[0,1,2]}" +
+",{headLog:true,from:50,to:100,protoList:[0,1,2]}" +
+",{headLog:true,from:50,to:100,parentList:[0,1,2]}" +
+",{headLog:true,from:50,to:100,idList:[0,1,2],domainList:[0,1,2],protoList:[0,1,2],parentList:[0,1,2]}" +
+" ] }"
+//"{op:'poll',getLogs:[{from:'2017-01-01'},{from:'2016-01-01',to:'2016-02-02'},{from:'2016-01-01',to:'2016-02-02',domain:0}],update:[],getDistinct:[]}"
+	};
+	for(String p:prms){
+	s.pc.q.init(p);
+	TL.run( s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.getWriter(),s.pc );s.pc.q.ssn.newlySsn=false;
+}}
 
 static void oldMain() {
 	Dbg.p("DebugXhr.main:begin");
