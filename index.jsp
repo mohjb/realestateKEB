@@ -176,7 +176,6 @@ static Map getLog(Map p,TL tl){
 	}catch(Exception ex){tl.error(ex,"getLog");}
 	return p;}
 
-
 static List update(List rows,TL tl){
 	List x=new LinkedList();
 	ObjProperty d=new ObjProperty(0);
@@ -230,7 +229,6 @@ static List getIds(List rows,TL tl){
 	return x;}
 */
 }
-
 
 /**
  * pg is pagenation, a js-obj from client-http-request of the
@@ -295,6 +293,16 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 	return m;}
 
 static{TL.registerOp( App.class);}
+public static Tbl tbl(Class<? extends Tbl>c){
+	if(c==ObjProperty.class)
+		return ObjProperty.sttc;
+	if(c==ObjHead.class)
+		return ObjHead.sttc;
+	try{return c.newInstance();}
+	catch ( Exception ex ){TL.tl().error( ex,"aswan2017.App.tbl:" );}
+	return ObjHead.sttc;
+}
+
 /**
  * Proto_Id_Name_Val_Usr_LogTime P.I.N.V.U.LT)
  * */
@@ -318,8 +326,15 @@ public static class ObjProperty extends Tbl {//implements Serializable
 		@Override public Object value(Object v){return val(tbl(),v);}
 		@Override public Object val(TL.Form f){return f.v(this);}
 		@Override public Object val(TL.Form f,Object v){return f.v(this,v);}
-		public String prefix(){return this==logTime?"max(`":"`";}
-		public String suffix(){return this==logTime?"`)":"`";}
+		public String prefix(){String r="`";
+			if(this==logTime && TL.tl().h.r(this+".noMax")==null)
+				r="max(`";
+			return r;}
+
+		public String suffix(){String r="`";
+			if(this==logTime && TL.tl().h.r(this+".noMax")==null)
+				r="`)";
+			return r;}
 	}//C
 	@Override public CI pkc(){return C.no;}
 	@Override public Object pkv(){return no;}
@@ -338,7 +353,7 @@ public static class ObjProperty extends Tbl {//implements Serializable
 				TL.Util.lst(C.id,C.logTime)
 				,TL.Util.lst(C.logTime,C.id)
 				,TL.Util.lst(C.id,C.n,C.logTime)
-				,TL.Util.lst(C.n,C.v,C.logTime)
+				,TL.Util.lst(C.n,TL.Util.lst( C.v,255),C.logTime)
 				,TL.Util.lst(C.uid,C.id,C.logTime) )
 		);
 /*
@@ -359,7 +374,11 @@ CREATE TABLE `ObjProperty` (
 */
 	}
 	static{registered.add(ObjProperty.class);}
-
+public static ObjProperty sttc=new ObjProperty( 0 );
+	@Override public Tbl save() throws Exception{
+		TL tl=TL.tl();tl.h.r( C.logTime+".noMax",true );
+		super.save();tl.h.r( C.logTime+".noMax",null );
+		return this;}
 	public static ObjHead loadObj(ObjHead o){
 		if(o==null)return o;
 		if(o.props==null)
@@ -392,18 +411,19 @@ CREATE TABLE `ObjProperty` (
 			+C.n+"`=? group by `" +C.id +"`,`"+C.n +"`",Integer.class,pn);}
 	public ObjProperty(Integer id){this.id=id;}
 }//class ObjProperty
+
 /**
  * for Domain&Proto vs userRole Access-Control
  * */
 public static class ObjHead extends Tbl {
 	public static final String dbtName="ObjHead";
 	@Override public String getName(){return dbtName;}
-	@F public Integer id,/**parent-object*/parent
+	@F public Integer no,id,/**parent-object*/parent
 	,/**the super-prototype*/proto
 	,/**belongs to which domain/company/realm/accessControlContext */domain
 	,/**user that made the change*/uid;
 	@F(max=true) public Date logTime;
-	public enum C implements CI{id,parent,proto,domain,uid,logTime;
+	public enum C implements CI{no,id,parent,proto,domain,uid,logTime;
 		@Override public Class<? extends Tbl>cls(){return ObjHead.class;}
 		@Override public Class<? extends TL.Form>clss(){return cls();}
 		@Override public String text(){return name();}
@@ -415,23 +435,34 @@ public static class ObjHead extends Tbl {
 		@Override public Object value(Object v){return val(tbl(),v);}
 		@Override public Object val(TL.Form f){return f.v(this);}
 		@Override public Object val(TL.Form f,Object v){return f.v(this,v);}
-		public String prefix(){return this==logTime?"max(`":"`";}
-		public String suffix(){return this==logTime?"`)":"`";}
+		public String prefix(){//return this==logTime?"max(`":"`";
+			String r="`";
+			if(this==logTime && TL.tl().h.r(this+".noMax")==null)
+				r="max(`";
+			return r;}
+
+		public String suffix(){
+			String r="`";
+			if(this==logTime && TL.tl().h.r(this+".noMax")==null)
+				r="`)";
+			return r;}
 	}//C
-	@Override public CI pkc(){return C.id;}
-	@Override public Object pkv(){return id;}
+	@Override public CI pkc(){return C.no;}
+	@Override public Object pkv(){return no;}
 	@Override public C[]columns(){return C.values();}
 	@Override public List creationDBTIndices(TL tl){
 		return TL.Util.lst(TL.Util.lst(
-			"int(8) PRIMARY KEY NOT NULL AUTO_INCREMENT"//id
+			"int(8) PRIMARY KEY NOT NULL AUTO_INCREMENT"//no
+			,"int(8) NOT NULL DEFAULT 1"//id
 			,"int(8) NOT NULL DEFAULT 1"//parent
 			,"int(8) NOT NULL DEFAULT 1"//proto
 			,"int(8) NOT NULL DEFAULT 1"//domain
 			,"INT(6) DEFAULT NULL"//uid
 			,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
-			),TL.Util.lst(TL.Util.lst(C.domain,C.proto ,C.logTime)
-			,TL.Util.lst(C.parent ,C.logTime)
+			),TL.Util.lst(TL.Util.lst(C.id ,C.logTime)
 			,TL.Util.lst(C.logTime)
+			,TL.Util.lst(C.domain,C.proto ,C.logTime)
+			,TL.Util.lst(C.parent ,C.logTime)
 			,TL.Util.lst(C.uid,C.domain,C.logTime))
 		);
 /*
@@ -483,9 +514,17 @@ CREATE TABLE `ObjHead` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 */
 	}
+
 	static{registered.add(ObjHead.class);}
+	public static ObjHead sttc=new ObjHead( 0,0,0,0 );
+
+	@Override public Tbl save() throws Exception{
+		TL tl=TL.tl();tl.h.r( C.logTime+".noMax",true );
+		super.save();tl.h.r( C.logTime+".noMax",null );
+		return this;}
+
 	/** all protos in all domains*/
-	static Map<Integer,ObjHead>all;
+	static Map<Integer,ObjHead>all=new HashMap<Integer,ObjHead>();
 	/**roles is the list of access control, if a user doesnt have any of the roles then the user has no access
 	 *,if a user is in locks ,even if the user has a role for access, the user is locked-out and has no access*/
 	//Map<String,Domain.Role>roles=new HashMap<String,Domain.Role>();//,locks=new HashMap<String,Domain.Role>();
@@ -694,8 +733,67 @@ CREATE TABLE `ObjHead` (
 	return d;
   }
 
-	public static Domain initNew(){Domain d =null;try
-	  {/*two cases:1.new domain0 , 2. domain0 exists
+	public static Domain initNew(){Domain d =null;TL tl=TL.tl();try
+	  {d = new Domain( 0, 0, 0 );
+		d.uid=tl.usr==null?0:tl.usr.id;
+		int n = d.maxPlus1( C.id ),x=n;
+		d.id=n==1?n=0:n;
+		domains.put( n,d );
+		all.put( n,d );
+		d.save();int c=d.count( null );
+		/*if(d.id!=n || c<2)
+		{tl.log( "App.Domain.initNew:after d.save, domain.id!=n : n=",n," ,d.id=",d.id );
+			d.id=n;
+			if(c==1 && !d.exists()){
+				TL.DB.x( "update `"+ObjHead.dbtName+"` set id=0" );// and uid=0
+				tl.log( "App.Domain.initNew:if(c==1 && !d.exists())TL.DB.x( \"update `\"+ObjHead.dbtName+\"` set id=0\" );" );
+			}
+		}
+		if(!d.exists())
+			tl.log( "App.Domain.initNew:after d.save, !d.exists()" );*/
+		ObjHead o=null;
+		Map<Proto,ObjHead>m=new HashMap<Proto,ObjHead>();
+		for(Proto prt:Proto.values()) {int id=prt.ordinal()+n+1;
+			o = new ObjHead( id, d.id, id, d.id );
+			o.save();m.put( prt,o );
+			all.put( o.id,o );
+			o.loadProps();
+			ObjProperty p = new ObjProperty( o.id );
+			p.n = "name";
+			p.v = prt.name();
+			o.props.put( p.n, p );
+			p.save();
+			x=o.id;
+		}
+		Usr u = tl.usr;
+		//create user admin admin
+		if(n==0 || u==null) {
+			o = m.get( Proto.Usr );
+			u = d.new Usr( ++x, d.id, o.id );
+			u.save();
+			if (u.props ==null )
+				u.props = new HashMap<>();
+			ObjProperty p=u.props.get("un");
+			if(p==null)u.setProps(
+				"un","admin"
+				,"pw","6f8f57715090da2632453988d9a1501b"
+			);
+		 }
+		//create role admin for admin
+		o=m.get( Proto.Role);
+		String rn="domain"+d.id+".admin";
+		Role r=d.new Role( ++x,d.id,o.id );
+		r.save();
+		r.setProps( "name",rn
+			,"member1",u.id
+			,"resource1",d.id
+			,"operation1",Oper.all.toString()
+		);
+		d.roles.put( rn,r );
+		u.have.put( rn,r );//r.roles.put( rn,r );u.roles.put( rn,r );
+	  }catch ( Exception ex ){tl.error(ex,"App.Domain.initNew:");}
+	  return d;
+	  /*two cases:1.new domain0 , 2. domain0 exists
 
 		create Role,Usr,Lock,Proto
 		//create a user
@@ -719,56 +817,7 @@ CREATE TABLE `ObjHead` (
 		 timeout
 		 changePW
 		*/
-
-
-		d = new Domain( 0, 0, 0 );
-		int n = d.maxPlus1( C.id ),x=n;
-		d.id=n==1?n=0:n;
-		domains.put( n,d );
-		all.put( n,d );
-		d.save();ObjHead o=null;
-		Map<Proto,ObjHead>m=new HashMap<Proto,ObjHead>();
-		for(Proto prt:Proto.values()) {
-			o = new ObjHead( prt.ordinal()+n, d.id, prt.ordinal()+n, d.id );
-			o.save();m.put( prt,o );
-			all.put( o.id,o );
-			o.loadProps();
-			ObjProperty p = new ObjProperty( o.id );
-			p.n = "name";
-			p.v = prt.name();
-			o.props.put( p.n, p );
-			p.save();
-			x=o.id;
 		}
-		TL tl = TL.tl();
-		Usr u = tl.usr;
-		//create user admin admin
-		if(n==0 || u==null) {
-			o = m.get( Proto.Usr );
-			u = d.new Usr( ++x, d.id, o.id );
-			u.save();
-			if ( u.props == null )
-				 u.props = new HashMap<>();
-			ObjProperty p=u.props.get("un");
-			if(p==null)u.setProps(
-				"un","admin"
-				,"pw","6f8f57715090da2632453988d9a1501b"
-			);
-		 }
-		//create role admin for admin
-		o=m.get( Proto.Role);
-		String rn="domain"+d.id+".admin";
-		Role r=d.new Role( ++x,d.id,o.id );
-		r.save();
-		r.setProps( "name",rn
-			,"member1",u.id
-			,"resource1",d.id
-			,"operation1",Oper.all.toString()
-		);
-		d.roles.put( rn,r );
-		u.have.put( rn,r );//r.roles.put( rn,r );u.roles.put( rn,r );
-	  }catch ( Exception ex ){}
-	  return d;}
 
 
   public class Role extends ObjHead{
