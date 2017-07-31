@@ -1321,6 +1321,7 @@ public static class Json{
 			if(a==null)w("null"); //Object\n.p(ind)
 			else if(a instanceof String)oStr(String.valueOf(a),ind);
 			else if(a instanceof Boolean||a instanceof Number)w(a.toString());
+			else if(a instanceof App.Tbl)((App.Tbl)a).jsonOutput(this,ind,path);
 			else if(a instanceof TL.Form)oForm((TL.Form)a,ind,path);
 			else if(a instanceof Map<?,?>)oMap((Map)a,ind,path);
 			else if(a instanceof Collection<?>)oCollctn((Collection)a,ind,path);
@@ -1340,29 +1341,24 @@ public static class Json{
 			else if(a instanceof Cookie )oCookie((Cookie)a,ind,path);
 			else if(a instanceof java.util.UUID)w("\"").p(a.toString()).w(c?"\"/*uuid*/":"\"");
 			else{w("{\"class\":").oStr(a.getClass().getName(),ind)
-					     .w(",\"str\":").oStr(String.valueOf(a),ind)
-					     .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
+					.w(",\"str\":").oStr(String.valueOf(a),ind)
+					.w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
 				if(c)w("}//Object&cachePath=\"").p(path).w("\"\n").p(ind);
 				else w("}");}return this;}
-		public Output oFormFlds(TL.Form p,String ind,String path)throws IOException{
-			Field[]a=p.fields();String i2=ind+'\n';
-			w("\"name\":").oStr(p.getName(),ind);
-			for(Field f:a)
-			{	w(',').oStr(f.getName(),i2).w(':')
-						 .o(p.v(f),ind,comment?path+'.'+f.getName():path);
-				if(comment)w("//").w(f.toString()).w("\n").p(i2);
-			}return this;}
+
 		public Output oForm(TL.Form p,String ind,String path)throws IOException{
-			if(p instanceof TL.DB.Tbl)return oDbTbl((TL.DB.Tbl)p,ind,path);
-			if(comment)w("{//TL.Form:").w(p.getClass().toString()).w('\n').p(ind);
+			if(comment)w("{//TL.Form:").w('\n').p(ind);//.w(p.getClass().toString())
 			else w('{');
-			oFormFlds(p,ind,path);
+			Field[]a=p.fields();String i2=ind+'\n';
+			w("\"class\":").oStr(p.getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
+			for(Field f:a)
+			{	w(',').oStr(f.getName(),i2).w(':').o(p.v(f)
+					,ind,comment?path+'.'+f.getName():path);
+				if(comment)w("//").w(f.toString()).w("\n").p(i2);
+			}
 			return (comment?w("}//TL.Form&cachePath=\"").p(path).w("\"\n").p(ind):w('}'));}
-		public Output oDbTbl(TL.DB.Tbl p,String ind,String path)throws IOException{
-			if(comment)w("{//TL.DB.Tbl:pkc=").o(p.pkc()).w(':')
-					           .w(p.getClass().toString()).w("\n").p(ind);else w('{');
-			oFormFlds(p,ind,path);
-			return comment?w("}//TL.DB.Tbl&cachePath=\"").p(path).w("\"\n").p(ind):w('}');}
+
+
 		public Output oStr(String a,String indentation)throws IOException
 		{final boolean m=comment;if(a==null)return w(m?" null //String\n"+indentation:"null");
 			w('"');for(int n=a.length(),i=0;i<n;i++)
@@ -1566,9 +1562,9 @@ public static class Json{
 			return this;}
 		Output oSC(ServletContext y,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-				                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-				                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-				                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+			.w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+			.w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+			.w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 			if(c)
 				w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("}");
@@ -1612,10 +1608,10 @@ public static class Json{
 			for(int i=1;i<=cc;i++){
 				if(i>1){if(c)w("\n").p(i2).w(",");else w(",");}
 				w("{\"name\":").oStr(o.getColumnName( i ),i2)
-						.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
-						.w(",\"width\":").p(o.getColumnDisplaySize( i ))
-						.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
-						.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
+					.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
+					.w(",\"width\":").p(o.getColumnDisplaySize( i ))
+					.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
+					.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
 			}//for i<=cc
 			if(c)w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
 					     ;else w("]");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSetMetaData:");}return this;}
