@@ -97,7 +97,8 @@ public Json.Output getOut() throws IOException {return out;}
 
 /**sets a new TL-instance to the localThread*/
 public static TL Enter(HttpServletRequest r,HttpServletResponse response,HttpSession session,Writer out,PageContext pc) throws IOException{
-	TL p;tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));//Class c=App.class;c=App.ObjProperty.class;c=App.ObjHead.class;
+	TL p;App app=null;if(ops==null || ops.size()==0)App.staticInit();
+	tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));//Class c=App.class;c=App.ObjProperty.class;c=App.ObjHead.class;
 	if(App.ObjHead.sttc==null)
 		p.log( "TL.Enter:App.ObjHead.sttc=",App.ObjHead.sttc );
 	if(App.ObjProperty.sttc==null)
@@ -532,7 +533,7 @@ public static class DB {
 	public static void close(Connection c,TL tl){
 		try{if(c!=null){
 			List<ResultSet>a=stack(tl,false);
-			if(a!=null&&a.size()>0)
+			if(a==null||a.size()<1)
 				tl.h.s(context.DB.reqCon.str,a=null);
 			if(a==null)
 				c.close();}
@@ -1797,7 +1798,7 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 		}
 		Op opAnno=op==null?null:op.getAnnotation( Op.class );
 		tl.log("jsp:version2017.02.09.17.10:op=",op,opAnno);
-		if(tl.usr==null&& (opAnno==null || opAnno.usrLoginNeeded() ) &&!tl.h.logOut)//TODO: AFTER TESTING DEVELOPMENT, REMOVE tl.h.logOut
+		if(tl.usr==null&& (opAnno==null || opAnno.usrLoginNeeded() ) )//&&!tl.h.logOut TO DO: AFTER TESTING DEVELOPMENT, REMOVE tl.h.logOut
 			op=null;
 		Object retVal=null;
 		if(op!=null){
@@ -1840,8 +1841,8 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 				:n==6?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5])
 				:n==7?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5],args[6])
 				:op.invoke(cl,args);
-			Op pp=op.getAnnotation(Op.class);
-			if(pp!=null && pp.nestJsonReq() && tl.json!=null){
+			//Op pp=op.getAnnotation(Op.class);
+			if(opAnno!=null && opAnno.nestJsonReq() && tl.json!=null){
 				tl.json.put("return",retVal);retVal=tl.json;}
 		}
 		// else TL.Util.mapSet(tl.response,"msg","Operation not authorized ,or not applicable","return",false);
