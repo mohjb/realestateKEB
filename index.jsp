@@ -24,14 +24,14 @@ public static @TL.Op(usrLoginNeeded=false) Map login
 		tl.h.s( "usr",u );
 		Map m=u.asMap();
 		TL.Util.mapSet( m
-			,"have",u.have
+			,"have",u.have//TODO: in TL.Json.Output add methods for ObjHead,ObjProperty,Domain,Role,Usr
 			,"props",u.props );
 		return m;
 	}
 	return null;}
 
 public static @TL.Op boolean logout(TL tl){
-	Domain.Usr u=tl.usr;
+	Domain.Usr u=tl.usr;tl.h.s("usr",tl.usr=null);
 	Object[]a=TL.DB.stack(tl,null,false,true);
 	a[1]=null;
 	TL.DB.close( (java.sql.Connection)a[0],tl );
@@ -384,18 +384,24 @@ Tbl(Integer id){this();this.id=id;}
 	super.save();tl.h.r( n,null );
 	return this;}
 
+	public static List ids(java.util.Collection<? extends Tbl>a){
+		if(a==null)return null;
+		List l=new LinkedList<Integer>();// have.size() );
+		for(Tbl t:a)l.add( t.id );
+		return l;}
+	public abstract TL.Json.Output jsonOutput(TL.Json.Output o
+		,String ind,String path)throws java.io.IOException;
+
 }//abstract class App.Tbl
 
 /** db-tbl ORM wrapper * Id_Name_Val_Usr_LogTime I.N.V.U.LT * */
 public static class ObjProperty extends Tbl {//implements Serializable
 	public static final String dbtName="ObjProperty";
 	@Override public String getName(){return dbtName;}
-	/*
-		@F public Integer no, /**user that made the change* /uid;
-	@F(max=true) public Date logTime;//cancelled:lastModified
-	@F(group=true) public Integer /**Object Id* /id;
+	@Override public TL.Json.Output jsonOutput(TL.Json.Output o
+		,String ind,String path)throws java.io.IOException{
+		return o.oForm( this,ind,path );}
 
-	*/
 	@F(group=true) public String /**propertyName*/n;
 	@F(json=true) public Object /**propertyValue*/v;
 	public enum C implements CI{no,uid,logTime,id,n,v;
@@ -565,15 +571,38 @@ CREATE TABLE `ObjHead` (
 
 	static{registered.add(ObjHead.class);}
 	public static ObjHead sttc=new ObjHead( );
+	static ObjHead factory(Integer id){
+		ObjHead p,x,o=all.get( id );
+		if(o==null){
+			x=o=new ObjHead( id,0,0,0 );
+			o.loadBy( C.id,id );
+			while(x.proto!=x.id && x instanceof ObjHead)
+			{p=x.proto();
+				if(p==null)
+					p=factory(x.proto);
+				x=p;
+			}
+			if(x instanceof ObjHead)
+				all.put( id,o );
+			else
+			{if(x instanceof Domain || x.id==x.domain){
+					Domain d=Domain.loadDomain( id );o=d;
+					Domain.domains.put( id,d );
+			 }else if(x instanceof Domain.Usr){
 
+			}
+			}
+		}
+		return o;
+	}
 
 	/** all protos in all domains*/
-	static Map<Integer,ObjHead>all=new HashMap<Integer,ObjHead>();
+	public static Map<Integer,ObjHead>all=new HashMap<Integer,ObjHead>();
 	/* *roles is the list of access control, if a user doesnt have any of the roles then the user has no access
 	 *,if a user is in locks ,even if the user has a role for access, the user is locked-out and has no access* /
 	//Map<String,Domain.Role>roles=new HashMap<String,Domain.Role>();//,locks=new HashMap<String,Domain.Role>();*/
-	Map<Integer,ObjHead>children;//,sub,descendents;
-	Map<String,ObjProperty>props;
+	public Map<Integer,ObjHead>children;//,sub,descendents;
+	public Map<String,ObjProperty>props;
 	ObjHead(Integer id,Integer parent,Integer proto,Integer domain){
 		super(id);this.parent=parent;this.proto=proto;this.domain=domain;}
 	public ObjHead(){this(0,0,0,0);}
@@ -639,6 +668,69 @@ CREATE TABLE `ObjHead` (
 		Number v=p instanceof Number?(Number)p
 		:p==null?null:Double.parseDouble( p.toString() );
 		return v;}
+
+	public boolean hasAccess(){Domain.Usr u=TL.tl().usr;return u!=null&&u.hasAccess( "view",id );}
+	//public boolean hasAccess(Object operation,Domain.Usr u){return u.hasAccess( op,id );}
+
+		/*public Output oDbTbl(TL.DB.Tbl p,String ind,String path)throws IOException{
+			if(p instanceof App.Tbl)return oAppTbl((App.Tbl)p,ind,path);
+			return comment?w("}//TL.DB.Tbl:pkc=").o(p.pkc()).w(':')
+				.w(p.getClass().toString()).w("&cachePath=\"").p(path).w("\"\n").p(ind):w('}');}
+		public Output oAppTbl(App.Tbl o,String ind,String path)throws IOException{
+			if(o instanceof App.ObjProperty){App.ObjProperty p=(App.ObjProperty)o;
+
+			}else
+			if(o instanceof App.ObjHead)return oObjHead((App.ObjHead)o,ind,path);
+			return (comment?w("}//App.Tbl&cachePath=\"").p(path).w("\"\n").p(ind):w('}'));}*/
+	@Override public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{
+		return jsonOutput( o,ind,path,true );}
+
+	public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException{
+		Domain.Usr u=TL.tl().usr;
+		if (u==null || !u.hasAccess( "view",id ))
+		{o.w( "noAccess" );return null;}
+		//if(o.comment)o.w("{//TL.Form:").w('\n').p(ind);else//.w(p.getClass().toString())
+		 o.w('{');
+		Field[]a=fields();String i2=ind+'\n';
+		o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
+		for(Field f:a)
+		{	o.w(',').oStr(f.getName(),i2).w(':')
+				.o(v(f),ind,o.comment?path+'.'+f.getName():path);
+			if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
+		}
+
+		if(children!=null) //o.w(",\"children\":").oCollctn( children.keySet(),ind,o.comment?path+".children":path );
+			jsonOutput(children.values() , o.w(",\"children\":"),ind,o.comment?path+".children":path);
+		if(props!=null) {o.w(",\"props\":{");//.oCollctn( p.props.values(),ind,w.comment?path+".props":path );
+			boolean comma=false;
+			for ( App.ObjProperty p:props.values() ){
+				if(comma)o.w(',');else comma=true;
+				o.oStr(p.n,ind)
+					.w(":{\"v\":")
+					.o( p.v,ind,o.comment?path+".props."+p.n:path )
+					.w(",\"uid\":").p( p.uid )
+					.w(",\"logTime\":").p( p.logTime==null?0:p.logTime.getTime() )
+				.w( '}' );
+			}
+			o.w("}");
+		}
+		if(closeBrace){
+			if(o.comment)
+				o.w("}//App.ObjHead&cachePath=\"").p(path).w("\"\n").p(ind);
+			else o.w('}');}
+		return o;
+	}
+
+	public TL.Json.Output jsonOutput(java.util.Collection<? extends ObjHead> l
+,TL.Json.Output o,String ind,String path)throws java.io.IOException{
+		o.w("[");
+			boolean comma=false;
+			for ( ObjHead p:l )if(p.hasAccess(  )){
+				if(comma)o.w(',');else comma=true;
+				o.o( p.id );
+			}
+			o.w("]");
+		return o;}
 
 }//class ObjHead
 
@@ -858,6 +950,30 @@ CREATE TABLE `ObjHead` (
 		 changePW
 		*/
 		}
+
+	@Override public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{
+		if(super.jsonOutput( o,ind,path ,false)==null)return o;
+		if(usrs!=null) //o.w(",\"usrs\":").oCollctn( App.Tbl.ids(usrs.values( )),ind,o.comment?path+".usrs":path );
+			jsonOutput(usrs.values() , o.w(",\"usrs\":"),ind,o.comment?path+".usrs":path);
+
+		if(roles!=null)//o.w(",\"roles\":").oCollctn( App.Tbl.ids(roles.values()),ind,o.comment?path+".roles":path );
+			jsonOutput(roles.values() , o.w(",\"roles\":"),ind,o.comment?path+".roles":path);
+		if(locks!=null)//o.w(",\"locks\":").oCollctn( locks.keySet(),ind,o.comment?path+".locks":path );
+			jsonOutput(locks.values() , o.w(",\"locks\":"),ind,o.comment?path+".locks":path);
+		if(o.comment)
+			o.w("}//App.Domain&cachePath=\"").p(path).w("\"\n").p(ind);
+		else o.w('}');
+		return o;}//(o.comment?o.w("}//App.Domain&cachePath=\"").p(path).w("\"\n").p(ind):o.w('}'));
+
+	/*public TL.Json.Output oUsr(App.Domain.Usr p,String ind,String path)throws IOException{
+		if(p.have!=null)w(",\"have\":").oCollctn( p.haveKeys(),ind,w.comment?path+".have":path );
+		if(p.locks!=null)w(",\"locks\":").oCollctn( p.locks.keySet(),ind,w.comment?path+".locks":path );
+		return (w.comment?w("}//App.Domain.Usr&cachePath=\"").p(path).w("\"\n").p(ind):w('}'));}
+	public TL.Json.Output oRole(App.Domain.Role p,String ind,String path)throws IOException{
+		if(p.operations!=null)w(",\"operations\":").oCollctn( p.operations,ind,w.comment?path+".operations":path );
+		if(p.resources!=null)w(",\"resources\":").oCollctn( p.resources.keySet(),ind,w.comment?path+".resources":path );
+		if(p.members!=null)w(",\"members\":").oCollctn( p.members.keySet(),ind,w.comment?path+".members":path );
+		return (w.comment?w("}//App.Domain.Role&cachePath=\"").p(path).w("\"\n").p(ind):w('}'));}*/
 
 
   public class Role extends ObjHead{
