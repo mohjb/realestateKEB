@@ -30,6 +30,14 @@ public static @TL.Op(usrLoginNeeded=false) Map login
 	}
 	return null;}
 
+public static @TL.Op boolean logout(TL tl){
+	Domain.Usr u=tl.usr;
+	Object[]a=TL.DB.stack(tl,null,false,true);
+	a[1]=null;
+	TL.DB.close( (java.sql.Connection)a[0],tl );
+	tl.h.getSession().setMaxInactiveInterval( 0 );
+	return u!=null;}
+
 /**http-get-method , poll-server
  * , of param"lastPoll" is present, then call lastPoll
  * , if param"updateCols" present then call updateCols
@@ -304,7 +312,11 @@ static Map list(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 	}catch(Exception ex){tl.error(ex,"list",pg,rs);}
 	return m;}
 
-static{TL.registerOp( App.class);}
+static void staticInit(){
+	TL.registerOp( App.class);
+}
+
+static{staticInit();}
 
 public static TL.DB.Tbl tbl(Class<? extends TL.DB.Tbl>c){
 	if(c==ObjProperty.class)
