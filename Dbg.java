@@ -931,14 +931,16 @@ public static void main(String[]args)throws Exception{
 	s.pc.a=SrvltContxt.sttc();
 	s.pc.q.ssn=new Ssn();
 	String[]prms=
-{"{op:'login',un:'moh',pw:'x',logOut:true}"
+{/*"{op:'login',un:'moh',pw:'x',logOut:true}"
 ,"{op:'App.login',un:'moh',pw:'x'}"
 		,"{op:'poll',getLogs:[{from:50},{to:50}]}"
 		,"{op:'App.poll',getLogs:[{from:50},{to:50}]}"
 ,"{op:'App.login',un:'admin',pw:'6f8f57715090da2632453988d9a1501b'}"
+,*/"{op:'App.login',un:'usr0',pw:'6f8f57715090da2632453988d9a1501b'}"
 		,"{op:'poll',getLogs:[{from:50},{to:50}]}"
 ,"{op:'App.poll',getLogs:[" +
-"{from:50},{to:50}" +
+ "{from:50}" +
+",{to:50}" +
 ",{from:50,to:100}" +
 ",{from:50,to:100,idList:[0,1,2]}" +
 ",{from:50,to:100,idList:[0,1,2],nList:['a','b']}" +
@@ -947,14 +949,14 @@ public static void main(String[]args)throws Exception{
 ",{from:50,to:100,nList:['a','b'],uidList:[0,1,2]}" +
 ",{from:50,to:100,idList:[0,1,2],uidList:[0,1,2]}" +
 
-",{headLog:true,to:100}" +
-",{headLog:true,from:50}" +
-",{headLog:true,from:50,to:100}" +
-",{headLog:true,from:50,to:100,idList:[0,1,2]}" +
-",{headLog:true,from:50,to:100,domainList:[0,1,2]}" +
-",{headLog:true,from:50,to:100,protoList:[0,1,2]}" +
-",{headLog:true,from:50,to:100,parentList:[0,1,2]}" +
-",{headLog:true,from:50,to:100,idList:[0,1,2],domainList:[0,1,2],protoList:[0,1,2],parentList:[0,1,2]}" +
+",{To:100}" +
+",{From:50}" +
+",{From:50,To:100}" +
+",{From:50,To:100,idList:[0,1,2]}" +
+",{From:50,To:100,domainList:[0,1,2]}" +
+",{From:50,To:100,protoList:[0,1,2]}" +
+",{From:50,To:100,parentList:[0,1,2]}" +
+",{From:50,To:100,idList:[0,1,2],domainList:[0,1,2],protoList:[0,1,2],parentList:[0,1,2]}" +
 " ] }"
 //"{op:'poll',getLogs:[{from:'2017-01-01'},{from:'2016-01-01',to:'2016-02-02'},{from:'2016-01-01',to:'2016-02-02',domain:0}],update:[],getDistinct:[]}"
 	};
@@ -962,5 +964,30 @@ public static void main(String[]args)throws Exception{
 	s.pc.q.init(p);
 	TL.run( s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.getWriter(),s.pc );s.pc.q.ssn.newlySsn=false;
 }}
+
+static void oldMain() {
+	Dbg.p("DebugXhr.main:begin");
+	final String prms=",storage:{path:'eu059s.files:dbg.txt',contentType:'text/Javascript',lastModified:1487164764805,data:'dbgOk'},path:'eu059s.files:dbg.txt',lastModified:1486164764805,no:0,logOut:true}";
+	final String[]testCases={
+			// "{op:'Storage.New'"	+prms,
+			"{op:'Storage.list'"	+prms
+			,"{op:'Storage.get'"	+prms
+			,"{op:'Storage.content'"+prms
+			,"{op:'Storage.set'"	+prms
+			,"{op:'Storage.delete'"	+prms
+			,""
+	};//final String[]testCases
+	Dbg.Srvlt s=new Dbg.Srvlt();
+	s.pc=new PC();
+	s.pc.a=SrvltContxt.sttc();
+	Dbg.p("DebugXhr.main:new Srvlt");
+	//TL.registerOp(AppEU059S.class);TL.registerOp(AppEU059S.Storage.class);
+	for(String data:testCases)
+	{Dbg.p("DebugXhr.main:data=",s.pc.q.init(data));
+		try {s.pc.q.attribs.clear();
+			TL.run(s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.out,s.pc);//AppEU059S.jsp(s.q,s.p,s.p.out);
+		}catch (Exception e) {e.printStackTrace();}}
+	Dbg.p("Dbg.main:end");
+}//oldMain
 
 }//class Dbg
