@@ -297,14 +297,15 @@ public static abstract class Tbl extends TL.DB.Tbl{
 	@F public Integer no, /**user that made the change*/uid;
 	@F(max=true) public Date logTime;//cancelled:lastModified
 	@F(group=true) public Integer /**Object Id*/id;
-Tbl(){TL tl=TL.tl();uid=tl.usr==null?0:tl.usr.id;}
-Tbl(Integer id){this();this.id=id;}
 
-	abstract CI ciId();
-	abstract CI ciUid();
-	abstract CI ciLogTime();
-	abstract CI[]groupBy();
-	@Override public Object pkv(){return no;}
+ Tbl(){TL tl=TL.tl();uid=tl.usr==null?0:tl.usr.id;}
+ Tbl(Integer id){this();this.id=id;}
+
+ abstract CI ciId();
+ abstract CI ciUid();
+ abstract CI ciLogTime();
+ abstract CI[]groupBy();
+ @Override public Object pkv(){return no;}
 
  public boolean exists(){CI[]groupBy=groupBy();
 	Object[]where=new Object[groupBy.length*2];
@@ -338,14 +339,13 @@ Tbl(Integer id){this();this.id=id;}
 	super.save();
 	return this;}
 
-public abstract CI[]colmns();
-	public static List ids(java.util.Collection<? extends Tbl>a){
-		if(a==null)return null;
-		List l=new LinkedList<Integer>();// have.size() );
-		for(Tbl t:a)l.add( t.id );
-		return l;}
-	public abstract TL.Json.Output jsonOutput(TL.Json.Output o
-		,String ind,String path)throws java.io.IOException;
+ public abstract CI[]colmns();
+
+ public static List ids(java.util.Collection<? extends Tbl>a){
+	if(a==null)return null;
+	List l=new LinkedList<Integer>();// have.size() );
+	for(Tbl t:a)l.add( t.id );
+	return l;}
 
 }//abstract class App.Tbl
 
@@ -353,8 +353,6 @@ public abstract CI[]colmns();
 public static class ObjProperty extends Tbl {//implements Serializable
 	public static final String dbtName="ObjProperty";
 	@Override public String getName(){return dbtName;}
-	@Override public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{
-		return o.oForm( this,ind,path );}
 
 	@F(group=true) public String /**propertyName*/n;
 	@F(json=true) public Object /**propertyValue*/v;
@@ -364,7 +362,13 @@ public static class ObjProperty extends Tbl {//implements Serializable
 	}//C
 	@Override public CI pkc(){return C.no;}
 	@Override public C[]columns(){return C.values();}
-	@Override  public CI[]colmns(){CI[]a=C.values();a[C.logTime.ordinal()]=Co.maxLogTime;return a;}
+	@Override  public CI[]colmns(){
+		C[]x=C.values();
+		CI[]a=new CI[x.length];
+		System.arraycopy( x,0,a,0,x.length );
+		a[C.logTime.ordinal()]=Co.maxLogTime;
+		return a;}
+
 	@Override public List creationDBTIndices(TL tl){
 		return TL.Util.lst(
 			TL.Util.lst("int(24) PRIMARY KEY NOT NULL AUTO_INCREMENT"//no
@@ -455,7 +459,12 @@ public static class ObjHead extends Tbl {
 	}//C
 	@Override public CI pkc(){return C.no;}
 	@Override public C[]columns(){return C.values();}
-	@Override  public CI[]colmns(){CI[]a=C.values();a[C.logTime.ordinal()]=Co.maxLogTime;return a;}
+	@Override public CI[]colmns(){
+		C[]x=C.values();
+		CI[]a=new CI[x.length];
+		System.arraycopy( x,0,a,0,x.length );
+		a[C.logTime.ordinal()]=Co.maxLogTime;
+		return a;}
 
 	@Override public List creationDBTIndices(TL tl){
 		return TL.Util.lst(TL.Util.lst(
@@ -614,9 +623,12 @@ CREATE TABLE `ObjHead` (
 	//Map<String,Domain.Role>roles=new HashMap<String,Domain.Role>();//,locks=new HashMap<String,Domain.Role>();*/
 	public Map<Integer,ObjHead>children;//,sub,descendents;
 	public Map<String,ObjProperty>props;
+
 	ObjHead(Integer id,Integer parent,Integer proto,Integer domain){
 		super(id);this.parent=parent;this.proto=proto;this.domain=domain;}
+
 	public ObjHead(){this(0,0,0,0);}
+
 	ObjHead parent(){return all==null?null:all.get(parent);}
 	ObjHead proto(){return all==null?null:all.get(proto);}
 	Domain domain(){return  all==null?null: (Domain)(all.get(domain));}//Domain.domains
@@ -646,15 +658,15 @@ CREATE TABLE `ObjHead` (
 
 	public void setProps(Object...a)throws Exception{
 		if(a==null||a.length<2)return;
-		if(props==null)props=new HashMap<>(  );
+		if(props==null)props=new HashMap<>(  );TL tl=TL.tl();
 		for(int i=0;i<a.length;i+=2){
 			String n=String.valueOf( a[i] );
 			ObjProperty p=props.get( n );
 			if(p==null)
 				props.put( n,p=new ObjProperty( id,n,a[i+1] ) );
-			else p.v=a[i+1];
-			TL tl=TL.tl();
-			p.uid=tl.usr==null?0:tl.usr.id;
+			else{ p.v=a[i+1];
+			//TL tl=TL.tl();
+			p.uid=tl.usr==null?0:tl.usr.id;}
 			p.logTime=tl.now;
 			p.save();
 		}}
@@ -680,7 +692,7 @@ CREATE TABLE `ObjHead` (
 		:p==null?null:Double.parseDouble( p.toString() );
 		return v;}
 
-	public boolean hasAccess(){Domain.Usr u=TL.tl().usr;return u!=null&&u.hasAccess( Domain.Oper.view.name(),id );}
+	public boolean hasAccess(){Domain.Usr u=TL.tl().usr;return u!=null&&u.hasAccess( Domain.Oper.view.name(),id );
 	//public boolean hasAccess(Object operation,Domain.Usr u){return u.hasAccess( op,id );}
 
 		/*public Output oDbTbl(TL.DB.Tbl p,String ind,String path)throws IOException{
@@ -692,23 +704,15 @@ CREATE TABLE `ObjHead` (
 
 			}else
 			if(o instanceof App.ObjHead)return oObjHead((App.ObjHead)o,ind,path);
-			return (comment?w("}//App.Tbl&cachePath=\"").p(path).w("\"\n").p(ind):w('}'));}*/
-	@Override public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{
-		return jsonOutput( o,ind,path,true );}
+			return (comment?w("}//App.Tbl&cachePath=\"").p(path).w("\"\n").p(ind):w('}'));}*/}
 
 	public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException{
 		Domain.Usr u=TL.tl().usr;
-		if (u==null || !u.hasAccess( Domain.Oper.view.name(),id ))
-		{o.w( "\"noAccess\"" );return o;}//return null throw new IOException( "no user access-control on object" );
-		//if(o.comment)o.w("{//TL.Form:").w('\n').p(ind);else//.w(p.getClass().toString())
-		 o.w('{');
-		Field[]a=fields();String i2=ind+'\n';
-		o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
-		for(Field f:a)
-		{	o.w(',').oStr(f.getName(),i2).w(':')
-				.o(v(f),ind,o.comment?path+'.'+f.getName():path);
-			if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
-		}
+		if (o.restrictedAccess &&( u==null || !u.hasAccess( Domain.Oper.view.name(),id )))
+		{o.w( "\"noAccess\"" );o.accessViolation++;
+			return o;}//throw new IOException( "no user access-control on object" );
+
+		super.jsonOutput( o,ind,path,false );
 
 		if(children!=null) //o.w(",\"children\":").oCollctn( children.keySet(),ind,o.comment?path+".children":path );
 			jsonOutput(children.values() , o.w(",\"children\":"),ind,o.comment?path+".children":path);
@@ -717,10 +721,10 @@ CREATE TABLE `ObjHead` (
 			for ( App.ObjProperty p:props.values() ){
 				if(comma)o.w(',');else comma=true;
 				o.oStr(p.n,ind)
-					.w(":{\"v\":")
-					.o( p.v,ind,o.comment?path+".props."+p.n:path )
-					.w(",\"uid\":").p( p.uid )
-					.w(",\"logTime\":").p( p.logTime==null?0:p.logTime.getTime() )
+				.w(":{\"v\":")
+				.o( p.v,ind,o.comment?path+".props."+p.n:path )
+				.w(",\"uid\":").p( p.uid )
+				.w(",\"logTime\":").p( p.logTime==null?0:p.logTime.getTime() )
 				.w( '}' );
 			}
 			o.w("}");
@@ -855,7 +859,7 @@ CREATE TABLE `ObjHead` (
 	return d;
   }
 
-	public static Domain initNew(){Domain d =null;TL tl=TL.tl();try
+  public static Domain initNew(){Domain d =null;TL tl=TL.tl();try
 	  {int n = Domain.maxPlus1( C.id ,dbtName),x=n;ObjHead o;
 		d = new Domain( x, x, x );
 		//d.uid=tl.usr==null?0:tl.usr.id;//d.id=n==1?n=0:n;
@@ -880,14 +884,14 @@ CREATE TABLE `ObjHead` (
 		if(n==0 || u==null) {
 			o = m.get( Proto.Usr );
 			u = d.new Usr( ++x, d.id, o.id );u.uid=d.uid;
-			u.save();
+			u.save();String un=null;
 			if (u.props ==null )
 				u.props = new HashMap<>();
 			ObjProperty p=u.props.get("un");
 			if(p==null)u.setProps(
-				"un","usr0"
+				"un",un="usr0"
 				,"pw","6f8f57715090da2632453988d9a1501b"
-			);
+			);else un=u.un();allUsrs.put(un,u);d.usrs.put(un,u);
 		}
 		//create role admin for admin
 		o=m.get( Proto.Role);
@@ -897,18 +901,18 @@ CREATE TABLE `ObjHead` (
 		r.setProps( "name",rn
 			,"member1",u.id
 			,"resource1",d.id
-			,"resource2",Proto.Usr  .get().id
-			,"resource3",Proto.Role .get().id
-			,"resource4",Proto.Proto.get().id
-			,"resource5",Proto.Lock .get().id
+			,"resource2",m.get(Proto.Usr  ).id//Proto.Usr  .get().id
+			,"resource3",m.get(Proto.Role ).id//Proto.Role .get().id
+			,"resource4",m.get(Proto.Proto).id//Proto.Proto.get().id
+			,"resource5",m.get(Proto.Lock ).id//Proto.Lock .get().id
 		);
 		for(Oper oper:Oper.values())
-			r.setProps( "operation"+oper.ordinal()+1 , oper.name());
+			r.setProps( "operation"+(oper.ordinal()+1) , oper.name());
 		d.roles.put( rn,r );
 		u.have.put( rn,r );//r.roles.put( rn,r );u.roles.put( rn,r );
 	  }catch ( Exception ex ){tl.error(ex,"App.Domain.initNew:");}
 	 return d;
-	  /*create Role,Usr,Lock,Proto
+	/*create Role,Usr,Lock,Proto
 		//create a user
 		//create a role, and add the new domain as resource, add user as member, add the default operations
 		changePW
@@ -922,7 +926,10 @@ CREATE TABLE `ObjHead` (
 	}
 
 	@Override public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{
-		if(super.jsonOutput( o,ind,path ,false)==null)return o;
+		try{int old=o.accessViolation;
+			super.jsonOutput( o,ind,path ,false);
+			if(old!=o.accessViolation)
+			return o;}catch(Exception ex){return o;}
 		if(usrs!=null)
 			jsonOutput(usrs.values() , o.w(",\"usrs\":"),ind,o.comment?path+".usrs":path);
 
@@ -952,11 +959,7 @@ CREATE TABLE `ObjHead` (
 				:null;
 				if(i==null&&v!=null){s=v.toString();
 					i=TL.Util.isNum( s ) ?new Integer( s):null;}
-				v=all.get( i );Usr u=v instanceof Usr?(Usr)v:usrs.get( i );
-				//if(u==null){
-				//	v=all.get( i );
-				//	if(v instanceof Usr)
-				//		u=(Usr)v;}
+				v=all.get( i );Usr u=v instanceof Usr?(Usr)v:usrs.get( i );//if(u==null){//	v=all.get( i );//	if(v instanceof Usr)//		u=(Usr)v;}
 				if(u!=null){
 					u.have.put(name,this);
 					if(members==null)
