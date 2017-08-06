@@ -522,7 +522,7 @@ public static class DB {
 		t.log("TL("+t+").DB.P(sql="+sql+",p="+p+",odd="+odd+")");
 		if(odd){if(p.length==1)
 			r.setObject(1,p[0]);else
-			for(int i=1;p!=null&&i<p.length;i+=2)
+			for(int i=1,n=p.length;p!=null&&i<n;i+=2)if((!(p[i] instanceof List)) ) // ||!(p[i-1] instanceof List)||((List)p[i-1]).size()!=2||((List)p[i-1]).get(1)!=Tbl.Co.in )
 				r.setObject(i/2+1,p[i]);//if(t.logOut)TL.log("dbP:"+i+":"+p[i]);
 		}else
 			for(int i=0;p!=null&&i<p.length;i++)
