@@ -42,9 +42,9 @@ import java.util.Date;
 public class TL
 {
 enum context{ROOT(
-		                 "/public_html/i1io/"
-		                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-		                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	"/public_html/i1io/"
+	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -431,14 +431,15 @@ public void logA(Object[]s){try{
 	h.getServletContext().log(t);
 	if(h.logOut)out.flush().w(h.comments[0]).w(t).w(h.comments[1]);
 }catch(Exception ex){ex.printStackTrace();}}
-public void error(Throwable x,Object...p){try{
+
+ public void error(Throwable x,Object...p){try{
 	String s=jo().clrSW().w("error:").o(p,x).toString();
 	h.getServletContext().log(s);
 	if(h.logOut)out.w(h.comments[0]//"\n/*
 	).w("error:").w(s.replaceAll("<", "&lt;"))
-			          .w("\n---\n").o(x).w(h.comments[1]
-			);if(x!=null)x.printStackTrace();}
-catch(Exception ex){ex.printStackTrace();}}
+		.w("\n---\n").o(x).w(h.comments[1] );
+	if(x!=null)x.printStackTrace();}
+ catch(Exception ex){ex.printStackTrace();}}
 
 /**get a pooled jdbc-connection for the current Thread, calling the function dbc()*/
 Connection dbc()throws SQLException {
@@ -778,10 +779,27 @@ public static class DB {
 // /**encapsulating Html-form fields, use annotation Form.F for defining/mapping member-variables to html-form-fields*/ public abstract static class Form{
 
 @Override public String toString(){return toJson();}
+
 	public abstract String getName();
-	public String toJson(){Json.Output o= tl().jo().clrSW();
-		try {o.oForm(this, "", "");}
-		catch (IOException ex) {}return o.toString();}
+
+public Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{return jsonOutput( o,ind,path,true );}
+public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException{
+	//if(o.comment)o.w("{//TL.Form:").w('\n').p(ind);else//.w(p.getClass().toString())
+	 o.w('{');
+	Field[]a=fields();String i2=ind+'\n';
+	o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
+	for(Field f:a)
+	{	o.w(',').oStr(f.getName(),i2).w(':')
+			.o(v(f),ind,o.comment?path+'.'+f.getName():path);
+		if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
+	}
+	if(closeBrace){
+		if(o.comment)
+			o.w("}//TL.DB.Tbl&cachePath=\"").p(path).w("\"\n").p(ind);
+		else o.w('}');}
+	return o; }
+
+	public String toJson(){Json.Output o= tl().jo().clrSW();try {jsonOutput(o, "", "");}catch (IOException ex) {}return o.toString();}
 
 	public Tbl readReq(String prefix){
 		TL t=tl();CI[]a=columns();for(CI f:a){
@@ -791,9 +809,10 @@ public static class DB {
 				if(s!=null)v=Util.parse(s,c);
 				v(f,v);//f.set(this, v);
 			}catch (Exception ex) {// IllegalArgumentException,IllegalAccessException
-				t.error(ex,"TL.Form.readReq:t=",this," ,field="
+				t.error(ex,"TL.DB.Tbl.readReq:t=",this," ,field="
 						,f+" ,c=",c," ,s=",s," ,v=",v);}}
 		return this;}
+
 	public abstract CI[]columns();//public abstract FI[]flds();
 
 	public Object[]vals(){
@@ -802,8 +821,7 @@ public static class DB {
 		int i=-1;
 		for(Field f:a){i++;
 			r[i]=v(a[i]);
-		}return r;}
-/*	@Override public Object[] vals() {
+		}return r;/*	@Override public Object[] vals() {
 		Object[]r=super.vals();
 		for(int i=0;i<r.length;i++)
 			if(r[i] instanceof Map)
@@ -811,7 +829,8 @@ public static class DB {
 				r[i]=t.jo().clrSW().o(r[i]).toStrin_();
 			} catch (IOException e) {e.printStackTrace();}}
 		return r;
-	} */
+	} */}
+
 
 	public Tbl vals (Object[]p){
 		Field[]a=fields();int i=-1;
@@ -837,6 +856,7 @@ public static class DB {
 		return this;}
 
 	public Field[]fields(){return fields(getClass());}
+
 	public static Field[]fields(Class<?> c){
 		List<Field>l=fields(c,null);
 		int n=l==null?0:l.size();
@@ -856,21 +876,26 @@ public static class DB {
 		return l;}
 
 	public Tbl v(CI p,Object v){return v(p.f(),v);}//this is beautiful(tear running down cheek)
+
 	public Object v(CI p){return v(p.f());}//this is beautiful(tear running down cheek)
+
 	public Tbl v(Field p,Object v){//this is beautiful(tear running down cheek)
 		try{Class <?>t=p.getType();
 			if(v!=null && !t.isAssignableFrom( v.getClass() ))//t.isEnum()||t.isAssignableFrom(URL.class))
 				v=Util.parse(v instanceof String?(String)v:String.valueOf(v),t);
 			p.set(this,v);
-		}catch (Exception ex) {tl().error(ex,"TL.Form.v(",this,",",p,",",v,")");}
+		}catch (Exception ex) {tl().error(ex,"TL.DB.Tbl.v(",this,",",p,",",v,")");}
 		return this;}
+
 	public Object v(Field p){//this is beautiful(tear running down cheek)
 		try{return p.get(this);}
 		catch (Exception ex) {//IllegalArgumentException,IllegalAccessException
-			tl().error(ex,"TL.Form.v(",this,",",p,")");return null;}}
+			tl().error(ex,"TL.DB.Tbl.v(",this,",",p,")");return null;}}
+
 	/**Field annotation to designate a java member for use in a Html-Form-field/parameter*/
 	@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
 	public @interface F{	boolean prmPw() default false;boolean group() default false;boolean max() default false;boolean json() default false; }
+
 	/**Interface for enum-items from different forms and sql-tables ,
 	 * the enum items represent a reference Column Fields for identifing the column and selection.*/
 	public interface CI{public Field f();}//interface I
@@ -955,7 +980,7 @@ public static class DB {
 			} catch (SQLException ex) {
 				tl.error(ex, "TL.DB.Tbl.checkTableCreation:check-pt1:",dtn);}
 			List l=(List)o;
-			try{if(o==null||!l.contains( dtn.toLowerCase() )){
+			try{if(o==null||(!l.contains( dtn )&&!l.contains( dtn.toLowerCase()))){
 				StringBuilder sql= new StringBuilder("CREATE TABLE `").append(dtn).append("` (\n");
 				CI[]ci=columns();int an,x=0;
 				List a=creationDBTIndices(tl),b=(List)a.get(0);
@@ -1255,15 +1280,15 @@ public static class DB {
 public Json.Output o(Object...a)throws IOException{if(out!=null&&out.w!=null)for(Object s:a)out.w.write(s instanceof String?(String)s:String.valueOf(s));return out;}
 public static class Json{
 	public static class Output
-	{ public Writer w;
+	{ public Writer w;public boolean restrictedAccess=false;int accessViolation=0;
 		public boolean initCache=false,includeObj=false,comment=false;
 		Map<Object, String> cache;
 		public static void out(Object o,Writer w,boolean initCache,boolean includeObj)
-				throws IOException{Json.Output t=new Json.Output(w,initCache,includeObj);t.o(o);if(t.cache!=null){t.cache.clear();t.cache=null;}}
+			throws IOException{Json.Output t=new Json.Output(w,initCache,includeObj);t.o(o);if(t.cache!=null){t.cache.clear();t.cache=null;}}
 		public static String out(Object o,boolean initCache,boolean includeObj){StringWriter w=new StringWriter();
 			try{out(o,w,initCache,includeObj);}catch(Exception ex){TL.tl().log("Json.Output.out",ex);}return w.toString();}
 		public static String out(Object o){StringWriter w=new StringWriter();try{out(o,w,
-				false,false);}catch(Exception ex){TL.tl().log("Json.Output.out",ex);}return w.toString();}
+			false,false);}catch(Exception ex){TL.tl().log("Json.Output.out",ex);}return w.toString();}
 		public Output(){w=new StringWriter();}
 		public Output(Writer p){w=p;}
 		public Output(Writer p,boolean initCache,boolean includeObj)
@@ -1394,8 +1419,7 @@ public static class Json{
 			Iterator e=o.iterator();int i=0;
 			if(e.hasNext()){o(e.next(),ind,c?path+(i++):path);
 				while(e.hasNext()){w(",");o(e.next(),ind,c?path+(i++):path);}}
-			return c?w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
-					       :w("]");}
+			return c?w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind) :w("]");}
 		public Output oMap(Map o,String ind,String path) throws IOException
 		{if(o==null)return w("null");final boolean c=comment;
 			if(c){w("{//").p(o.getClass().getName()).w(":Map\n").p(ind);
@@ -1408,40 +1432,40 @@ public static class Json{
 			while(e.hasNext()){k=e.next();v=o.get(k);w(",");
 				o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 			if(c) w("}//")
-					      .p(o.getClass().getName())
-					      .w("&cachePath=\"")
-					      .p(path)
-					      .w("\"\n")
-					      .p(ind);else w("}");
+				.p(o.getClass().getName())
+				.w("&cachePath=\"")
+				.p(path)
+				.w("\"\n")
+				.p(ind);else w("}");
 			return this;}
 		public Output oReq(HttpServletRequest r,String ind,String path)throws IOException
 		{final boolean c=comment;try{boolean comma=false,c2;//,d[]
 			String k,i2=c?ind+"\t":ind,ct;int j;Enumeration e,f;
 			(c?w("{//").p(r.getClass().getName()).w(":HttpServletRequest\n").p(ind):w("{"))
-					.w("\"dt\":").oDt(TL.tl().now,i2)//new java.util.Date()
-					.w(",\"AuthType\":").o(r.getAuthType(),i2,c?path+".AuthTyp":path)
-					.w(",\"CharacterEncoding\":").o(r.getCharacterEncoding(),i2,c?path+".CharacterEncoding":path)
-					.w(",\"ContentLength\":").o(r.getContentLength(),i2,c?path+".ContentLength":path)
-					.w(",\"ContentType\":").o(ct=r.getContentType(),i2,c?path+".ContentType":path)
-					.w(",\"ContextPath\":").o(r.getContextPath(),i2,c?path+".ContextPath":path)
-					.w(",\"Method\":").o(r.getMethod(),i2,c?path+".Method":path)
-					.w(",\"PathInfo\":").o(r.getPathInfo(),i2,c?path+".PathInfo":path)
-					.w(",\"PathTranslated\":").o(r.getPathTranslated(),i2,c?path+".PathTranslated":path)
-					.w(",\"Protocol\":").o(r.getProtocol(),i2,c?path+".Protocol":path)
-					.w(",\"QueryString\":").o(r.getQueryString(),i2,c?path+".QueryString":path)
-					.w(",\"RemoteAddr\":").o(r.getRemoteAddr(),i2,c?path+".RemoteAddr":path)
-					.w(",\"RemoteHost\":").o(r.getRemoteHost(),i2,c?path+".RemoteHost":path)
-					.w(",\"RemoteUser\":").o(r.getRemoteUser(),i2,c?path+".RemoteUser":path)
-					.w(",\"RequestedSessionId\":").o(r.getRequestedSessionId(),i2,c?path+".RequestedSessionId":path)
-					.w(",\"RequestURI\":").o(r.getRequestURI(),i2,c?path+".RequestURI":path)
-					.w(",\"Scheme\":").o(r.getScheme(),i2,c?path+".Scheme":path)
-					.w(",\"UserPrincipal\":").o(r.getUserPrincipal(),i2,c?path+".UserPrincipal":path)
-					.w(",\"Secure\":").o(r.isSecure(),i2,c?path+".Secure":path)
-					.w(",\"SessionIdFromCookie\":").o(r.isRequestedSessionIdFromCookie(),i2,c?path+".SessionIdFromCookie":path)
-					.w(",\"SessionIdFromURL\":").o(r.isRequestedSessionIdFromURL(),i2,c?path+".SessionIdFromURL":path)
-					.w(",\"SessionIdValid\":").o(r.isRequestedSessionIdValid(),i2,c?path+".SessionIdValid":path)
-					.w(",\"Locales\":").oEnumrtn(r.getLocales(),ind,c?path+".Locales":path)
-					.w(",\"Attributes\":{");
+				.w("\"dt\":").oDt(TL.tl().now,i2)//new java.util.Date()
+				.w(",\"AuthType\":").o(r.getAuthType(),i2,c?path+".AuthTyp":path)
+				.w(",\"CharacterEncoding\":").o(r.getCharacterEncoding(),i2,c?path+".CharacterEncoding":path)
+				.w(",\"ContentLength\":").o(r.getContentLength(),i2,c?path+".ContentLength":path)
+				.w(",\"ContentType\":").o(ct=r.getContentType(),i2,c?path+".ContentType":path)
+				.w(",\"ContextPath\":").o(r.getContextPath(),i2,c?path+".ContextPath":path)
+				.w(",\"Method\":").o(r.getMethod(),i2,c?path+".Method":path)
+				.w(",\"PathInfo\":").o(r.getPathInfo(),i2,c?path+".PathInfo":path)
+				.w(",\"PathTranslated\":").o(r.getPathTranslated(),i2,c?path+".PathTranslated":path)
+				.w(",\"Protocol\":").o(r.getProtocol(),i2,c?path+".Protocol":path)
+				.w(",\"QueryString\":").o(r.getQueryString(),i2,c?path+".QueryString":path)
+				.w(",\"RemoteAddr\":").o(r.getRemoteAddr(),i2,c?path+".RemoteAddr":path)
+				.w(",\"RemoteHost\":").o(r.getRemoteHost(),i2,c?path+".RemoteHost":path)
+				.w(",\"RemoteUser\":").o(r.getRemoteUser(),i2,c?path+".RemoteUser":path)
+				.w(",\"RequestedSessionId\":").o(r.getRequestedSessionId(),i2,c?path+".RequestedSessionId":path)
+				.w(",\"RequestURI\":").o(r.getRequestURI(),i2,c?path+".RequestURI":path)
+				.w(",\"Scheme\":").o(r.getScheme(),i2,c?path+".Scheme":path)
+				.w(",\"UserPrincipal\":").o(r.getUserPrincipal(),i2,c?path+".UserPrincipal":path)
+				.w(",\"Secure\":").o(r.isSecure(),i2,c?path+".Secure":path)
+				.w(",\"SessionIdFromCookie\":").o(r.isRequestedSessionIdFromCookie(),i2,c?path+".SessionIdFromCookie":path)
+				.w(",\"SessionIdFromURL\":").o(r.isRequestedSessionIdFromURL(),i2,c?path+".SessionIdFromURL":path)
+				.w(",\"SessionIdValid\":").o(r.isRequestedSessionIdValid(),i2,c?path+".SessionIdValid":path)
+				.w(",\"Locales\":").oEnumrtn(r.getLocales(),ind,c?path+".Locales":path)
+				.w(",\"Attributes\":{");
 			comma=false;
 			e=r.getAttributeNames();while(e.hasMoreElements())
 				try{k=e.nextElement().toString();if(comma)w(",");else comma=true;
@@ -1483,10 +1507,10 @@ public static class Json{
 		{final boolean c=comment;try{if(s==null)w("null");else
 		{String i2=c?ind+"\t":ind;
 			(c?w("{//").p(s.getClass().getName()).w(":HttpSession\n").p(ind):w("{"))
-					.w("{\"isNew\":").p(s.isNew()).w(",sid:").oStr(s.getId(),ind)
-					.w(",\"CreationTime\":").p(s.getCreationTime())
-					.w(",\"MaxInactiveInterval\":").p(s.getMaxInactiveInterval())
-					.w(",\"attributes\":{");Enumeration e=s.getAttributeNames();boolean comma=false;
+				.w("{\"isNew\":").p(s.isNew()).w(",sid:").oStr(s.getId(),ind)
+				.w(",\"CreationTime\":").p(s.getCreationTime())
+				.w(",\"MaxInactiveInterval\":").p(s.getMaxInactiveInterval())
+				.w(",\"attributes\":{");Enumeration e=s.getAttributeNames();boolean comma=false;
 			while(e.hasMoreElements())
 			{Object k=e.nextElement().toString();if(comma)w(",");else comma=true;
 				o(k,i2).w(":").o(s.getAttribute(String.valueOf(k)),i2,c?path+".Attributes."+k:path);
@@ -1496,15 +1520,15 @@ public static class Json{
 			return this;}
 		public Output oCookie(Cookie y,String ind,String path)throws IOException
 		{final boolean c=comment;try{(c?w("{//")
-				                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-				                             .w("\"Comment\":").o(y.getComment())
-				                             .w(",\"Domain\":").o(y.getDomain())
-				                             .w(",\"MaxAge\":").p(y.getMaxAge())
-				                             .w(",\"Name\":").o(y.getName())
-				                             .w(",\"Path\":").o(y.getPath())
-				                             .w(",\"Secure\":").p(y.getSecure())
-				                             .w(",\"Version\":").p(y.getVersion())
-				                             .w(",\"Value\":").o(y.getValue());
+			.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+			.w("\"Comment\":").o(y.getComment())
+			.w(",\"Domain\":").o(y.getDomain())
+			.w(",\"MaxAge\":").p(y.getMaxAge())
+			.w(",\"Name\":").o(y.getName())
+			.w(",\"Path\":").o(y.getPath())
+			.w(",\"Secure\":").p(y.getSecure())
+			.w(",\"Version\":").p(y.getVersion())
+			.w(",\"Value\":").o(y.getValue());
 		}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
@@ -1513,7 +1537,7 @@ public static class Json{
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;
 			(c?w("{//").p(y.getClass().getName()).w(":PageContext\n").p(ind):w("{"))
 					.w("\"ip\":").o(y.h.ip,i2,c?path+".ip":path)
-				//	.w(",\"usr\":").o(y.usr,i2,c?path+".usr":path)//.w(",uid:").o(y.uid,i2,c?path+".uid":path)
+					.w(",\"usr\":").o(y.usr,i2,c?path+".usr":path)//.w(",uid:").o(y.uid,i2,c?path+".uid":path)
 					//.w(",\"ssn\":").o(y.ssn,i2,c?path+".ssn":path)//.w(",sid:").o(y.sid,i2,c?path+".sid":path)
 					.w(",\"now\":").o(y.now,i2,c?path+".now":path)
 					.w(",\"json\":").o(y.json,i2,c?path+".json":path)
@@ -1548,8 +1572,7 @@ public static class Json{
 			//getServletContext()
 			//String getServletName()	.w(",:").o(y.(),i2,c?path+".":path)
 		}catch(Exception ex){TL.tl().error(ex,"Json.Output.ServletConfiguration:");}
-			return c?w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
-					       :w("}");}
+			return c?w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind) :w("}");}
 		Output oBean(Object o,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind,i3=c?i2+"\t":ind;Class z=o.getClass();
 			(c?w("{//").p(z.getName()).w(":Bean\n").p(ind):w("{"))
@@ -1557,19 +1580,18 @@ public static class Json{
 //		.w(",:").o(o.(),i2,c?path+".":path)
 			;Method[]a=z.getMethods();//added 2015.11.21
 			for(Method m:a){String n=m.getName();
-				if(n.startsWith("get")&&m//.getParameterCount()
-						                        .getParameterTypes().length==0)
+				if(n.startsWith("get")&&m.getParameterTypes().length==0)//.getParameterCount()
 					w("\n").w(i2).w(",").p(n).w(':').o(m.invoke(o), i3, path+'.'+n);}
-			if(c)w("}//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
-					     ;else w("}");}catch(Exception ex){TL.tl().error(ex,"Json.Output.Bean:");}return this;}
+			if(c)w("}//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
+			else w("}");}catch(Exception ex){TL.tl().error(ex,"Json.Output.Bean:");}return this;}
 		Output oResultSet(ResultSet o,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;
 			TL.DB.ItTbl it=new TL.DB.ItTbl(o);
 			(c?w("{//").p(o.getClass().getName()).w(":ResultSet\n").p(ind):w("{"))
-					.w("\"h\":").oResultSetMetaData(it.row.m,i2,c?path+".h":path)
-					.w("\n").p(ind).w(",\"a\":").o(it,i2,c?path+".a":path)
-			;if(c)w("}//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
-					      ;else w("}");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSet:");}return this;}
+				.w("\"h\":").oResultSetMetaData(it.row.m,i2,c?path+".h":path)
+				.w("\n").p(ind).w(",\"a\":").o(it,i2,c?path+".a":path);
+			if(c)w("}//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
+			else w("}");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSet:");}return this;}
 		Output oResultSetMetaData(ResultSetMetaData o,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;
 			int cc=o.getColumnCount();
@@ -1626,9 +1648,9 @@ public static class Json{
 				skipWhiteSpace();if(c==')')next();break;
 			default:r=extractIdentifier();}skipWhiteSpace();
 			if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-					                    ||(cache!=null&&comments.startsWith("cacheReference"))))
-			{if(i!=-1){if(cache==null)cache=new HashMap<String,Object>();int j=comments.indexOf
-					                                                                            ("\"",i+=11);cache.put(comments.substring(i,j!=-1?j:comments.length()),r);}
+				||(cache!=null&&comments.startsWith("cacheReference"))))
+			{if(i!=-1){if(cache==null)cache=new HashMap<String,Object>();
+			 int j=comments.indexOf("\"",i+=11);cache.put(comments.substring(i,j!=-1?j:comments.length()),r);}
 			else r=cache.get(r);comments=null;}return r;}
 		public void skipWhiteSpace()
 		{boolean b=false;do{b=c==' '||c=='\t'||c=='\n'||c=='\r';
@@ -1648,17 +1670,11 @@ public static class Json{
 		{if(c=='\\'){next();switch(c)
 		{case 'n':r.append('\n');break;case 't':r.append('\t');break;
 			case 'r':r.append('\r');break;case '0':r.append('\0');break;
-			case 'x':case 'X':next();r.append( (char)
-					                                   java.lang.Integer.parseInt(
-							                                   p.substring(offset,offset+2
-							                                   ),16));next();//next();
+			case 'x':case 'X':next();r.append( (char) Integer.parseInt(p.substring(offset,offset+2),16));next();//next();
 			break;
 			case 'u':
 			case 'U':
-				next();r.append( (char)
-						                 java.lang.Integer.parseInt(
-								                 p.substring(offset,offset+4
-								                 ),16));next();next();next();//next();
+				next();r.append( (char)Integer.parseInt(p.substring(offset,offset+4),16));next();next();next();//next();
 				break;default:if(c!='\0')r.append(c);}}
 		else r.append(c);
 			next();b=c!=first&&c!='\0';
@@ -1671,8 +1687,8 @@ public static class Json{
 			while(c!='\0'&&Character.isUnicodeIdentifierPart(c))next();
 			String r=p.substring(i,offset);
 			return "true".equals(r)?new Boolean(true)
-					       :"false".equals(r)?new Boolean(false)
-							        :"null".equals(r)||"undefined".equals(r)?NULL:r;}
+				:"false".equals(r)?new Boolean(false)
+				:"null".equals(r)||"undefined".equals(r)?NULL:r;}
 		public Object extractDigits()
 		{int i=offset,iRow=row,iCol=col;boolean dot=c=='.';
 			if(c=='0'&&offset+1<len)
@@ -1707,9 +1723,9 @@ public static class Json{
 			Object k,v;Boolean t=new Boolean(true);while(c!='\0'&&c!='}')
 			{v=t;if(c=='"'||c=='\''||c=='`')k=extractStringLiteral();else k=extractIdentifier();
 				skipWhiteSpace();if(c==':'||c=='='){next();v=parseItem();}//else skipWhiteSpace();
-				if(c!='\0'&&c!='}'){if(c!=',')throw new IllegalArgumentException(
-						                                                                "Object:("+row+","+col+") expected '}' or ','");next();skipWhiteSpace();
-				}r.put(k,v);} // {
+				if(c!='\0'&&c!='}'){if(c!=',')throw new IllegalArgumentException("Object:("+row+","+col+") expected '}' or ','");
+					next();skipWhiteSpace();
+					}r.put(k,v);} // {
 			if(c=='}')next();return r;
 		}
 	}//class Json.Parser
@@ -1777,8 +1793,8 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 				Class c=prmTypes[++i];
 				String nm=pp!=null?pp.prmName():"arg"+i;//t.getName();
 				Object o=null;
-				if(TL.Form.class.isAssignableFrom(c))
-				{TL.Form f=(TL.Form)c.newInstance();args[i]=f;
+				if(TL.DB.Tbl.class.isAssignableFrom(c))
+				{TL.DB.Tbl f=(TL.DB.Tbl)c.newInstance();args[i]=f;
 					o=tl.json.get(nm);
 					if(o instanceof Map)f.fromMap((Map)o);
 					else if(o instanceof List)f.vals(((List)o).toArray());
@@ -1809,7 +1825,10 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 		if(tl.h.r("responseDone")==null)
 		{if(tl.h.r("responseContentTypeDone")==null)
 			response.setContentType(String.valueOf(tl.h.r("contentType")));
-			tl.getOut().o(retVal);
+			Json.Output o=tl.getOut();
+			o.restrictedAccess=true;o.accessViolation=0;
+			o.o(retVal);
+			o.restrictedAccess=false;
 			tl.log("App.TL.run:xhr-response:",tl.jo().o(retVal).toString());}
 		tl.getOut().flush();
 	}catch(Exception x){
