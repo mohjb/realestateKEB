@@ -13,6 +13,7 @@ import java.lang.reflect.Field;
 /**Created by moh on 14/7/17.*/
 public class App {
 static final String AppNm="aswan2017.App",UploadPth="/aswan/uploads/";
+
 public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
 	(@TL.Op(prmName="un")String un
 	,@TL.Op(prmName="pw")String pw,TL tl){
@@ -24,6 +25,7 @@ public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
 		return u;
 	}
 	return null;}
+
  public static @TL.Op boolean logout(TL tl){
 	Domain.Usr u=tl.usr;tl.h.s("usr",tl.usr=null);
 	Object[]a=TL.DB.stack(tl,null,false,true);
@@ -31,17 +33,17 @@ public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
 	TL.DB.close( (java.sql.Connection)a[0],tl );
 	tl.h.getSession().setMaxInactiveInterval( 0 );
 	return u!=null;}
+
 /**http-get-method , poll-server
- * , of param"lastPoll" is present, then call lastPoll
  * , if param"updateCols" present then call updateCols
  * , if param"putEntities" present then call putEntities
  * , if param"getIds" present then call getIds
- * , if param"getEntities" present then call getEntities
  */
  public static @TL.Op(urlPath = "*") Map poll
  (@TL.Op(prmName="getLogs")List getLogs
-	,@TL.Op(prmName="writeObjs")List writeObjs
 	,@TL.Op(prmName="getIds")List getIds
+	,@TL.Op(prmName="writeObjs")List writeObjs
+  ,@TL.Op(prmName="newEntries")List newEntries
 	,TL tl) {
  	if(tl.usr==null)return null;
 	Map m=new HashMap();try{
@@ -52,14 +54,19 @@ public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
 			a.add(getLog(x,tl));
 		}
 	}
-	if( writeObjs!=null)
-		m.put("writeObjs",writeObjs(writeObjs,tl));
 	if( getIds!=null){List a=new LinkedList<>();
 		m.put("getIds",a);
 		for (Object o:getIds)
 			a.add(ObjHead.factory(toInt( o)));
-	}}catch ( Exception ex ){tl.error( ex,"App.poll" );}
+	}
+	if( writeObjs!=null)
+		m.put("writeObjs",writeObjs(writeObjs,tl));
+	if( newEntries!=null)
+		m.put("newEntries",newEntries(newEntries,tl));
+
+	}catch ( Exception ex ){tl.error( ex,"App.poll" );}
 	return m;}
+
  /**op methods:
 	* create new domain
 	* create new usr
@@ -160,12 +167,14 @@ static Map getLog(Map p,TL tl){
 		return p;
 	}catch(Exception ex){tl.error(ex,"getLog");}
 	return p;}
+
 static Map listLog(Map m,String sql,Object[]where,TL tl){
 	ResultSet rs=null;
 	try{rs=TL.DB.R(sql, where);}catch(Exception ex){tl.error(ex
 			,"aswan2017.App.list(sql",sql,":where=",where,m);}
 	m=listLog(m,rs,null,null,tl);
 	return m; }
+
 /**
  * pg is pagenation, a js-obj from client-http-request of the
  * ps is pagenation, a js-obj from session
@@ -223,17 +232,86 @@ static Map listLog(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 		}
 	}catch(Exception ex){tl.error(ex,"listLog",pg,rs);}
 	return m;}
+
+/** new , create in database new-entry:
+ * 1.property
+ * 2.head
+ *   1.domain
+ *   2.usr
+ *   3.role/lock
+ *   4.proto
+ *3. object
+ */
+static List newEntries(List rows,TL tl){
+	ObjHead h=null;ObjProperty p=null;
+	for(Object o:rows)try
+	{Map m=o instanceof Map?(Map)o:null;
+		Object props=m.get( "props"),
+		 pn=m.get( ObjProperty.C.n.name() );
+		if(props!=null || pn==null){
+			if(h==null)h=new ObjHead(  );
+			h.proto=h.parent=h.domain=null;
+			h.fromMap( m );
+			if(h.proto!=null && h.parent!=null){
+				if(h.domain==null)
+					h.domain=tl.usr.domain;
+				if(){}
+				h.id=h.maxPlus1( ObjHead.C.id );
+				h.save();
+				m.put( ObjHead.C.id.name(),h.id );
+				if(props instanceof Map)
+					for(Object k:((Map)props).keySet()){
+						Object v=((Map)props).get(k);
+						h.setProps( k,v );
+					}
+			}
+		}else if(pn!=null){
+			if(p==null)
+				p=new ObjProperty(  );
+			p.id=null;//p.n=pn.toString();
+			p.fromMap( m );
+			if(p.id!=null){
+				p.save();
+			}
+		}
+	}catch(Exception ex){tl.error(ex,"newEntries");}
+	return rows;}
+
+/** delete, 1.property , 2.head
+ * */
+
+/**
+ * update database
+ * cases:
+ * 1. update 1.head/ 2.property
+
+ *      3.move child
+ *      4. link head to parent or proto from another domain
+
+
+ *
+ * update database
+ * cases:
+ * 1. update head
+ * 2. update property / new property
+ * 3. new head / new object head&properties
+ * 4. delete: 1.head , 2.property
+ * 5. new: 1.domain , 2.usr , 3.role , 4.proto
+ * 6. Move child
+ * 7. parent or proto from another domain
+ * */
 static List writeObjs(List rows,TL tl){
 	if(tl.usr==null)return null;
 	List x=new LinkedList();
 	ObjProperty p0=null;
-	ObjHead h0=null;Tbl.CI clt=null;
+	ObjHead h0=null,h;Tbl.CI clt=null;
 	for(Object o:rows)try
 	{Map m=o instanceof Map?(Map)o:null;
 	 Tbl t=null;
 	 if(m!=null)
-	 {	Object id=m.get( ObjProperty.C.id.name() );
-		if(id!=null ){Object pn=m.get( ObjProperty.C.n.name() );
+	 {	Object id=m.get( ObjProperty.C.id.name() ),
+		 pn=m.get( ObjProperty.C.n.name() );
+		if(id!=null ){h=ObjHead.factory( toInt( id ) );
 		 if ( pn==null ){
 			if(h0==null)//{h0.uid=tl.usr.id;}
 				h0=new ObjHead(  );
@@ -251,10 +329,13 @@ static List writeObjs(List rows,TL tl){
 	 }
 	}catch(Exception ex){tl.error(ex,"writeObjs");}
 	return x;}
+
 static void staticInit(){
 	TL.registerOp( App.class);
 }
+
 static{staticInit();}
+
  public static Integer toInt(Object o){
 	if(o instanceof String && TL.Util.isNum( (String)o ))
 		return new Integer( (String)o);
@@ -263,6 +344,7 @@ static{staticInit();}
 	if(o==null)return null;
 	String s=o.toString();
 	return TL.Util.isNum( s )?new Integer( s ):null;}
+
 public static TL.DB.Tbl tbl(Class<? extends TL.DB.Tbl>c){
 	if(c==ObjProperty.class)
 		return ObjProperty.sttc;
@@ -271,23 +353,32 @@ public static TL.DB.Tbl tbl(Class<? extends TL.DB.Tbl>c){
 	try{return c.newInstance();}
 	catch ( Exception ex ){TL.tl().error( ex,"aswan2017.App.tbl:" );}
 	return ObjHead.sttc; }
+
 public static abstract class Tbl extends TL.DB.Tbl{
 	@F public Integer no, /**user that made the change*/uid;
 	@F(max=true) public Date logTime;//cancelled:lastModified
 	@F(group=true) public Integer /**Object Id*/id;
+
  Tbl(){TL tl=TL.tl();uid=tl.usr==null?0:tl.usr.id;}
+
  Tbl(Integer id){this();this.id=id;}
+
  abstract CI ciId();
  abstract CI ciUid();
  abstract CI ciLogTime();
  abstract CI[]groupBy();
+ public abstract CI[]colmns();
+
  @Override public Object pkv(){return no;}
+
  public boolean exists(){CI[]groupBy=groupBy();
 	Object[]where=new Object[groupBy.length*2];
 	for(int i=0;i<groupBy.length;i++)
 		where[i*2+1]=v((CI)(where[i*2]=groupBy[i]));
 	return exists( where,getName() );}
- public static boolean exists(Object[]where,String dbtName){return exists(where,null,dbtName);}
+
+public static boolean exists(Object[]where,String dbtName){return exists(where,null,dbtName);}
+
  public static boolean exists(Object[]where,CI[]groupBy,String dbtName){
 	boolean b=false;
 	int n=0;
@@ -295,28 +386,34 @@ public static abstract class Tbl extends TL.DB.Tbl{
 	b=n>0;
 	return b;
  }
+
  Tbl load(){return loadBy(ciId(),id);}//@Override
+
  @Override Tbl loadBy(CI c,Object v){ResultSet rs=null;try{
  	rs=TL.DB.r( sql(colmns(),where( c,v ),groupBy()) ,v );
-	if(rs.next())load( rs );
+	if(rs.next())
+		load( rs );
 	}catch(Exception x){ TL.tl().error(x,
 		"App.Tbl(",this,").loadBy(",c,",",v,")");}
 	finally {
-			TL.DB.close( rs );
-        }
+		TL.DB.close( rs );
+    }
 	return this;}//loadBy
+
  @Override public Tbl save() throws Exception{
 	TL tl=TL.tl();if(uid==null)
 		uid=tl.usr==null?0:tl.usr.id;
 	super.save();
 	return this;}
- public abstract CI[]colmns();
+
  public static List ids(java.util.Collection<? extends Tbl>a){
 	if(a==null)return null;
 	List l=new LinkedList<Integer>();// have.size() );
 	for(Tbl t:a)l.add( t.id );
 	return l;}
+
 }//abstract class App.Tbl
+
 /** db-tbl ORM wrapper * Id_Name_Val_Usr_LogTime oI.N.V.U.LT * */
 public static class ObjProperty extends Tbl {//implements Serializable
 	public static final String dbtName="ObjProperty";
@@ -405,6 +502,7 @@ CREATE TABLE `ObjProperty` (
 			+"`,max(`"+C.logTime+"`) from `"+dbtName+"` where `"
 			+C.n+"`=? group by `" +C.id +"`,`"+C.n +"`",Integer.class,pn);}
 }//class ObjProperty
+
 /** db-tbl ORM wrapper * for Domain&Proto vs userRole Access-Control, also field parent-obj* */
 public static class ObjHead extends Tbl {
 	public static final String dbtName="ObjHead";
@@ -497,7 +595,7 @@ CREATE TABLE `ObjHead` (
 		if(id==null)return null;
 		ObjHead p,x,o=all.get( id );
 		if(o==null){
-			x=o=new ObjHead( id,0,0,0 );
+			x=o=new ObjHead( id,null,null,TL.tl().usr.domain );
 			o.loadBy( C.id,id );
 			p=o.parent==id?null:o.parent();
 			if(p!=null && p.children!=null ){
@@ -565,9 +663,9 @@ CREATE TABLE `ObjHead` (
 					, where( C.parent, id ),o.groupBy() )
 					, Integer.class, id );
 				if(chldrn!=null&&chldrn.size()>0){
-					if ( o.children==null )
-						o.children=new HashMap<>(  );
-				for(Integer i:chldrn){
+				 if ( o.children==null )
+					o.children=new HashMap<>(  );
+				 for(Integer i:chldrn){
 					x=all.get( i );
 					o.children.put( i,x!=null?x:o );
 				}}
@@ -692,6 +790,7 @@ CREATE TABLE `ObjHead` (
 			o.w("]");
 		return o;}
 }//class ObjHead
+
  public static class Domain extends ObjHead{
 	public enum Proto{Role,Usr,Proto,Lock;//,Membership;,Deleted,Screen,Component,AngularJs,AngularJsCtrl,AngularJsTemlplt,AngularJsState,AngularJsDirective,AngularJsFilter,AngularJsService,scriptJs,scriptJsServerSide,scriptJsServerSideRestEntry
 	ObjHead get(){Domain d0=domains.get( 0 );if(d0!=null && d0.children!=null)
@@ -701,7 +800,13 @@ CREATE TABLE `ObjHead` (
 				return o;}
 		return null;}
 	}
-	public enum Oper{all,view,writeObject,writeProperty,moveToDelete,app,newSubProto,newChild,newDomain}
+	public enum Oper{view,app//all,
+		,writeObject,writeProperty
+		,moveToDomain,moveToProto,moveToParent//,moveToDelete
+		,moveFromDomain ,moveFromProto,moveFromParent
+		,newProperty,newChild
+		,newDomain//,newUsr,newRole,newSubProto
+	}
 	Domain(Integer id,Integer parent,Integer proto){super(id,parent,proto,id);}
 	public static Map<Integer,Domain>domains=new HashMap<Integer,Domain>();
 	public static Map<String,Usr>allUsrs=new HashMap<String,Usr>();
@@ -921,19 +1026,22 @@ CREATE TABLE `ObjHead` (
 		super(id,parent,proto,Domain.this.id);}
 	public String un(){return propStr("un");}
 	public Domain domain(){return Domain.this;}
-	boolean hasAccess(String operation,Integer resourceId){//,String resourcePN//PropertyName
+	boolean hasAccess(String operation,Integer resourceId){
+		return hasAccess( resourceId,TL.Util.lst( operation ) );}
+
+	boolean hasAccess(Integer resourceId,List operations){//,String resourcePN//PropertyName
 		ObjHead c=all.get( resourceId );if(c==null)return false;
 		for(Role r:have.values()){
 			for (ObjHead o: r.resources.values())
 			{if((o.id==c.id || c.isInstanceOf( o ))
-			 &&(r.operations.contains( operation )
-			  ||r.operations.contains( Oper.all.toString() )))
+			 &&(r.operations.containsAll( operations ) //||r.operations.contains( Oper.all.toString() )
+			))
 			 {if(locks==null)return true;
 				for(Role x:locks.values()){
 					for (ObjHead z: x.resources.values())
 					{if((z.id==c.id || c.isInstanceOf( z ))
-					 &&(x.operations.contains( operation )
-					  ||x.operations.contains( Oper.all.toString() )))
+					 &&(x.operations.containsAll( operations ) //||x.operations.contains( Oper.all.toString() )
+					))
 					    return false;
 					}
 				}
