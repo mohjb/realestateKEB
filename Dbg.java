@@ -926,48 +926,28 @@ public static void p(Object...p){for(Object s:p)System.out.print(s);System.out.p
 public static void pa(String...p){for(String s:p)System.out.print(s);}
 
 public static void main(String[]args)throws Exception{
-	Dbg.Srvlt s=Srvlt.sttc;
-	s.pc=new PC();
-	s.pc.a=SrvltContxt.sttc();
-	s.pc.q.ssn=new Ssn();
-	String[]prms=
-{/*"{op:'login',un:'moh',pw:'x',logOut:true}"
-,"{op:'App.login',un:'moh',pw:'x'}"
-		,"{op:'poll',getLogs:[{from:50},{to:50}]}"
-		,"{op:'App.poll',getLogs:[{from:50},{to:50}]}"
-,"{op:'App.login',un:'admin',pw:'6f8f57715090da2632453988d9a1501b'}"
-,*/"{op:'App.login',un:'usr0',pw:'6f8f57715090da2632453988d9a1501b'}"
-		//,"{op:'poll',getLogs:[{from:50},{to:50}]}"
-,"{op:'App.poll',getLogs:[" +
- //"{from:50}" +
-//",{to:50}" +
-//",{from:50,to:100}" +
-//",{from:50,to:100,idList:[0,1,2]}" +
-//",{from:50,to:100,idList:[0,1,2],nList:['a','b']}" +
-//",{from:50,to:100,idList:[0,1,2],nList:['a','b'],uidList:[0,1,2]}" +
-//",{from:50,to:100,uidList:[0,1,2]}" +
-//",{from:50,to:100,nList:['a','b'],uidList:[0,1,2]}" +
-"{from:50,to:111111121,idList:[0,1,2],uidList:[0,1,2],nList:['a','b']}" +
+ Dbg.Srvlt s=Srvlt.sttc;
+ s.pc=new PC();
+ s.pc.a=SrvltContxt.sttc();
+ s.pc.q.ssn=new Ssn();
+ String[]prms= {
+	"{op:'App.login',un:'usr0',pw:'6f8f57715090da2632453988d9a1501b'}"
 
-//",{To:100}" +
-//",{From:50}" +
-//",{From:50,To:100}" +
-//",{From:50,To:100,idList:[0,1,2]}" +
-//",{From:50,To:100,domainList:[0,1,2]}" +
-//",{From:50,To:100,protoList:[0,1,2]}" +
-//",{From:50,To:100,parentList:[0,1,2]}" +
-",{From:50,To:111111121,idList:[0,1,2],domainList:[0,1,2],protoList:[0,1,2],parentList:[0,1,2]}" +
-" ] }"
-//"{op:'poll',getLogs:[{from:'2017-01-01'},{from:'2016-01-01',to:'2016-02-02'},{from:'2016-01-01',to:'2016-02-02',domain:0}],update:[],getDistinct:[]}"
-//,"{op:'poll',writeObjs:[ {id:30,uid:5,logTime:111111111, parent:0,proto:5,domain:0}" + ",{id:30,uid:5,logTime:111111111, n:'test',v:'testing'}  ]}","{op:'poll',getIds:[5,30]}"
+	,"{op:'App.poll'" +
+		",getIds:[5,30]" +
+		",getLogs:[" +
+			",{from:50,to:111111121} ,{From:50,To:111111121}" +
+			",{from:50,to:111111121,idList:[0,1,2,30],uidList:[0,1,2],nList:['a','b']}" +
+			",{From:50,To:111111121,idList:[0,1,2,30],domainList:[0,1,2],protoList:[0,1,2,30],parentList:[0,1,2,30]}" +
+			"]" +
+		",writeObjs:[ " +
+			"{id:30, parent:0,proto:5,domain:0,ref:12}," +
+			"{id:30, n:'test',v:'testing',ref:17}  ]" +
+		",newEntries:[" +
+			"{proto:0,parent:0,ref:15,props:{hi:'hello',created:'2017,8,7 10:32',closed:false}}]" +
+	 "}"
 
-,"{op:'poll',writeObjs:[ {id:30, parent:0,proto:5,domain:0,ref:12},{id:30, n:'test',v:'testing',ref:17}  ]" +
-  ",getIds:[5,30]" +
-  ",getLogs:[" +
-	 "{from:50,to:111111121,idList:[0,1,2,30],uidList:[0,1,2],nList:['a','b']}" +
-	",{From:50,To:111111121,idList:[0,1,2,30],domainList:[0,1,2],protoList:[0,1,2,30],parentList:[0,1,2,30]}" +
-  "]}"
-
+	,"{op:'App.logout'}"
 	};
 	for(String p:prms){
 	s.pc.q.init(p);
