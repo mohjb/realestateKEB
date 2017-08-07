@@ -1743,9 +1743,9 @@ public @interface Op{
 	String prmName() default "";
 }//Op
 static Map<String,Method>
-		ops=new HashMap<String,Method>(),
-		mth=new HashMap<String,Method>(),
-		url=new HashMap<String,Method>();
+	ops=new HashMap<String,Method>(),
+	mth=new HashMap<String,Method>(),
+	url=new HashMap<String,Method>();
 
 public static void registerOp(Class p){
 	Method[]b=p.getMethods();
