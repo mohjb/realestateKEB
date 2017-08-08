@@ -1,4 +1,4 @@
-package aswan2017;
+package mApp2017;
 
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.apache.commons.fileupload.FileItem;
@@ -40,7 +40,7 @@ import java.util.Date;
 
 /** * Created by mbohamad on 19/07/2017.*/
 public class TL
-{
+{public static final String Name=App.packageName+".TL";
 enum context{ROOT(
 	"/public_html/i1io/"
 	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
@@ -48,7 +48,7 @@ enum context{ROOT(
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
-		pool("dbpool-aswan2017")
+		pool("dbpool-"+Name)
 		,reqCon("javax.sql.PooledConnection")
 		,server("216.227.216.46","localhost")//,"216.227.220.84"
 		,dbName("js4d00_aswan","aswan")
@@ -68,7 +68,7 @@ enum context{ROOT(
 				real=(b?"./":f.getCanonicalPath())+path;
 			}
 		}catch(Exception ex){
-			t.error(ex,"aswan2017.TL.context.getRealPath:",path);}
+			t.error(ex,Name,".context.getRealPath:",path);}
 		return real==null?"./"+path:real;}
 	static int getContextIndex(TL t){
 		try{File f=null;
@@ -79,7 +79,7 @@ enum context{ROOT(
 					return i;i--;
 			}
 		}catch(Exception ex){
-			t.error(ex,"App.TL.context.getContextIndex:");}
+			t.error(ex,Name,".context.getContextIndex:");}
 		return -1;}
 	//***/static Map<DB,String> getContextPack(TL t,List<Map<DB,String>>a){return null;}
 }//context
@@ -101,9 +101,9 @@ public static TL Enter(HttpServletRequest r,HttpServletResponse response,HttpSes
 	TL p;App app=null;if(ops==null || ops.size()==0)App.staticInit();
 	tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));//Class c=App.class;c=App.ObjProperty.class;c=App.ObjHead.class;
 	if(App.ObjHead.sttc==null)
-		p.log( "TL.Enter:App.ObjHead.sttc=",App.ObjHead.sttc );
+		p.log( Name,".Enter:App.ObjHead.sttc=",App.ObjHead.sttc );
 	if(App.ObjProperty.sttc==null)
-		p.log( "TL.Enter:App.ObjProperty.sttc=",App.ObjProperty.sttc );
+		p.log( Name,".Enter:App.ObjProperty.sttc=",App.ObjProperty.sttc );
 	p.onEnter();
 	return p;}
 private void onEnter()throws IOException {
@@ -119,9 +119,9 @@ private void onEnter()throws IOException {
 			DB.Tbl.check(this);
 			App.Domain.loadDomain0();}
 		usr=(App.Domain.Usr)h.s("usr");
-	}catch(Exception ex){error(ex,"TL.onEnter");}
+	}catch(Exception ex){error(ex,Name,".onEnter");}
 	//if(pages==null){rsp.setHeader("Retry-After", "60");rsp.sendError(503,"pages null");throw new Exception("pages null");}
-	if(h.logOut)out.w(h.comments[0]).w("TL.tl.onEnter:\n").o(this).w(h.comments[1]);
+	if(h.logOut)out.w(h.comments[0]).w(Name).w(".tl.onEnter:\n").o(this).w(h.comments[1]);
 }//onEnter
 private void onExit(){usr=null;h.ip=null;now=null;h.req=null;json=null;out=jo=null;h.rspns=null;}//ssn=null;
 /**unsets the localThread, and unset local variables*/
@@ -194,7 +194,7 @@ public static class Util{//utility methods
 	public static int parseInt(String v,int dv)
 	{if(isNum(v) )try{dv=Integer.parseInt(v);}
 	catch(Exception ex){//changed 2016.06.27 18:28
-		TL.tl().error(ex, "TL.Util.parseInt:",v,dv);
+		TL.tl().error(ex, Name,".Util.parseInt:",v,dv);
 	}return dv;}
 	public static <T>T parse(String s,T defval){
 		if(s!=null)try{
@@ -207,7 +207,7 @@ public static class Util{//utility methods
 					if(s.equalsIgnoreCase(o.toString()))
 						return (T)o;
 			}}catch(Exception x){//changed 2016.06.27 18:28
-			TL.tl().error(x, "TL.Util.<T>T parse(String s,T defval):",s,defval);}
+			TL.tl().error(x, Name,".Util.<T>T parse(String s,T defval):",s,defval);}
 		return defval;}
 	public static Object parse(String s,Class c){
 		if(s!=null)try{if(String.class.equals(c))return s;
@@ -225,7 +225,7 @@ public static class Util{//utility methods
 			return s.length()<1?'\0':s.charAt(0);
 		else if(URL.class.isAssignableFrom(c))try {return new URL(
 				                                                         "file:" +TL.tl().h.getServletContext().getContextPath()+'/'+s);}
-		catch (Exception ex) {TL.tl().error(ex,"TL.Util.parse:URL:p=",s," ,c=",c);}
+		catch (Exception ex) {TL.tl().error(ex,Name,".Util.parse:URL:p=",s," ,c=",c);}
 			boolean b=c==null?false:c.isEnum();
 			if(!b){Class ct=c.getEnclosingClass();b=ct==null?false:ct.isEnum();if(b)c=ct;}
 			if(b){
@@ -235,7 +235,7 @@ public static class Util{//utility methods
 			}
 			return Json.Parser.parse(s);
 		}catch(Exception x){//changed 2016.06.27 18:28
-			TL.tl().error(x, "TL.Util.<T>T parse(String s,Class):",s,c);}
+			TL.tl().error(x, Name,".Util.<T>T parse(String s,Class):",s,c);}
 		return s;}
 }//class Util
 
@@ -293,7 +293,7 @@ public class H{
 			}//for(FileItem item:formItems)
 		}//if(formItems!=null && formItems.size()>0 )
 	}catch(Exception ex){
-		error(ex,"TL.getMultiParts");}
+		error(ex,Name,".getMultiParts");}
 	//if(ServletFileUpload.isMultipartContent(req))
 	return m;
 }//Map getMultiParts()
@@ -322,9 +322,9 @@ public void a(Object n,Object v){getServletContext().setAttribute(String.valueOf
 public Object var(String pn)
 {HttpSession ss=getSession();
 	Object r=null;try{Object sVal=ss.getAttribute(pn);String reqv=req(pn);
-	if(reqv!=null&&!reqv.equals(sVal)){ss.setAttribute(pn,r=reqv);//logo("TL.var(",pn,")reqVal:sesssion.set=",r);
+	if(reqv!=null&&!reqv.equals(sVal)){ss.setAttribute(pn,r=reqv);//logo(Name,".var(",pn,")reqVal:sesssion.set=",r);
 	}
-	else if(sVal!=null){r=sVal; //logo("TL.var(",pn,")sessionVal=",r);
+	else if(sVal!=null){r=sVal; //logo(Name,".var(",pn,")sessionVal=",r);
 	}}catch(Exception ex){ex.printStackTrace();}return r;}
 public Number var(String pn,Number r)
 {Object x=var(pn);return x==null?r:x instanceof Number?(Number)x:Double.parseDouble(x.toString());}
@@ -345,7 +345,7 @@ public <T>T var(String n,T defVal) {
 			if(c.isAssignableFrom(s.getClass()))
 				defVal=(T)s;//s(n,defVal=(T)s); //changed 2016.07.18
 			else
-				log("TL.var(",n,",<T>",defVal,"):defVal not instanceof ssnVal:",s);//added 2016.07.18
+				log(Name,".var(",n,",<T>",defVal,"):defVal not instanceof ssnVal:",s);//added 2016.07.18
 		}
 	}return defVal;
 }
@@ -355,7 +355,7 @@ public Object reqo(String n){
 	{Object o=json.get(n);if(o!=null)return o;}
 	String r=req.getParameter(n);
 	if(r==null)r=req.getHeader(n);
-	if(logOut)log("TL.reqo(",n,"):",r);
+	if(logOut)log(Name,".reqo(",n,"):",r);
 	return r;}
 
 public String req(String n){
@@ -466,12 +466,12 @@ public static class DB {
 			a[0]=r;//changed 2017.07.14
 		else try
 		{try{int x=context.getContextIndex(t);
-			t.log("TL.DB.c:1:getContextIndex:",x);
+			t.log(Name,".DB.c:1:getContextIndex:",x);
 			if(x!=-1)
-			{	p=c(t,x,x,x,x);t.log("TL.DB.c:1:c2:",p);
+			{	p=c(t,x,x,x,x);t.log(Name,".DB.c:1:c2:",p);
 				r=(Connection)p[1];
 				return r;}
-		}catch(Exception e){t.log("TL.DB.MysqlConnectionPoolDataSource:1:",e);}
+		}catch(Exception e){t.log(Name,".DB.MysqlConnectionPoolDataSource:1:",e);}
 			String[]dba=context.DB.dbName.a
 					,sra=context.DB.server.a
 					,una=context.DB.un.a
@@ -483,8 +483,8 @@ public static class DB {
 						{	p=c(t,idb,iun,ipw,isr);
 							r=(Connection)p[1];
 							if(t.h.logOut)t.log("new "+context.DB.pool.str+":"+p[0]);
-						}catch(Exception e){t.log("TL.DB.MysqlConnectionPoolDataSource:",idb,",",isr,",",iun,ipw,t.h.logOut?p[2]:"",",",e);}
-		}catch(Throwable e){t.error(e,"TL.DB.MysqlConnectionPoolDataSource:throwable:");}//ClassNotFoundException
+						}catch(Exception e){t.log(Name,".DB.MysqlConnectionPoolDataSource:",idb,",",isr,",",iun,ipw,t.h.logOut?p[2]:"",",",e);}
+		}catch(Throwable e){t.error(e,Name,".DB.MysqlConnectionPoolDataSource:throwable:");}//ClassNotFoundException
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
@@ -493,7 +493,7 @@ public static class DB {
 				,context.DB.un.str,context.DB.pw.str
 			);Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
-		}catch(Throwable e){t.error(e,"TL.DB.DriverManager:");}
+		}catch(Throwable e){t.error(e,Name,".DB.DriverManager:");}
 		return r;}
 	public static synchronized Object[]c(TL t,int idb,int iun,int ipw,int isr) throws SQLException{
 		MysqlConnectionPoolDataSource d=new MysqlConnectionPoolDataSource();
@@ -519,7 +519,7 @@ public static class DB {
 	public static PreparedStatement P(String sql,Object[]p,boolean odd)throws SQLException {
 		TL t=tl();Connection c=t.dbc();
 		PreparedStatement r=c.prepareStatement(sql);if(t.h.logOut)
-		t.log("TL("+t+").DB.P(sql="+sql+",p="+p+",odd="+odd+")");
+		t.log(Name,"("+t+").DB.P(sql="+sql+",p="+p+",odd="+odd+")");
 		if(odd){if(p.length==1)
 			r.setObject(1,p[0]);else
 			for(int i=1,n=p.length;p!=null&&i<n;i+=2)if((!(p[i] instanceof List)) ) // ||!(p[i-1] instanceof List)||((List)p[i-1]).size()!=2||((List)p[i-1]).get(1)!=Tbl.Co.in )
@@ -560,7 +560,7 @@ public static class DB {
 		List<ResultSet>l=stack(tl);//if(l==null){stack(tl,null)[1]=l=new LinkedList<ResultSet>();l.add(r);}else
 		if(!l.contains(r))
 			l.add(r);
-	}catch (Exception ex){tl.error(ex,"TL.DB.push");}}
+	}catch (Exception ex){tl.error(ex,Name,".DB.push");}}
 
 	//public static void close(Connection c){close(c,tl());}
 	public static void close(Connection c,TL tl){
@@ -630,8 +630,8 @@ public static class DB {
 		int cc=cc(s);while(s.next()){r.add(a=new Object[cc]);
 			for(int i=0;i<cc;i++){a[i]=s.getObject(i+1);
 			}}return r;}finally{close(s,t);//CHANGED:2015.10.23.16.06:closeRS ;
-		if(t.h.logOut)try{t.log(t.jo().o("TL.DB.L:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
-		catch(IOException x){t.error(x,"TL.DB.List:",sql);}}}
+		if(t.h.logOut)try{t.log(t.jo().w(Name).w(".DB.L:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+		catch(IOException x){t.error(x,Name,".DB.List:",sql);}}}
 
 	public static List<Integer[]>qLInt(String sql,Object...p)throws SQLException{return qLInt(sql,p);}//2017.07.14
 	public static List<Integer[]>QLInt(String sql,Object[]p)throws SQLException{//2017.07.14
@@ -649,9 +649,9 @@ public static class DB {
 			}return r;
 		}finally
 		{close(s,tl);
-			if(tl.h.logOut)try{tl.log(tl.jo().o("TL.DB.Lt:sql=")
+			if(tl.h.logOut)try{tl.log(tl.jo().w(Name).w(".DB.Lt:sql=")
 					                        .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
-			catch(IOException x){tl.error(x,"TL.DB.Lt:",sql);}
+			catch(IOException x){tl.error(x,Name,".DB.Lt:",sql);}
 		}
 	}
 
@@ -659,8 +659,8 @@ public static class DB {
 	{ResultSet s=null;List<Object> r=null;try{s=R(sql,p);r=new LinkedList<Object>();
 		while(s.next())r.add(s.getObject(1));return r;}
 	finally{TL t=tl();close(s,t);if(t.h.logOut)
-		try{t.log(t.jo().o("TL.DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-				          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){t.error(x,"TL.DB.q1colList:",sql);}}}
+		try{t.log(t.jo().w(Name).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
+				          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){t.error(x,Name,".DB.q1colList:",sql);}}}
 	public static <T>List<T> q1colTList(String sql,Class<T>t,Object...p)throws SQLException
 	{ResultSet s=null;List<T> r=null;try{s=R(sql,p);r=new LinkedList<T>();//Class<T>t=null;
 		while(s.next())r.add(
@@ -668,8 +668,8 @@ public static class DB {
 				//s.getObject(1)
 		);return r;}
 	finally{TL tl=tl();close(s,tl);if(tl.h.logOut)
-		try{tl.log(tl.jo().o("TL.DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-				           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,"TL.DB.q1colList:",sql);}}}
+		try{tl.log(tl.jo().w(Name).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
+				           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,Name,".DB.q1colList:",sql);}}}
 	public static Object[] q1col(String sql,Object...p)throws SQLException
 	{List<Object> l=q1colList(sql,p);Object r[]=new Object[l.size()];l.toArray(r);l.clear();return r;}
 	public static <T>T[] q1colT(String sql,Class<T>t,Object...p)throws SQLException
@@ -680,7 +680,7 @@ public static class DB {
 	public static Object[] q1Row(String sql,Object[]p)throws SQLException
 	{ResultSet s=null;try{s=R(sql,p);Object[]a=null;int cc=cc(s);if(s.next())
 	 {a=new Object[cc];for(int i=0;i<cc;i++)try{a[i]=s.getObject(i+1);}
-	 catch(Exception ex){tl().error(ex,"TL.DB.q1Row:",sql);a[i]=s.getString(i+1);}}
+	 catch(Exception ex){tl().error(ex,Name,".DB.q1Row:",sql);a[i]=s.getString(i+1);}}
 		return a;}finally{close(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
 	/**returns the result of (e.g. insert/update/delete) sql-statement
 	 ,calls dbP() setting the variable-length-arguments values parameters-p
@@ -689,8 +689,8 @@ public static class DB {
 	public static int X(String sql,Object[]p)throws SQLException {
 	 int r=-1;try{PreparedStatement s=P(sql,p,false);r=s.executeUpdate();s.close();return r;}
 	 finally{TL t=tl();if(t.h.logOut)try{
-		t.log(t.jo().o("TL.DB.x:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
-	 catch(IOException x){t.error(x,"TL.DB.X:",sql);}}}
+		t.log(t.jo().w(Name).w(".DB.x:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+	 catch(IOException x){t.error(x,Name,".DB.X:",sql);}}}
 	/**output to tl.out the Json.Output.oRS() of the query*/
 	public static void q2json(String sql,Object...p)throws SQLException{
 		ResultSet s=null;
@@ -704,9 +704,9 @@ public static class DB {
 		finally
 		{close(s,tl);
 			if(tl.h.logOut)try{
-				tl.log(tl.jo().o("TL.DB.L:q2json=")
+				tl.log(tl.jo().w(Name).w(".DB.L:q2json=")
 				.o(sql).w(",prms=").o(p).toStrin_());
-		 }catch(IOException x){tl.error(x,"TL.DB.q1json:",sql);}
+		 }catch(IOException x){tl.error(x,Name,".DB.q1json:",sql);}
 		}
 	}
 	/**return a list of maps , each map has as a key a string the name of the column, and value obj*/
@@ -724,18 +724,18 @@ public static class DB {
 		public static ItTbl it(String sql,Object...p){return new ItTbl(sql,p);}
 		public ItTbl(String sql,Object[]p){
 			try {init(TL.DB.R(sql, p));}
-			catch (Exception e) {tl().logo("TL.DB.ItTbl.<init>:Exception:sql=",sql,",p=",p," :",e);}}
+			catch (Exception e) {tl().logo(Name,".DB.ItTbl.<init>:Exception:sql=",sql,",p=",p," :",e);}}
 		public ItTbl(ResultSet o) throws SQLException{init(o);}
 		public ItTbl init(ResultSet o) throws SQLException
 		{row.rs=o;row.m=o.getMetaData();row.row=row.col=0;
 			row.cc=row.m.getColumnCount();return this;}
-		static final String ErrorsList="TL.DB.ItTbl.errors";
+		static final String ErrorsList=Name+".DB.ItTbl.errors";
 		@Override public boolean hasNext(){
 			boolean b=false;try {if(b=row!=null&&row.rs!=null&&row.rs.next())row.row++;
 			else TL.DB.close(row.rs);//CHANGED:2015.10.23.16.06:closeRS ; 2017.7.17
 			}catch (SQLException e) {//e.printStackTrace();
 				TL t=TL.tl();//changed 2016.06.27 18:05
-				final String str="TL.DB.ItTbl.next";
+				final String str=Name+".DB.ItTbl.next";
 				t.error(e,str);
 				List l=(List)t.json.get(ErrorsList);//t.response
 				if(l==null)t.json.put(ErrorsList,l=new LinkedList());//t.response
@@ -755,7 +755,7 @@ public static class DB {
 				try {return rs==null?null:rs.getObject(++col);}
 				catch (SQLException e) {//changed 2016.06.27 18:05
 					TL t=TL.tl();
-					final String str="TL.DB.ItTbl.ItRow.next";
+					final String str=Name+".DB.ItTbl.ItRow.next";
 					t.error(e,str);
 					List l=(List)t.json.get(ErrorsList);//t.response
 					if(l==null)t.json.put(ErrorsList,l=new LinkedList());//t.response
@@ -809,7 +809,7 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 				if(s!=null)v=Util.parse(s,c);
 				v(f,v);//f.set(this, v);
 			}catch (Exception ex) {// IllegalArgumentException,IllegalAccessException
-				t.error(ex,"TL.DB.Tbl.readReq:t=",this," ,field="
+				t.error(ex,Name,".DB.Tbl.readReq:t=",this," ,field="
 						,f+" ,c=",c," ,s=",s," ,v=",v);}}
 		return this;}
 
@@ -884,13 +884,13 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 			if(v!=null && !t.isAssignableFrom( v.getClass() ))//t.isEnum()||t.isAssignableFrom(URL.class))
 				v=Util.parse(v instanceof String?(String)v:String.valueOf(v),t);
 			p.set(this,v);
-		}catch (Exception ex) {tl().error(ex,"TL.DB.Tbl.v(",this,",",p,",",v,")");}
+		}catch (Exception ex) {tl().error(ex,Name,".DB.Tbl.v(",this,",",p,",",v,")");}
 		return this;}
 
 	public Object v(Field p){//this is beautiful(tear running down cheek)
 		try{return p.get(this);}
 		catch (Exception ex) {//IllegalArgumentException,IllegalAccessException
-			tl().error(ex,"TL.DB.Tbl.v(",this,",",p,")");return null;}}
+			tl().error(ex,Name,".DB.Tbl.v(",this,",",p,")");return null;}}
 
 	/**Field annotation to designate a java member for use in a Html-Form-field/parameter*/
 	@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
@@ -973,12 +973,12 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 		 */
 		public abstract List creationDBTIndices(TL tl);
 		public void checkDBTCreation(TL tl){
-			String dtn=getName();Object o=tl.h.a("aswan2017:db:show tables");
+			String dtn=getName();Object o=tl.h.a(Name+":db:show tables");
 			if(o==null)
 			try {o=TL.DB.q1colList("show tables");
-				tl.h.a("aswan2017:db:show tables",o);
+				tl.h.a(Name+":db:show tables",o);
 			} catch (SQLException ex) {
-				tl.error(ex, "TL.DB.Tbl.checkTableCreation:check-pt1:",dtn);}
+				tl.error(ex, Name+".DB.Tbl.checkTableCreation:check-pt1:",dtn);}
 			List l=(List)o;
 			try{if(o==null||(!l.contains( dtn )&&!l.contains( dtn.toLowerCase()))){
 				StringBuilder sql= new StringBuilder("CREATE TABLE `").append(dtn).append("` (\n");
@@ -1017,9 +1017,9 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 						sql.append(bo);
 				}
 				sql.append(") ENGINE=InnoDB DEFAULT CHARSET=utf8 ;");
-				tl.log("TL.DB.Tbl.checkTableCreation:before:sql=",sql);
+				tl.log(Name,".DB.Tbl.checkTableCreation:before:sql=",sql);
 				int r=TL.DB.x(sql.toString());
-				tl.log("TL.DB.Tbl.checkTableCreation:executedSql:",dtn,":returnValue=",r);
+				tl.log(Name,".DB.Tbl.checkTableCreation:executedSql:",dtn,":returnValue=",r);
 				b=an>2?(List)a.get(2):b;if(an>2)
 					for(Object bo:b){
 						List c=(List)bo;
@@ -1027,11 +1027,11 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 						c.toArray(p);
 						vals(p);
 						try {save();} catch (Exception ex) {
-							tl.error(ex, "TL.DB.Tbl.checkTableCreation:insertion",c);}
+							tl.error(ex, Name,".DB.Tbl.checkTableCreation:insertion",c);}
 					}
 			}
 			} catch (SQLException ex) {
-				tl.error(ex, "TL.DB.Tbl.checkTableCreation:errMain:",dtn);}
+				tl.error(ex, Name,".DB.Tbl.checkTableCreation:errMain:",dtn);}
 		}//checkTableCreation
 		/**where[]={col-name , param}*/
 		public int count(Object[]where) throws Exception{return count(where,null,getName());}
@@ -1065,8 +1065,8 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 			try{r=DB.r(sql(cols(Co.all), where(pkc()))
 					,pk);
 				if(r.next())load(r);
-				else{t.error(null,"TL.DB.Tbl(",this,").load(pk=",pk,"):resultset.next=false");nullify();}}
-			catch(Exception x){t.error(x,"TL.DB.Tbl(",this,"):",pk);}
+				else{t.error(null,Name,".DB.Tbl(",this,").load(pk=",pk,"):resultset.next=false");nullify();}}
+			catch(Exception x){t.error(x,Name,".DB.Tbl(",this,"):",pk);}
 			finally{DB.close(r,t);}
 			return this;}
 		public Tbl nullify(){return nullify(fields());}
@@ -1077,14 +1077,14 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 		Tbl loadBy(CI c,Object v){
 			try{Object[]a=DB.q1row(sql(cols(Co.all),where(c)),v);
 				vals(a);}
-			catch(Exception x){tl().error(x,"TL.DB.Tbl(",this,").loadBy(",c,",",v,")");}
+			catch(Exception x){tl().error(x,Name,".DB.Tbl(",this,").loadBy(",c,",",v,")");}
 			return this;}//loadBy
 		Tbl save(CI c){// throws Exception
 			CI pkc=pkc();
 			Object cv=v(c),pkv=pkv();TL t=TL.tl();
 			if(cv instanceof Map)try
 			{String j=t.jo().clrSW().o(cv).toString();cv=j;}
-			catch (IOException e) {t.error(e,"TL.DB.Tbl.save(CI:",c,"):");}
+			catch (IOException e) {t.error(e,Name,".DB.Tbl.save(CI:",c,"):");}
 			try{DB.x("replace into `"+getName()+"` (`"+pkc+
 				"`,`"+c+"`) values(?"//+Co.m(pkc).txt
 				+",?"//+Co.m(c).txt
@@ -1092,7 +1092,7 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 				Integer k=(Integer)pkv;
 				//TL.DB.Tbl.Log.log( TL.DB.Tbl.Log.Entity.valueOf(getName()), k, TL.DB.Tbl.Log.Act.Update, TL.Util.mapCreate(c,v(c)) );
 			}catch(Exception x){tl().error(x
-					,"TL.DB.Tbl(",this,").save(",c,"):pkv=",pkv);}
+					,Name,".DB.Tbl(",this,").save(",c,"):pkv=",pkv);}
 			return this;}//save
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 */
 		public Tbl save() throws Exception{
@@ -1102,7 +1102,7 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 					sql("max(`"+pkc+"`)+1",null,null,null)
 					,1);
 				v(pkc,pkv=x);
-				tl().log("TL.DB.Tbl(",toJson(),").save-new:max(",pkc,") + 1:",x);
+				tl().log(Name,".DB.Tbl(",toJson(),").save-new:max(",pkc,") + 1:",x);
 			}CI[]cols=columns();
 			StringBuilder sql=new StringBuilder("replace into`").append(getName()).append("`( ");
 			Co.generate(sql, cols);//.toString();
@@ -1153,24 +1153,24 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 				this.makeClones=makeClones;a=fields();
 				try{rs=DB.R(sql, where);}
 				catch(Exception x){
-					tl().error(x,"TL.DB.Tbl(",this,").Itrtr.<init>:where=",where);}
+					tl().error(x,Name,".DB.Tbl(",this,").Itrtr.<init>:where=",where);}
 			}
 			public Itrtr(Object[]where){a=fields();
 				try{rs=DB.R(sql(cols(Co.all),where), where);}
-				catch(Exception x){tl().error(x,"TL.DB.Tbl(",this,").Itrtr.<init>:where=",where);}}
+				catch(Exception x){tl().error(x,Name,".DB.Tbl(",this,").Itrtr.<init>:where=",where);}}
 			@Override public Iterator<Tbl>iterator(){return this;}
 			@Override public boolean hasNext(){boolean b=false;
 				try {b = rs!=null&&rs.next();} catch (SQLException x)
-				{tl().error(x,"TL.DB.Tbl(",this,").Itrtr.hasNext:i=",i,",rs=",rs);}
+				{tl().error(x,Name,".DB.Tbl(",this,").Itrtr.hasNext:i=",i,",rs=",rs);}
 				if(!b&&rs!=null){DB.close(rs);rs=null;}
 				return b;}
 			@Override public Tbl next(){i++;Tbl t=Tbl.this;TL tl=TL.tl();
 				if(makeClones)try{
 					t=t.getClass().newInstance();}catch(Exception ex){
-					tl.error(ex,"TL.DB.Tbl(",this,").Itrtr.next:i=",i,":",rs,":makeClones");
+					tl.error(ex,Name,".DB.Tbl(",this,").Itrtr.next:i=",i,":",rs,":makeClones");
 				}
 				try{t.load(rs,a);}catch(Exception x){
-						tl.error(x,"TL.DB.Tbl(",this,").Itrtr.next:i=",i,":",rs);
+						tl.error(x,Name,".DB.Tbl(",this,").Itrtr.next:i=",i,":",rs);
 						close(rs,tl);rs=null;
 					}
 				return t;}
@@ -1193,7 +1193,7 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 			public static Field f(String name,Class<? extends Tbl>c){
 				//for(Field f:fields(c))if(name.equals(f.getName()))return f;return null;
 				Field r=null;try{r=c.getField(name);}catch(Exception x)
-				{tl().error(x,"TL.DB.Tbl.f(",name,c,"):");}
+				{tl().error(x,Name,".DB.Tbl.f(",name,c,"):");}
 				return r;}
 
 			/**generate Sql into the StringBuilder*/
@@ -1240,12 +1240,12 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 							if(o instanceof CI || o instanceof Co)
 								b.append('`').append(o).append('`');
 							else
-								tl().log("TL.DB.Tbl.Co.where:unknown where-clause item:o=",o);
+								tl().log(Name,".DB.Tbl.Co.where:unknown where-clause item:o=",o);
 							b.append(m.txt).append("?");
 						}else
-							tl().log("TL.DB.Tbl.Co.where:unknown where-clause item: o=",o);
+							tl().log(Name,".DB.Tbl.Co.where:unknown where-clause item: o=",o);
 					}
-					else tl().error(null,"TL.DB.Tbl.Col.where:for:",o);
+					else tl().error(null,Name,".DB.Tbl.Col.where:for:",o);
 					i++;
 				}//for
 				return b;}
@@ -1261,7 +1261,7 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 				if(comma)o.w(',');else comma=true;
 				i.outputJson();}
 			o.w(']');
-		} catch (IOException e){tl().error(e,"TL.DB.Tbl.outputJson:");}
+		} catch (IOException e){tl().error(e,Name,".DB.Tbl.outputJson:");}
 		}//outputJson(Object...where)
 		public static List<Class<? extends Tbl>>registered=new LinkedList<Class<? extends Tbl>>();
 		static void check(TL tl){
@@ -1271,7 +1271,7 @@ public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean cl
 					Tbl t=c.newInstance();
 					t.checkDBTCreation(tl);
 					tl.h.a(n2,tl.now);
-				}}catch(Exception ex){tl.error( ex,"TL.DB.Tbl.check" );}
+				}}catch(Exception ex){tl.error( ex,Name,".DB.Tbl.check" );}
 		}
 	}//class Tbl
 }//class DB
@@ -1807,7 +1807,7 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 						&&(nm.indexOf("r")!=-1)
 						&&(nm.indexOf("m")!=-1)?tl.json
 						:tl.h.req(nm,c);
-			}catch(Exception ex){tl.error(ex,"TL.run:arg:i=",i);}
+			}catch(Exception ex){tl.error(ex,Name,".run:arg:i=",i);}
 			retVal=n==0?op.invoke(cl)
 				:n==1?op.invoke(cl,args[0])
 				:n==2?op.invoke(cl,args[0],args[1])
@@ -1829,11 +1829,11 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 			o.restrictedAccess=true;o.accessViolation=0;
 			o.o(retVal);
 			o.restrictedAccess=false;
-			tl.log("App.TL.run:xhr-response:",tl.jo().o(retVal).toString());}
+			tl.log(Name,".run:xhr-response:",tl.jo().o(retVal).toString());}
 		tl.getOut().flush();
 	}catch(Exception x){
 		if(tl!=null){
-			tl.error(x,"App.jsp:");
+			tl.error(x,Name,":");
 			tl.getOut().o(x);
 		}else
 			x.printStackTrace();
