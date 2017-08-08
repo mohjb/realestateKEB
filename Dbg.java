@@ -1,4 +1,4 @@
-package aswan2017;
+package mApp2017;
 
 /**
  * Created by moh on 20/7/17.
@@ -20,7 +20,7 @@ import javax.servlet.http.*;
  */
 
 public class Dbg{
-static final String Name="aswan2017.Dbg";
+static final String Name=App.packageName+".Dbg";
 //////////////////////////////////////////////////////////////////////
 
 public static class Req implements HttpServletRequest {
@@ -286,168 +286,7 @@ public static class Req implements HttpServletRequest {
 			//NanoHTTPD.LOG.log( Level.WARNING, "Encoding not supported, ignored", ignored );
 			TL.tl().error(ex,"Encoding not supported, ignored");
 		}
-		return decoded;
-/*
-	/**
-	 * Decodes the Multipart Body data and put it into Key/Value pairs.
-	 * /
-		private void decodeMultipartFormData(ContentType contentType, ByteBuffer fbuf, Map<String, List<String>> parms, Map<String, String> files) throws NanoHTTPD.ResponseException {
-			int pcount = 0;
-			try {
-				int[] boundaryIdxs = getBoundaryPositions(fbuf, contentType.getBoundary().getBytes());
-				if (boundaryIdxs.length < 2) {
-					throw new NanoHTTPD.ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Content type is multipart/form-data but contains less than two boundary strings.");
-				}
-				byte[] partHeaderBuff = new byte[MAX_HEADER_SIZE];
-				for (int boundaryIdx = 0; boundaryIdx < boundaryIdxs.length - 1; boundaryIdx++) {
-					fbuf.position(boundaryIdxs[boundaryIdx]);
-					int len = (fbuf.remaining() < MAX_HEADER_SIZE) ? fbuf.remaining() : MAX_HEADER_SIZE;
-					fbuf.get(partHeaderBuff, 0, len);
-					BufferedReader in =
-							new BufferedReader(new InputStreamReader(new ByteArrayInputStream(partHeaderBuff, 0, len), Charset.forName(contentType.getEncoding())), len);
-					int headerLines = 0;
-					// First line is boundary string
-					String mpline = in.readLine();
-					headerLines++;
-					if (mpline == null || !mpline.contains(contentType.getBoundary())) {
-						throw new NanoHTTPD.ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Content type is multipart/form-data but chunk does not start with boundary.");
-					}
-					String partName = null, fileName = null, partContentType = null;
-					// Parse the reset of the header lines
-					mpline = in.readLine();
-					headerLines++;
-					while (mpline != null && mpline.trim().length() > 0) {
-						Matcher matcher = NanoHTTPD.CONTENT_DISPOSITION_PATTERN.matcher(mpline);
-						if (matcher.matches()) {
-							String attributeString = matcher.group(2);
-							matcher = NanoHTTPD.CONTENT_DISPOSITION_ATTRIBUTE_PATTERN.matcher(attributeString);
-							while (matcher.find()) {
-								String key = matcher.group(1);
-								if ("name".equalsIgnoreCase(key)) {
-									partName = matcher.group(2);
-								} else if ("filename".equalsIgnoreCase(key)) {
-									fileName = matcher.group(2);
-									// add these two line to support multiple
-									// files uploaded using the same field Id
-									if (!fileName.isEmpty()) {
-										if (pcount > 0)
-											partName = partName + String.valueOf(pcount++);
-										else
-											pcount++;
-									}
-								}
-							}
-						}
-						matcher = NanoHTTPD.CONTENT_TYPE_PATTERN.matcher(mpline);
-						if (matcher.matches()) {
-							partContentType = matcher.group(2).trim();
-						}
-						mpline = in.readLine();
-						headerLines++;
-					}
-					int partHeaderLength = 0;
-					while (headerLines-- > 0) {
-						partHeaderLength = scipOverNewLine(partHeaderBuff, partHeaderLength);
-					}
-					// Read the part data
-					if (partHeaderLength >= len - 4) {
-						throw new NanoHTTPD.ResponseException(Status.INTERNAL_ERROR, "Multipart header size exceeds MAX_HEADER_SIZE.");
-					}
-					int partDataStart = boundaryIdxs[boundaryIdx] + partHeaderLength;
-					int partDataEnd = boundaryIdxs[boundaryIdx + 1] - 4;
-					fbuf.position(partDataStart);
-					List<String> values = parms.get(partName);
-					if (values == null) {
-						values = new ArrayList<String>();
-						parms.put(partName, values);
-					}
-					if (partContentType == null) {
-						// Read the part into a string
-						byte[] data_bytes = new byte[partDataEnd - partDataStart];
-						fbuf.get(data_bytes);
-						values.add(new String(data_bytes, contentType.getEncoding()));
-					} else {
-						// Read it into a file
-						String path = saveTmpFile(fbuf, partDataStart, partDataEnd - partDataStart, fileName);
-						if (!files.containsKey(partName)) {
-							files.put(partName, path);
-						} else {
-							int count = 2;
-							while (files.containsKey(partName + count)) {
-								count++;
-							}
-							files.put(partName + count, path);
-						}
-						values.add(fileName);
-					}
-				}
-			} catch (NanoHTTPD.ResponseException re) {
-				throw re;
-			} catch (Exception e) {
-				throw new NanoHTTPD.ResponseException(Status.INTERNAL_ERROR, e.toString());
-			}
-		}
-	public void parseBody(Map<String, String> files) throws IOException, NanoHTTPD.ResponseException {
-		RandomAccessFile randomAccessFile = null;
-		try {
-			long size = getBodySize();
-			ByteArrayOutputStream baos = null;
-			DataOutput requestDataOutput = null;
-			// Store the request in memory or a file, depending on size
-			if (size < MEMORY_STORE_LIMIT) {
-				baos = new ByteArrayOutputStream();
-				requestDataOutput = new DataOutputStream(baos);
-			} else {
-				randomAccessFile = getTmpBucket();
-				requestDataOutput = randomAccessFile;
-			}
-			// Read all the body and write it to request_data_output
-			byte[] buf = new byte[REQUEST_BUFFER_LEN];
-			while (this.rlen >= 0 && size > 0) {
-				this.rlen = this.inputStream.read(buf, 0, (int) Math.min(size, REQUEST_BUFFER_LEN));
-				size -= this.rlen;
-				if (this.rlen > 0) {
-					requestDataOutput.write(buf, 0, this.rlen);
-				}
-			}
-			ByteBuffer fbuf = null;
-			if (baos != null) {
-				fbuf = ByteBuffer.wrap(baos.toByteArray(), 0, baos.size());
-			} else {
-				fbuf = randomAccessFile.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, randomAccessFile.length());
-				randomAccessFile.seek(0);
-			}
-			// If the method is POST, there may be parameters
-			// in data section, too, read it:
-			if (Method.POST.equals(this.method)) {
-				ContentType contentType = new ContentType(this.headers.get("content-type"));
-				if (contentType.isMultipart()) {
-					String boundary = contentType.getBoundary();
-					if (boundary == null) {
-						throw new NanoHTTPD.ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Content type is multipart/form-data but boundary missing. Usage: GET /example/file.html");
-					}
-					decodeMultipartFormData(contentType, fbuf, this.parms, files);
-				} else {
-					byte[] postBytes = new byte[fbuf.remaining()];
-					fbuf.get(postBytes);
-					String postLine = new String(postBytes, contentType.getEncoding()).trim();
-					// Handle application/x-www-form-urlencoded
-					if ("application/x-www-form-urlencoded".equalsIgnoreCase(contentType.getContentType())) {
-						decodeParms(postLine, this.parms);
-					} else if (postLine.length() != 0) {
-						// Special case for raw POST data => create a
-						// special files entry "postData" with raw content
-						// data
-						files.put(POST_DATA, postLine);
-					}
-				}
-			} else if (Method.PUT.equals(this.method)) {
-				files.put("content", saveTmpFile(fbuf, 0, fbuf.limit(), null));
-			}
-		} finally {
-			NanoHTTPD.safeClose(randomAccessFile);
-		}
-	}*/}
+		return decoded; }
 
 
 
