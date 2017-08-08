@@ -1,6 +1,5 @@
-package aswan2017;
+package mApp2017;
 
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.Date;
 import java.util.HashMap;
@@ -9,10 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.lang.reflect.Field;
 
-//%><%aswan2017.TL.run(request, response, session, out, pageContext);%><%!
+//%><%mApp2017.TL.run(request, response, session, out, pageContext);%><%!
 /**Created by moh on 14/7/17.*/
 public class App {
-static final String AppNm="aswan2017.App",UploadPth="/aswan/uploads/";
+static final String packageName="mApp2017",AppNm=packageName+".App",UploadPth="/aswan/uploads/";
 
 public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
 	(@TL.Op(prmName="un")String un
@@ -139,7 +138,7 @@ static Map getLog(Map p,TL tl){
 		to=ref==null?null:ref instanceof Number?((Number)ref).longValue():TL.Util.parseDate(String.valueOf(ref)).getTime();//Double.NaN;
 		List w=new LinkedList();//ref=p.get("domain");
 		if(from==null&&to==null) {
-			p.put("msg","aswan2017.App.getLog:no parameter 'from' nor 'to'");
+			p.put("msg",AppNm+".getLog:no parameter 'from' nor 'to'");
 			return p;}
 		if(from!=null){
 			w.add( TL.Util.lst(ObjProperty.C.logTime,Tbl.Co.ge));w.add(from );}
@@ -171,7 +170,7 @@ static Map getLog(Map p,TL tl){
 static Map listLog(Map m,String sql,Object[]where,TL tl){
 	ResultSet rs=null;
 	try{rs=TL.DB.R(sql, where);}catch(Exception ex){tl.error(ex
-			,"aswan2017.App.list(sql",sql,":where=",where,m);}
+			,AppNm,".list(sql",sql,":where=",where,m);}
 	m=listLog(m,rs,null,null,tl);
 	return m; }
 
@@ -243,36 +242,57 @@ static Map listLog(Map m,ResultSet rs,Map pg,Map ps,TL tl){
  *3. object
  */
 static List newEntries(List rows,TL tl){
-	ObjHead h=null;ObjProperty p=null;
+	ObjHead h=null,x,y;ObjProperty p=null;
 	for(Object o:rows)try
 	{Map m=o instanceof Map?(Map)o:null;
 		Object props=m.get( "props"),
 		 pn=m.get( ObjProperty.C.n.name() );
 		if(props!=null || pn==null){
 			if(h==null)h=new ObjHead(  );
-			h.proto=h.parent=h.domain=null;
+			h.id=h.proto=h.parent=h.domain=null;
 			h.fromMap( m );
 			if(h.proto!=null && h.parent!=null){
 				if(h.domain==null)
 					h.domain=tl.usr.domain;
-				if(){}
-				h.id=h.maxPlus1( ObjHead.C.id );
-				h.save();
-				m.put( ObjHead.C.id.name(),h.id );
-				if(props instanceof Map)
-					for(Object k:((Map)props).keySet()){
-						Object v=((Map)props).get(k);
-						h.setProps( k,v );
+				else if(h.domain()!=null){}
+				else{x=ObjHead.factory(h.domain);
+					if(!x.exists())
+						;
+					else
+						;
+				}
+				x=ObjHead.factory(h.proto);y=ObjHead.factory(h.parent);
+				if(!x.exists() || !y.exists() ){
+					//tl.usr.hasAccess(Domain.Oper.moveToProto.name(),Domain.Proto.Proto.get().id);
+				}else
+				if( tl.usr.hasAccess(Domain.Oper.newChild.name(),h.parent)
+				 && tl.usr.hasAccess(Domain.Oper.newChild.name(),h.proto)){
+					//check if usr or role or domain
+
+					if(x instanceof Domain && tl.usr.hasAccess(Domain.Oper.newDomain.name(),h.domain));else
+					if(x instanceof Domain.Usr );else
+					if(x instanceof Domain.Role);else;
+					//check tl.usr.hasAccess , operations: newChild on parent,
+					//TODO: in Usr.hasAccess add checking parents
+					h.id=h.maxPlus1( ObjHead.C.id );
+					h.save();
+					if(y.children==null)y.children=new HashMap<>();
+					y.children.put(h.id,h);
+					m.put( ObjHead.C.id.name(),h.id );
+					if(props instanceof Map)
+						for(Object k:((Map)props).keySet()){
+							Object v=((Map)props).get(k);
+							h.setProps( k,v );
 					}
+				}
 			}
-		}else if(pn!=null){
+		}else if(pn!=null ){
 			if(p==null)
 				p=new ObjProperty(  );
 			p.id=null;//p.n=pn.toString();
 			p.fromMap( m );
-			if(p.id!=null){
+			if(p.id!=null && tl.usr.hasAccess(Domain.Oper.newProperty.name(),p.id) )
 				p.save();
-			}
 		}
 	}catch(Exception ex){tl.error(ex,"newEntries");}
 	return rows;}
@@ -351,7 +371,7 @@ public static TL.DB.Tbl tbl(Class<? extends TL.DB.Tbl>c){
 	if(c==ObjHead.class)
 		return ObjHead.sttc;
 	try{return c.newInstance();}
-	catch ( Exception ex ){TL.tl().error( ex,"aswan2017.App.tbl:" );}
+	catch ( Exception ex ){TL.tl().error( ex,AppNm,".tbl:" );}
 	return ObjHead.sttc; }
 
 public static abstract class Tbl extends TL.DB.Tbl{
@@ -596,7 +616,9 @@ CREATE TABLE `ObjHead` (
 		ObjHead p,x,o=all.get( id );
 		if(o==null){
 			x=o=new ObjHead( id,null,null,TL.tl().usr.domain );
-			o.loadBy( C.id,id );
+			o.loadBy( C.id,id );if(o.proto==null || o.parent==null){
+
+			}
 			p=o.parent==id?null:o.parent();
 			if(p!=null && p.children!=null ){
 				x=p.children.get( id );
