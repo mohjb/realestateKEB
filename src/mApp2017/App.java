@@ -1,5 +1,7 @@
 package mApp2017;
 
+import com.sun.java.browser.plugin2.DOM;
+
 import java.sql.ResultSet;
 import java.util.Date;
 import java.util.HashMap;
@@ -254,13 +256,13 @@ static List newEntries(List rows,TL tl){
 			if(h.proto!=null && h.parent!=null){
 				if(h.domain==null)
 					h.domain=tl.usr.domain;
-				else if(h.domain()!=null){}
+				/* else if(h.domain()!=null){} // WHAT DOES THIS LINE REPRESENT
 				else{x=ObjHead.factory(h.domain);
 					if(!x.exists())
-						;
+						;//TODO:
 					else
-						;
-				}
+						;//TODO:
+				}*/
 				x=ObjHead.factory(h.proto);y=ObjHead.factory(h.parent);
 				if(!x.exists() || !y.exists() ){
 					//tl.usr.hasAccess(Domain.Oper.moveToProto.name(),Domain.Proto.Proto.get().id);
@@ -269,7 +271,14 @@ static List newEntries(List rows,TL tl){
 				 && tl.usr.hasAccess(Domain.Oper.newChild.name(),h.proto)){
 					//check if usr or role or domain
 
-					if(x instanceof Domain && tl.usr.hasAccess(Domain.Oper.newDomain.name(),h.domain));else
+					if(x instanceof Domain && tl.usr.hasAccess(Domain.Oper.newDomain.name(),h.domain)){
+						Domain d=Domain.initNew();/*new Domain( h.id,h.parent,h.proto );
+						d.children=h.children;d.props=h.props;
+						Domain.domains.put( d.id,d );
+						ObjHead.all.put( d.id,d );*/
+						o=d;
+						m.put( ObjHead.C.id.name(),d.id );
+					}else
 					if(x instanceof Domain.Usr );else
 					if(x instanceof Domain.Role);else;
 					//check tl.usr.hasAccess , operations: newChild on parent,
@@ -611,14 +620,14 @@ CREATE TABLE `ObjHead` (
 	}
 	static{registered.add(ObjHead.class);}
 	public static ObjHead sttc=new ObjHead( );
+
 	public static ObjHead factory(Integer id){
 		if(id==null)return null;
 		ObjHead p,x,o=all.get( id );
 		if(o==null){
 			x=o=new ObjHead( id,null,null,TL.tl().usr.domain );
-			o.loadBy( C.id,id );if(o.proto==null || o.parent==null){
-
-			}
+			o.loadBy( C.id,id );if(o.proto==null || o.parent==null)
+				return o;
 			p=o.parent==id?null:o.parent();
 			if(p!=null && p.children!=null ){
 				x=p.children.get( id );
@@ -695,6 +704,7 @@ CREATE TABLE `ObjHead` (
 		}
 		return o;
 	}
+
 	/** all protos in all domains*/
 	public static Map<Integer,ObjHead>all=new HashMap<Integer,ObjHead>();
 	/* *roles is the list of access control, if a user doesnt have any of the roles then the user has no access
