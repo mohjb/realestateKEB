@@ -247,8 +247,9 @@ static List newEntries(List rows,TL tl){
 	ObjHead h=null,x,y;ObjProperty p=null;
 	for(Object o:rows)try
 	{Map m=o instanceof Map?(Map)o:null;
-		Object props=m.get( "props"),
+		Object prps=m.get( "props"),
 		 pn=m.get( ObjProperty.C.n.name() );
+		Map props=prps instanceof Map?(Map)prps:null;
 		if(props!=null || pn==null){
 			if(h==null)h=new ObjHead(  );
 			h.id=h.proto=h.parent=h.domain=null;
@@ -263,14 +264,13 @@ static List newEntries(List rows,TL tl){
 					else
 						;//TODO:
 				}*/
-				x=ObjHead.factory(h.proto);y=ObjHead.factory(h.parent);
-				if(!x.exists() || !y.exists() ){
-					//tl.usr.hasAccess(Domain.Oper.moveToProto.name(),Domain.Proto.Proto.get().id);
+				x=ObjHead.factory(h.proto); y=ObjHead.factory(h.parent);
+				if( x.proto==null || y.proto==null ){ // !x.exists() || !y.exists()
+					//TODO //tl.usr.hasAccess(Domain.Oper.moveToProto.name(),Domain.Proto.Proto.get().id);
+					tl.log("proto or parent not found");
 				}else
 				if( tl.usr.hasAccess(Domain.Oper.newChild.name(),h.parent)
 				 && tl.usr.hasAccess(Domain.Oper.newChild.name(),h.proto)){
-					//check if usr or role or domain
-
 					if(x instanceof Domain && tl.usr.hasAccess(Domain.Oper.newDomain.name(),h.domain)){
 						Domain d=Domain.initNew();/*new Domain( h.id,h.parent,h.proto );
 						d.children=h.children;d.props=h.props;
@@ -278,20 +278,44 @@ static List newEntries(List rows,TL tl){
 						ObjHead.all.put( d.id,d );*/
 						o=d;
 						m.put( ObjHead.C.id.name(),d.id );
-					}else
-					if(x instanceof Domain.Usr );else
-					if(x instanceof Domain.Role);else;
-					//check tl.usr.hasAccess , operations: newChild on parent,
-					//TODO: in Usr.hasAccess add checking parents
-					h.id=h.maxPlus1( ObjHead.C.id );
-					h.save();
-					if(y.children==null)y.children=new HashMap<>();
-					y.children.put(h.id,h);
-					m.put( ObjHead.C.id.name(),h.id );
-					if(props instanceof Map)
-						for(Object k:((Map)props).keySet()){
-							Object v=((Map)props).get(k);
-							h.setProps( k,v );
+					}else{
+						//TODO: in Usr.hasAccess add checking parents
+						h.id=h.maxPlus1( ObjHead.C.id );
+						if(y.children==null)
+							y.children=new HashMap<>();
+						m.put( ObjHead.C.id.name(),h.id );
+						int c=x instanceof Domain.Usr?2:x instanceof Domain.Role?3:1;
+						if(c>1){
+							prps=props.get(c==2?"un":"name");
+							String n=prps instanceof String?(String)prps:null;
+							if(c==2){
+								if(n!=null && !Domain.allUsrs.containsKey(n)){
+									Domain.Usr u=h.domain().new Usr(h.id,h.parent,h.proto);
+									x=u;
+									u.domain().usrs.put(n,u);
+									Domain.allUsrs.put(n,u);
+								}else c=0;
+							}else if(c==2){
+								if(n!=null && !h.domain().roles.containsKey(n)){
+									Domain.Role u=h.domain().new Role(h.id,h.parent,h.proto);
+									x=u;
+									u.domain().roles.put(n,u);
+									u.init();
+								}else c=0;
+							}
+							if(c>0){
+								u.props=h.props;
+								u.children=h.children;
+							}
+						}else x=h;
+						y.children.put(x.id,x);
+						ObjHead.all.put(x.id,x);
+						h.save();
+						if(props instanceof Map)
+							for(Object k:((Map)props).keySet()){
+								Object v=((Map)props).get(k);
+								h.setProps( k,v );
+							}
 					}
 				}
 			}
@@ -1094,4 +1118,5 @@ CREATE TABLE `ObjHead` (
 	}
   }//class Usr
  }//class Domain
+
 }//class App
