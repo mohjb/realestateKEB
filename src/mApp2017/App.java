@@ -1,7 +1,5 @@
 package mApp2017;
 
-import com.sun.java.browser.plugin2.DOM;
-
 import java.sql.ResultSet;
 import java.util.Date;
 import java.util.HashMap;
@@ -48,23 +46,22 @@ public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
 	,TL tl) {
  	if(tl.usr==null)return null;
 	Map m=new HashMap();try{
-	if( getLogs!=null){List<Map>a=new LinkedList<>();
-		m.put("getLogs",a);
-		for (Object o:getLogs) {
-			Map x=(Map)o;
-			a.add(getLog(x,tl));
+		if( newEntries!=null)
+			m.put("newEntries",newEntries(newEntries,tl));
+		if( writeObjs!=null)
+			m.put("writeObjs",writeObjs(writeObjs,tl));
+		if( getIds!=null){List a=new LinkedList<>();
+			m.put("getIds",a);
+			for (Object o:getIds)
+			{	ObjHead x=ObjHead.factory(toInt( o));a.add(x.proto==null?o:x.hasAccess()?x:null);}
 		}
-	}
-	if( getIds!=null){List a=new LinkedList<>();
-		m.put("getIds",a);
-		for (Object o:getIds)
-			a.add(ObjHead.factory(toInt( o)));
-	}
-	if( writeObjs!=null)
-		m.put("writeObjs",writeObjs(writeObjs,tl));
-	if( newEntries!=null)
-		m.put("newEntries",newEntries(newEntries,tl));
-
+		if( getLogs!=null){List<Map>a=new LinkedList<>();
+			m.put("getLogs",a);
+			for (Object o:getLogs) {
+				Map x=(Map)o;
+				a.add(getLog(x,tl));
+			}
+		}
 	}catch ( Exception ex ){tl.error( ex,"App.poll" );}
 	return m;}
 
@@ -1114,19 +1111,17 @@ CREATE TABLE `ObjHead` (
 		return hasAccess( resourceId,TL.Util.lst( operation ) );}
 
 	boolean hasAccess(Integer resourceId,List operations){//,String resourcePN//PropertyName
-		ObjHead c=all.get( resourceId );if(c==null)return false;
-		for(Role r:have.values()){
+		ObjHead c=all.get( resourceId );if(c==null||have==null)return false;
+		for(Role r:have.values()){if(r!=null && r.resources!=null && r.operations!=null)
 			for (ObjHead o: r.resources.values())
 			{if((o.id==c.id || c.isInstanceOf( o ))
-			 &&(r.operations.containsAll( operations ) //||r.operations.contains( Oper.all.toString() )
-			))
+			 &&(r.operations.containsAll( operations ) ))  //||r.operations.contains( Oper.all.toString() )
 			 {if(locks==null)return true;
 				for(Role x:locks.values()){
 					for (ObjHead z: x.resources.values())
 					{if((z.id==c.id || c.isInstanceOf( z ))
-					 &&(x.operations.containsAll( operations ) //||x.operations.contains( Oper.all.toString() )
-					))
-					    return false;
+					 &&(x.operations.containsAll( operations ) )) //||x.operations.contains( Oper.all.toString() )
+						return false;
 					}
 				}
 				return true;

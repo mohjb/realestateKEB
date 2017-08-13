@@ -1801,11 +1801,7 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 					else if(o instanceof Object[])f.vals((Object[])o);
 					else f.readReq("");
 				}else
-					args[i]=o=TL.class.equals(c)?tl
-						:Map.class.isAssignableFrom(c)
-						&&(nm.indexOf("p")!=-1)
-						&&(nm.indexOf("r")!=-1)
-						&&(nm.indexOf("m")!=-1)?tl.json
+					args[i]=o=TL.class.equals(c)?tl//:Map.class.isAssignableFrom(c) &&(nm.indexOf("p")!=-1) &&(nm.indexOf("r")!=-1) &&(nm.indexOf("m")!=-1)?tl.json
 						:tl.h.req(nm,c);
 			}catch(Exception ex){tl.error(ex,Name,".run:arg:i=",i);}
 			retVal=n==0?op.invoke(cl)
