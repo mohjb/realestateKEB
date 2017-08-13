@@ -770,25 +770,6 @@ public static void main(String[]args)throws Exception{
  s.pc.a=SrvltContxt.sttc();
  s.pc.q.ssn=new Ssn();
  String[]prms= {
-	"{op:'App.login',un:'usr0',pw:'6f8f57715090da2632453988d9a1501b'}"
-
-	,"{op:'App.poll'" +
-		",getIds:[5,14]" +
-		",getLogs:[" +
-			" {from:50,to:1501856678000} ,{From:50,To:1501856678000}" +
-			",{from:50,to:1501856678000,idList:[0,1,2,13],uidList:[0,1,2],nList:['a','b']}" +
-			",{From:50,To:1501856678000,idList:[0,1,2,13],domainList:[0,1,2],protoList:[0,1,2,30],parentList:[0,1,2,30]}" +
-			"]" +
-		",writeObjs:[ " +
-			"{id:13, parent:0,proto:3,domain:0,ref:12}," +
-			"{id:13, n:'test',v:'testing',ref:17}  ]" +
-		",newEntries:[" +
-			"{proto:3,parent:0,ref:13,props:{hi:'hello',created:'2017,8,7 10:32',closed:false}}" +
-		 	",{ref:14,proto:1,parent:0,props:{url:'role-2',name:'role.normal',member1:15,operation1:'view',resource1:15,resource2:3}}" +
-		 	",{ref:15,proto:2,parent:0,props:{url:'usr-2' ,un:'be',pw:'',email:'x'}}" +
-		 "]" +
-	"}"
-	,"{op:'App.logout'}"
 /*
 +----+-----+---------------------+----+--------+-------+--------+
 | no | uid | logTime             | id | parent | proto | domain |
@@ -864,6 +845,25 @@ public static void main(String[]args)throws Exception{
 
 
 */
+	"{op:'App.login',un:'usr0',pw:'6f8f57715090da2632453988d9a1501b'}"
+
+	,"{op:'App.poll'" +
+		",getIds:[5,14]" +
+		",getLogs:[" +
+			" {from:50,to:1501856678000} ,{From:50,To:1501856678000}" +
+			",{from:50,to:1501856678000,idList:[0,1,2,13],uidList:[0,1,2],nList:['a','b']}" +
+			",{From:50,To:1501856678000,idList:[0,1,2,13],domainList:[0,1,2],protoList:[0,1,2,3],parentList:[0,1,2,3]}" +
+			"]" +
+		",writeObjs:[ " +
+			"{id:13, parent:0,proto:3,domain:0,ref:12}," +
+			"{id:13, n:'test',v:'testing',ref:17}  ]" +
+		",newEntries:[" +
+			"{proto:3,parent:0,ref:13,props:{hi:'hello',created:'2017,8,7 10:32',closed:false}}" +
+		 	",{ref:14,proto:1,parent:0,props:{url:'role-2',name:'role.normal',member1:15,operation1:'view',resource1:15,resource2:3}}" +
+		 	",{ref:15,proto:2,parent:0,props:{url:'usr-2' ,un:'be',pw:'',email:'x'}}" +
+		 "]" +
+	"}"
+	,"{op:'App.logout'}"
 	};
 	for(String p:prms){
 	s.pc.q.init(p);
