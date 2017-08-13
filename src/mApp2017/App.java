@@ -249,9 +249,7 @@ static List newEntries(List rows,TL tl){
 		 get( ObjProperty.C.n.name() );
 		Map props=prps instanceof Map?(Map)prps:null;
 		if(props!=null || n==null){
-			if(h==null)h=new ObjHead(  );
-			h.id=h.proto=h.parent=h.domain=null;
-			h.fromMap( m );
+			h=new ObjHead(  );h.fromMap( m );//if(h==null)//h.id=h.proto=h.parent=h.domain=null;h.props=null;
 			if(h.proto!=null && h.parent!=null){
 				if(h.domain==null)
 					h.domain=tl.usr.domain;
@@ -287,10 +285,10 @@ static List newEntries(List rows,TL tl){
 									Domain.Role u=h.domain().new Role(h.id,h.parent,h.proto);
 									x=u;
 									u.domain().roles.put(s,u);
-									u.init();
+									//u.init();
 								}else c=0;
 							}
-							if(c>0){
+							if(c>0){// misleading because , props and children are always null, the reason is, h is always newly instantiated
 								x.props=h.props;
 								x.children=h.children;
 							}
@@ -299,10 +297,10 @@ static List newEntries(List rows,TL tl){
 							y.children.put(x.id,x);
 							ObjHead.all.put(x.id,x);
 							x.no=null;x.save();
-							if(props !=null) for(Object k:props.keySet())
+							if(props !=null){for(Object k:props.keySet())
 							{	prps=props.get(k);
 								x.setProps( k,prps );
-							}
+							}if(c==3)((Domain.Role)x).init();}
 						}
 					}
 				}
@@ -681,8 +679,8 @@ CREATE TABLE `ObjHead` (
 			p=o.parent==id?null:o.parent();
 			if(p!=null && p.children!=null ){
 				x=p.children.get( id );
-				if(x!=null && x.id==id)
-					return x;
+				if(x!=null && x.id==id)//this case should not happen
+				{all.put(id,x);return x;}
 				else
 					x=o;
 			}
@@ -755,7 +753,7 @@ CREATE TABLE `ObjHead` (
 		return o;
 	}
 
-	/** all protos in all domains*/
+	/** all protos in all domains */ // a different idea is to move member'all' to domain, and each domain would have its own id-sequence, and in cases where cross-domain links are required , the link would be represented as {class:'ObjHeadRef',id:<int:id>,domain:<int:domain>}, of course from jdbc  ObjProperty-v would be only a string, which is a problem
 	public static Map<Integer,ObjHead>all=new HashMap<Integer,ObjHead>();
 
 	/* *roles is the list of access control, if a user doesnt have any of the roles then the user has no access
@@ -767,9 +765,9 @@ CREATE TABLE `ObjHead` (
 		super(id);this.parent=parent;this.proto=proto;this.domain=domain;}
 
 	public ObjHead(){this(0,0,0,0);}
-	ObjHead parent(){return all==null?null:all.get(parent);}
-	ObjHead proto(){return all==null?null:all.get(proto);}
-	Domain domain(){return  all==null?null: (Domain)(all.get(domain));}//Domain.domains
+	ObjHead parent(){return all.get(parent);}//all==null?null:
+	ObjHead proto(){return all.get(proto);}//all==null?null:
+	Domain domain(){return (Domain)(all.get(domain));}// all==null?null: Domain.domains
 
 	boolean isInstanceOf(ObjHead p){ObjHead o=this,q=null;
 		while(p!=o && q!=o && o!=null)
@@ -1100,6 +1098,7 @@ CREATE TABLE `ObjHead` (
 		}
 	}//init
   }//class Role
+
   public class Usr extends ObjHead{
 	Map<String,Role>have=new HashMap<String,Domain.Role>()
 		,locks;//=new HashMap<String,Domain.Role>();
