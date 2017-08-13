@@ -342,7 +342,7 @@ static List newEntries(List rows,TL tl){
  static List writeObjs(List rows,TL tl){
 	if(tl.usr==null)return null;
 	List x=new LinkedList();ObjProperty p=null,p0=null;
-	ObjHead h=null,h0=null;Tbl.CI clt=null;
+	ObjHead h=null,h0=null,h2;Tbl.CI clt=null;
 	for(Object o:rows)try
 	{Map m=o instanceof Map?(Map)o:null;
 		Tbl t=null;p=null;h=null;
@@ -358,13 +358,13 @@ static List newEntries(List rows,TL tl){
 				{t=h;clt=ObjHead.C.logTime;}else
 				{t=p=h.props.get( n );clt=ObjProperty.C.logTime;}
 			}
-			if(t!=null){if(t instanceof ObjHead )
+			if(t!=null){if(t==h )// instanceof ObjHead
 				{if(h0==null)h0=new ObjHead(  );h0.set( h );t=h0;}
 				else{if(p0==null)p0=new ObjProperty( h.id,p.n,p.v );else
 					{p0.no=null;p0.logTime=tl.now;p0.uid=tl.usr.id;p0.id=p.id;p0.n=p.n;p0.v=p.v;
 					}t=p0;}
 				t.fromMap(m);
-				if(h!=null ){
+				if(t==h0 ){
 					if(h.proto!=h0.proto
 					&&(!tl.usr.hasAccess(Domain.Oper.moveFromProto.name() ,h0.proto )
 					|| !tl.usr.hasAccess(Domain.Oper.moveToProto.name() ,h.proto )))
@@ -383,7 +383,48 @@ static List newEntries(List rows,TL tl){
 					?Domain.Oper.writeProperty.name()
 					:Domain.Oper.writeObject.name()
 					,t.id ))//TODO: investigate what are the circumstances for other operations ,other than "view"
-				{	t.uid=tl.usr.id;
+				{/*TODO: check cases of what is going to be changed:
+				  head:
+					1. head is domain
+					2. head is proto
+					1. change of domain of head
+					2. change of parent of head
+					3. change of proto of head
+				  property:
+					if proto is Role    
+						1. change of prop member
+						2. change of prop resource
+						3. change of prop operation
+					if proto is Usr
+						4. change of prop un
+						
+					in such cases, must update intermediatery maps, children, roles, users, allUsers, have, locks, all, domains 
+					*/if(t==h0 ){//h0 is the new changes
+						if(h0.parent!=h.parent)
+						{h2=h0.parent();
+							if(h2!=null && h2.children!=null)
+								h2.children.remove( h.id );
+							h2=h.parent();
+							if(h2!=null)
+							{if(h2.children==null)
+								h2.children=new HashMap<>(  );
+							 h2.children.put( h.id,h );
+							}
+						}
+						if(h0.proto!=h.proto){
+							//TODO: cases , from/to role/usr/domain/objhead
+						}
+					}
+					if(p!=null){
+						if(h instanceof Domain){}
+						if(h instanceof Domain.Usr){}
+						if(h instanceof Domain.Role){
+							if(p0.n.startsWith( "operation" )){}
+							else if(p0.n.startsWith( "resource" )){}
+							else if(p0.n.startsWith( "member" )){}
+						}
+					}
+					t.uid=tl.usr.id;
 					m.put(clt.toString(),t.logTime=tl.now);
 					x.add(m);t.no=null;t.save();
 				}
