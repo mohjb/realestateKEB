@@ -360,8 +360,11 @@ static List newEntries(List rows,TL tl){
 			}
 			if(t!=null){if(t==h )// instanceof ObjHead
 				{if(h0==null)h0=new ObjHead(  );h0.set( h );t=h0;}
-				else{if(p0==null)p0=new ObjProperty( h.id,p.n,p.v );else
-					{p0.no=null;p0.logTime=tl.now;p0.uid=tl.usr.id;p0.id=p.id;p0.n=p.n;p0.v=p.v;
+				else{if(p0==null)
+					p0=new ObjProperty( h.id,p.n,p.v );
+					else
+					{p0.no=null;p0.logTime=tl.now;
+						p0.uid=tl.usr.id;p0.id=p.id;p0.n=p.n;p0.v=p.v;
 					}t=p0;}
 				t.fromMap(m);
 				if(t==h0 ){
@@ -391,7 +394,7 @@ static List newEntries(List rows,TL tl){
 					2. change of parent of head
 					3. change of proto of head
 				  property:
-					if proto is Role    
+					if proto is Role
 						1. change of prop member
 						2. change of prop resource
 						3. change of prop operation
