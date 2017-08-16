@@ -769,7 +769,7 @@ public static void main(String[]args)throws Exception{
  s.pc=new PC();
  s.pc.a=SrvltContxt.sttc();
  s.pc.q.ssn=new Ssn();
- String[]prms= {
+ String[]requests= {
 /*
 +----+-----+---------------------+----+--------+-------+--------+
 | no | uid | logTime             | id | parent | proto | domain |
@@ -843,68 +843,88 @@ public static void main(String[]args)throws Exception{
 +----+-----+---------------------+----+-------------+----------------------------------+
 46 rows in set (0.04 sec)
 
-2017.08.14 test-cases:
--writeObjs :
-	test case error , non-existing id
-	non-existing proto
-	non-existing parent
-	non-existing domain
-	non-existing property
-	parent same as id
-	proto no access moveToProto
-	proto no access moveFromProto
-	proto no access moveToProto nor moveFromProto
-	parent no access moveToParent
-	parent no access moveFromParent
-	parent no access moveToParent nor moveFromParent
-	domain no access moveToDomain
-	domain no access moveFromDomain
-	domain no access moveToDomain nor moveFromDomain
-	no access writeObj
-	no access writeProperty
-	domain same as id
-	property un of usr
-
-
-
--newEntries:
-	no access newDomain
-	no access newChild Usr
-	no access newChild Role
-	no access newChild lock
-	no access newChild
-	no access subProto
-	no access newProperty
-	new obj, then with writeObjs change to domain
-	new obj, then with writeObjs change to role
-	new obj, then with writeObjs change to usr
-	new prop, pre-existsing
-
+ 2017.08.14 test-cases:
 
 */
 	"{op:'App.login',un:'usr0',pw:'6f8f57715090da2632453988d9a1501b'}"
 
+
 	,"{op:'App.poll'" +
-		",getIds:[5,14]" +
+		",newEntries:[" +
+			"{proto:0,parent:0,ref:'1.1 d1',props:{url:'domain1',description:'// 1.1 create domain d1'}}" +//Role 12,Usr 13, Proto 14,Lock 15,role 16
+		 	",{proto:14,parent:11,domain:11,props:{url:'proto-17',name:'proto-T',description:'//1.2 create subclass of proto for testing, proto-T in d1'}}" +
+		 	",{proto:17,parent:11,domain:11,props:{url:'test-instance1'         ,description:'//1.3 create test-instance1 subclass of proto-T , with test properties'}}" +
+		 	",{proto:17,parent:11,domain:11,props:{url:'test-instance2'         ,description:'//1.4 create test-instance2 subclass of proto-T , with test properties'}}" +
+		 	",{proto:12,parent:11,domain:11,props:{url:'role-20',description:'//1.5 create role with limited access ,to proto-T'" +
+			    ",name:'domain1.role.view',resource:[],member:[],operation:['view']}}" +
+		 	",{proto:3,parent:11,domain:11,props:{url:'o-1.6'                   ,description:'//1.6 create user with limited access'}}" +
+		 	",{proto:3,parent:11,domain:11,props:{url:'o-1.7'                   ,description:'//1.7 new obj, then with writeObjs change to domain'}}" +
+		 	",{proto:3,parent:11,domain:11,props:{url:'o-1.8'                   ,description:'//1.8 new obj, then with writeObjs change to role'}}" +
+			",{proto:2,parent:11,domain:11,props:{,url:'usr-2'  ,description:'//1.9 new obj, then with writeObjs change to usr'" +
+				",un:'be' ,pw:'6f8f57715090da2632453988d9a1501b',email:'x'}}" +
+		 	//test cases that are intentionally-invalid requests
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.1	no access newDomain'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.2	no access newChild Usr'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.3	no access newChild Role'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.4	no access newChild lock'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.5	no access newChild'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.6	no access subProto'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.7	no access newProperty'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.8	new usr, existsing un'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.9	new role, existsing name'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'//2.10new prop, pre-existsing'}}" +
+		 "]" +
+		",writeObjs:[ " +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.1 write props in test-instance'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.2 change head parent'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.3 change head proto'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.4 change head domain'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.5 change un'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.6 change role name'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.7 change member'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.8 change resource'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.9 change operation'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'3.10change domain'}}" +
+		 	//4 test cases that are intentionally-invalid requests
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.1  non-existing id'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.2  non-existing proto'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.3  non-existing parent'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.4  non-existing domain'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.5  non-existing property'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.6  parent same as id'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.7  proto no access moveToProto'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.8  proto no access moveFromProto'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.9  proto no access moveToProto nor moveFromProto'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.10 parent no access moveToParent'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.11 parent no access moveFromParent'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.12 parent no access moveToParent nor moveFromParent'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.13 domain no access moveToDomain'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.14 domain no access moveFromDomain'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.15 domain no access moveToDomain nor moveFromDomain'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.16 no access writeObj'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.17 no access writeProperty'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.18 no access newDomain, domain same as id'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.19 property un of usr, already used'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.20 same value prop'}}" +
+		 	",{proto:,parent:11,domain:11,props:{url:'o-1',description:'4.21 same value head: proto,parent,domain'}}" +
+		"]" +
+		",getIds:[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,14]" +
 		",getLogs:[" +
 			" {from:50,to:1501856678000} ,{From:50,To:1501856678000}" +
 			",{from:50,to:1501856678000,idList:[0,1,2,13],uidList:[0,1,2],nList:['a','b']}" +
 			",{From:50,To:1501856678000,idList:[0,1,2,13],domainList:[0,1,2],protoList:[0,1,2,3],parentList:[0,1,2,3]}" +
 			"]" +
-		",writeObjs:[ " +
-			"{id:13, parent:0,proto:3,domain:0,ref:12}," +
-			"{id:13, n:'test',v:'testing',ref:17}  ]" +
-		",newEntries:[" +
-			"{proto:3,parent:0,ref:13,props:{hi:'hello',created:'2017,8,7 10:32',closed:false}}" +
-		 	",{ref:14,proto:1,parent:0,props:{url:'role-2',name:'role.normal',member1:15,operation1:'view',resource1:15,resource2:3}}" +
-		 	",{ref:15,proto:2,parent:0,props:{url:'usr-2' ,un:'be',pw:'',email:'x'}}" +
-		 "]" +
+
 	"}"
 	,"{op:'App.logout'}"
+
+	,"{op:'App.login',un:'be',pw:'6f8f57715090da2632453988d9a1501b'}"
+
 	};
-	for(String p:prms){
-	s.pc.q.init(p);
-	TL.run( s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.getWriter(),s.pc );s.pc.q.ssn.newlySsn=false;
-}}
+	for(String p:requests){
+		s.pc.q.init(p);
+		TL.run( s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.getWriter(),s.pc );s.pc.q.ssn.newlySsn=false;
+	}
+ }
 
 }//class Dbg
