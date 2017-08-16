@@ -858,6 +858,7 @@ public static class ObjHead extends Tbl {
 			,TL.Util.lst(C.domain,C.proto ,C.logTime)
 			,TL.Util.lst(C.parent ,C.logTime)
 			,TL.Util.lst(C.uid,C.domain,C.logTime))
+			,TL.Util.lst(C.proto,C.logTime)
 		);
 /*
 must create foundational prototypes(classes)
