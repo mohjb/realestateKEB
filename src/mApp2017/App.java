@@ -1,6 +1,9 @@
 package mApp2017;
 
+import com.sun.java.browser.plugin2.DOM;
+
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -1138,7 +1141,7 @@ CREATE TABLE `ObjHead` (
 		,writeObject,writeProperty
 		,moveToDomain,moveToProto,moveToParent//,moveToDelete
 		,moveFromDomain ,moveFromProto,moveFromParent
-		,newProperty,newChild
+		,newProperty,newChild//,ArchiveView,ArchiveEntryEncrypt,JsFunc,JsCall
 		,newDomain//,newUsr,newRole,newSubProto
 	}
 
@@ -1307,8 +1310,17 @@ CREATE TABLE `ObjHead` (
 		changePW
 		*/
 	}
+  public static List<Integer>loadDomainsIds(TL tl){
+  	List<Integer>l=null;
+	  try {
+		  l=TL.DB.q1colTList( Domain.sql( cols(C.id,Co.maxLogTime),null,sttc.groupBy(),null,dbtName ),Integer.class);
+	  } catch ( SQLException e ) {
+		  tl.error( e,AppNm,".Domain.loadDomainsIds" );
+	  }
+	  return l;
+  }
 
-	@Override public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{
+  @Override public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{
 		try{int old=o.accessViolation;
 			super.jsonOutput( o,ind,path ,false);
 			if(old!=o.accessViolation)
