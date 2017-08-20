@@ -762,7 +762,7 @@ public static class SrvltContxt implements ServletContext{//static SrvltContxt s
 //////////////////////////////////////////////////////////////////////
 
 public static void p(Object...p){for(Object s:p)System.out.print(s);System.out.println();}
-public static void pa(String...p){for(String s:p)System.out.print(s);}
+public static void pa(String...p){for(String s:p)System.out.print(s);
 /*
 +----+-----+---------------------+----+--------+-------+--------+
 | no | uid | logTime             | id | parent | proto | domain |
@@ -838,7 +838,7 @@ public static void pa(String...p){for(String s:p)System.out.print(s);}
 
  2017.08.14 test-cases:
 
-*/
+*/}
 public static void main(String[]args)throws Exception {
 	Dbg.Srvlt s = Srvlt.sttc;
 	s.pc = new PC();
@@ -849,12 +849,39 @@ public static void main(String[]args)throws Exception {
 	int mp1 = TL.DB.Tbl.maxPlus1( App.ObjHead.C.id, App.ObjHead.dbtName );
 	List< Integer > domains = App.Domain.loadDomainsIds( tl );
 	App.Domain d1 =domains != null && domains.size() > 1? App.Domain.loadDomain( domains.get( 1 ) ): null;
-	App.Domain.Role role = null,pRole=null;
+	App.Domain.Role role = null,role2,pRole=null;
 	App.Domain.Usr usrB = null,pUsr=null;
 	App.ObjHead proto=null,protoT=null,t1=null,t2=null;//,test2=null,test1_7=null,test1_8=null,test1_9=null;
 	//List<App.ObjHead>test=new LinkedList<>();
 
 	if ( d1 != null ){ usrB = d1.usrs.get( "be" );
+		if(usrB==null){
+			pUsr=(App.Domain.Usr)d1.findChild( "name","Usr" );
+			//mp1 = TL.DB.Tbl.maxPlus1( App.ObjHead.C.id, App.ObjHead.dbtName );
+			usrB=(App.Domain.Usr)d1.new Usr(null,d1.id,pUsr.id).saveNewId();
+			usrB.setProps( "un","be"
+				,"pw","6f8f57715090da2632453988d9a1501b");
+			pRole=(App.Domain.Role)d1.findChild( "name","Role" );
+			role=d1.new Role( null,d1.id,pRole.id );role.saveNewId();
+			role.setProps( "name", "domainD1Role.usrB"
+				,"member1",usrB.id
+				,"resource1",usrB.id
+			,"operation1",App.Domain.Oper.view.name()
+			,"operation2",App.Domain.Oper.newProperty.name()
+			,"operation3",App.Domain.Oper.writeProperty.name()
+			);d1.roles.put( role.propStr( "name" ),role );role.init();
+
+			//mp1 = TL.DB.Tbl.maxPlus1( App.ObjHead.C.id, App.ObjHead.dbtName );
+			role2=d1.new Role( null,d1.id,pRole.id );role2.saveNewId();
+			role2.setProps( "name", "domainD1Role.DataEntry"
+				,"member1",usrB.id
+				,"resource1",d1.findChild( "name","Proto" ).id
+			,"operation1",App.Domain.Oper.view.name()
+			,"operation2",App.Domain.Oper.newChild.name()
+			,"operation3",App.Domain.Oper.newProperty.name()
+			,"operation4",App.Domain.Oper.writeProperty.name()
+			);d1.roles.put( role2.propStr( "name" ),role2 );role2.init();
+		}
 		for ( App.Domain.Role r:d1.roles.values() )
 			if(r.members.containsValue( usrB )) {
 				{//the usr should have two roles , the first role has operation only view, the other role is more than view
