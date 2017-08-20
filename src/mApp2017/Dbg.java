@@ -843,6 +843,43 @@ public static void main(String[]args)throws Exception{
 +----+-----+---------------------+----+-------------+----------------------------------+
 46 rows in set (0.04 sec)
 
+2017.08.14 test-cases:
+-writeObjs :
+	test case error , non-existing id
+	non-existing proto
+	non-existing parent
+	non-existing domain
+	non-existing property
+	parent same as id
+	proto no access moveToProto
+	proto no access moveFromProto
+	proto no access moveToProto nor moveFromProto
+	parent no access moveToParent
+	parent no access moveFromParent
+	parent no access moveToParent nor moveFromParent
+	domain no access moveToDomain
+	domain no access moveFromDomain
+	domain no access moveToDomain nor moveFromDomain
+	no access writeObj
+	no access writeProperty
+	domain same as id
+	property un of usr
+
+
+
+-newEntries:
+	no access newDomain
+	no access newChild Usr
+	no access newChild Role
+	no access newChild lock
+	no access newChild
+	no access subProto
+	no access newProperty
+	new obj, then with writeObjs change to domain
+	new obj, then with writeObjs change to role
+	new obj, then with writeObjs change to usr
+	new prop, pre-existsing
+
 
 */
 	"{op:'App.login',un:'usr0',pw:'6f8f57715090da2632453988d9a1501b'}"

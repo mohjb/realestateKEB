@@ -241,12 +241,14 @@ static Map listLog(Map m,ResultSet rs,Map pg,Map ps,TL tl){
  *3. object
  */
 static List newEntries(List rows,TL tl){
-	if(tl.usr==null)return null;
-	ObjHead h=null,x,y;ObjProperty p=null;
+	if(tl.usr==null)return null;List list=new LinkedList();
+	ObjHead h=null,x,y;ObjProperty p=null,po;
 	for(Object o:rows)try
 	{Map m=o instanceof Map?(Map)o:null;
-		Object prps=m.get( "props"),n=m.
-		 get( ObjProperty.C.n.name() );
+		if(m==null){
+			list.add( TL.Util.mapCreate( "return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","expected json-object item " ,"item",o) ) );
+			continue;}
+		Object prps=m.get( "props"),n=m.get( ObjProperty.C.n.name() );
 		Map props=prps instanceof Map?(Map)prps:null;
 		if(props!=null || n==null){
 			h=new ObjHead(  );h.fromMap( m );//if(h==null)//h.id=h.proto=h.parent=h.domain=null;h.props=null;
@@ -257,18 +259,28 @@ static List newEntries(List rows,TL tl){
 				if( x.proto==null || y.proto==null ){ // !x.exists() || !y.exists()
 					//TODO //tl.usr.hasAccess(Domain.Oper.moveToProto.name(),Domain.Proto.Proto.get().id);
 					tl.log("proto or parent not found");
+					m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","proto or parent not found" ) );
+					continue;
 				}else
-				if( tl.usr.hasAccess(Domain.Oper.newChild.name(),h.parent)
-				 && tl.usr.hasAccess(Domain.Oper.newChild.name(),h.proto))
+				if(!( tl.usr.hasAccess(Domain.Oper.newChild.name(),h.parent)
+				 && tl.usr.hasAccess(Domain.Oper.newChild.name(),h.proto)))
+					m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","no access operation 'newChild'" ) );
+				else
 				{	if(x instanceof Domain && tl.usr.hasAccess(Domain.Oper.newDomain.name(),h.domain))
 					{	Domain d=Domain.initNew();
 							m.put( ObjHead.C.id.name(),d.id );
+							list.add( TL.Util.mapSet( m,
+								ObjHead.C.id.name(),x.id
+								,ObjHead.C.logTime.name(),x.logTime
+								,"return",TL.Util.mapCreate(
+									"statusCode",+1
+									,"statusMsg","created new Domain")));
 					}else
 					{	//TODO: in Usr.hasAccess add checking parents
 						if(y.children==null)
 							y.children=new HashMap<>();
 						h.id=h.maxPlus1( ObjHead.C.id );
-						m.put( ObjHead.C.id.name(),h.id );
+						//m.put( ObjHead.C.id.name(),h.id );
 						int c=x instanceof Domain.Usr?2:x instanceof Domain.Role?3:1;
 						if(c>1){
 							prps=props.get(c==2?"un":"name");
@@ -279,14 +291,18 @@ static List newEntries(List rows,TL tl){
 									x=u;
 									u.domain().usrs.put(s,u);
 									Domain.allUsrs.put(s,u);
-								}else c=0;
+								}else{c=0;
+									m.put("return",TL.Util.mapCreate(
+										"statusCode",-1,"statusMsg","user name used" ) );}
 							}else if(c==3){
 								if(s!=null && !h.domain().roles.containsKey(s)){
 									Domain.Role u=h.domain().new Role(h.id,h.parent,h.proto);
 									x=u;
 									u.domain().roles.put(s,u);
 									//u.init();
-								}else c=0;
+								}else{c=0;
+									m.put("return",TL.Util.mapCreate(
+										"statusCode",-1,"statusMsg","role name used" ) );}
 							}
 							if(c>0){// misleading because , props and children are always null, the reason is, h is always newly instantiated
 								x.props=h.props;
@@ -295,26 +311,60 @@ static List newEntries(List rows,TL tl){
 						}else x=h;
 						if(c>0){
 							y.children.put(x.id,x);
-							ObjHead.all.put(x.id,x);
+							ObjHead.all.put(x.id,x);x.logTime=tl.now;
 							x.no=null;x.save();
+							list.add( TL.Util.mapSet( m,
+								ObjHead.C.id.name(),x.id
+								,ObjHead.C.logTime.name(),x.logTime
+								,"return",TL.Util.mapCreate(
+									"statusCode",+1
+									,"statusMsg","created new ObjHead" )));
 							if(props !=null){for(Object k:props.keySet())
-							{	prps=props.get(k);
-								x.setProps( k,prps );
-							}if(c==3)((Domain.Role)x).init();}
+								{	prps=props.get(k);
+									x.setProps( k,prps );
+								}
+								if(c==3)
+									((Domain.Role)x).init();
+							}
 						}
 					}
 				}
 			}
 		}else if(n!=null ){
-			if(p==null)
+			//if(p==null)
 				p=new ObjProperty(  );
 			p.id=null;//p.n=n;
-			p.fromMap( m );p.no=null;
-			if(p.id!=null &&p.n!=null && tl.usr.hasAccess(Domain.Oper.newProperty.name(),p.id) )
-				p.save();
-		}
-	}catch(Exception ex){tl.error(ex,"newEntries");}
-	return rows;}
+			p.fromMap( m );
+			if(p.id==null)
+				m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","expected 'id'" ) );
+			else {
+				h = ObjHead.factory( p.id );
+				if ( h == null || h.proto == null )
+					m.put( "return", TL.Util.mapCreate( "statusCode", -1, "statusMsg", "'id' not found" ) );
+				else if ( p.n == null )
+					m.put( "return", TL.Util.mapCreate( "statusCode", -1, "statusMsg", "expected n <propertyName>" ) );
+				else
+				{po=h.props==null?null:h.props.get( p.n );
+					if(po!=null)
+						m.put( "return", TL.Util.mapCreate( "statusCode", -1, "statusMsg", "can not use propertyName" ) );
+					else if ( tl.usr.hasAccess( Domain.Oper.newProperty.name(), p.id ) ) {
+						p.no = null;
+						p.logTime = tl.now;
+						p.save();
+						list.add( TL.Util.mapSet( m
+							, ObjProperty.C.id.name(), p.id
+							, ObjProperty.C.logTime.name(), p.logTime
+							, "return", TL.Util.mapCreate( "statusCode", +1, "statusMsg", "created new ObjProperty") ) );
+					} else
+						m.put("return", TL.Util.mapCreate( "statusCode", -1, "statusMsg", "no access operation 'newProperty'" ) );
+				}
+			}
+		}else
+			m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","item unknown") );
+	}catch(Exception ex){tl.error(ex,"newEntries");
+		list.add(TL.Util.mapCreate("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","exception","exception",ex ) ));
+	}
+	return list;}
 
 /** delete, 1.property , 2.head
  * */
@@ -339,102 +389,251 @@ static List newEntries(List rows,TL tl){
  * 6. Move child
  * 7. parent or proto from another domain
  * */
- static List writeObjs(List rows,TL tl){
+ static List writeObjs(List entries,TL tl){
 	if(tl.usr==null)return null;
-	List x=new LinkedList();ObjProperty p=null,p0=null;
-	ObjHead h=null,h0=null,h2;Tbl.CI clt=null;
-	for(Object o:rows)try
+	List list=new LinkedList();ObjProperty p0=null,pr=null;//p0 is the original&registered property, pr is a temp for reading the new requested changes
+	ObjHead h0=null,hr=null,hx;//h0 is the original&registered head, hr is a temp for reading the requested changes, hx is a temp for scratch work
+	Tbl.CI clt=null;
+	for(Object o:entries)try
 	{Map m=o instanceof Map?(Map)o:null;
-		Tbl t=null;p=null;h=null;
-		if(m!=null)
-		{	Object id=m.get( ObjProperty.C.id.name() ),n=null;
-			if(id!=null )
-			{h=ObjHead.factory( toInt( id ) );
-				if(h==null || h.proto==null)
-				{tl.log( AppNm,".writeObjs:obj not found:",m );
+	 if(m==null){
+		list.add( TL.Util.mapCreate( "return",TL.Util.mapCreate(
+			"statusCode",-1,"statusMsg","expected json-object item " ,"item",o) ) );
+		continue;}
+	Tbl t=null;p0=null;h0=null;
+	Object id=m.get( ObjProperty.C.id.name() ),n=null;
+	if(id!=null )
+	{h0=ObjHead.factory( toInt( id ) );
+		if(h0==null || h0.proto==null)
+		{tl.log( AppNm,".writeObjs:obj not found:",m );
+			m.put("return",TL.Util.mapCreate( "statusCode"
+				,-1,"statusMsg","proto or parent not found" ) );
+			continue;
+		}else n=m.get( ObjProperty.C.n.name() );
+		if ( n==null )
+		{t=h0;clt=ObjHead.C.logTime;}
+		else
+		{t=p0=h0.props==null?null:h0.props.get( n );
+			if(t==null)
+			{tl.log(AppNm,".writeObjs:property not found:",m);
+				m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","proto or parent not found" ) );
+				continue;}
+			clt=ObjProperty.C.logTime;}
+	}
+	if(t==null)
+	{m.put("return",TL.Util.mapCreate( "statusCode"
+		,-1,"statusMsg","object not found" ) );
+		continue;}
+	if(t==h0 )// instanceof ObjHead
+	{   if(hr==null)
+			hr=new ObjHead(  );
+		hr.set( h0 );
+		t=hr;
+	}
+	else{
+		if(pr==null)
+			pr=new ObjProperty( h0.id,p0.n,p0.v );
+		else
+		{pr.no=null;pr.logTime=tl.now;pr.uid=tl.usr.id;
+			pr.id=p0.id;pr.n=p0.n;pr.v=p0.v;
+		}
+		t=pr;
+	}
+	t.fromMap(m);/////////////////////////vital step/////reading the requested changes
+	if(t==hr ){
+		if(h0.proto!=hr.proto
+		&&(!tl.usr.hasAccess(Domain.Oper.moveFromProto.name() ,hr.proto )
+		|| !tl.usr.hasAccess(Domain.Oper.moveToProto.name() ,h0.proto )))
+		{m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","no access move proto" ) );
+			continue;}
+		if( h0.parent!=hr.parent
+		&&(!tl.usr.hasAccess(Domain.Oper.moveFromParent.name() ,hr.parent )
+		|| !tl.usr.hasAccess(Domain.Oper.moveToParent.name() ,h0.parent )))
+		{m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","no access move parent" ) );
+			continue;}
+		if( h0.domain!=hr.domain
+		&&(!tl.usr.hasAccess(Domain.Oper.moveFromDomain.name() ,hr.domain )
+		|| !tl.usr.hasAccess(Domain.Oper.moveToDomain.name() ,h0.domain )))
+		{m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","no access move domain" ) );
+			continue;}
+	}
+	if(!(t!=null && tl.usr.hasAccess(
+		t instanceof ObjProperty
+		?Domain.Oper.writeProperty.name()
+		:Domain.Oper.writeObject.name()
+		,t.id )))
+	{m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","no access write" ) );
+		continue;}//TODO: investigate what are the circumstances for other operations ,other than "view"
+	hx=ObjHead.factory(h0.domain);
+	Domain d=hx instanceof Domain?(Domain)hx:null;
+		/*TODO: check cases of what is going to be changed:
+		  head:
+			1. head is domain
+			2. head is proto
+			1. change of domain of head
+			2. change of parent of head
+			3. change of proto of head
+		  property:
+			if proto is Role
+				1. change of prop member
+				2. change of prop resource
+				3. change of prop operation
+			if proto is Usr
+				4. change of prop un
+
+			in such cases, must update intermediatery maps, children, roles, users, allUsers, have, locks, all, domains
+		*/
+	if(t==hr )//hr is the new changes
+	{
+		if(hr.domain!=h0.domain){//TODO: investigate,diagnose,design,and implement all cases
+			hx=ObjHead.factory(hr.domain);
+			Domain d2=hx instanceof Domain?(Domain ) hx:null;
+			if(h0.domain==h0.id || h0==d){
+				if(d.usrs.size()>1 || d.roles.size()>1 || d.locks.size()>0){
+					m.put("return",TL.Util.mapCreate( "statusCode"
+						,-1,"statusMsg","domain not empty" ) );
 					continue;
-				}else n=m.get( ObjProperty.C.n.name() );
-				if ( n==null )
-				{t=h;clt=ObjHead.C.logTime;}else
-				{t=p=h.props.get( n );clt=ObjProperty.C.logTime;}
-			}
-			if(t!=null){if(t==h )// instanceof ObjHead
-				{if(h0==null)h0=new ObjHead(  );h0.set( h );t=h0;}
-				else{if(p0==null)
-					p0=new ObjProperty( h.id,p.n,p.v );
-					else
-					{p0.no=null;p0.logTime=tl.now;
-						p0.uid=tl.usr.id;p0.id=p.id;p0.n=p.n;p0.v=p.v;
-					}t=p0;}
-				t.fromMap(m);
-				if(t==h0 ){
-					if(h.proto!=h0.proto
-					&&(!tl.usr.hasAccess(Domain.Oper.moveFromProto.name() ,h0.proto )
-					|| !tl.usr.hasAccess(Domain.Oper.moveToProto.name() ,h.proto )))
-						t=null;
-					if(t!=null && h.parent!=h0.parent
-					&&(!tl.usr.hasAccess(Domain.Oper.moveFromParent.name() ,h0.parent )
-					|| !tl.usr.hasAccess(Domain.Oper.moveToParent.name() ,h.parent )))
-						t=null;
-					if(t!=null && h.domain!=h0.domain
-					&&(!tl.usr.hasAccess(Domain.Oper.moveFromDomain.name() ,h0.domain )
-					|| !tl.usr.hasAccess(Domain.Oper.moveToDomain.name() ,h.domain )))
-						t=null;
 				}
-				if(t!=null && tl.usr.hasAccess(
-					t instanceof ObjProperty
-					?Domain.Oper.writeProperty.name()
-					:Domain.Oper.writeObject.name()
-					,t.id ))//TODO: investigate what are the circumstances for other operations ,other than "view"
-				{/*TODO: check cases of what is going to be changed:
-				  head:
-					1. head is domain
-					2. head is proto
-					1. change of domain of head
-					2. change of parent of head
-					3. change of proto of head
-				  property:
-					if proto is Role
-						1. change of prop member
-						2. change of prop resource
-						3. change of prop operation
-					if proto is Usr
-						4. change of prop un
-						
-					in such cases, must update intermediatery maps, children, roles, users, allUsers, have, locks, all, domains 
-					*/if(t==h0 ){//h0 is the new changes
-						if(h0.parent!=h.parent)
-						{h2=h0.parent();
-							if(h2!=null && h2.children!=null)
-								h2.children.remove( h.id );
-							h2=h.parent();
-							if(h2!=null)
-							{if(h2.children==null)
-								h2.children=new HashMap<>(  );
-							 h2.children.put( h.id,h );
-							}
-						}
-						if(h0.proto!=h.proto){
-							//TODO: cases , from/to role/usr/domain/objhead
-						}
-					}
-					if(p!=null){
-						if(h instanceof Domain){}
-						if(h instanceof Domain.Usr){}
-						if(h instanceof Domain.Role){
-							if(p0.n.startsWith( "operation" )){}
-							else if(p0.n.startsWith( "resource" )){}
-							else if(p0.n.startsWith( "member" )){}
-						}
-					}
-					t.uid=tl.usr.id;
-					m.put(clt.toString(),t.logTime=tl.now);
-					x.add(m);t.no=null;t.save();
+				Domain.domains.remove( h0.id );
+				hx=new ObjHead(  );hx.set(h0);
+				ObjHead.all.put( hx.id,hx );
+			}else if(hr.domain==hr.id || hx==hr){
+				if(!tl.usr.hasAccess(Domain.Oper.newDomain.name() ,tl.usr.id )){
+					m.put("return",TL.Util.mapCreate( "statusCode"
+						,-1,"statusMsg","no access create new domain" ) );
+					continue;
+				}
+				hx=ObjHead.factory( h0.parent );
+				if(hx!=null && hx.children!=null) {
+					hx.children.remove( h0.id );
+					if(h0 instanceof Domain.Usr ){}else//TODO investigate,diagnose,design,and implement all cases
+					if(h0 instanceof Domain.Role){}//TODO investigate,diagnose,design,and implement all cases
+				}
+				d2=Domain.initNew( hr.id );
+				t=d2;
+			}else{//TODO investigate,diagnose,design,and implement all cases
+				if(!ObjHead.exists( Tbl.where(ObjHead.C.id,hr.domain ),ObjHead.dbtName)){
+					m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","domain not found" ) );
+					continue;
 				}
 			}
 		}
-	}catch(Exception ex){tl.error(ex,"writeObjs");}
-	return x;}
+		if(hr.parent!=h0.parent)
+		{hx=ObjHead.factory( hr.parent );
+			if(hx==null || hx.proto==null|| hx==h0 || hr.parent==h0.id ){
+				m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","parent not found" ) );
+				continue;
+			}
+			if(hx.children==null)
+				hx.children=new HashMap<>(  );
+			hx.children.put( h0.id,h0 );
+			hx=ObjHead.factory(h0.parent);
+			if(hx!=null && hx.children!=null)
+				hx.children.remove( h0.id );
+		}
+		if(hr.proto!=h0.proto){
+			hx=ObjHead.factory( hr.proto );
+			if(hx==null||hx.proto==null){
+				m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","proto not found" ) );
+				continue;
+			}
+			//TODO: cases , from/to role/usr/domain/objhead
+			if(hx instanceof Domain){}//TODO investigate,diagnose,design,and implement all cases
+			if(hx instanceof Domain.Usr){}//TODO investigate,diagnose,design,and implement all cases
+			if(hx instanceof Domain.Role){}//TODO investigate,diagnose,design,and implement all cases
+		}
+		t=h0;
+	}else if(pr.v!=p0.v)// t==pr && p0!=null
+	{	//if(h0 instanceof Domain){}
+		if(h0 instanceof Domain.Usr && "un".equals( p0.n ) && pr.v!=null){
+			String nm=pr.v.toString();
+			if(Domain.allUsrs.containsKey( nm )){
+				m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","user-name not unique" ) );
+				continue;
+			}
+			Domain.Usr u=(Domain.Usr)h0;
+			String on=u.un();
+			if(d!=null)
+				d.usrs.remove( on );
+			Domain.allUsrs.remove( on );
+			Domain.allUsrs.put( nm,u );
+			if(d!=null)
+				d.usrs.put( nm ,u );
+			p0.v=nm;
+			tl.log( AppNm,".writeObjs:usr rename:old=",on," ,new un:",nm );
+		}
+		if(h0 instanceof Domain.Role){
+			Domain.Role role=(Domain.Role)h0;
+			String nm=role.propStr( "name" );
+			if("name".equals( p0.n ) &&d!=null){
+				String nv=pr.v.toString();
+				if(!role.lock){
+					d.roles.remove( nm );
+					d.roles.put( nv ,role );
+					for(Domain.Usr z:role.members.values()){
+						z.have.remove( nm );
+						z.have.put( nv,role );
+					}
+				}else for(Domain.Usr z:role.members.values()){
+					if(z.locks!=null)z.locks.remove( nm );
+					else z.locks=new HashMap<>(  );
+					z.locks.put( nv,role );
+				}tl.log( AppNm,".writeObjs:role rename:old=",nm," ,new-name:",nv );
+			}else if(pr.n.startsWith( "operation" ))
+			{role.operations.remove( p0.v );role.operations.add( pr.v );
+			 tl.log( AppNm,".writeObjs:operation overwrite:old=",p0.v," ,current:",pr.v );
+			}
+			else if(pr.n.startsWith( "resource" )){
+				hx=ObjHead.factory( toInt(pr.v) );
+				if(hx!=null && hx.proto!=null ){
+					role.resources.put( hx.id,hx );
+					hx=role.resources.get( p0.v );
+					if(hx!=null)
+						role.resources.remove( hx.id );//
+					tl.log( AppNm,".writeObjs:role-resource overwrite:old=",p0.v," ,current:",pr.v );
+				}else {
+					m.put( "return", TL.Util.mapCreate( "statusCode", -1, "statusMsg", "resource not found" ) );
+					continue;
+				}
+			}
+			else if(pr.n.startsWith( "member" )){
+				hx=ObjHead.factory( toInt( pr.v) );
+				if(hx instanceof Domain.Usr){
+					Domain.Usr w=role.members.get( p0.v );
+					if(w!=null)
+					{role.members.remove( w.id );
+						if( w.have!=null)
+							w.have.remove( nm );
+					}
+					w=(Domain.Usr)hx;
+					role.members.put( w.id,w );
+					if(w.have==null)
+						w.have=new HashMap<>(  );
+					w.have.put( nm,role );
+					tl.log( AppNm,".writeObjs:role-member overwrite:old=",p0.v," ,current:",pr.v );
+				}else {
+					m.put( "return", TL.Util.mapCreate( "statusCode", -1, "statusMsg", "member not found" ) );
+					continue;
+				}
+			}
+		}
+		t=p0;p0.v=pr.v;
+	}
+	t.uid=tl.usr.id;t.logTime=tl.now;
+	t.no=null;
+	t.save();
+	list.add( TL.Util.mapSet( m
+		, ObjProperty.C.logTime.name(), t.logTime
+		, "return", TL.Util.mapCreate(
+			"statusCode", +1, "statusMsg", "saved") ) );
+	}catch(Exception ex){tl.error(ex,"writeObjs");
+		list.add(TL.Util.mapCreate("return",TL.Util.mapCreate(
+			"statusCode",-1
+			,"statusMsg","exception"
+			,"exception",ex
+			,"item",o ) ));
+	}
+	return list;}
 
 static void staticInit(){
 	TL.registerOp( App.class);
@@ -593,9 +792,9 @@ CREATE TABLE `ObjProperty` (
 		for (TL.DB.Tbl t: query(Tbl.where( C.id,id )) )//TODO:might want to put oldest and newest logTime
 		{ObjProperty p=(ObjProperty)t;
 			m.put(p.n,p.v);}
-		ObjHead h=ObjHead.all!=null?ObjHead.all.get(id):null;
-		if(h!=null)m.put("$",TL.Util.mapCreate("id",id
-			,"parent",h.parent,"proto",h.proto,"domain",h.domain));
+		ObjHead h0=ObjHead.all!=null?ObjHead.all.get(id):null;
+		if(h0!=null)m.put("$",TL.Util.mapCreate("id",id
+			,"parent",h0.parent,"proto",h0.proto,"domain",h0.domain));
 		else m.put("$",TL.Util.mapCreate("id",id));
 		return m;}
 	static List<Integer>idsByPName(String pn,Object pv,TL tl)throws Exception{
@@ -713,6 +912,15 @@ CREATE TABLE `ObjHead` (
 	static{registered.add(ObjHead.class);}
 	public static ObjHead sttc=new ObjHead( );
 
+	/**
+	 * attempts to get reference of objHead or Domain.Usr or Domain.Role
+	 * if id not found in "all" , attempts to load from db-tbl Objhead
+	 * ,if not in db-tbl, then returns an objHead instance with `parent`==null and `proto`==null
+	 * otherwise,
+	 * loads props , and loads children
+	 * some children are not completely loaded,
+	 * such cases `children` would have the id as a key, but the value would be the parent objHead
+	 * */
 	public static ObjHead factory(Integer id){
 		if(id==null)return null;
 		ObjHead p,x,o=all.get( id );
@@ -723,8 +931,8 @@ CREATE TABLE `ObjHead` (
 			p=o.parent==id?null:o.parent();
 			if(p!=null && p.children!=null ){
 				x=p.children.get( id );
-				if(x!=null && x.id==id)//this case should not happen
-				{all.put(id,x);return x;}
+				if(x==null || x.id!=id)//this case happens when not completely loaded
+					p.children.put( id,o );//{all.put(id,x);return x;}
 				else
 					x=o;
 			}
@@ -742,7 +950,7 @@ CREATE TABLE `ObjHead` (
 					p=factory(x.proto);
 				x=p;
 			}
-			if(x instanceof Domain || x.id==x.domain){
+			if(x instanceof Domain || x.id==x.domain){//this shouldnt happen, cuz previously:d=Domain.loadDomain( o.domain );
 				d=Domain.loadDomain( id );o=d;
 				d.props=o.props;
 				Domain.domains.put( id,d );
@@ -790,7 +998,7 @@ CREATE TABLE `ObjHead` (
 					o.children=new HashMap<>(  );
 				 for(Integer i:chldrn){
 					x=all.get( i );
-					o.children.put( i,x!=null?x:o );
+					o.children.put( i,x );//x!=null?x:o// here happens the cases of not completely loading some children
 				}}
 			}catch ( Exception ex ){}
 		}
@@ -869,7 +1077,8 @@ CREATE TABLE `ObjHead` (
 			return o;}//throw new IOException( "no user access-control on object" );
 		super.jsonOutput( o,ind,path,false );
 		if(children!=null) //o.w(",\"children\":").oCollctn( children.keySet(),ind,o.comment?path+".children":path );
-			jsonOutput(children.values() , o.w(",\"children\":"),ind,o.comment?path+".children":path);
+			jsonOutputIds(children.keySet()//values()
+					, o.w(",\"children\":"),ind,o.comment?path+".children":path);
 		if(props!=null) {o.w(",\"props\":{");//.oCollctn( p.props.values(),ind,w.comment?path+".props":path );
 			boolean comma=false;
 			for ( App.ObjProperty p:props.values() ){
@@ -901,12 +1110,23 @@ CREATE TABLE `ObjHead` (
 			o.w("]");
 		return o;}
 
+	public TL.Json.Output jsonOutputIds(java.util.Set<Integer> ids
+	,TL.Json.Output o,String ind,String path)throws java.io.IOException{
+		o.w("[");Domain.Usr u=TL.tl().usr;
+			boolean comma=false;
+			for ( Integer pid:ids )if(u.hasAccess( Domain.Oper.view.name(), pid )){
+				if(comma)o.w(',');else comma=true;
+				o.o( pid );
+			}
+			o.w("]");
+		return o;}
+
 }//class ObjHead
 
  public static class Domain extends ObjHead{
 	public enum Proto{Role,Usr,Proto,Lock;//,Membership;,Deleted,Screen,Component,AngularJs,AngularJsCtrl,AngularJsTemlplt,AngularJsState,AngularJsDirective,AngularJsFilter,AngularJsService,scriptJs,scriptJsServerSide,scriptJsServerSideRestEntry
 	ObjHead get(){Domain d0=domains.get( 0 );if(d0!=null && d0.children!=null)
-		for(ObjHead o:d0.children.values()){
+		for(Integer oid:d0.children.keySet()){ObjHead o=factory( oid );
 			ObjProperty p=o.props==null?null:o.props.get( "name" );
 			if(p!=null&&name().equals( p.v ))
 				return o;}
@@ -961,7 +1181,9 @@ CREATE TABLE `ObjHead` (
 		if(children==null)children=new HashMap<Integer,ObjHead>( );
 		children.put( o.id, o );
 	}//TODO:should use BreadthFirst-queueing to load objects and their sub-proto`s, and queueing again to load their children
-	for(ObjHead x:children.values()) if((o=prots.get( x.proto ))!=null&&o!=x){
+	for(Integer xid:children.keySet()//values
+			){ObjHead x=factory( xid );
+		if((o=prots.get( x.proto ))!=null&&o!=x){
 		if(o instanceof Usr){
 			Usr u=new Usr(x.id,x.parent,x.proto);
 			if(x.props!=null)u.props=x.props;
@@ -988,7 +1210,7 @@ CREATE TABLE `ObjHead` (
 				roles.put( n,r );
 			}//r.init();
 		}
-	}
+	}}
 	for(Role r:roles.values())
 		r.init(  );
 	// load heads that belong to this domain , o.domain=this.id
@@ -1019,15 +1241,16 @@ CREATE TABLE `ObjHead` (
 	return d;
   }
 
-  public static Domain initNew(){Domain d =null;TL tl=TL.tl();try
-	  {int n = Domain.maxPlus1( C.id ,dbtName),x=n;ObjHead o;
+  public static Domain initNew(){return initNew( null );}
+  public static Domain initNew(Integer id){Domain d =null;TL tl=TL.tl();try
+	  {int n = id==null?Domain.maxPlus1( C.id ,dbtName):id,x=n;ObjHead o;
 		d = new Domain( x, x, x );
 		//d.uid=tl.usr==null?0:tl.usr.id;//d.id=n==1?n=0:n;
 		domains.put( n,d );
 		all.put( n,d );
 		d.save();if(d.children==null)d.children=new HashMap<>(  );
 		Map<Proto,ObjHead>m=new HashMap<Proto,ObjHead>();
-		for(Proto prt:Proto.values()) {int id=prt.ordinal()+n+1;
+		for(Proto prt:Proto.values()) { id=prt.ordinal()+n+1;
 			o = new ObjHead( id, d.id, id, d.id );o.uid=d.uid;
 			o.save();m.put( prt,o );d.children.put( o.id,o );
 			all.put( o.id,o );
@@ -1052,7 +1275,7 @@ CREATE TABLE `ObjHead` (
 				"un",un="usr0"
 				,"pw","6f8f57715090da2632453988d9a1501b"
 			);else un=u.un();allUsrs.put(un,u);d.usrs.put(un,u);
-		}
+		}else d.usrs.put( u.un(),u );
 		//create role admin for admin
 		o=m.get( Proto.Role);
 		String rn="domain"+d.id+".usr0";
@@ -1094,7 +1317,7 @@ CREATE TABLE `ObjHead` (
 		if(roles!=null)
 			jsonOutput(roles.values() , o.w(",\"roles\":"),ind,o.comment?path+".roles":path);
 		if(locks!=null)
-			jsonOutput(locks.values() , o.w(",\"locks\":"),ind,o.comment?path+".locks":path);
+			jsonOutputIds(locks.keySet() , o.w(",\"locks\":"),ind,o.comment?path+".locks":path);
 		if(o.comment)
 			o.w("}//App.Domain&cachePath=\"").p(path).w("\"\n").p(ind);
 		else o.w('}');
