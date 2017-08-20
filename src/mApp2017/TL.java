@@ -669,7 +669,7 @@ public static class DB {
 		);return r;}
 	finally{TL tl=tl();close(s,tl);if(tl.h.logOut)
 		try{tl.log(tl.jo().w(Name).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-				           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,Name,".DB.q1colList:",sql);}}}
+			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,Name,".DB.q1colList:",sql);}}}
 	public static Object[] q1col(String sql,Object...p)throws SQLException
 	{List<Object> l=q1colList(sql,p);Object r[]=new Object[l.size()];l.toArray(r);l.clear();return r;}
 	public static <T>T[] q1colT(String sql,Class<T>t,Object...p)throws SQLException

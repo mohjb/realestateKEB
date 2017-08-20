@@ -844,103 +844,88 @@ public static void main(String[]args)throws Exception {
 	s.pc = new PC();
 	s.pc.a = SrvltContxt.sttc();
 	s.pc.q.ssn = new Ssn();
-	TL tl = TL.Enter( s.pc.q, s.pc.p, s.pc.q.ssn, s.pc.getOut(), s.pc );
+	TL tl = TL.Enter( s.pc.q, s.pc.p, s.pc.q.ssn, s.pc.p.getWriter(), s.pc );
 
 	int mp1 = TL.DB.Tbl.maxPlus1( App.ObjHead.C.id, App.ObjHead.dbtName );
 	List< Integer > domains = App.Domain.loadDomainsIds( tl );
-	App.Domain d1 = null;
-	App.Domain.Role role = null,rRole=null;
-	App.Domain.Usr usrB = null;
-	App.ObjHead proto=null,protoT=null,test1=null,test2=null;
-	if ( domains != null && domains.size() > 1 ) d1 = App.Domain.loadDomain( domains.get( 1 ) );
+	App.Domain d1 =domains != null && domains.size() > 1? App.Domain.loadDomain( domains.get( 1 ) ): null;
+	App.Domain.Role role = null,pRole=null;
+	App.Domain.Usr usrB = null,pUsr=null;
+	App.ObjHead proto=null,protoT=null,t1=null,t2=null;//,test2=null,test1_7=null,test1_8=null,test1_9=null;
+	//List<App.ObjHead>test=new LinkedList<>();
+
 	if ( d1 != null ){ usrB = d1.usrs.get( "be" );
 		for ( App.Domain.Role r:d1.roles.values() )
 			if(r.members.containsValue( usrB )) {
-				;//role=d1.roles.get( 0 );
+				{//the usr should have two roles , the first role has operation only view, the other role is more than view
 				role=r;break;
-			}
+			}}
 		for( App.ObjHead h:d1.children.values()){
 			if("Proto".equals(h.propStr( "name" ))){proto=h;break;}}
 		for( App.ObjHead h:d1.children.values()){
-			if("Role".equals(h.propStr( "name" ))){rRole=(App.Domain.Role)h;break;}}
+			if("Role".equals(h.propStr( "name" ))){pRole=(App.Domain.Role)h;break;}}
 		for( App.ObjHead h:d1.children.values()){
 			if("protoT".equals(h.propStr( "name" ))){protoT=h;break;}}
-		for( App.ObjHead h:d1.children.values()){
-			if(h.proto==protoT.id){if(test1==null)test1=h;else test2=h;} }
-
+		//for( App.ObjHead h:d1.children.values()){if(h.proto==protoT.id){if(test1==null)test1=h;else if()test2=h;} }
+		t1=protoT.children.get(0);
+		t2=protoT.children.get(1);
 	}
- Map map=TL.Util.mapCreate("mp1", mp1
-	,"d1",d1
-	,"usrB",usrB
-	,"role",role
-,"protoT",protoT
-		 ,"test1",test1
-		 ,"test2",test2
- );
+	int tn=protoT.children==null?0:protoT.children.size();
+ //Map map=TL.Util.mapCreate("mp1", mp1,"d1",d1,"usrB",usrB,"role",role,"protoT",protoT//,"test1",test1//,"test2",test2,"test1_7",test1_7,"test1_8",test1_8,"test1_9",test1_9);
  TL.Exit();
+
+ String P1=",{proto:"
+	,P2=",parent:"+d1.id+",domain:"+d1.id+",props:{url:'"
+	,P3=P1+proto.id+P2;int urlCounter=1;
  String[]requests= {
-
-	"{op:'App.login',un:'usr0',pw:'6f8f57715090da2632453988d9a1501b'}"
-
-
+	"{op:'App.login',un:'usr0',pw:'6f8f57715090da2632453988d9a1501b',logOut:true}"
 	,"{op:'App.poll'" +
 		",newEntries:[0" +
-			(d1!=null?"":",{proto:0,parent:0,ref:'1.1 d1',props:{url:'domain1',description:'// 1.1 create domain d1'}}") +//Role 12,Usr 13, Proto 14,Lock 15,role 16
-			(protoT!=null?"":",{proto:"+proto.id+",parent:"+d1.id+",domain:"+d1.id+",props:{url:'proto-17',name:'protoT',description:'//1.2 create subclass of proto for testing, protoT in d1'}}" )+
-			(test1!=null?"":",{proto:"+protoT.id+",parent:"+d1.id+",domain:"+d1.id+",props:{url:'test-instance1'         ,description:'//1.3 create test-instance1 subclass of proto-T , with test properties'}}" )+
-			(test2!=null?"":",{proto:"+protoT.id+",parent:"+d1.id+",domain:"+d1.id+",props:{url:'test-instance2'         ,description:'//1.4 create test-instance2 subclass of proto-T , with test properties'}}" )+
-			(role!=null?"":",{proto:12,parent:"+d1.id+",domain:"+d1.id+",props:{url:'role-20',description:'//1.5 create role with limited access ,to proto-T'" +
+			(d1!=null?"":P1+"0,parent:0,ref:'1.1 d1',props:{url:'domain1',description:'// 1.1 create domain d1'}}") +//Role 12,Usr 13, Proto 14,Lock 15,role 16
+			(protoT!=null?"":P3+"proto-T',name:'protoT',description:'//1.2 create subclass of proto for testing, protoT in d1'}}" )+
+			(t1!=null?"":P3+"test-instance1',description:'//1.3 create test-instance1 subclass of proto-T , with test properties'}}" )+
+			(t2!=null?"":P3+"test-instance2',description:'//1.4 create test-instance2 subclass of proto-T , with test properties'}}" )+
+			(role!=null?"":P1+"12"+P2+"role-20',description:'//1.5 create role with limited access ,to proto-T'" +
 				",name:'domain1.role.view',resource:[],member:[],operation:['view']}}" )+
-			(usrB!=null?"":",{proto:3,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1.6'                   ,description:'//1.6 create user with limited access'}}" )+
-			",{proto:3,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1.7'                   ,description:'//1.7 new obj, then with writeObjs change to domain'}}" +
-			",{proto:3,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1.8'                   ,description:'//1.8 new obj, then with writeObjs change to role'}}" +
-			",{proto:2,parent:"+d1.id+",domain:"+d1.id+",props:{,url:'usr-2'  ,description:'//1.9 new obj, then with writeObjs change to usr'" +
-				",un:'be' ,pw:'6f8f57715090da2632453988d9a1501b',email:'x'}}" +
-		 	//test cases that are intentionally-invalid requests
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.1	no access newDomain'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.2	no access newChild Usr'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.3	no access newChild Role'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.4	no access newChild lock'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.5	no access newChild'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.6	no access subProto'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.7	no access newProperty'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.8	new usr, existsing un'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.9	new role, existsing name'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'//2.10new prop, pre-existsing'}}" +
+			(usrB!=null?"":P1+"3"+P2+"o-1.6',description:'//1.6 create user with limited access'}}" )+
+			(tn>2?"":P1+"3"+P2+"o-1.7',description:'//1.7 new obj, then with writeObjs change to domain'}}" )+
+			(tn>3?"":P1+"3"+P2+"o-1.8',description:'//1.8 new obj, then with writeObjs change to role'}}" )+
+			(tn>4?"":P1+"2"+P2+"usr-2',description:'//1.9 new obj, then with writeObjs change to usr'" +
+				",un:'be' ,pw:'6f8f57715090da2632453988d9a1501b',email:'x'}}" )+
 		 "]" +
-		",writeObjs:[ " +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.1 write props in test-instance'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.2 change head parent'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.3 change head proto'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.4 change head domain'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.5 change un'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.6 change role name'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.7 change member'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.8 change resource'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.9 change operation'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'3.10change domain'}}" +
-		 	//4 test cases that are intentionally-invalid requests
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.1  non-existing id'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.2  non-existing proto'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.3  non-existing parent'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.4  non-existing domain'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.5  non-existing property'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.6  parent same as id'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.7  proto no access moveToProto'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.8  proto no access moveFromProto'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.9  proto no access moveToProto nor moveFromProto'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.10 parent no access moveToParent'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4."+d1.id+" parent no access moveFromParent'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.12 parent no access moveToParent nor moveFromParent'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.13 domain no access moveToDomain'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.14 domain no access moveFromDomain'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.15 domain no access moveToDomain nor moveFromDomain'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.16 no access writeObj'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.17 no access writeProperty'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.18 no access newDomain, domain same as id'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.19 property un of usr, already used'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.20 same value prop'}}" +
-		 	",{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-1',description:'4.21 same value head: proto,parent,domain'}}" +
+		",writeObjs:[0 " +
+			"{description:'3.1 write props in test-instance',id:'"+t1.id+",n:'test',v:0}}"+
+			"{description:'3.2 change head parent',id:'"+t1.id+",parent:"+d1.id+",proto:"+t1.proto+",domain:"+t1.domain+"}"+
+			"{description:'3.3 change head proto' ,id:'"+t1.id+",parent:"+d1.id+",proto:"+t2.id+",domain:"+t1.domain+"}"+
+			"{description:'3.4 change head domain',id:'"+t1.id+",parent:"+d1.id+",proto:"+t2.id+",domain:0}"+
+			"{description:'3.5 change un',id:"+usrB.id+",n:'un',v:'Be'}" +
+			"{description:'3.6 change role name',id:"+role.id+",n:'name',v:'role.Normal'}" +
+			"{description:'3.7 change member',id:"+role.id+",n:'member1',v:0}" +
+			"{description:'3.8 change resource',id:"+role.id+",n:'',v:}" +
+			"{description:'3.9 change operation',id:"+role.id+",n:'',v:}" +
+			"{description:'3.10change domain',id:"+role.id+",n:'',v:}" +
+			//4 test cases that are intentionally-invalid requests
+			"{description:'4.1  non-existing id',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.2  non-existing proto',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.3  non-existing parent',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.4  non-existing domain',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.5  non-existing property',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.6  parent same as id',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.7  proto no access moveToProto',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.8  proto no access moveFromProto',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.9  proto no access moveToProto nor moveFromProto',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.10 parent no access moveToParent',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.11 parent no access moveFromParent',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.12 parent no access moveToParent nor moveFromParent',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.13 domain no access moveToDomain',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.14 domain no access moveFromDomain',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.15 domain no access moveToDomain nor moveFromDomain',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
+			"{description:'4.16 no access writeObj',id:"+d1.id+",parent:"+d1.parent+",proto:"+d1.proto+",domain:"+d1.domain+"}" +
+			"{description:'4.17 no access writeProperty',id:"+d1.id+",n:'test',v:'ok'}" +
+			"{description:'4.18 no access newDomain, domain same as id',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.id+"}" +
+			"{description:'4.19 property un of usr, already used',id:"+usrB.id+",n:'un',v:'usr0'}" +
+			"{description:'4.20 same value prop',id:"+t1.id+",n:'test',v:0}" +
+			"{description:'4.21 same value head: proto,parent,domain',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
 		"]" +
 		",getIds:[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,14]" +
 		",getLogs:[" +
@@ -953,7 +938,44 @@ public static void main(String[]args)throws Exception {
 	,"{op:'App.logout'}"
 
 	,"{op:'App.login',un:'be',pw:'6f8f57715090da2632453988d9a1501b'}"
-
+	,"{op:'App.poll',newEntries:[" +
+		//test cases that are intentionally-invalid requests
+		"{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-"+(urlCounter++)+"',description:'//2.1	no access newDomain'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.2	no access newChild Usr'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.3	no access newChild Role'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.4	no access newChild lock'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.5	no access newChild'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.6	no access subProto'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.7	no access newProperty'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.8	new usr, existsing un'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.9	new role, existsing name'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.10new prop, pre-existsing'}}" +
+		"]" +
+	",writeObjs:[ " +
+		//4 test cases that are intentionally-invalid requests
+		 "{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-"+(urlCounter++)+"',description:'4.1  non-existing id'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.2  non-existing proto'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.3  non-existing parent'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.4  non-existing domain'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.5  non-existing property'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.6  parent same as id'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.7  proto no access moveToProto'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.8  proto no access moveFromProto'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.9  proto no access moveToProto nor moveFromProto'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.10 parent no access moveToParent'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4."+d1.id+" parent no access moveFromParent'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.12 parent no access moveToParent nor moveFromParent'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.13 domain no access moveToDomain'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.14 domain no access moveFromDomain'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.15 domain no access moveToDomain nor moveFromDomain'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.16 no access writeObj'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.17 no access writeProperty'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.18 no access newDomain, domain same as id'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.19 property un of usr, already used'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.20 same value prop'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.21 same value head: proto,parent,domain'}}" +
+		"]" +
+	"}"
 	};
 	for(String p:requests){
 		s.pc.q.init(p);

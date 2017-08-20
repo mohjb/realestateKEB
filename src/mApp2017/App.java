@@ -16,7 +16,7 @@ import java.lang.reflect.Field;
 public class App {
 static final String packageName="mApp2017",AppNm=packageName+".App",UploadPth="/aswan/uploads/";
 
-public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
+ public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
 	(@TL.Op(prmName="un")String un
 	,@TL.Op(prmName="pw")String pw,TL tl){
 	Domain d=Domain.loadDomain0();
@@ -36,7 +36,7 @@ public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
 	tl.h.getSession().setMaxInactiveInterval( 0 );
 	return u!=null;}
 
-/**http-get-method , poll-server
+ /**http-get-method , poll-server
  * , if param"updateCols" present then call updateCols
  * , if param"putEntities" present then call putEntities
  * , if param"getIds" present then call getIds
@@ -1187,7 +1187,8 @@ CREATE TABLE `ObjHead` (
 	}//TODO:should use BreadthFirst-queueing to load objects and their sub-proto`s, and queueing again to load their children
 	for(Integer xid:children.keySet()//values
 			){ObjHead x=factory( xid );
-		if((o=prots.get( x.proto ))!=null&&o!=x){
+		o=prots.get( x.proto );
+		if(o!=null&&o!=x){
 		if(o instanceof Usr){
 			Usr u=new Usr(x.id,x.parent,x.proto);
 			if(x.props!=null)u.props=x.props;
@@ -1217,6 +1218,9 @@ CREATE TABLE `ObjHead` (
 	}}
 	for(Role r:roles.values())
 		r.init(  );
+	if(locks!=null)
+		for(Role r:locks.values())
+			r.init( );
 	// load heads that belong to this domain , o.domain=this.id
 	// load children , o.parent=this.id
 	// load sub-proto`s , o.proto=this.id
@@ -1247,58 +1251,58 @@ CREATE TABLE `ObjHead` (
 
   public static Domain initNew(){return initNew( null );}
   public static Domain initNew(Integer id){Domain d =null;TL tl=TL.tl();try
-	  {int n = id==null?Domain.maxPlus1( C.id ,dbtName):id,x=n;ObjHead o;
-		d = new Domain( x, x, x );
-		//d.uid=tl.usr==null?0:tl.usr.id;//d.id=n==1?n=0:n;
-		domains.put( n,d );
-		all.put( n,d );
-		d.save();if(d.children==null)d.children=new HashMap<>(  );
-		Map<Proto,ObjHead>m=new HashMap<Proto,ObjHead>();
-		for(Proto prt:Proto.values()) { id=prt.ordinal()+n+1;
-			o = new ObjHead( id, d.id, id, d.id );o.uid=d.uid;
-			o.save();m.put( prt,o );d.children.put( o.id,o );
-			all.put( o.id,o );
-			if(o.props==null)o.props=new HashMap<String,ObjProperty>(  );//o.loadProps();
-			ObjProperty p = new ObjProperty( o.id );
-			p.n = "name";p.uid=d.uid;
-			p.v = prt.name();
-			o.props.put( p.n, p );
-			p.save();
-			x=o.id;
-		}
-		Usr u = tl.usr;
-		//create user admin admin
-		if(n==0 || u==null) {
-			o = m.get( Proto.Usr );
-			u = d.new Usr( ++x, d.id, o.id );u.uid=d.uid;
-			u.save();String un=null;
-			if (u.props ==null )
-				u.props = new HashMap<>();
-			ObjProperty p=u.props.get("un");
-			if(p==null)u.setProps(
-				"un",un="usr0"
-				,"pw","6f8f57715090da2632453988d9a1501b"
-			);else un=u.un();allUsrs.put(un,u);d.usrs.put(un,u);
-		}else d.usrs.put( u.un(),u );
-		//create role admin for admin
-		o=m.get( Proto.Role);
-		String rn="domain"+d.id+".usr0";
-		Role r=d.new Role( ++x,d.id,o.id );
-		r.save();
-		r.setProps( "name",rn
-			,"member1",u.id
-			,"resource1",d.id
-			,"resource2",m.get(Proto.Usr  ).id//Proto.Usr  .get().id
-			,"resource3",m.get(Proto.Role ).id//Proto.Role .get().id
-			,"resource4",m.get(Proto.Proto).id//Proto.Proto.get().id
-			,"resource5",m.get(Proto.Lock ).id//Proto.Lock .get().id
-		);
-		for(Oper oper:Oper.values())
-			r.setProps( "operation"+(oper.ordinal()+1) , oper.name());
-		d.roles.put( rn,r );
-		u.have.put( rn,r );//r.roles.put( rn,r );u.roles.put( rn,r );
-	  }catch ( Exception ex ){tl.error(ex,"App.Domain.initNew:");}
-	 return d;
+  {int n = id==null?Domain.maxPlus1( C.id ,dbtName):id,x=n;ObjHead o;
+	d = new Domain( x, x, x );
+	//d.uid=tl.usr==null?0:tl.usr.id;//d.id=n==1?n=0:n;
+	domains.put( n,d );
+	all.put( n,d );
+	d.save();if(d.children==null)d.children=new HashMap<>(  );
+	Map<Proto,ObjHead>m=new HashMap<Proto,ObjHead>();
+	for(Proto prt:Proto.values()) { id=prt.ordinal()+n+1;
+		o = new ObjHead( id, d.id, id, d.id );o.uid=d.uid;
+		o.save();m.put( prt,o );d.children.put( o.id,o );
+		all.put( o.id,o );
+		if(o.props==null)o.props=new HashMap<String,ObjProperty>(  );//o.loadProps();
+		ObjProperty p = new ObjProperty( o.id );
+		p.n = "name";p.uid=d.uid;
+		p.v = prt.name();
+		o.props.put( p.n, p );
+		p.save();
+		x=o.id;
+	}
+	Usr u = tl.usr;
+	//create user admin admin
+	if(n==0 || u==null) {
+		o = m.get( Proto.Usr );
+		u = d.new Usr( ++x, d.id, o.id );u.uid=d.uid;
+		u.save();String un=null;
+		if (u.props ==null )
+			u.props = new HashMap<>();
+		ObjProperty p=u.props.get("un");
+		if(p==null)u.setProps(
+			"un",un="usr0"
+			,"pw","6f8f57715090da2632453988d9a1501b"
+		);else un=u.un();allUsrs.put(un,u);d.usrs.put(un,u);
+	}else d.usrs.put( u.un(),u );
+	//create role admin for admin
+	o=m.get( Proto.Role);
+	String rn="domain"+d.id+".usr0";
+	Role r=d.new Role( ++x,d.id,o.id );
+	r.save();
+	r.setProps( "name",rn
+		,"member1",u.id
+		,"resource1",d.id
+		,"resource2",m.get(Proto.Usr  ).id//Proto.Usr  .get().id
+		,"resource3",m.get(Proto.Role ).id//Proto.Role .get().id
+		,"resource4",m.get(Proto.Proto).id//Proto.Proto.get().id
+		,"resource5",m.get(Proto.Lock ).id//Proto.Lock .get().id
+	);
+	for(Oper oper:Oper.values())
+		r.setProps( "operation"+(oper.ordinal()+1) , oper.name());
+	d.roles.put( rn,r );
+	u.have.put( rn,r );//r.roles.put( rn,r );u.roles.put( rn,r );
+  }catch ( Exception ex ){tl.error(ex,"App.Domain.initNew:");}
+  return d;
 	/*create Role,Usr,Lock,Proto
 		//create a user
 		//create a role, and add the new domain as resource, add user as member, add the default operations
@@ -1310,10 +1314,14 @@ CREATE TABLE `ObjHead` (
 		changePW
 		*/
 	}
+
   public static List<Integer>loadDomainsIds(TL tl){
   	List<Integer>l=null;
-	  try {
-		  l=TL.DB.q1colTList( Domain.sql( cols(C.id,Co.maxLogTime),null,sttc.groupBy(),null,dbtName ),Integer.class);
+	  try {StringBuilder sql=new StringBuilder("select ");
+		Co.generate(sql,cols(C.id,Co.maxLogTime));
+		sql.append(" from `").append(dbtName ).append("` where `"+C.id+"`=`"+C.domain+"` group by ");
+		Co.generate(sql,sttc.groupBy());
+		  l=TL.DB.q1colTList( sql.toString(),Integer.class);
 	  } catch ( SQLException e ) {
 		  tl.error( e,AppNm,".Domain.loadDomainsIds" );
 	  }
@@ -1357,7 +1365,12 @@ CREATE TABLE `ObjHead` (
 				v=all.get( i );
 				Usr u=v instanceof Usr?(Usr)v:usrs.get( i );//if(u==null){//	v=all.get( i );//	if(v instanceof Usr)//		u=(Usr)v;}
 				if(u!=null){
-					u.have.put(name,this);
+					if(lock)
+					{	if(u.locks==null)
+							u.locks=new HashMap<>();
+						u.locks.put(name,this);}
+					else
+						u.have.put(name,this);
 					if(members==null)
 						members=new HashMap<Integer,Usr>();
 					members.put( u.id,u );}
