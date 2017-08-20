@@ -56,7 +56,8 @@ static final String packageName="mApp2017",AppNm=packageName+".App",UploadPth="/
 		if( getIds!=null){List a=new LinkedList<>();
 			m.put("getIds",a);
 			for (Object o:getIds)
-			{	ObjHead x=ObjHead.factory(toInt( o));a.add(x.proto==null?o:x.hasAccess()?x:null);}
+			{	ObjHead x=ObjHead.factory(toInt( o));
+				a.add(x.proto==null?o:x.hasViewAccess()?x:null);}
 		}
 		if( getLogs!=null){List<Map>a=new LinkedList<>();
 			m.put("getLogs",a);
@@ -638,9 +639,7 @@ static List newEntries(List rows,TL tl){
 	}
 	return list;}
 
-static void staticInit(){
-	TL.registerOp( App.class);
-}
+static void staticInit(){ TL.registerOp( App.class); }
 
 static{staticInit();}
 
@@ -1072,7 +1071,19 @@ CREATE TABLE `ObjHead` (
 		String v=p instanceof String?(String)p:p==null?null:p.toString();
 		return v;}
 
-	public boolean hasAccess(){Domain.Usr u=TL.tl().usr;return u!=null&&u.hasAccess( Domain.Oper.view.name(),id ); }
+	public boolean hasViewAccess(){Domain.Usr u=TL.tl().usr;return u!=null&&u.hasAccess( Domain.Oper.view.name(),id ); }
+
+	/**this is only for creating new objects in the database,
+	 * where this method is synchronized so that only one thread
+	 * runs at a time and allocate a new id number-value from
+	 * the db-table-objHead and store it*/
+	public synchronized ObjHead saveNewId()throws Exception{
+		id=TL.DB.Tbl.maxPlus1( App.ObjHead.C.id, App.ObjHead.dbtName );
+		if(proto==null)proto=id;
+		if(domain==null)domain=TL.tl().usr.domain().id;
+		if(parent==null)parent=domain;
+		save();
+		return this;}
 
 	public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException{
 		Domain.Usr u=TL.tl().usr;
@@ -1107,7 +1118,7 @@ CREATE TABLE `ObjHead` (
 	,TL.Json.Output o,String ind,String path)throws java.io.IOException{
 		o.w("[");
 			boolean comma=false;
-			for ( ObjHead p:l )if(p.hasAccess(  )){
+			for ( ObjHead p:l )if(p.hasViewAccess(  )){
 				if(comma)o.w(',');else comma=true;
 				o.o( p.id );
 			}
@@ -1124,6 +1135,31 @@ CREATE TABLE `ObjHead` (
 			}
 			o.w("]");
 		return o;}
+
+ App.ObjHead findChild( String pn,Object v){
+	if(children==null)
+		return null;
+	for(App.ObjHead h:children.values()){
+		Object o=h.propo( pn );
+		if(o==v || (o!=null && o.equals( v )))
+			return h;
+	}return null;}
+
+ App.ObjHead findChildByProto( Integer prot){
+	if(children==null)
+		return null;
+	for(App.ObjHead h:children.values()){
+		if(h.proto==prot)
+			return h;
+	}return null;}
+
+ List<App.ObjHead>findChildrenByProto( Integer prot){
+	if(children==null)
+		return null;List l=new LinkedList(  );
+	for(App.ObjHead h:children.values()){
+		if(h.proto==prot)
+			l.add( h );
+	}return l;}
 
 }//class ObjHead
 
@@ -1317,16 +1353,15 @@ CREATE TABLE `ObjHead` (
 
   public static List<Integer>loadDomainsIds(TL tl){
   	List<Integer>l=null;
-	  try {StringBuilder sql=new StringBuilder("select ");
+	try {StringBuilder sql=new StringBuilder("select ");
 		Co.generate(sql,cols(C.id,Co.maxLogTime));
 		sql.append(" from `").append(dbtName ).append("` where `"+C.id+"`=`"+C.domain+"` group by ");
 		Co.generate(sql,sttc.groupBy());
-		  l=TL.DB.q1colTList( sql.toString(),Integer.class);
-	  } catch ( SQLException e ) {
-		  tl.error( e,AppNm,".Domain.loadDomainsIds" );
-	  }
-	  return l;
-  }
+		l=TL.DB.q1colTList( sql.toString(),Integer.class);
+	} catch ( SQLException e ) {
+		tl.error( e,AppNm,".Domain.loadDomainsIds" );
+	}
+	return l;}
 
   @Override public TL.Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{
 		try{int old=o.accessViolation;
