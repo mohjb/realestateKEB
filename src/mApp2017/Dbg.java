@@ -848,11 +848,11 @@ public static void main(String[]args)throws Exception {
 
 	int mp1 = TL.DB.Tbl.maxPlus1( App.ObjHead.C.id, App.ObjHead.dbtName );
 	List< Integer > domains = App.Domain.loadDomainsIds( tl );
-	App.Domain d1 =domains != null && domains.size() > 1? App.Domain.loadDomain( domains.get( 1 ) ): null;
+	App.Domain d1 =domains != null && domains.size() > 1? App.Domain.loadDomain( domains.get( 1 ) ): App.Domain.initNew(mp1);
 	App.Domain.Role role = null,role2,pRole=null;
 	App.Domain.Usr usrB = null,pUsr=null;
 	App.ObjHead proto=null,protoT=null,t1=null,t2=null;//,test2=null,test1_7=null,test1_8=null,test1_9=null;
-	//List<App.ObjHead>test=new LinkedList<>();
+	int tn=-1;//List<App.ObjHead>test=new LinkedList<>();
 
 	if ( d1 != null ){ usrB = d1.usrs.get( "be" );
 		if(usrB==null){
@@ -861,6 +861,8 @@ public static void main(String[]args)throws Exception {
 			usrB=(App.Domain.Usr)d1.new Usr(null,d1.id,pUsr.id).saveNewId();
 			usrB.setProps( "un","be"
 				,"pw","6f8f57715090da2632453988d9a1501b");
+			d1.usrs.put( usrB.un(),usrB );
+			App.Domain.allUsrs.put( usrB.un(),usrB );
 			pRole=(App.Domain.Role)d1.findChild( "name","Role" );
 			role=d1.new Role( null,d1.id,pRole.id );role.saveNewId();
 			role.setProps( "name", "domainD1Role.usrB"
@@ -887,17 +889,14 @@ public static void main(String[]args)throws Exception {
 				{//the usr should have two roles , the first role has operation only view, the other role is more than view
 				role=r;break;
 			}}
-		for( App.ObjHead h:d1.children.values()){
-			if("Proto".equals(h.propStr( "name" ))){proto=h;break;}}
-		for( App.ObjHead h:d1.children.values()){
-			if("Role".equals(h.propStr( "name" ))){pRole=(App.Domain.Role)h;break;}}
-		for( App.ObjHead h:d1.children.values()){
-			if("protoT".equals(h.propStr( "name" ))){protoT=h;break;}}
+		proto=d1.findChild( "name","Proto" );//for( App.ObjHead h:d1.children.values()){ if("Proto".equals(h.propStr( "name" ))){proto=h;break;}}
+		pRole=(App.Domain.Role)d1.findChild( "name","Role" );//for( App.ObjHead h:d1.children.values()){ if("Role".equals(h.propStr( "name" ))){pRole=(App.Domain.Role)h;break;}}
+		protoT=d1.findChild( "name","protoT" );//for( App.ObjHead h:d1.children.values()){ if("protoT".equals(h.propStr( "name" ))){protoT=h;break;}}
 		//for( App.ObjHead h:d1.children.values()){if(h.proto==protoT.id){if(test1==null)test1=h;else if()test2=h;} }
-		t1=protoT.children.get(0);
-		t2=protoT.children.get(1);
-	}
-	int tn=protoT.children==null?0:protoT.children.size();
+		tn=protoT==null|| protoT.children==null?0:protoT.children.size();
+		t1= tn>0?protoT.children.get(0):null;
+		t2= tn>1?protoT.children.get(1):null;
+	}else tn=protoT==null|| protoT.children==null?0:protoT.children.size();
  //Map map=TL.Util.mapCreate("mp1", mp1,"d1",d1,"usrB",usrB,"role",role,"protoT",protoT//,"test1",test1//,"test2",test2,"test1_7",test1_7,"test1_8",test1_8,"test1_9",test1_9);
  TL.Exit();
 
@@ -920,7 +919,7 @@ public static void main(String[]args)throws Exception {
 			(tn>4?"":P1+"2"+P2+"usr-2',description:'//1.9 new obj, then with writeObjs change to usr'" +
 				",un:'be' ,pw:'6f8f57715090da2632453988d9a1501b',email:'x'}}" )+
 		 "]" +
-		",writeObjs:[0 " +
+		",writeObjs:[0 " +/*
 			"{description:'3.1 write props in test-instance',id:'"+t1.id+",n:'test',v:0}}"+
 			"{description:'3.2 change head parent',id:'"+t1.id+",parent:"+d1.id+",proto:"+t1.proto+",domain:"+t1.domain+"}"+
 			"{description:'3.3 change head proto' ,id:'"+t1.id+",parent:"+d1.id+",proto:"+t2.id+",domain:"+t1.domain+"}"+
@@ -953,7 +952,7 @@ public static void main(String[]args)throws Exception {
 			"{description:'4.19 property un of usr, already used',id:"+usrB.id+",n:'un',v:'usr0'}" +
 			"{description:'4.20 same value prop',id:"+t1.id+",n:'test',v:0}" +
 			"{description:'4.21 same value head: proto,parent,domain',id:"+t1.id+",parent:"+t1.parent+",proto:"+t1.proto+",domain:"+t1.domain+"}" +
-		"]" +
+		*/"]" +
 		",getIds:[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,14]" +
 		",getLogs:[" +
 			" {from:50,to:1501856678000} ,{From:50,To:1501856678000}" +
@@ -965,7 +964,7 @@ public static void main(String[]args)throws Exception {
 	,"{op:'App.logout'}"
 
 	,"{op:'App.login',un:'be',pw:'6f8f57715090da2632453988d9a1501b'}"
-	,"{op:'App.poll',newEntries:[" +
+	,"{op:'App.poll',newEntries:[" +/*
 		//test cases that are intentionally-invalid requests
 		"{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-"+(urlCounter++)+"',description:'//2.1	no access newDomain'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'//2.2	no access newChild Usr'}}" +
@@ -976,9 +975,9 @@ public static void main(String[]args)throws Exception {
 		P3+"o-"+(urlCounter++)+"',description:'//2.7	no access newProperty'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'//2.8	new usr, existsing un'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'//2.9	new role, existsing name'}}" +
-		P3+"o-"+(urlCounter++)+"',description:'//2.10new prop, pre-existsing'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'//2.10new prop, pre-existsing'}}" +*/
 		"]" +
-	",writeObjs:[ " +
+	",writeObjs:[ " +/*
 		//4 test cases that are intentionally-invalid requests
 		 "{proto:,parent:"+d1.id+",domain:"+d1.id+",props:{url:'o-"+(urlCounter++)+"',description:'4.1  non-existing id'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'4.2  non-existing proto'}}" +
@@ -990,7 +989,7 @@ public static void main(String[]args)throws Exception {
 		P3+"o-"+(urlCounter++)+"',description:'4.8  proto no access moveFromProto'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'4.9  proto no access moveToProto nor moveFromProto'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'4.10 parent no access moveToParent'}}" +
-		P3+"o-"+(urlCounter++)+"',description:'4."+d1.id+" parent no access moveFromParent'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.11 parent no access moveFromParent'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'4.12 parent no access moveToParent nor moveFromParent'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'4.13 domain no access moveToDomain'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'4.14 domain no access moveFromDomain'}}" +
@@ -1000,7 +999,7 @@ public static void main(String[]args)throws Exception {
 		P3+"o-"+(urlCounter++)+"',description:'4.18 no access newDomain, domain same as id'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'4.19 property un of usr, already used'}}" +
 		P3+"o-"+(urlCounter++)+"',description:'4.20 same value prop'}}" +
-		P3+"o-"+(urlCounter++)+"',description:'4.21 same value head: proto,parent,domain'}}" +
+		P3+"o-"+(urlCounter++)+"',description:'4.21 same value head: proto,parent,domain'}}" +*/
 		"]" +
 	"}"
 	};

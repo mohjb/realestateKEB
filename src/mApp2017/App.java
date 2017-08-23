@@ -14,7 +14,7 @@ import java.lang.reflect.Field;
 //%><%mApp2017.TL.run(request, response, session, out, pageContext);%><%!
 /**Created by moh on 14/7/17.*/
 public class App {
-static final String packageName="mApp2017",AppNm=packageName+".App",UploadPth="/aswan/uploads/";
+ static final String packageName="mApp2017",AppNm=packageName+".App",UploadPth="/aswan/uploads/";
 
  public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
 	(@TL.Op(prmName="un")String un
@@ -125,7 +125,7 @@ static final String packageName="mApp2017",AppNm=packageName+".App",UploadPth="/
  *
  * 3.param parent , getLog of all children and descendants
  * */
-static Map getLog(Map p,TL tl){
+ static Map getLog(Map p,TL tl){
 	try{Map pg=(Map)p.get("pagenation");
 		Object ref=pg!=null?pg.get("ref"):null;
 		if(ref!=null){
@@ -170,18 +170,18 @@ static Map getLog(Map p,TL tl){
 	}catch(Exception ex){tl.error(ex,"getLog");}
 	return p;}
 
-static Map listLog(Map m,String sql,Object[]where,TL tl){
+ static Map listLog(Map m,String sql,Object[]where,TL tl){
 	ResultSet rs=null;
 	try{rs=TL.DB.R(sql, where);}catch(Exception ex){tl.error(ex
 			,AppNm,".list(sql",sql,":where=",where,m);}
 	m=listLog(m,rs,null,null,tl);
 	return m; }
 
-/**
+ /**
  * pg is pagenation, a js-obj from client-http-request of the
  * ps is pagenation, a js-obj from session
  * */
-static Map listLog(Map m,ResultSet rs,Map pg,Map ps,TL tl){
+ static Map listLog(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 	if(tl.usr==null)return null;
 	Object o=ps!=null?ps.get("properties"):null;if(o==null)o=m.get("From");if(o==null)o=m.get("To");
 	//if(o==null){		if(ps!=null)			o=ps.get("properties");		//if(o==null&&pg!=null) o=ps.get("properties");	}
@@ -235,7 +235,7 @@ static Map listLog(Map m,ResultSet rs,Map pg,Map ps,TL tl){
 	}catch(Exception ex){tl.error(ex,"listLog",pg,rs);}
 	return m;}
 
-/** new , create in database new-entry:
+ /** new , create in database new-entry:
  * 1.property
  * 2.head
  *   1.domain
@@ -244,7 +244,7 @@ static Map listLog(Map m,ResultSet rs,Map pg,Map ps,TL tl){
  *   4.proto
  *3. object
  */
-static List newEntries(List rows,TL tl){
+ static List newEntries(List rows,TL tl){
 	if(tl.usr==null)return null;List list=new LinkedList();
 	ObjHead h=null,x,y;ObjProperty p=null,po;
 	for(Object o:rows)try
@@ -267,7 +267,7 @@ static List newEntries(List rows,TL tl){
 					continue;
 				}else
 				if(!( tl.usr.hasAccess(Domain.Oper.newChild.name(),h.parent)
-				 && tl.usr.hasAccess(Domain.Oper.newChild.name(),h.proto)))
+				 && tl.usr.hasAccess(Domain.Oper.newChild.name(),h.proto)))//TODO: invesstigate why false when h.proto is pProto for usr0
 					m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","no access operation 'newChild'" ) );
 				else
 				{	if(x instanceof Domain && tl.usr.hasAccess(Domain.Oper.newDomain.name(),h.domain))
@@ -283,7 +283,7 @@ static List newEntries(List rows,TL tl){
 					{	//TODO: in Usr.hasAccess add checking parents
 						if(y.children==null)
 							y.children=new HashMap<>();
-						h.id=h.maxPlus1( ObjHead.C.id );
+						h.id=h.maxPlus1( ObjHead.C.id );//TODO: must use ObjHead.saveWithNewId instead of h.maxPlus1
 						//m.put( ObjHead.C.id.name(),h.id );
 						int c=x instanceof Domain.Usr?2:x instanceof Domain.Role?3:1;
 						if(c>1){
@@ -370,10 +370,9 @@ static List newEntries(List rows,TL tl){
 	}
 	return list;}
 
-/** delete, 1.property , 2.head
- * */
+ /** delete, 1.property , 2.head* */
 
-/**
+ /**
  * update database
  * cases:
  * 1. update 1.head/ 2.property
@@ -639,9 +638,9 @@ static List newEntries(List rows,TL tl){
 	}
 	return list;}
 
-static void staticInit(){ TL.registerOp( App.class); }
+ static void staticInit(){ TL.registerOp( App.class); }
 
-static{staticInit();}
+ static{staticInit();}
 
  public static Integer toInt(Object o){
 	if(o instanceof String && TL.Util.isNum( (String)o ))
