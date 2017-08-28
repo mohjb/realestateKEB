@@ -1,8 +1,6 @@
 package mApp2017;
 
-/**
- * Created by moh on 20/7/17.
- */
+/**Created by moh on 20/7/17. */
 
 import java.util.*;
 import java.io.*;
@@ -641,7 +639,7 @@ public class Dbg{
 
 //////////////////////////////////////////////////////////////////////
 
-    public static class SrvltContxt implements ServletContext{//static SrvltContxt sttc;
+ public static class SrvltContxt implements ServletContext{//static SrvltContxt sttc;
         HashMap<String,Object> attribs=new HashMap<String,Object>();
         @Override public FilterRegistration.Dynamic addFilter( String arg0, String p2){return null;}
         @Override public FilterRegistration.Dynamic addFilter(String arg0, Filter p2){return null;}
@@ -871,10 +869,13 @@ public class Dbg{
                         ,"operation1",App.Domain.Oper.view.name()
                         ,"operation2",App.Domain.Oper.newProperty.name()
                         ,"operation3",App.Domain.Oper.writeProperty.name()
-                );d1.roles.put( role.propStr( "name" ),role );role.init();
+                );
+                d1.roles.put( role.propStr( "name" ),role );
+                role.init();
 
                 //mp1 = TL.DB.Tbl.maxPlus1( App.ObjHead.C.id, App.ObjHead.dbtName );
-                role2=d1.new Role( null,d1.id,pRole.id );role2.saveNewId();
+                role2=d1.new Role( null,d1.id,pRole.id );
+                role2.saveNewId();
                 role2.setProps( "name", "domainD1Role.DataEntry"
                         ,"member1",usrB.id
                         ,"resource1",d1.findChild( "name","Proto" ).id
@@ -882,7 +883,9 @@ public class Dbg{
                         ,"operation2",App.Domain.Oper.newChild.name()
                         ,"operation3",App.Domain.Oper.newProperty.name()
                         ,"operation4",App.Domain.Oper.writeProperty.name()
-                );d1.roles.put( role2.propStr( "name" ),role2 );role2.init();
+                );
+                d1.roles.put( role2.propStr( "name" ),role2 );
+                role2.init();
             }
             for ( App.Domain.Role r:d1.roles.values() )
                 if(r!=null&&r.members!=null && r.members.containsValue( usrB )) {
