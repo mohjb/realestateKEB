@@ -1,7 +1,5 @@
 package mApp2017;
 
-import com.sun.java.browser.plugin2.DOM;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
@@ -14,11 +12,12 @@ import java.lang.reflect.Field;
 //%><%mApp2017.TL.run(request, response, session, out, pageContext);%><%!
 /**Created by moh on 14/7/17.*/
 public class App {
- static final String packageName="mApp2017",AppNm=packageName+".App",UploadPth="/aswan/uploads/";
+	static final String packageName="mApp2017",AppNm=packageName+".App",UploadPth="/aswan/uploads/";
 
- public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
- (@TL.Op(prmName="un")String un,@TL.Op(prmName="pw")String pw,TL tl){
-	Domain d=Domain.loadDomain0();
+	public static @TL.Op(usrLoginNeeded=false) Domain.Usr login
+			(@TL.Op(prmName="un")String un
+					,@TL.Op(prmName="pw")String pw,TL tl){
+		Domain d=Domain.loadDomain0();
 		Domain.Usr u=d.allUsrs.get( un );
 		if(u!=null && pw!=null && pw.equals( u.propStr( "pw" ) )){
 			tl.usr=u;
@@ -40,35 +39,33 @@ public class App {
 	 * , if param"putEntities" present then call putEntities
 	 * , if param"getIds" present then call getIds
 	 */
- public static @TL.Op(urlPath = "*") Map poll
- (@TL.Op(prmName="getLogs")List getLogs
-	,@TL.Op(prmName="getIds")List getIds
-	,@TL.Op(prmName="writeObjs")List writeObjs
-	,@TL.Op(prmName="newEntries")List newEntries
-	,TL tl){
-	if(tl.usr==null)
-		return null;
-	Map m=new HashMap();try{
-		if( newEntries!=null)
-			m.put("newEntries",newEntries(newEntries,tl));
-		if( writeObjs!=null)
-			m.put("writeObjs",writeObjs(writeObjs,tl));
-		if( getIds!=null){List a=new LinkedList<>();
-			m.put("getIds",a);
-			for (Object o:getIds)
-			{	ObjHead x=ObjHead.factory(toInt( o));
-				a.add(x.proto!=null && x.hasViewAccess()?x:o);}
-		}
-		if( getLogs!=null){
-			List<Map>a=new LinkedList<>();
-			m.put("getLogs",a);
-			for (Object o:getLogs) {
-				Map x=(Map)o;
-				a.add(getLog(x,tl));
+	public static @TL.Op(urlPath = "*") Map poll
+	(@TL.Op(prmName="getLogs")List getLogs
+			,@TL.Op(prmName="getIds")List getIds
+			,@TL.Op(prmName="writeObjs")List writeObjs
+			,@TL.Op(prmName="newEntries")List newEntries
+			,TL tl) {
+		if(tl.usr==null)return null;
+		Map m=new HashMap();try{
+			if( newEntries!=null)
+				m.put("newEntries",newEntries(newEntries,tl));
+			if( writeObjs!=null)
+				m.put("writeObjs",writeObjs(writeObjs,tl));
+			if( getIds!=null){List a=new LinkedList<>();
+				m.put("getIds",a);
+				for (Object o:getIds)
+				{	ObjHead x=ObjHead.factory(toInt( o));
+					a.add(x.proto==null?o:x.hasViewAccess()?x:null);}
 			}
-		}
-	}catch ( Exception ex ){tl.error( ex,"App.poll" );}
-	return m;}
+			if( getLogs!=null){List<Map>a=new LinkedList<>();
+				m.put("getLogs",a);
+				for (Object o:getLogs) {
+					Map x=(Map)o;
+					a.add(getLog(x,tl));
+				}
+			}
+		}catch ( Exception ex ){tl.error( ex,"App.poll" );}
+		return m;}
 
 	/**op methods:
 	 * create new domain
@@ -255,23 +252,24 @@ public class App {
 				continue;}
 			Object prps=m.get( "props"),n=m.get( ObjProperty.C.n.name() );
 			Map props=prps instanceof Map?(Map)prps:null;
-			if(props!=null || n==null)
-			{	h=new ObjHead(  );h.fromMap( m );//if(h==null)//h.id=h.proto=h.parent=h.domain=null;h.props=null;
-				if(h.proto!=null && h.parent!=null)
-				{if(h.domain==null)
-					h.domain=tl.usr.domain;
-				 x=ObjHead.factory(h.proto); y=ObjHead.factory(h.parent);
-				 if( x.proto==null || y.proto==null ){ // !x.exists() || !y.exists()
-					//TO DO //tl.usr.hasAccess(Domain.Oper.moveToProto.name(),Domain.Proto.Proto.get().id);
-					tl.log("proto or parent not found");
-					m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","proto or parent not found" ) );
-					continue;
-				 }else if(!( tl.usr.hasAccess(Domain.Oper.newChild.name(),h.parent)
+			if(props!=null || n==null){
+				h=new ObjHead(  );h.fromMap( m );//if(h==null)//h.id=h.proto=h.parent=h.domain=null;h.props=null;
+				if(h.proto!=null && h.parent!=null){
+					if(h.domain==null)
+						h.domain=tl.usr.domain;
+					x=ObjHead.factory(h.proto); y=ObjHead.factory(h.parent);
+					if( x.proto==null || y.proto==null ){ // !x.exists() || !y.exists()
+						//TODO //tl.usr.hasAccess(Domain.Oper.moveToProto.name(),Domain.Proto.Proto.get().id);
+						tl.log("proto or parent not found");
+						m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","proto or parent not found" ) );
+						continue;
+					}else
+					if(!( tl.usr.hasAccess(Domain.Oper.newChild.name(),h.parent)
 							&& tl.usr.hasAccess(Domain.Oper.newChild.name(),h.proto)))//TODO: invesstigate why false when h.proto is pProto for usr0
 						m.put("return",TL.Util.mapCreate( "statusCode",-1,"statusMsg","no access operation 'newChild'" ) );
-				 else
-				 {if(x instanceof Domain && tl.usr.hasAccess(Domain.Oper.newDomain.name(),h.domain))
-				  {	Domain d=Domain.initNew();
+					else
+					{	if(x instanceof Domain && tl.usr.hasAccess(Domain.Oper.newDomain.name(),h.domain))
+					{	Domain d=Domain.initNew();
 						m.put( ObjHead.C.id.name(),d.id );
 						list.add( TL.Util.mapSet( m,
 								ObjHead.C.id.name(),x.id
@@ -279,11 +277,11 @@ public class App {
 								,"return",TL.Util.mapCreate(
 										"statusCode",+1
 										,"statusMsg","created new Domain")));
-					 }else
-					 {	//TODO: in Usr.hasAccess add checking parents
+					}else
+					{	//TODO: in Usr.hasAccess add checking parents
 						if(y.children==null)
 							y.children=new HashMap<>();
-						//h.id=h.maxPlus1( ObjHead.C.id );//_Done: must use ObjHead.saveWithNewId instead of h.maxPlus1
+						//h.id=h.maxPlus1( ObjHead.C.id );//TODO: must use ObjHead.saveWithNewId instead of h.maxPlus1
 						//m.put( ObjHead.C.id.name(),h.id );
 						int c=x instanceof Domain.Usr?2:x instanceof Domain.Role?3:1;
 						if(c>1){
@@ -306,37 +304,33 @@ public class App {
 									//u.init();
 								}else{c=0;
 									m.put("return",TL.Util.mapCreate(
-									   "statusCode",-1,"statusMsg","role name used" ) );}
+											"statusCode",-1,"statusMsg","role name used" ) );}
 							}
 							if(c>0){// misleading because , props and children are always null, the reason is, h is always newly instantiated
 								x.props=h.props;
 								x.children=h.children;
 							}
-						}else
-							x=h;
+						}else x=h;
 						if(c>0){
-							x.no=null;
-							x.saveNewId();
 							y.children.put(x.id,x);
-							ObjHead.all.put(x.id,x);
-							x.logTime=tl.now;
+							ObjHead.all.put(x.id,x);x.logTime=tl.now;
+							x.no=null;x.save();
 							list.add( TL.Util.mapSet( m,
-								ObjHead.C.id.name(),x.id
-								,ObjHead.C.logTime.name(),x.logTime
-								,"return",TL.Util.mapCreate(
-									"statusCode",+1
-									,"statusMsg","created new ObjHead" )));
-							if(props !=null){
-								for(Object k:props.keySet())
-								{	prps=props.get(k);
-									x.setProps( k,prps );
-								}
+									ObjHead.C.id.name(),x.id
+									,ObjHead.C.logTime.name(),x.logTime
+									,"return",TL.Util.mapCreate(
+											"statusCode",+1
+											,"statusMsg","created new ObjHead" )));
+							if(props !=null){for(Object k:props.keySet())
+							{	prps=props.get(k);
+								x.setProps( k,prps );
+							}
 								if(c==3)
 									((Domain.Role)x).init();
 							}
 						}
-					 }
-				  }
+					}
+					}
 				}
 			}else if(n!=null ){
 				//if(p==null)
@@ -1474,4 +1468,4 @@ CREATE TABLE `ObjHead` (
 
 	}//class Domain
 
- }//class App
+}//class App
