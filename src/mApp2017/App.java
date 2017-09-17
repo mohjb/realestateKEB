@@ -988,21 +988,25 @@ CREATE TABLE `ObjHead` (
 						p.children=new HashMap<>(  );
 						p.children.put( id,o );
 					}
-				}
-				try {List<Integer>chldrn = TL.DB.
-						q1colTList( o.sql( cols( C.id,Co.maxLogTime)
-								, where( C.parent, id ),o.groupBy() )
-								, Integer.class, id );
-					if(chldrn!=null&&chldrn.size()>0){
-						if ( o.children==null )
-							o.children=new HashMap<>(  );
-						for(Integer i:chldrn){
-							x=all.get( i );
-							o.children.put( i,x );//x!=null?x:o// here happens the cases of not completely loading some children
-						}}
-				}catch ( Exception ex ){}
+				}o.loadChildren();
 			}
 			return o;
+		}
+
+		Map<Integer,ObjHead>loadChildren(){
+			try {List<Integer>chldrn = TL.DB.
+					q1colTList( sql( cols( C.id,Co.maxLogTime)
+						, where( C.parent, id ),groupBy() )
+						, Integer.class, id );
+				if(chldrn!=null&&chldrn.size()>0){
+					if ( children==null )
+						children=new HashMap<>(  );
+					for(Integer i:chldrn){
+						ObjHead x=all.get( i );
+						children.put( i,x );//x!=null?x:o// here happens the cases of not completely loading some children
+				}}
+			}catch ( Exception ex ){TL.tl().error( ex,"ObjHead.loadChildren:" );}
+			return children;
 		}
 
 		/** all protos in all domains */ // a different idea is to move member'all' to domain, and each domain would have its own id-sequence, and in cases where cross-domain links are required , the link would be represented as {class:'ObjHeadRef',id:<int:id>,domain:<int:domain>}, of course from jdbc  ObjProperty-v would be only a string, which is a problem
@@ -1436,12 +1440,14 @@ CREATE TABLE `ObjHead` (
 				return hasAccess( resourceId,TL.Util.lst( operation ) );}
 
 			boolean hasAccess(Integer resourceId,List operations){//,String resourcePN//PropertyName
-				ObjHead c=all.get( resourceId );if(c==null||have==null)return false;
+				ObjHead c=all.get( resourceId );if(c==null||have==null)
+					return false;
 				for(Role r:have.values()){if(r!=null && r.resources!=null && r.operations!=null)
 					for (ObjHead o: r.resources.values())
 					{if((o.id==c.id || c.isInstanceOf( o ))
 							&&(r.operations.containsAll( operations ) ))  //||r.operations.contains( Oper.all.toString() )
-					{if(locks==null)return true;
+					{if(locks==null)
+						return true;
 						for(Role x:locks.values()){
 							for (ObjHead z: x.resources.values())
 							{if((z.id==c.id || c.isInstanceOf( z ))
