@@ -177,7 +177,6 @@ function cs(p){
 		p.lsSave();
 		location.hash='#!/main';
 	}}
-
 	p.profileSelects={}
 	p.profileFields=[
 		{name:'Name',isArray:true}
@@ -493,7 +492,6 @@ function cs(p){
 		sp.freeAttendance = ! ! sp.freeAttendance 
 		console.log('profilesCtrl.chngProfileSlct:',sp,$scope);
 	}
-
 	$scope.chng=function(a,x){console.log('profilesCtrl.chng:',a,x);}
 	$scope.blur=function(a,x){console.log('profilesCtrl.blur:',a,x);}
 	console.log('profilesCtrl:version=',$scope.version='profilesCtrl , app=',app )
@@ -587,11 +585,9 @@ function cs(p){
 .controller('usrsCtrl',function profilesCtrlController($scope,app ) {
 	if(app instanceof Function)
 		app=app();
-
 	if(!app || !app.usr || !app.usr.f)
 		return location.hash='#!/login'
 	$scope.app=app
-
 	$scope.chng=function chng(x){
 		if(!x)x=$scope.editUsr
 		else $scope.editUsr=x
@@ -602,13 +598,11 @@ function cs(p){
 .controller('xlCtrl',function xlCtrlController($scope,$http,app ) {
 	if(app instanceof Function)
 		app=app();
-
 	if(!app || !app.usr || !app.usr.f)
 		return location.hash='#!/login'
 	$scope.app=app;if(!app.xl){var d='default';app.xl={fileName:d,
 		fileList:[{name:d,size:'?',lastModified:new Date().getTime()}]}
 	}var xl=$scope.xl=app.xl//else {$scope.fileName=app.xl.fileName;$scope.fileList=app.xl.fileList}
-
 	$scope.signature=function signature(c){
 		var s=[],n=0,z=40,i=0,j=z
 		,s2
@@ -683,7 +677,6 @@ function cs(p){
 		}
 	console.log('xlCtrl:version=',$scope.version='xlCtrl , app=',app )
 })
-
 .service('LoadingInterceptor', ['$q', '$rootScope', '$log', 
 function ($q, $rootScope, $log) {
     //'use strict';
@@ -727,7 +720,6 @@ function ($q, $rootScope, $log) {
         }
     };
 }])
-
 .filter('filtr',function(){
 	return function(p,op1){
 		function intgr(p)
@@ -882,17 +874,17 @@ function ($q, $rootScope, $log) {
 </script>
 
 <!-- template.XL dependencies-->
-<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/shim.js"></script>
-<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/xlsx.full.min.js"></script>
+<script type="text/javascript" src="../../SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/shim.js"></script>
+<script type="text/javascript" src="xlsx.full.min.js"></script>
 
 <!-- FileSaver.js is the library of choice for Chrome -->
-<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/Blob.js"></script>
-<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/FileSaver.js"></script>
-
+<script type="text/javascript" src="../../SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/Blob.js"></script>
+<script type="text/javascript" src="../../SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/FileSaver.js"></script>
+<script type="text/javascript" src="xlContract.js"></script>
 <!-- FileSaver doesn't work in older IE and newer Safari; Downloadify is the flash fallback -->
-<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/swfobject.js"></script>
-<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/downloadify.min.js"></script>
-<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/base64.min.js"></script>
+<script type="text/javascript" src="../../SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/swfobject.js"></script>
+<script type="text/javascript" src="../../SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/downloadify.min.js"></script>
+<script type="text/javascript" src="../../SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/base64.min.js"></script>
 
 <script>
 function s2ab(s) {
@@ -907,7 +899,6 @@ function s2ab(s) {
 		return buf;
 	}
 }
-
 function export_table_to_excel(id, type, fn) {
 var wb = XLSX.utils.table_to_book(document.getElementById(id), {sheet:"Sheet JS"});
 var wbout = XLSX.write(wb, {bookType:type, bookSST:true, type: 'binary'});
@@ -917,7 +908,6 @@ try {
 } catch(e) { if(typeof console != 'undefined') console.log(e, wbout); }
 return wbout;
 }
-
 function doit(type, fn) { return export_table_to_excel('xltable', type || 'xlsx', fn); }
 </script>
 <!-- end of template.XL dependencies-->
@@ -949,18 +939,15 @@ input, textarea, select, button, meter, progress {
 	transition: width 1s cubic-bezier(0.85,-0.3, 0.55, 1.27);
 	
 }
-
  input:focus{animation:sz1 1s;
  transition: width 1s cubic-bezier(0.85,-0.3, 0.55, 1.27);
  }
  input:blur {animation:sz2 1s}
 @keyframes sz1{0%{width:60%}100%{width:90%}}
 @keyframes sz2{0%{width:90%}100%{width:60%}}
-
 progress:focus , textarea:focus , select:focus , button:focus , meter:focus
 {animation:fade 2s}
 @keyframes fade{0%{background:rgba(240,240,240,0.9)}100%{background:rgba(240,240,240,0.01);}}
-
 .tbl{display: grid;
     grid-gap: 3px;
     grid-auto-rows: minmax(16px,auto);
@@ -1564,7 +1551,8 @@ body{
 
 
 <template id="template.xl" >
-<script type="text/ng-template" id="/cntrct.html"><tr>
+<script type="text/ng-template" id="/cntrct.html" >
+<tr>
 	<td class="not_menuItem hding" style="text-align:right"><h3>Title</h3></td>
 	<td class="not_menuItem" style="text-align:left" ><h3>{{c.title}}</h3></td>
 
@@ -1636,7 +1624,7 @@ body{
 <tr><td>eSignature</td><td><pre style="font-size: 6px;"> <!-- { { c | json }} --> {{ signature(c) }} </pre></td></tr>
 <tr><td colspan="2"><hr/></td></tr><tr><td colspan="2"><hr/></td></tr>
 </script>
-<script src="xlContract.js"></script>
+<script type="text/javascript" src="xlContract.js"></script>
 <style>
 .xport, .btn {
 	display: inline;
@@ -1682,9 +1670,9 @@ a { text-decoration: none }
 	ondragend="dragend_handler(event);"
 	>
   <strong>Drag excel file to this Drop Zone ...</strong>
-  <progress id="progress" value=0>%</progress><br/>
+  <progress id="progress" value=0>%</progress>
+</div><br/>
   <span id="drop_zone_results">-</span>
-</div>
 <hr/>
 	scheduled save-to-server <hr/>
 <button class="menuItem bvl " onclick="doit()">Download as Excel file</button>
