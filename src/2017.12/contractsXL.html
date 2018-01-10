@@ -1,0 +1,1699 @@
+<!DOCTYPE><html><head><link href="favic32.ico" rel="shortcut icon" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="/angular-1.6.4/angular.min.js"></script>
+<script src="/angular-1.6.4/angular-sanitize.min.js"></script>
+<script src="/angular-1.6.4/angular-md5.js"></script>
+<script src="/angular-1.6.4/angular-ui-router.js"></script>
+	<script>//\>\s*\{\{([^\|]*)\|filtr\:'currency'\}\} , ni= tc+cm-sp
+function did(p){return document.getElementById(p);}
+function dt(p){var d=p;
+		if(p==undefined)
+			return '-';
+		else if(!(p instanceof Date))//if(typeof(d)=='number')
+			try{d=new Date(p);}
+			catch(ex){
+				console.error('function dt:formatDate:error:',ex)
+			}
+		if( d instanceof Date)return d.getFullYear()+'-'+
+			(1+d.getMonth())+'-'+
+			d.getDate()+'T'+
+			d.getHours()+':'+
+			d.getMinutes()+':'+
+			d.getSeconds()+'.'+
+			d.getMilliseconds();
+		else
+			return '-';
+	}
+function cs(p){
+	var ss=document.styleSheets
+	for(var i in ss)try{
+		var x=ss[i],r=x.rules//console.log(i,ss[i])
+		for(var j in r)try{
+			var y=r[j],t=y.selectorText//console.log(j,ss[i].rules[j])
+			if(t==p)
+				return y.style
+		}catch(ex){}
+	}catch(ex){}
+}xUrl='index.jsp';//2017.11.jsp
+(window.xa=app=(angular||{})
+.module('app', ['ngSanitize','angular-md5','ui.router'] ))
+.factory('app', ['$http','md5', function appFactory($http,md5) {
+	var p=window.xa||{}
+	p.lsInitEntitiesCache=function(a){
+		var hitsCount=0
+		function itrtOver(a,depth){if(a instanceof Object)
+			for(var i in a){
+				var o=a[i];
+				if(o && o.entityId && !o.deleted)
+				{p.entities[o.entityId]=o;
+					hitsCount++}
+				if(depth>0)
+					itrtOver(o,depth-1)
+			}}
+		try{itrtOver(a,2);}
+			catch(ex){
+			console.log('app.lsInitEntitiesCache:error',a,ex)}
+		return hitsCount;
+	}
+	p.lsReset =function appLsReset(){p.entities={};
+		p.ls={rate:{entityId:"rate",lastModified:0,v:350},usr:{
+				moh:{entityId:'user-moh',un:'moh',pw:'6f8f57715090da2632453988d9a1501b'
+					,firstName:'Mohammad',lastName:'Buhamad'
+					,tel:'99876454',email:'mohamadjb@gmail.com'
+					,level:'fullAccess',notes:'',created:'2017/06/20T21:05',f:1
+					,lastModified:'2017/06/20T21:05'}
+				,be:{entityId:'user-be',un:'be',pw:'92eb5ffee6ae2fec3ad71c777531578f'
+					,firstName:'Secratery',lastName:'x',email:'bohamaem@gmail.com'
+					,level:'user',notes:'',created:'2017/07/06T16:00',f:0
+					,lastModified:'2017/07/06T21:05'}}
+			,contracts:[]
+			,oh:[]
+			,profiles:[]
+		}// ls // localStorage
+		p.lsInitEntitiesCache(p.ls)
+	};p.lsReset();
+	p.rate=function(){return p.ls.rate.v;}
+	p.logout=function appLogout(state){p.usr=0;
+		cs('.onUsrF').display='none'
+		cs('.onLoggedIn').display='none'
+		cs('.onLoggedOut').display='';}
+	p.dt=dt;p.lsSaved=0//new Date().getTime()
+	p.lsSave=function(forgein){
+		localStorage.aswan20170704=
+			forgein==undefined
+			?JSON.stringify(p.ls)
+			:forgein;
+		p.lsSaved=new Date().getTime();}
+	p.lsLoad=function(forgein){
+		var s=forgein!=undefined
+			?forgein
+			:localStorage.aswan20170704
+		if(typeof(s)=='string')
+			try{s=JSON.parse(s)
+			}catch(ex){
+				console.log('app.lsLoad:json-parse:error',ex)}
+		p.lsInitEntitiesCache(p.ls=s)
+		if(forgein!=undefined)
+			p.lsSave(typeof(forgein)=='string'
+				?forgein
+				:JSON.stringify(forgein))
+	}
+	p.chng=function(x){
+		if(x && x.entityId){
+			var d=new Date(),n=d.getTime();
+			x.lastModified=n
+			console.log('app.chng',x,arguments)
+			if(x.entityId.startsWith('cntrct'))
+				p.compute(x);
+		}
+	}
+	p.blur=function(x){
+		if(x && x.entityId){
+			console.log('app.blur',x,arguments)
+			var z=p.entities[x.entityId]
+			if(!z)
+				p.entities[x.entityId]=x
+			if( p.lsSaved<x.lastModified)
+				p.lsSave();
+		}else
+			console.log('app.blur:no unique id found:',x)
+	}
+	p.newUsr=function(){
+		var un=prompt('Please Enter User-Name')
+		,pw,u,d=new Date(),n=d.getTime();
+		if(!un)return null;
+		if(p.ls.usr[un] && !p.ls.usr[un].deleted ){
+			alert('can not use user-name:'+un);return null;}
+		pw=prompt('Please enter password')
+		if(!pw)return null;
+		pw=md5.createHash(pw)
+		p.ls.usr[un]=u={entityId:'user-'+un
+			,un:un,pw:pw,usr:app.usr.entityId
+			,firstName:'user '+Object.keys(p.ls.usr).length+1
+			,lastName:'-',email:'',notes:'',level:'',f:0,tel:''
+			,created:n,lastModified:n}
+		p.entities[u.entityId]=u//{o:u,lastModified:n,chng:0}
+		p.lsSave();
+		return u;}
+	p.compute=function(c){
+		c.oh=(c.rate||0)*(c.ppl||0)*(c.month||0);
+		c.tc=(c.dl||0)+(c.dm||0)+(c.sv||0)+(c.oh||0)
+		c.ni=(c.sp||0)-((c.tc||0)+(c.cm||0))
+	}
+	p.cols={ppl:'number of People'
+		,dl:'Direct Labor'		//sum
+		,month:'month'
+		,dm:'Direct Material'	//sum
+		,sv:'Direct Supervisor'	//sum
+		,oh:'Overhead'			//sum
+		,cm:'Commession'		//sum
+		,sp:'Sales Price'		//sum
+		,ni:'Net Income'		//sum
+		,tc:'Total Cost'		//sum
+	}
+	p.newCntrct=function(){
+		var d=new Date(),n=d.getTime()
+	  ,x= {lastModified:n,created:n
+		,entityId:'cntrct-'+n
+		,usr:(app.usr&&app.usr.entityId)
+		,title:'Contract'+n
+		,contractor:'Contractor'
+		,jn:0,ppl:0,month:0
+		,dl:0 // 'Direct Labor'
+		,dm:0 // Direct Material
+		,sv:0 // direct Supervisor
+		,oh:0 // Over head
+		,tc:0 //total cost
+		,cm:0 // comession
+		,sp:0 // sales-price
+		,ni:0 // net-income ,goal:'dl'
+		,rate:p.rate()
+		}
+		return x;
+	}
+	p.deleteCntrct=function(){
+		if(confirm('Please confirm delete '+p.cntrct.title)){
+		p.cntrct.deleted=new Date();
+		p.lsSave();
+		location.hash='#!/main';
+	}}
+
+	p.profileSelects={}
+	p.profileFields=[
+		{name:'Name',isArray:true}
+		,{name:'CID',type:'integer'}
+		,{name:'Nationality',isArray:true,type:'select'
+			,select:p.profileSelects.Nationality= ["Afghanistan","Albania","Algeria","Andorra","Angola","Anguilla","Antigua & Barbuda","Argentina","Armenia","Aruba","Australia","Austria","Azerbaijan","Bahamas"
+			,"Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bermuda","Bhutan","Bolivia","Bosnia & Herzegovina","Botswana","Brazil","British Virgin Islands"
+			,"Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon" ,"Canada","Cape Verde","Cayman Islands","Chad","Chile","China","Colombia","Congo","Cook Islands","Costa Rica"
+			,"Cote D Ivoire","Croatia","Cruise Ship","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea"
+			,"Estonia","Ethiopia","Falkland Islands","Faroe Islands","Fiji","Finland","France","French Polynesia","French West Indies","Gabon","Gambia","Georgia","Germany","Ghana"
+			,"Gibraltar","Greece","Greenland","Grenada","Guam","Guatemala","Guernsey","Guinea","Guinea Bissau","Guyana","Haiti","Honduras","Hong Kong","Hungary","Iceland","India"
+			,"Indonesia","Iran","Iraq","Ireland","Isle of Man","Israel","Italy","Jamaica","Japan","Jersey","Jordan","Kazakhstan","Kenya","Kuwait","Kyrgyz Republic","Laos","Latvia"
+			,"Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Macau","Macedonia","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Mauritania"
+			,"Mauritius","Mexico","Moldova","Monaco","Mongolia","Montenegro","Montserrat","Morocco","Mozambique","Namibia","Nepal","Netherlands","Netherlands Antilles","New Caledonia"
+			,"New Zealand","Nicaragua","Niger","Nigeria","Norway","Oman","Pakistan","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal"
+			,"Puerto Rico","Qatar","Reunion","Romania","Russia","Rwanda","Saint Pierre & Miquelon","Samoa","San Marino","Satellite","Saudi Arabia","Senegal","Serbia","Seychelles"
+			,"Sierra Leone","Singapore","Slovakia","Slovenia","South Africa","South Korea","Spain","Sri Lanka","St Kitts & Nevis","St Lucia","St Vincent","St. Lucia","Sudan"
+			,"Suriname","Swaziland","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor L'Este","Togo","Tonga","Trinidad & Tobago","Tunisia"
+			,"Turkey","Turkmenistan","Turks & Caicos","Uganda","Ukraine","United Arab Emirates","United Kingdom"
+			, "United States",  "United States Minor Outlying Islands"
+			,"Uruguay","Uzbekistan","Venezuela","Vietnam","Virgin Islands (US)"
+			,"Yemen","Zambia","Zimbabwe"]}
+		,{name:'contactInfo',c:[{name:'telNo',type:'tel',isArray:true}
+			,{name:'address',isArray:true}
+			,{name:'email',type:'email',isArray:true}]}
+		,{name:'PassportNo',isArray:true,type:'integer'}
+		,{name:'type',type:'select',select:p.profileSelects.type=[//enum
+			'operator'
+			,'administrator'
+			,'contractor']}// (only commision)
+		,{name:'JobCategory',isArray:true,type:'select',select:p.profileSelects.JobCategory=["Mechanical Engineer"
+			, "Electrical Engineer", "Instrument Engineer"
+			, "Mechanical Supervisor", "Welder –TIG & ARC"
+			, "Fabricator", "Valve Technician", "Instrument Technician"
+			, "Machinist", "Electrician", "Pipe Fitter", "CNC Operator"
+			, "Store Keeper", "General Manager", "Project Manager"
+			, "Accountant", "Coordinator", "Secretary", "Receptionist"
+			, "Draft man", "Lison Officer (Mandoop)", "Driver", "Care Taker"]}
+		,{name:'PunchID',type:'integer'}
+		,{name:'Date','type':'date',c:[{name:'Joining'},{name:'DOB'}]}
+		,{name:'Size',type:'integer',c:[{name:'shoe'},{name:'overall'}]}
+		,{name:'Expiry',type:'date',c:[
+			{name:'Passport'}
+			,{name:'CID'},{name:'Residency'}
+			,{name:'Contract',desc:'(ministry of labor)'}
+			,{name:'driverLicense'}]}
+		,{name:'freeAttendance',type:'checkbox' ,authorization:'TopLevel,Auditor'}
+		,{name:'BankAccountDetailes',isArray:true,authorization:'TopLevel,Auditor',c:[
+			{name:'cash',type:'checkbox'}
+			,{name:'bankName'}
+			,{name:'accountNumber'}
+			]}
+		,{name:'Salary',type:'currency'
+			,desc:'salary fields (each has change log)'
+			,authorization:'TopLevel,Auditor'
+			,c:[{name:'basic salary'}
+			,{name:'mobile'}
+			,{name:'fuel'}
+			,{name:'Increment'}
+			,{name:'CustomItems',isArray:true}]}
+		,{name:'Attachments',type:'file',c:[
+			 {name:'FacePic',isArray:true}
+			,{name:'cid',isArray:true}
+			,{name:'residency',isArray:true}
+			,{name:'passport',isArray:true}
+			,{name:'ministryLabor',isArray:true}
+			,{name:'driverLicense',isArray:true}]}
+		]//profileFields
+	p.newProfile=function(){
+		var d=new Date(),n=d.getTime()
+		,x={entityId:'profile'+n,created:n,lastModified:n,usr:app.usr.entityId};
+		p.entities[x.entityId]=x//{o:x,lm:n,chng:0};
+		p.ls.profiles.push(x)
+		for(var i in p.profileFields)
+		{var u=p.profileFields[i];
+			if(u.c){var z=x[u.name]={}
+			  for(var j in u.c){var w=u.c[j]
+				z[w.name]=w.isArray?[]:''
+			}}else
+				x[u.name]=u.isArray?[]:''
+		}x.Name[0]=p.ls.profiles.length+'.Name'
+		p.lsSave();return x;
+	}/*
+	p.serverIntrvl=setInterval(function(){
+		var x=p.lastServerCheck.getTime()
+		,n=new Date().getTime();
+		if(x+120000<=n)
+		{console.log('app:polling server');
+			p.lsLoad('');}
+	},10000)
+	p.lastServerCheck=new Date();*/p.lsLoad()
+	return function appFactoryCallback(message) {return p;}
+}])
+.config(function appConfig($stateProvider,$urlRouterProvider){
+	console.log('config',this,arguments);
+	$urlRouterProvider.otherwise('/login');
+	/*var states=['login','main','cntrct','oh','profiles','cntrctsReport']
+	for(var i in states){var s=states[i]
+		console.log('config:for:',s);
+		$stateProvider.state(s,{
+		  url:'/'+s,controller:s+'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:',s);
+			return $timeout(function () 
+				{var x='template.'+s
+					,t=did(x)
+					,cnn=t.innerHTML;
+					console.log('config:func3:',s,cnn);
+					return cnn;
+				}, 100);}
+		})
+	}*/
+	$stateProvider.state('login',{
+		  url:'/login',controller:'loginCtrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:login');
+			return $timeout(function () 
+				{var x='template.login'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					//console.log('config:func3:login',cnn);
+					return cnn;
+				}, 100);}
+		})
+	.state('main',{
+		  url:'/main',controller:'mainCtrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:main');
+			return $timeout(function () 
+				{var x='template.main'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					//console.log('config:func3:main',cnn);
+					return cnn;
+				}, 100);}
+		}).state('cntrct',{
+		  url:'/cntrct',controller:'cntrctCtrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:cntrct');
+			return $timeout(function () 
+				{var x='template.cntrct'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					//console.log('config:func3:cntrct',cnn);
+					return cnn;
+				}, 100);}
+		}).state('oh',{
+		  url:'/oh',controller:'ohCtrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:oh');
+			return $timeout(function () 
+				{var x='template.oh'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					//console.log('config:func3:oh',cnn);
+					return cnn;
+				}, 100);}
+		}).state('profiles',{
+		  url:'/profiles',controller:'profilesCtrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:profiles');
+			return $timeout(function () 
+				{var x='template.profiles'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					//console.log('config:func3:profiles',cnn);
+					return cnn;
+				}, 100);}
+		}).state('cntrctsReport',{
+		  url:'/cntrctsReport',controller:'cntrctsReportCtrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:cntrctsReport');
+			return $timeout(function () 
+				{var x='template.cntrctsReport'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					//console.log('config:func3:cntrctsReport',cnn);
+					return cnn;
+				}, 100);}
+		}).state('usrs',{
+		  url:'/usrs',controller:'usrsCtrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:usrs');
+			return $timeout(function () 
+				{var x='template.usrs'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					//console.log('config:func3:cntrctsReport',cnn);
+					return cnn;
+				}, 100);}
+		}).state('xlScreen',{
+		  url:'/xl',controller:'xlCtrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:xl');
+			return $timeout(function () 
+				{var x='template.xl'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					//console.log('config:func3:cntrctsReport',cnn);
+					return cnn;
+				}, 100);}
+		})
+})//config
+.controller('loginCtrl',function loginCtrlController($scope,app,md5,$state,$rootScope){
+ console.log('app.controller:loginCtrl:($scope'
+ 		,$scope,',app',app,',md5',md5
+ 		,',$state',$state,',$rootScope',$rootScope
+ 		,',arguments',arguments,',this',this,')')
+	$scope.un=''
+	$scope.pw=''
+	$scope.msg=''
+	if(app instanceof Function)app=app();
+	$scope.app=app;
+	$scope.clk=
+	function calek(){
+		console.log('loginCtrl:clk',arguments,this);
+		var u=app.ls.usr[$scope.un]
+		if(!md5){console.error('controller:loginCtrl:function-clk:param-md5 not defined');
+			md5={createHash:function loginCtrlDummyMd5(){} } }
+		if(u && u.pw == md5.createHash($scope.pw)){
+			app.usr=u;
+			//TODO: DbLog.newEntry(login)
+			$scope.msg='login successful,\n'+(new Date)
+			cs('.onLoggedIn').display=''
+			cs('.onLoggedOut').display='none'
+			cs('.onUsrF').display=app.usr.f?'':'none';//did('logoNotLog').style.display='none';did('logoLoggedin').style.display='grid'
+			location.hash='#!/main';//$state.go('main')
+		}
+		else $scope.msg='invalid login \n,'+(new Date)
+	}
+	if(app.usr)
+		location.hash='#!/main'
+	})
+.controller('mainCtrl',function mainCtrlController($scope,app ) {
+	if(app instanceof Function)
+		app=app();
+	
+	if(!app || !app.usr)
+		return location.hash='#!/login'
+	if(app){
+		$scope.app=app
+		$scope.dt=dt
+		$scope.cntrcts=app.ls.contracts
+		console.log('mainCntrl:version=',$scope.version='mainCntrl , app=',app )
+	}else{
+		$scope.usr=null;
+		console.log('mainCntrl:version=',$scope.version='mainCntrl , no app')
+	}
+})
+.controller('cntrctCtrl',function cntrctCtrlController($scope,app ) {
+	if(app instanceof Function)
+		app=app();
+	
+	if(!app || !app.usr)
+		return location.hash='#!/login'
+	if(app){
+		$scope.app=app
+		$scope.dt=dt
+		$scope.c=app.cntrct
+		console.log('cntrctCtrl:version=',$scope.version='cntrctCtrl , app=',app )
+	}else{
+		$scope.usr=null;
+		console.log('cntrctCtrl:version=',$scope.version='cntrctCtrl , no app')
+	}
+})
+.controller('ohCtrl',function ohCtrlController($scope,app ) {
+	if(app instanceof Function)
+		app=app();
+	
+	if(!app || !app.usr)
+		return location.hash='#!/login'
+	$scope.app=app
+	$scope.dt=dt
+	//$scope.c=app.cntrct
+	console.log('ohCtrl:version=',$scope.version='ohCtrl , app=',app )
+	
+})
+.controller('profilesCtrl',function profilesCtrlController($scope,app ) {
+	if(app instanceof Function)
+		app=app();
+	
+	if(!app || !app.usr)
+		return location.hash='#!/login'
+	$scope.app=app
+	$scope.dt=dt
+	var pf=$scope.pf=app.profileFields
+	,ps=$scope.profileSelects=app.profileSelects
+	,sp=$scope.sp=app.selectedProfile=(
+		app.selectedProfile?app.selectedProfile
+		:((app.ls.profiles&&app.ls.profiles.length)?app.ls.profiles[0]
+		  :app.newProfile()
+		 )
+	)
+	
+	
+	$scope.fld=function fld(path,af){//get field
+		function pth(pi,prnt){
+			var n=path[pi]
+			,x=prnt[n];
+			return pi+1>=path.length//pi+2>=pth.length?[x,x[path[pi+1]]]
+				?x:pth(pi+1,path,x);}
+		var a=path instanceof Array
+		,n=a?path[0]:path;if(!af)af=pf;
+		for(var i in af)
+		{if(n==af[i].name)
+			return a?pth(0,af[i]):af[i]
+		}
+	}
+	
+	$scope.chngSlct=function(){
+		//if(!$scope.selectedProfile)$scope.selectedProfile=app.selectedProfile||app.ls.profiles[0]||{}
+		var sp=$scope.sp=app.selectedProfile//$scope.keys=$scope.prepareKeys($scope.selectedProfile)
+		sp.freeAttendance = ! ! sp.freeAttendance 
+		console.log('profilesCtrl.chngProfileSlct:',sp,$scope);
+	}
+
+	$scope.chng=function(a,x){console.log('profilesCtrl.chng:',a,x);}
+	$scope.blur=function(a,x){console.log('profilesCtrl.blur:',a,x);}
+	console.log('profilesCtrl:version=',$scope.version='profilesCtrl , app=',app )
+})
+.controller('cntrctsReportCtrl',function cntrctsReportCtrlController($scope,app ) {
+	if(app instanceof Function)
+		app=app();
+	if(!app || !app.usr)
+		return location.hash='#!/login'
+	$scope.app=app
+	$scope.dt=dt;
+	$scope.from=app.from;
+	$scope.to=app.to;
+	$scope.PType=[$scope.paid='all','Only Paid','Only not paid']
+	$scope.search=function(d1,d2){
+		var a=$scope.a=[],pt=$scope.paid
+		,paid=0
+		,f=app.from=d1||$scope.from
+		,t=app.to=d2||$scope.to;//$scope.sum=0
+		$scope.b=[{name:'dl',sum:0}
+		,{name:'dm',sum:0}
+		,{name:'sv',sum:0}
+		,{name:'oh',sum:0}
+		,{name:'tc',sum:0}
+		,{name:'cm',sum:0}
+		,{name:'sp',sum:0}
+		,{name:'ni',sum:0}
+		];
+		if(f || t)
+		for(var i in app.ls.contracts)try{
+			var c=app.ls.contracts[i]
+			,s=c.started
+			,e=c.completed
+			,z=f&&t /* for the sake of debugging ,if-else statements are used for checking time interval intersection (z) 
+				, but if debugging isnt needed, alternativly can be written as:
+			 z= (f&&t 
+			 	 && (	  (s&&e &&( s<=t&&f<=e )) 
+			 	 		||(s 	&&( f<=s&&s<=t )) 
+			 	 		||(e 	&&( f<=e&&e<=t )) 
+					)
+				)
+			  ||(f&&( 
+						  (e&& f<=e) 
+						||(s&& f<=s) 
+					)
+				)
+			  ||(t&&(	  (s&& s<=t)
+			  			||(e&& e<=t)
+					)
+			)*/
+			if(c.deleted|| (pt!='all' &&((pt=='Only Paid'&&
+				c.paid) || (pt=='Only not paid'&& !c.paid))))
+				continue;
+			if( s &&(!(s instanceof Date)) )
+				s=new Date(s)
+			if( e &&(!(e instanceof Date)) )
+				e=new Date(e)
+			if(z){
+				if(s&&e)
+					z=s<=t&&f<=e;else
+				if(s)
+					z=f<=s&&s<=t;else
+				if(e)
+					z=f<=e&&e<=t
+				else 
+					z=0;
+			}else if(f ){
+				if(e)
+					z=f<=e;else
+				if(s)
+					z=f<=s
+			}else if(t){
+				if(s)
+					z=s<=t;else
+				if(e)
+					z=e<=t
+			}
+			if(z){
+				$scope.a.push(c);
+				for(var j in $scope.b){
+					var u=$scope.b[j],v=c[u.name]
+					if(!isNaN(v))
+						u.sum+=v;
+				}
+			}
+		}catch(ex)//for i c
+		{console.error('cntrctReport.search',ex);}
+	}//function search
+	console.log('cntrctsReportCtrl:version=',$scope.version='cntrctsReportCtrl , app=',app )
+})
+.controller('usrsCtrl',function profilesCtrlController($scope,app ) {
+	if(app instanceof Function)
+		app=app();
+
+	if(!app || !app.usr || !app.usr.f)
+		return location.hash='#!/login'
+	$scope.app=app
+
+	$scope.chng=function chng(x){
+		if(!x)x=$scope.editUsr
+		else $scope.editUsr=x
+		x.f=!!x.f;}
+	$scope.chng(app.usr);
+	console.log('usrsCtrl:version=',$scope.version='usrsCtrl , app=',app )
+})
+.controller('xlCtrl',function xlCtrlController($scope,$http,app ) {
+	if(app instanceof Function)
+		app=app();
+
+	if(!app || !app.usr || !app.usr.f)
+		return location.hash='#!/login'
+	$scope.app=app;if(!app.xl){var d='default';app.xl={fileName:d,
+		fileList:[{name:d,size:'?',lastModified:new Date().getTime()}]}
+	}var xl=$scope.xl=app.xl//else {$scope.fileName=app.xl.fileName;$scope.fileList=app.xl.fileList}
+
+	$scope.signature=function signature(c){
+		var s=[],n=0,z=40,i=0,j=z
+		,s2
+		,s1=c;
+		try{s1=JSON.stringify( c );}
+		catch(ex){
+			console.error("xlCtrl.signature:error:",ex);
+			}
+		s2=btoa( s1 )
+		n=s2.length
+		while(n-i>z)
+		{s.push(s2.substring(i,j));
+			i=j;j+=z;
+		}s.push(s2.substring(i,n));
+		return s.join('\n');
+	}
+	$scope.refreshFileList=function refreshFileList(x){
+		var s={op:'listFiles'}
+		$http.post(xUrl,s).then(
+			function(response){
+				var x=response.data['return'] ;xl.fileList=x// || response['return']
+				console.log('xlCtrl.refreshFileList:post:response:',x,s,response,arguments,$scope)
+			},function(response){
+				console.log('xlCtrl.refreshFileList:post:error:',response,arguments);
+			})//return ;
+		}
+	$scope.loadFile=function loadFile(x){
+		var s={op:'getFile',fileName:x.fileName}
+		$http.post(xUrl,s).then(
+			function(response){
+				var x=response.data['return'] 
+				,s=x&&x.content
+				,fn=app.ls.fileName=x.fileName
+				//if(s&&typeof(s)=='string')x.content=s=JSON.parse(x.content)
+				if(s)
+				{	app.lsLoad(s);if(!app.ls.fileName&&fn)
+					app.ls.fileName=fn;}
+				console.log('xlCtrl.loadFile:post:response:',x,s,response,arguments,$scope)
+			},function(response){
+				console.log('xlCtrl.loadFile:post:error:',response,arguments);
+			})//return ;
+		}
+	$scope.saveToServer=function saveToServer(filNm){
+		if(!filNm)
+			filNm=xl.fileName;
+		else 
+			xl.fileName=filNm;
+		var s={op:'putFile',fileName:app.ls.fileName=filNm
+			,content:JSON.stringify(app.ls),lastModified:app.lsSaved};
+		s.size=s.content.length;
+		$http.post(xUrl//,s
+		).then(
+			function(response){
+				var x=response.data['return'] ;//p.lastServerCheck=new Date();
+				if(x==true && xl.fileList){var a=xl.fileList,b=0
+					for(var i=0;i<a.length && !b;i++)
+						b=a[i]&&a[i].fileName&& a[i].fileName==s.fileName
+					if(!b)
+					{b=[s];for(var i=0;i<a.length ;i++)
+							b.push(a[i]);
+						xl.fileList=b;
+					}
+				}
+				console.log('xlCtrl.saveToServer:post:response:',x,s,response,arguments,$scope)
+			},function(response){
+				console.log('xlCtrl.saveToServer:post:error:',response,arguments);
+			})
+		return alert ('not implemented yet');
+	}
+	$scope.uploadXL=function uploadXL(x){
+		return alert ('not implemented yet');
+		}
+	console.log('xlCtrl:version=',$scope.version='xlCtrl , app=',app )
+})
+
+.service('LoadingInterceptor', ['$q', '$rootScope', '$log', 
+function ($q, $rootScope, $log) {
+    //'use strict';
+ 
+    var xhrCreations = 0;
+    var xhrResolutions = 0;
+ 
+    function isLoading() {
+        var x= xhrResolutions < xhrCreations;
+		console.log('LoadingInterceptor.isLoading:xhrResolutions',xhrResolutions ,' < xhrCreations', xhrCreations,':',x);
+		return x;
+    }
+ 
+    function updateStatus() {
+        $rootScope.loading = isLoading();
+		console.log('LoadingInterceptor.updateStatus:$rootScope.loading ',$rootScope.loading );
+    }
+ 
+    return {
+        request: function (config) {
+            xhrCreations++;
+            updateStatus();
+            return config;
+        },
+        requestError: function (rejection) {
+            xhrResolutions++;
+            updateStatus();
+            $log.error('Request error:', rejection);
+            return $q.reject(rejection);
+        },
+        response: function (response) {
+            xhrResolutions++;
+            updateStatus();
+            return response;
+        },
+        responseError: function (rejection) {
+            xhrResolutions++;
+            updateStatus();
+            $log.error('Response error:', rejection);
+            return $q.reject(rejection);
+        }
+    };
+}])
+
+.filter('filtr',function(){
+	return function(p,op1){
+		function intgr(p)
+		{var x=Math.abs(p),b="",s,i=1
+			if(x<1000)
+				return p;
+			while(x>999)
+			{s=Math.floor(x%1000).toString();
+				if(s.length==1)s='00'+s;else if(s.length==2)s='0'+s;
+				b=',<span class="num'+(i++)+'">'+s+'</span>'+b
+				x=Math.floor(x/1000)
+			}b='<span class="num'+i+'">'+x+'</span>'+b
+			if(p<0)b='-'+b
+			return b;}
+		function num(p,s)
+		{var x=Math.abs(p),b;
+			if(s==undefined)
+				s=Math.floor((x*1000)%1000);
+			s=s.toString()
+			if(s.length==1)s='00'+s;else if(s.length==2)s='0'+s;
+			b=intgr(Math.floor(x))+'.<span class="num0">'+s+'</span>';
+			if(p<0)b='-'+b
+			return b;}
+		if(!p)return p;
+		switch(op1||0)
+		{case 'integer':p= intgr(p);break;
+			case "number":p= num(p);break;
+			case 'currency':p= num(p)+'KD';break;
+			default:var x=Math.abs(p),
+			s=Math.floor((x*1000)%1000)
+			p= s==0?intgr(p):num(p,s);
+		}
+		return p
+	}
+})
+.filter('numberSpelling',function(){
+ return function(v,op1){
+	var r={ar:[],en:[]}
+	,a={0:{ar:'صفر',en:'zero'},n:{ar:'سالب',en:'negative',en2:'minus'}
+	,s:{ar:' ',en:' '},w:{ar:' و ',en:' '},point:{ar:' فاصلة ',en:' point '},frac:{ar:' من ألف ',en:' of a thousandth'}
+	,1:{1:{ar:'واحد',en:'one'},2:{ar:'ثنين',en:'two'},3:{ar:'ثلاثة',en:'three'},4:{ar:'اربع',en:'four'}
+			,5:{ar:'خمسة',en:'five'},6:{ar:'ستة',en:'six'},7:{ar:'سبعة',en:'seven'},8:{ar:'ثمانية',en:'eight'}
+			,9:{ar:'تسعة',en:'nine'},10:{ar:'عشرة',en:'ten'},11:{ar:'إحدى عشر',en:'eleven'}
+			,12:{ar:'إثنى عشر',en:'twelve'},13:{ar:'ثلاثة عشر',en:'thirteen'},14:{ar:'اربعة عشر',en:'fourteen'}
+			,15:{ar:'خمسة عشر',en:'fifteen'},16:{ar:'ستة عشر',en:'sixteen'},17:{ar:'سبعة عشر',en:'seventeen'}
+			,18:{ar:'ثمانية عشر',en:'eighteen'},19:{ar:'تسعة عشر',en:'ninteen'}
+		,t:{2:{ar:'عشرون',en:'twenty'},3:{ar:'ثلاثون',en:'thirty'},4:{ar:'اربعون',en:'fourty'}
+			,5:{ar:'خمسون',en:'fifty'},6:{ar:'ستون',en:'sixty'},7:{ar:'سبعون',en:'seventy'}
+			,8:{ar:'ثمانون',en:'eighty'},9:{ar:'تسعون',en:'ninety'}}
+		,100:{ar:'مئة',ar2:'مئتين',en:'hundred'}}
+	, 2:{en:'thousand'		,ar:'ألف'		,ar2:'ألفين'	,ar3:'آلاف' }
+	, 3:{en:'million'		,ar:'مليون'		,ar2:'مليونين'	,ar3:'ملاين' }
+	, 4:{en:'billion'		,ar:'بليون'		,ar2:'بليونين'	,ar3:'بلاين' }
+	, 5:{en:'trillion'		,ar:'ترليون'	,ar2:'ترليونين'	,ar3:'ترلاين'}
+	, 6:{en:'Quadrillion'   ,ar:'كوادرليون' ,ar2:'كوادرليونين',ar3:'كوادرلاين'}
+	/*, 7:{en:'Quintillion'   ,ar:'كوانتليون'	}
+	, 8:{en:'Sextillion'	,ar:'سكستليون'	}
+	, 9:{en:'Septillion'	,ar:'سبتليون'	}
+	,10:{en:'Octillion'		,ar:'أوكتليون'	}
+	,11:{en:'Nonillion'		,ar:'نونليون'	}
+	,12:{en:'Decillion'		,ar:'ديسيليون'	}
+	,13:{en:'Undecillion'	,ar:'أنديسليون'	}
+	,14:{en:'Duodecillion'	,ar:'ديوديسيليون'	}
+	,15:{en:'Tredecillion'	,ar:'تريديسيليون'	}
+	,16:{en:'Quattuordecillion'	,ar:'كواتورديسيليون'}
+	,17:{en:'Quinquadecillion'	,ar:'كوانكوديسيليون'}
+	,18:{en:'Sedecillion'		,ar:'سيديسيليون'	}
+	,19:{en:'Septendecillion'	,ar:'سيبتنديسيليون' }
+	
+	
+	
+	1000000000000000000000 ZWD
+=
+8.3669521967394E+17 KWD
+	*/
+	}//a
+	function apnd(p){r.ar.push(p.ar);r.en.push(p.en);}
+	function ones(v){
+		if(v>19)
+			tens(v);//if(x>0){apnd(a[' ']);apnd(a[1][x]);}
+		else if(v>0){
+			var x=Math.floor(v<20?v%100:v%10);
+			apnd(a.s);apnd(a[1][x]);
+		}
+		return r;
+	}
+	function tens(v){
+		var o=Math.floor(v%10),t=Math.floor(v/10)%10,x
+		if(v>99){hnds(Math.floor(v/100)%10);if(o+t>0)apnd(a.w);}
+		//en
+		if(t){x=a[1].t[t]||a[1][t*10+o];r.en.push(x.en);if(o)r.en.push(a.s.en);}
+		if(o && t!=1 ){x=a[1][o];r.en.push(x.en);}
+		//ar
+		if(o && t!=1 ){x=a[1][o];r.ar.push(x.ar);if(t)r.ar.push(a.w.ar);}
+		if(t){x=a[1].t[t]||a[1][t*10+o];r.ar.push(x.ar);}
+		return r;
+	}
+	function hnds(v){
+		if(v==1)apnd(a[1][100])
+		else if(v==2){
+			r.en.push(a[1][v].en,a.w.en,a[1][100].en)
+			r.ar.push(a[1][100].ar2)}
+		else{apnd(a[1][v]);apnd(a.s);apnd(a[1][100]);}
+	}
+	function d3(v,base)
+	{var x=Math.floor(v%1000)
+	 if(v>999)
+	 {	if(base==6){ // 19
+			d3(Math.floor(v/1000),2)
+			if(x==0){apnd(a.s);apnd(a[base])}
+		}
+		else d3(Math.floor(v/1000),base+1);
+		if(x>0)apnd(a.w);
+	 }if(x>0){
+		var b=a[base],h=x%100//,t=Math.floor(v/10)%10//,o=x%10;
+		if(x==1){
+			if(base>1 && b && b.en)apnd(b);
+			else{ apnd(a.s); apnd(a[1][1]);}
+		}else if(b.ar2 && h==2 ){
+			if(x>2)
+			{	hnds(Math.floor(v/100)%10);
+				r.ar.push(a.w.ar)
+			}
+			r.ar.push(b.ar2)
+			r.en.push(a[1][x].en,a.w.en,b.en)
+		}else
+		{	ones(x);
+			if(b.ar3 && h<11 ){//&& x>0  && x<11
+				r.en.push(a.s.en,b.en)
+				r.ar.push(a.s.ar,b.ar3)
+			}
+			else if(base>1)
+			{apnd(a.s);apnd(b);}
+	 }}
+	 return r;
+	}
+	function f(v){
+		if(!v)
+			return a[0];
+		var d,neg=v<0;
+		if(v<0){v=Math.abs(v);apnd(a.n);apnd(a.s);}
+		d=Math.floor(v*1000)%1000
+		d3(Math.floor(v),1);
+		if(d){apnd(a.point);d3(d,1);apnd(a.frac);}
+		r.ar=r.ar.join('');
+		r.en=r.en.join('')
+			return r;
+	}
+	return f(v);
+ }
+})
+</script>
+
+<!-- template.XL dependencies-->
+<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/shim.js"></script>
+<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/xlsx.full.min.js"></script>
+
+<!-- FileSaver.js is the library of choice for Chrome -->
+<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/Blob.js"></script>
+<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/FileSaver.js"></script>
+
+<!-- FileSaver doesn't work in older IE and newer Safari; Downloadify is the flash fallback -->
+<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/swfobject.js"></script>
+<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/downloadify.min.js"></script>
+<script type="text/javascript" src="./SheetJS JS-XLSX In-Browser HTML Table Export Demo_files/base64.min.js"></script>
+
+<script>
+function s2ab(s) {
+	if(typeof ArrayBuffer !== 'undefined') {
+		var buf = new ArrayBuffer(s.length);
+		var view = new Uint8Array(buf);
+		for (var i=0; i!=s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+		return buf;
+	} else {
+		var buf = new Array(s.length);
+		for (var i=0; i!=s.length; ++i) buf[i] = s.charCodeAt(i) & 0xFF;
+		return buf;
+	}
+}
+
+function export_table_to_excel(id, type, fn) {
+var wb = XLSX.utils.table_to_book(document.getElementById(id), {sheet:"Sheet JS"});
+var wbout = XLSX.write(wb, {bookType:type, bookSST:true, type: 'binary'});
+var fname = fn || 'test.' + type;
+try {
+	saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), fname);
+} catch(e) { if(typeof console != 'undefined') console.log(e, wbout); }
+return wbout;
+}
+
+function doit(type, fn) { return export_table_to_excel('xltable', type || 'xlsx', fn); }
+</script>
+<!-- end of template.XL dependencies-->
+
+<title>Aswan 2017, by mohamadjb@gmail.com</title>
+<style>
+.ghost{color:white}
+.grad {
+	background: #ae9018; /* For browsers that do not support gradients */
+	background: -webkit-linear-gradient(#ae9018, #6e5632); /* For Safari 5.1 to 6.0 */
+	background: -o-linear-gradient(#ae9018, #6e5632); /* For Opera 11.1 to 12.0 */
+	background: -moz-linear-gradient(#ae9018, #6e5632); /* For Firefox 3.6 to 15 */
+	background: linear-gradient(#ae9018, #6e5632); /* Standard syntax */
+}
+a, a:visited, a:hover, a:active {
+  color: inherit;    text-decoration: none;
+}
+input, textarea, select, button, meter, progress {
+    text-align: start;
+	background:rgba(240,240,240,0.2);
+    -webkit-writing-mode: horizontal-tb;
+	margin: 0;
+	padding: 8px;
+    /*display: block;*/
+    border: none;
+    border-bottom: 3px solid #444;
+	width:60%
+	-webkit-transition: width 1s ease-in-out;
+	transition: width 1s cubic-bezier(0.85,-0.3, 0.55, 1.27);
+	
+}
+
+ input:focus{animation:sz1 1s;
+ transition: width 1s cubic-bezier(0.85,-0.3, 0.55, 1.27);
+ }
+ input:blur {animation:sz2 1s}
+@keyframes sz1{0%{width:60%}100%{width:90%}}
+@keyframes sz2{0%{width:90%}100%{width:60%}}
+
+progress:focus , textarea:focus , select:focus , button:focus , meter:focus
+{animation:fade 2s}
+@keyframes fade{0%{background:rgba(240,240,240,0.9)}100%{background:rgba(240,240,240,0.01);}}
+
+.tbl{display: grid;
+    grid-gap: 3px;
+    grid-auto-rows: minmax(16px,auto);
+    grid-template-columns: min-content max-content; //repeat(6,1fr);
+    background: rgba(240,240,255,.1);
+    border-radius: 5px;
+    padding: 3px;
+    margin: 2px;
+}
+.menuItem{
+    background: rgba(248,248,255,.15);
+    border-radius: 8px;
+    text-align: center;
+    vertical-align: middle;/* x-padding-top: 25; */
+    margin: 2px;
+	color:white;
+	-webkit-text-stroke: 1px black;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+.hding{
+    background: rgba(90, 73, 28, 0.44);
+    border: 3px double rgba(70, 56, 20, 0.57);
+    box-shadow: inset 2px 2px 2px rgba(255, 255, 255, .4), inset -2px -2px 2px rgba(0, 0, 0, .4);
+}
+.brdr{
+    border: 1px solid rgba(97, 77, 24, 0.65);
+    background: rgba(164, 133, 32, 0.55);
+    border-radius: 6px;
+}
+.bvl{
+    padding:10px 10px/*60px*/;
+    -webkit-border-radius: 25px;
+	-moz-border-radius: 25px;
+	border-radius: 25px;
+    background: -moz-linear-gradient(top, #f6e6b4 0%, #ed9017 100%); /* firefox */
+    border: solid #ccc 3px;
+    box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
+    -moz-box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
+    -webkit-box-shadow: 0 1px 2px #fff, 0 -1px 1px #666, inset 0 -1px 1px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.8);
+    text-shadow: 0 1px 2px #fff;
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f6e6b4), color-stop(100%,#ed9017)); /* webkit */font-size:20px
+}
+.neon{
+    color: #D0F8FF;
+    text-shadow: 0 0 5px #A5F1FF, 0 0 10px #A5F1FF,
+             0 0 20px #A5F1FF, 0 0 30px #A5F1FF,
+             0 0 40px #A5F1FF;
+}
+.negRow {background: rgba(255, 73, 0, 0.24);}
+.negCell{background: rgba(255, 73, 0, 0.58);}
+.st3d{
+    color: #CCCCCC;
+    text-shadow: 0 1px 0 #999999, 0 2px 0 #888888,
+             0 3px 0 #777777, 0 4px 0 #666666,
+             0 5px 0 #555555, 0 6px 0 #444444,
+             0 7px 0 #333333, 0 8px 7px rgba(0, 0, 0, 0.4),
+             0 9px 10px rgba(0, 0, 0, 0.2);
+}
+body{
+	color:white;
+	-webkit-text-stroke: 1px black;}
+.num0{font-size:small;color:silver}
+.num1{font-size:medium}
+.num2{font-size:large;color:green}
+.num3{font-size:x-large;color:blue}
+.num4{font-size:xx-large;font-weight:bold;color:deeppink}
+.num5{font-size:xx-large;font-weight:bold;color:red}
+.onUsrF{display:none}
+.onLoggedIn{display:none}
+.onLoggedOut{display:block}
+</style>
+</head>
+<body class="grad">
+<div style="position:absolute;top:0;left:0;x-width:1600px;min-width:250px;min-height:250px;x-height:847px;width:100%;height:100%;background-image:url(ab_left.png);z-index: -10"></div>
+<img class="onLoggedOut" src="logo.png">
+<span class="onLoggedIn"><div width="100%" style="display:inline-flex ;
+    grid-gap: 3px;
+    grid-auto-rows: minmax(100px,auto);
+    grid-template-columns: repeat({{app.usr.f?6:2}},1fr);
+    background: rgba(240,240,255,.1);
+    border-radius: 5px;
+    padding: 3px;">
+	<div class="menuItem" style="min-width:300px"><img src="logo.png"></div>
+	<div class="menuItem bvl"><a href="#!/main">Contracts</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/cntrctsReport">cntrctsReport</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/xl">Excel</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/usrs">Users</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/oh">Overheads</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/profiles">Profiles</a></div>
+	<!--div class="menuItem bvl"><a ng-click="app.logout()" href="#!/login">Logout</a></div-->
+</div></span>
+<div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="app">
+
+<main ui-view></main><sub>, by mohamadjb@gmail.com</sub></div>
+
+<templates>
+
+<template id="template.main" >
+
+	<div class="tbl" style="grid-template-columns: repeat(3,1fr)">
+		<div class="menuItem"><h2 class="ghost st3d">Contracts Main Menu</h2></div>
+		<a ng-click="app.logout()" href="#!/login)" class="menuItem bvl"><div class="menuItem">Logout</div></a> 
+		<a ng-click="cntrcts.push(app.cntrct=app.newCntrct())" href="#!/cntrct" class="menuItem bvl"><div class="menuItem">New Contract</div></a>
+	</div>
+<hr/>
+	<div class="tbl hding" style="grid-template-columns: repeat({{app.usr.f?5:4}},1fr);background:rgba(#f0f0ffe0)">
+		<div class="menuItem">Jobcard No</div>
+		<div class="menuItem"><h3>Title</h3></div>
+		<div class="menuItem">Created</div>
+		<div class="menuItem">Total</div>
+		<div ng-if="app.usr.f" class="menuItem">Net Income</div>
+	</div>
+	<div ng-repeat="i in cntrcts">
+	 <a ng-click="app.cntrct=i" href="#!/cntrct" ng-class="i.ni<=0?'bvl negRow':'bvl'" ng-if="!i.deleted">
+	  <div class="tbl" style="grid-template-columns: repeat({{app.usr.f?5:4}},1fr);" >
+		<div class="menuItem"><span ng-if="i.closed">&#128274;</span><sub ng-if="i.paid" style="color:red;font-size: small;" class="neon" >PAID</sub>{{i.jn}}</div>
+		<div class="menuItem"><h3>{{i.title}}</h3></div>
+		<div class="menuItem">{{dt(i.created)|date:"yyyy/MM/dd HH:mm"}}</div>
+		<div class="menuItem"><span title="{{i.tc|numberSpelling}}" ng-bind-html="i.tc|filtr:'currency'"></span></div>
+		<div ng-if="app.usr.f" ng-class="i.ni<=0?'menuItem negCell':'menuItem'"><span title="{{i.ni|numberSpelling}}" ng-bind-html="i.ni|filtr:'currency'"></span></div>
+	</div></a></div>
+</template>
+
+<template id="template.cntrct" >
+	<h2 class="ghost"><span class="neon">Contract:</span><span class="st3d"><span ng-if="i.closed">&#128274;</span>{{c.title}}</span></h2>
+ <input type="button" ng-if="!app.cntrct.closed" ng-click="app.deleteCntrct()" value="&#10062;Delete" />
+ <div class="tbl" xstyle="grid-template-columns: repeat(2,1fr)" >
+	<div class="menuItem hding" style="text-align:right"><h3>Title</h3></div>
+	<div class="menuItem" style="text-align:left" ><h3><input ng-disabled="c.closed" ng-model="c.title" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></h3></div>
+
+	<div class="menuItem hding" style="text-align:right">Contractor</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" ng-model="c.contractor"
+		ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
+
+	<div class="menuItem hding" style="text-align:right">Created</div>
+	<div class="menuItem" style="text-align:left" >{{dt(c.created)|date:"yyyy/MM/dd HH:mm"}}</div>
+
+	<div class="menuItem hding" style="text-align:right">Last Modified</div>
+	<div class="menuItem" style="text-align:left" >{{dt(c.lastModified)|date:"yyyy/MM/dd HH:mm"}}</div>
+
+	<div class="menuItem hding" style="text-align:right">Started</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" type="date" xstyle="width:70%;" ng-model="c.started" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Completed</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" type="date" xstyle="width:70%;" ng-model="c.completed" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Paid</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed||(c.paid&&!app.usr.f)" xstyle="width:70%;" type="checkbox" ng-model="c.paid" ng-change="app.chng(c)" ng-blur="app.blur(c)"
+		/><sub ng-if="c.paid" style="color:red;font-size: small;" class="neon" >PAID</sub></div>
+
+	<div class="menuItem hding" style="text-align:right">Closed</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed&&!app.usr.f" xstyle="width:70%;" type="checkbox" ng-model="c.closed" ng-change="app.chng(c)" ng-blur="app.blur(c)"
+		/><span ng-if="c.closed">&#128274;</span></div>
+
+	<div class="menuItem hding" style="text-align:right" 
+		title="rate(at the time of the contract creation) is the overhead-sum of the company , divided by total number of operators"
+		>Rate</div><div class="menuItem" style="text-align:left"><span 
+		title="{{c.rate|numberSpelling}}" ng-bind-html="c.rate|filtr:'currency'"></span></div>
+
+	<div class="menuItem hding" style="text-align:right">Jobcard No</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed" xstyle="width:70%;"
+		ng-model="c.jn" type="number" min="0" placeholder="0" step="1" ng-change="app.chng(c)" 
+		ng-blur="app.blur(c)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">#Labor</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed||!app.usr.f" xstyle="width:70%;" ng-model="c.ppl" type="number" min="0" placeholder="0" step="1" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">#Month</div>
+	<div class="menuItem" style="text-align:left" ><input ng-disabled="c.closed||!app.usr.f" xstyle="width:70%;" ng-model="c.month" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Labor cost</div>
+	<div class="menuItem" style="text-align:left;display:inline" ><input ng-disabled="c.closed||!app.usr.f" xstyle="width:70%;" ng-model="c.dl" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" />KD</div>
+
+	<div class="menuItem hding" style="text-align:right">Material</div>
+	<div class="menuItem" style="text-align:left;display:inline" ><input ng-disabled="c.closed" xstyle="width:70%;" ng-model="c.dm" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" />KD</div>
+
+	<div class="menuItem hding" style="text-align:right" ng-if="app.usr.f">SV</div>
+	<div class="menuItem" style="text-align:left;display:inline" ng-if="app.usr.f"><input ng-disabled="c.closed" xstyle="width:70%;" ng-model="c.sv" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" />KD</div>
+
+	<div class="menuItem hding" style="text-align:right">Overhead Cost</div><div class="menuItem" style="text-align:left"><span title="{{c.oh|numberSpelling}}" ng-bind-html="c.oh|filtr:'currency'"></span></div>
+
+	<div class="menuItem hding" style="text-align:right">Total Cost</div><div class="menuItem" style="text-align:left"><span title="{{c.tc|numberSpelling}}" ng-bind-html="c.tc|filtr:'currency'"></span></div>
+
+	<div class="menuItem hding" style="text-align:right">Commission</div>
+	<div class="menuItem" style="text-align:left;display:inline" ><input ng-disabled="c.closed||!app.usr.f" xstyle="width:70%;" ng-model="c.cm" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" />KD</div>
+
+	<div class="menuItem hding" style="text-align:right">Invoice price</div>
+	<div class="menuItem" style="text-align:left;display:inline" ><input ng-disabled="c.closed||!app.usr.f" xstyle="width:70%;" ng-model="c.sp" type="number" min="0.000" placeholder="0.000" step="0.001" ng-change="app.chng(c)" ng-blur="app.blur(c)" />KD</div>
+
+	<div class="menuItem hding" style="text-align:right" ng-if="app.usr.f">Owner Income</div>
+	<div ng-class="c.ni<=0?'menuItem negCell':'menuItem'" style="text-align:left" ng-if="app.usr.f" ><span title="{{c.ni|numberSpelling}}" ng-bind-html="c.ni|filtr:'currency'"></span></div>
+
+	<div class="menuItem hding" style="text-align:right">Remarks</div>
+	<div class="menuItem" style="text-align:left" ><textarea ng-disabled="c.closed" ng-model="c.remarks" ng-change="app.chng(c)" ng-blur="app.blur(c)"></textarea></div>
+</div>
+</template>
+
+
+<template id="template.login" >
+	<h2>Login to your account</h2>
+	<form >
+		<input type="text" ng-model="un" placeholder="Username" autofocus ng-change="chng()" />
+		<input type="password" ng-model="pw" placeholder="Password"  ng-change="chng()" />
+		<input type="button" ng-click="clk()" value="Login" class="bvl" />
+	</form>
+	{{msg}}
+	<div class="cta"><a href="#"><!--Forgot your password?--></a></div>
+</template>
+
+<template id="template.oh" >
+	<h2 class="st3d">Overheads</h2>
+	 <div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+	<div class="menuItem hding" style="text-align:right">Currect Rate</div>
+	<div class="menuItem brdr" style="text-align:left" ><input ng-model="app.ls.rate.v"
+		type="number" min="0.000" placeholder="0.000" step="0.001" 
+		ng-change="app.chng(c)" ng-blur="app.blur(c)" /></div>
+</div>
+</template>
+
+<template id="template.profiles" >
+	<h2 class="st3d">Profiles</h2>
+ <input ng-click="app.selectedProfile=app.newProfile()" value="New Profile" type="button"/>
+ <select ng-model="app.selectedProfile" ng-options="i.Name for i in app.ls.profiles" ng-change="chngSlct()"></select>
+
+{{app.selectedProfile}}
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">Name</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Name" type="text" 
+	ng-change="chng(sp.Name)" 
+	ng-blur="blur(sp.Name)" /></div>
+
+<div class="menuItem hding" style="text-align:right">CID</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.CID" type="integer" 
+	ng-change="chng(sp.CID)" 
+	ng-blur="blur(sp.CID)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Nationality</div>
+<div class="menuItem" style="text-align:left" ><select 
+	ng-options="i for i in profileSelects.Nationality"
+	ng-model="sp.Nationality" 
+	ng-change="chng(sp.Nationality)" 
+	ng-blur="blur(sp.Nationality)" >
+	</select></div>
+
+<div class="menuItem hding" style="text-align:right">contactInfo</div>
+<div class="menuItem" style="text-align:left" >
+
+	<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+	<div class="menuItem hding" style="text-align:right">telNo</div>
+	<div class="menuItem" style="text-align:left" >{{sp.contactInfo.telNo.length}}<input 
+		ng-model="sp.contactInfo.telNo[0]" type="tel" 
+		ng-change="chng(sp.contactInfo.telNo[0])" 
+		ng-blur="blur(sp.contactInfo.telNo[0])" /></div>
+
+	<div class="menuItem hding" style="text-align:right">address</div>
+	<div class="menuItem" style="text-align:left" >{{sp.contactInfo.address.length}}<input 
+		ng-model="sp.contactInfo.address[0]" type="text" 
+		ng-change="chng(sp.contactInfo.address[0])" 
+		ng-blur="blur(sp.contactInfo.address[0])" /></div>
+
+	<div class="menuItem hding" style="text-align:right">email</div>
+	<div class="menuItem" style="text-align:left" >{{sp.contactInfo.email.length}}<input 
+		ng-model="sp.contactInfo.email[0]" type="email" 
+		ng-change="chng(sp.contactInfo.email[0])" 
+		ng-blur="blur(sp.contactInfo.email[0])" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">PassportNo</div>
+<div class="menuItem" style="text-align:left" >{{sp.PassportNo.length}}<input 
+	ng-model="sp.PassportNo[0]" type="integer" 
+	ng-change="chng(sp.PassportNo[0])" 
+	ng-blur="blur(sp.PassportNo[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">type</div>
+<div class="menuItem" style="text-align:left" ><select 
+	ng-model="sp.type" 
+	ng-change="chng(sp.type)" 
+	ng-blur="blur(sp.type)" >
+	<option>operator</option>
+	<option>administrator</option>
+	<option>contractor</option>
+	</select></div>
+
+<div class="menuItem hding" style="text-align:right">JobCategory</div>
+<div class="menuItem" style="text-align:left" >{{sp.JobCategory.length}}<select 
+	ng-model="sp.JobCategory[0]" 
+	ng-change="chng(sp.JobCategory[0])" 
+	ng-blur="blur(sp.JobCategory[0])" >
+	<option>Mechanical Engineer</option>
+	<option>Electrical Engineer</option>
+	<option>Instrument Engineer</option>
+	<option>Mechanical Supervisor</option>
+	<option>Welder –TIG & ARC</option>
+	<option>Fabricator</option>
+	<option>Valve Technician</option>
+	<option>Instrument Technician</option>
+	<option>Machinist</option>
+	<option>Electrician</option>
+	<option>Pipe Fitter</option>
+	<option>CNC Operator</option>
+	<option>Store Keeper</option>
+	<option>General Manager</option>
+	<option>Project Manager</option>
+	<option>Accountant</option>
+	<option>Coordinator</option>
+	<option>Secretary</option>
+	<option>Receptionist</option>
+	<option>Draft man</option>
+	<option>Lison Officer (Mandoop)</option>
+	<option>Driver</option>
+	<option>Care Taker</option>
+	</select></div>
+
+<div class="menuItem hding" style="text-align:right">PunchID</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.PunchID" type="integer" 
+	ng-change="chng(sp.PunchID)" 
+	ng-blur="blur(sp.PunchID)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Date</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">Joining</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Date.Joining" type="date" 
+	ng-change="chng(sp.Date.Joining)" 
+	ng-blur="blur(sp.Date.Joining)" /></div>
+
+<div class="menuItem hding" style="text-align:right">DOB</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Date.DOB" type="date" 
+	ng-change="chng(sp.Date.DOB)" 
+	ng-blur="blur(sp.Date.DOB)" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">Size</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">shoe</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Size.shoe" type="integer" 
+	ng-change="chng(sp.Size.shoe)" 
+	ng-blur="blur(sp.Size.shoe)" /></div>
+
+<div class="menuItem hding" style="text-align:right">overall</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Size.overall" type="integer" 
+	ng-change="chng(sp.Size.overall)" 
+	ng-blur="blur(sp.Size.overall)" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">Expiry</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">Passport</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.Passport" type="date" 
+	ng-change="chng(sp.Expiry.Passport)" 
+	ng-blur="blur(sp.Expiry.Passport)" /></div>
+
+<div class="menuItem hding" style="text-align:right">CID</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.CID" type="date" 
+	ng-change="chng(sp.Expiry.CID)" 
+	ng-blur="blur(sp.Expiry.CID)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Residency</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.Residency" type="date" 
+	ng-change="chng(sp.Expiry.Residency)" 
+	ng-blur="blur(sp.Expiry.Residency)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Contract</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.Contract" type="date" 
+	ng-change="chng(sp.Expiry.Contract)" 
+	ng-blur="blur(sp.Expiry.Contract)" /></div>
+
+<div class="menuItem hding" style="text-align:right">driverLicense</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Expiry.driverLicense" type="date" 
+	ng-change="chng(sp.Expiry.driverLicense)" 
+	ng-blur="blur(sp.Expiry.driverLicense)" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">freeAttendance</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.freeAttendance" type="checkbox" 
+	ng-change="chng(sp.freeAttendance)" 
+	ng-blur="blur(sp.freeAttendance)" /></div>
+
+<div class="menuItem hding" style="text-align:right">BankAccountDetailes</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">cash</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.BankAccountDetailes.cash" type="checkbox" 
+	ng-change="chng(sp.BankAccountDetailes.cash)" 
+	ng-blur="blur(sp.BankAccountDetailes.cash)" /></div>
+
+<div class="menuItem hding" style="text-align:right">bankName</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.BankAccountDetailes.bankName" type="text" 
+	ng-change="chng(sp.BankAccountDetailes.bankName)" 
+	ng-blur="blur(sp.BankAccountDetailes.bankName)" /></div>
+
+<div class="menuItem hding" style="text-align:right">accountNumber</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.BankAccountDetailes.accountNumber" type="text" 
+	ng-change="chng(sp.BankAccountDetailes.accountNumber)" 
+	ng-blur="blur(sp.BankAccountDetailes.accountNumber)" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">Salary</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">basicSalary</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Salary.basicSalary" type="currency" 
+	ng-change="chng(sp.Salary.basicSalary)" 
+	ng-blur="blur(sp.Salary.basicSalary)" /></div>
+
+<div class="menuItem hding" style="text-align:right">mobile</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Salary.mobile" type="currency" 
+	ng-change="chng(sp.Salary.mobile)" 
+	ng-blur="blur(sp.Salary.mobile)" /></div>
+
+<div class="menuItem hding" style="text-align:right">fuel</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Salary.fuel" type="currency" 
+	ng-change="chng(sp.Salary.fuel)" 
+	ng-blur="blur(sp.Salary.fuel)" /></div>
+
+<div class="menuItem hding" style="text-align:right">Increment</div>
+<div class="menuItem" style="text-align:left" ><input 
+	ng-model="sp.Salary.Increment" type="currency" 
+	ng-change="chng(sp.Salary.Increment)" 
+	ng-blur="blur(sp.Salary.Increment)" /></div>
+
+<div class="menuItem hding" style="text-align:right">CustomItems</div>
+<div class="menuItem" style="text-align:left" >{{sp.Salary.CustomItems.length}}<input 
+	ng-model="sp.Salary.CustomItems[0]" type="currency" 
+	ng-change="chng(sp.Salary.CustomItems[0])" 
+	ng-blur="blur(sp.Salary.CustomItems[0])" /></div></div></div>
+
+<div class="menuItem hding" style="text-align:right">Attachments</div>
+<div class="menuItem" style="text-align:left" >
+
+<div class="tbl" style="grid-template-columns: repeat(2,1fr)" >
+
+<div class="menuItem hding" style="text-align:right">FacePic</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.FacePic.length}}<input 
+	ng-model="sp.Attachments.FacePic[0]" type="file" 
+	ng-change="chng(sp.Attachments.FacePic[0])" 
+	ng-blur="blur(sp.Attachments.FacePic[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">cid</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.cid.length}}<input 
+	ng-model="sp.Attachments.cid[0]" type="file" 
+	ng-change="chng(sp.Attachments.cid[0])" 
+	ng-blur="blur(sp.Attachments.cid[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">residency</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.residency.length}}<input 
+	ng-model="sp.Attachments.residency[0]" type="file" 
+	ng-change="chng(sp.Attachments.residency[0])" 
+	ng-blur="blur(sp.Attachments.residency[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">passport</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.passport.length}}<input 
+	ng-model="sp.Attachments.passport[0]" type="file" 
+	ng-change="chng(sp.Attachments.passport[0])" 
+	ng-blur="blur(sp.Attachments.passport[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">ministryLabor</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.ministryLabor.length}}<input 
+	ng-model="sp.Attachments.ministryLabor[0]" type="file" 
+	ng-change="chng(sp.Attachments.ministryLabor[0])" 
+	ng-blur="blur(sp.Attachments.ministryLabor[0])" /></div>
+
+<div class="menuItem hding" style="text-align:right">driverLicense</div>
+<div class="menuItem" style="text-align:left" >{{sp.Attachments.driverLicense.length}}<input 
+	ng-model="sp.Attachments.driverLicense[0]" type="file" 
+	ng-change="chng(sp.Attachments.driverLicense[0])" 
+	ng-blur="blur(sp.Attachments.driverLicense[0])" /></div></div>
+</div>
+</div>
+</template>
+
+<template id="template.cntrctsReport" >
+	<h2 class="st3d">cntrctsReport</h2>
+
+	<div class="tbl" style="grid-template-columns: repeat(4,1fr)">
+		<div class="menuItem"><label for="from">From</label><input id="from" type="date" ng-model="from"/></div>
+		<div class="menuItem"><label for="to">To</label><input id="to" type="date" ng-model="to"/></div>
+		<div class="menuItem"><label for="paid">Paid-statues</label><select ng-model="paid" id="paid" ng-options='i  for i in PType'></select></div>
+		<div class="menuItem bvl" ng-click="search()" >Search</div>
+	</div>
+
+	<div class="tbl hding" style="grid-template-columns: repeat(11,1fr)">
+		<div class="menuItem">Jobcard No.</div>
+		<div class="menuItem">Title</div>
+		<div class="menuItem">Created</div>
+		<div class="menuItem">Labor</div>
+		<div class="menuItem">Material</div>
+		<div class="menuItem">Sv</div>
+		<div class="menuItem">Overhead</div>
+		<div class="menuItem">Total-cost</div>
+		<div class="menuItem">Commission</div>
+		<div class="menuItem">Invoice-price</div>
+		<div class="menuItem">Owner Income</div>
+	</div>
+
+	<div style="grid-template-columns: repeat(11,1fr)" ng-repeat=" c in a" ng-class="c.ni<=0?'tbl brdr negRow':'tbl brdr'">
+		<div class="menuItem">{{c.jn}}</div>
+		<div class="menuItem">{{c.title}}</div>
+		<div class="menuItem">{{dt(c.created)| date:"yyyy/MM/dd HH:mm"}}</div>
+		<div class="menuItem"><span title="{{c.dl|numberSpelling}}" ng-bind-html="c.dl|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{c.dm|numberSpelling}}" ng-bind-html="c.dm|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{c.sv|numberSpelling}}" ng-bind-html="c.sv|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{c.oh|numberSpelling}}" ng-bind-html="c.oh|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{c.tc|numberSpelling}}" ng-bind-html="c.tc|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{c.cm|numberSpelling}}" ng-bind-html="c.cm|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{c.sp|numberSpelling}}" ng-bind-html="c.sp|filtr:'currency'"></span></div>
+		<div ng-class="c.ni<=0?'menuItem negCell':'menuItem'"><span title="{{c.ni|numberSpelling}}" ng-bind-html="c.ni|filtr:'currency'"></span></div>
+	</div>
+
+	<div class="tbl hding" style="grid-template-columns: repeat(11,1fr)">
+		<div class="menuItem">rows:{{a.length}}</div>
+		<div class="menuItem"><!-- n g-class="sum<=0?'menuItem negCell':'menuItem'">Total-sum:<span title="{ {sum|numberSpelling} }" ng-bind-html="sum|filtr:'currency'"></span--></div>
+		<div class="menuItem">Totals:</div>
+		<div class="menuItem"><span title="{{b[0].sum|numberSpelling}}" ng-bind-html="b[0].sum|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{b[1].sum|numberSpelling}}" ng-bind-html="b[1].sum|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{b[2].sum|numberSpelling}}" ng-bind-html="b[2].sum|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{b[3].sum|numberSpelling}}" ng-bind-html="b[3].sum|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{b[4].sum|numberSpelling}}" ng-bind-html="b[4].sum|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{b[5].sum|numberSpelling}}" ng-bind-html="b[5].sum|filtr:'currency'"></span></div>
+		<div class="menuItem"><span title="{{b[6].sum|numberSpelling}}" ng-bind-html="b[6].sum|filtr:'currency'"></span></div>
+		<div ng-class="b[7].sum<=0?'menuItem negCell':'menuItem'"><span title="{{b[7].sum|numberSpelling}}" ng-bind-html="b[7].sum|filtr:'currency'"></span></div>
+	</div>
+</template>
+
+
+<template id="template.usrs" >
+	<h2 class="ghost"><span class="neon">Users:</span><span class="st3d">{{editUsr.un}}</span></h2>
+	<select ng-model="editUsr" ng-options="c.un for c in app.ls.usr" ng-change="chng(c)"></select>
+	<input type="button" ng-click="editUsr=app.newUsr()" value="New User"/>
+ <div class="tbl" style="grid-template-columns: repeat(2,1fr)" ng-if="editUsr && !editUsr.deleted" >
+
+	<div class="menuItem hding" style="text-align:right">User-name</div>
+	<div class="menuItem" style="text-align:left" ><input type="button" ng-click="app.deleteEditUsr()" value="&#10062;Delete" /><h3>{{editUsr.un}}</h3></div>
+
+	<div class="menuItem hding" style="text-align:right">First-name</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.firstName" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Last-name</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.lastName" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">E-Mail</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.email" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Telephone</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.tel" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Profile</div>
+	<div class="menuItem" style="text-align:left" ><select 
+		ng-options="i.Name for i in app.ls.profiles"
+		ng-change="app.chng(editUsr)" 
+		ng-blur="app.blur(editUsr)"
+		ng-model="editUsr.profile" ></select></div>
+
+	<div class="menuItem hding" style="text-align:right">Super-user</div>
+	<div class="menuItem" style="text-align:left" ><input type="checkbox" ng-model="editUsr.f" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Remarks</div>
+	<div class="menuItem" style="text-align:left" ><textarea ng-model="editUsr.notes" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"></textarea></div>
+
+	<div class="menuItem hding" style="text-align:right">Last Modified</div>
+	<div class="menuItem" style="text-align:left" >{{dt(editUsr.lastModified)|date:"yyyy/MM/ddTHH:mm"}}</div>
+
+	<div class="menuItem hding" style="text-align:right">Created</div>
+	<div class="menuItem" style="text-align:left" >{{dt(editUsr.created)|date:"yyyy/MM/ddTHH:mm"}}</div>
+
+	<div class="menuItem hding" style="text-align:right">Created by</div>
+	<div class="menuItem" style="text-align:left" >{{editUsr.usr}}</div>
+</div>
+</template>
+
+
+<template id="template.xl" >
+<script type="text/ng-template" id="/cntrct.html"><tr>
+	<td class="not_menuItem hding" style="text-align:right"><h3>Title</h3></td>
+	<td class="not_menuItem" style="text-align:left" ><h3>{{c.title}}</h3></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Contractor</td>
+	<td class="not_menuItem" style="text-align:left" >{{c.contractor}}</td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Created</td>
+	<td class="not_menuItem" style="text-align:left" >{{dt(c.created)|date:"yyyy/MM/dd HH:mm"}}</td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Last Modified</td>
+	<td class="not_menuItem" style="text-align:left" >{{dt(c.lastModified)|date:"yyyy/MM/dd HH:mm"}}</td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Started</td>
+	<td class="not_menuItem" style="text-align:left" >{{c.started}}</td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Completed</td>
+	<td class="not_menuItem" style="text-align:left" >{{c.completed}}</td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Paid</td>
+	<td class="not_menuItem" style="text-align:left" ><sub ng-if="c.paid" style="color:red;font-size: small;" class="neon" >PAID</sub></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Closed</td>
+	<td class="not_menuItem" style="text-align:left" ><span ng-if="c.closed">&#128274;</span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right" 
+		title="rate(at the time of the contract creation) is the overhead-sum of the company , divided by total number of operators"
+		>Rate</td><td class="not_menuItem" style="text-align:left"><span 
+		title="{{c.rate|numberSpelling}}" ng-bind-html="c.rate|filtr:'currency'"></span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Jobcard No</td>
+	<td class="not_menuItem" style="text-align:left" >{{c.jn}}</td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">#Labor</td>
+	<td class="not_menuItem" style="text-align:left" >{{c.ppl}}</td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">#Month</td>
+	<td class="not_menuItem" style="text-align:left" >{{c.month}}</td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Labor cost</td>
+	<td class="not_menuItem" style="text-align:left" ><span 
+		title="{{c.dl|numberSpelling}}" ng-bind-html="c.dl|filtr:'currency'"></span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Material</td>
+	<td class="not_menuItem" style="text-align:left" ><span 
+		title="{{c.dm|numberSpelling}}" ng-bind-html="c.dm|filtr:'currency'"></span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right" ng-if="app.usr.f">SV</td>
+	<td class="not_menuItem" style="text-align:left" ng-if="app.usr.f"><span 
+		title="{{c.sv|numberSpelling}}" ng-bind-html="c.sv|filtr:'currency'"></span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Overhead Cost</td><td class="not_menuItem" style="text-align:left"><span title="{{c.oh|numberSpelling}}" ng-bind-html="c.oh|filtr:'currency'"></span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Total Cost</td><td class="not_menuItem" style="text-align:left"><span title="{{c.tc|numberSpelling}}" ng-bind-html="c.tc|filtr:'currency'"></span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Commission</td>
+	<td class="not_menuItem" style="text-align:left" ><span 
+		title="{{c.cm|numberSpelling}}" ng-bind-html="c.cm|filtr:'currency'"></span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Invoice price</td>
+	<td class="not_menuItem" style="text-align:left" ><span 
+		title="{{c.sp|numberSpelling}}" ng-bind-html="c.sp|filtr:'currency'"></span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right" ng-if="app.usr.f">Owner Income</td>
+	<td ng-class="c.ni<=0?'not_menuItem negCell':'not_menuItem'" style="text-align:left" ng-if="app.usr.f" ><span title="{{c.ni|numberSpelling}}" ng-bind-html="c.ni|filtr:'currency'"></span></td>
+
+	</tr><tr><td class="not_menuItem hding" style="text-align:right">Remarks</td>
+	<td class="not_menuItem" style="text-align:left" ><pre>{{c.remarks}}</pre></td>
+</tr>
+<tr><td>eSignature</td><td><pre style="font-size: 6px;"> <!-- { { c | json }} --> {{ signature(c) }} </pre></td></tr>
+<tr><td colspan="2"><hr/></td></tr><tr><td colspan="2"><hr/></td></tr>
+</script>
+<script src="xlContract.js"></script>
+<style>
+.xport, .btn {
+	display: inline;
+	text-align:center;
+}
+a { text-decoration: none }
+#drop_zone {
+  border: 5px solid #ccc;border-style: dashed;
+  width:  200px;
+  height: 100px;
+}
+</style>
+
+<button class="menuItem bvl " ng-click="refreshFileList()">Refresh server file-list</button>	
+<table>
+<tr><th>file-name</th><th>file-size</th><th>file-date</th></tr>
+<tr ng-repeat="f in xl.fileList"  style="border-top:3px double blue">
+	<td style="border-top:3px double blue">
+		<span ng-if="f.fileName==app.ls.fileName">
+			<h2>{{f.fileName}}</h2>
+			<button class="menuItem bvl " ng-click="saveToServer(f.fileName)">Save to Server</button>
+		</span>
+		<span ng-if="f.fileName!=app.ls.fileName">
+			<button ng-click="loadFile(f)">Load</button>
+			{{f.fileName}}
+		</span>
+	</td>
+	<td>{{f.size}}</td>
+	<td>{{dt(f.lastModified) }}</td>
+</tr>
+
+<tr style="border:3px double black">
+<td style="border-top:3px double blue"><hr/>
+	<input ng-model="xl.fileName"/>
+	<button class="menuItem bvl " ng-click="saveToServer()">Save new file to Server</button>
+</td><td></td><td>{{dt(app.lsSaved) }}</td>
+</tr>
+</table>
+<hr/>
+<div id="drop_zone" 
+	ondrop="drop_handler(event);" 
+	ondragover="dragover_handler(event);"
+	ondragend="dragend_handler(event);"
+	>
+  <strong>Drag excel file to this Drop Zone ...</strong>
+  <progress id="progress" value=0>%</progress><br/>
+  <span id="drop_zone_results">-</span>
+</div>
+<hr/>
+	scheduled save-to-server <hr/>
+<button class="menuItem bvl " onclick="doit()">Download as Excel file</button>
+<span id="xlExp" onclick="var x=did('xltable'),s=x.style,d=s.display;s.display=d?'':'none'">+</span>
+<table id="xltable" style="display:none">
+<tbody ng-repeat="c in app.ls.contracts" ng-include="'/cntrct.html'"></tbody>
+</table>
+
+</template>
+
+</templates><div data-ng-if="loading"><!--Loading...--></div>
+</body></html>
