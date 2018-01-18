@@ -1,19 +1,14 @@
-package nov;
+package dev201801;
 
 /**
- * Created by Vaio-PC on 11/22/2017.
+ * Created by Vaio-PC on 18/01/2018.
  */
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.Statement;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Map;
 import java.util.List;
 import java.util.Iterator;
@@ -34,15 +29,9 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
-
-
 /** * Created by mbohamad on 19/07/2017.*/
 public class TL
 {public static final String Name=App.packageName+".TL";
-
-/**
- * 
- * */
 
 public static void run(HttpServletRequest request,HttpServletResponse response,HttpSession session,Writer out,PageContext pc)throws IOException{
 	TL tl=null;try
@@ -118,10 +107,10 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 }//run op servlet.service
 
 public H h=new H();
-public App.JsonStorage ssn,usr;//DB.Tbl.Usr//public DB.Tbl.Ssn ssn;
-public Map<String,Object>json;//accessing request in json-format
+public Map<String,Object> ssn,usr//DB.Tbl.Usr//public DB.Tbl.Ssn ssn;
+	,/**accessing request in json-format*/json;//
 public Date now;//public long seqObj,seqProp;
-boolean doNew_appTblRow;
+//boolean doNew_appTblRow;
 /**wrapping JspWriter or any other servlet writer in "out" */
 Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
 
@@ -130,68 +119,39 @@ Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
 public static class App {
 	static final String packageName= "dev201801",AppNm=packageName+".App";
 
-
 	static void staticInit(){ TL.registerOp( App.class); }
 
 	static{staticInit();}
 
-	public static Integer toInt(Object o){
-		if(o instanceof String && TL.Util.isNum( (String)o ))
-			return new Integer( (String)o);
-		if(o instanceof Integer)return (Integer)o;
-		if(o instanceof Number)return ((Number)o).intValue();
-		if(o==null)return null;
-		String s=o.toString();
-		return TL.Util.isNum( s )?new Integer( s ):null;}
-
-	public static Date toDate(Object o){
-		if(o instanceof String && TL.Util.isNum( (String)o ))
-			return new Date(new Integer( (String)o));
-		if(o instanceof Integer)return new Date((Integer)o);
-		if(o instanceof Number)return new Date(((Number)o).intValue());
-		if(o==null)return null;//new Date(0);
-		String s=o.toString();
-		return TL.Util.parseDate( s );}
-
-	public static TL.DB.Tbl tbl(Class<? extends TL.DB.Tbl>c){
-		if(c==Prop.class)
-			return Prop.sttc;
-		if(c==JsonStorage.class)
-			return JsonStorage.sttc;
-		try{return c.newInstance();}
-		catch ( Exception ex ){TL.tl().error( ex,AppNm,".tbl:" );}
-		return JsonStorage.sttc;}
-
-		
-	/** 
-	*	db-tbl ORM wrapper 
+	/**
+	*	db-tbl ORM wrapper
 	*/
-	public static class JsonStorage extends TL.DB.Tbl<String> {
+	public static class JsonStorage extends TL.DB.Tbl</**primary key type*/String> {
 		public static final String dbtName="JsonStorage";
 		@Override public String getName(){return dbtName;}
 		@Override public CI pkc(){return C.key;}
 		@F public String key;@F public Object value;String json;
-		
-		
+
 		@Override public String pkv(){return key;}
 		@Override public String pkv(String v){return key=v;}
 
 		public enum C implements CI{key, value;
 			@Override public Field f(){return Co.f(name(), JsonStorage.class);}
+			@Override public String getName(){return name();}
+			@Override public Class getType(){return String.class;}
 		}//C
 		@Override public C[]columns(){return C.values();}
 
 		@Override public List creationDBTIndices(TL tl){
 			return TL.Util.lst(TL.Util.lst(
 				"varchar(255) PRIMARY KEY NOT NULL DEFAULT '-' "//key
-				,"text NOT NULL DEFAULT '-' "//value
-				));
-/*
-CREATE TABLE `JsonStorage` (
-  `key` varchar(255) PRIMARY KEY NOT NULL DEFAULT '-',
-  `value` text NOT NULL DEFAULT '-'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-*/
+				,"text NOT NULL DEFAULT '-' "));//value
+			/*
+			CREATE TABLE `JsonStorage` (
+			  `key` varchar(255) PRIMARY KEY NOT NULL DEFAULT '-',
+			  `value` text NOT NULL DEFAULT '-'
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+			*/
 		}
 
 		static{registered.add(JsonStorage.class);}
@@ -199,46 +159,190 @@ CREATE TABLE `JsonStorage` (
 
 	}//class JsonStorage
 
-	/** 
+	/**
 	*	db-Table Wrapper , with Integer primary-key
 	*/
 	public static class MetaTbl extends TL.DB.Tbl<Integer> {
 		public String dbName,dbtName="MetaTbl",comment;
 		@Override public String getName(){return dbtName;}
-		@Override public CI pkc(){return pkc;}
-		int pkc;
+		@Override public CI pkc(){return pkc[0];}//cols==null||pkc==null||pkc.length<1||pkc[0]>=cols.length?null:cols[pkc[0]];
+		/**indicies of the columns which are the primary key in cols,
+		 * if the table has compound keys(more than one column as a primary key),
+		 * then this array is of length greater than one,
+		 * if the the primary key is only one column then this array is of length one
+		 * */C[]pkc;
 		C[]cols;
+		/**forgein keys*/Map<C,Map<String,String>>fk;
 
-		@Override public Integer pkv(){return pkc;}
-		@Override public Integer pkv(Integer v){return pkc;}
+		C col(String colName){
+			for ( C c:cols )if(c.name!=null && c.name.equals( colName ))return c;
+			return null;}
 
-		public static class C implements CI{String name,type,comment;
+		@Override public Integer pkv(){return null;}//pkc!=null&&pkc.length>0?pkc[0]:null;
+		@Override public Integer pkv(Integer v){return null;}//pkc!=null&&pkc.length>0?pkc[0]:null;
+
+		public static class C implements CI{String name,type,comment;Class clss;int i;
 			@Override public Field f(){return null;}
+			@Override public String getName(){return name;}
+			@Override public Class getType(){return clss;}
 		}//C
 		@Override public C[]columns(){return cols;}
 
 		@Override public List creationDBTIndices(TL tl){return null;}
+public enum T{Array(Types.ARRAY,Object[].class),
+		BIGINT                 (Types.BIGINT                  ,Long.class),
+		BIT                    (Types.BIT                     ,Boolean.class),
+		BINARY                 (Types.BINARY                  ,Boolean.class),
+		BLOB                   (Types.BLOB                    ,byte[].class),
+		BOOLEAN                (Types.BOOLEAN                 ,Boolean.class),
+		CHAR                   (Types.CHAR                    ,String.class),
+		CLOB                   (Types.CLOB                    ,String.class),
+		DATALINK               (Types.DATALINK                ,String.class),
+		DATE                   (Types.DATE                    ,Date.class),
+		DECIMAL                (Types.DECIMAL                 ,Double.class),
+		DISTINCT               (Types.DISTINCT                ,String.class),
+		DOUBLE                 (Types.DOUBLE                  ,Double.class),
+		FLOAT                  (Types.FLOAT                   ,Double.class),
+		INTEGER                (Types.INTEGER                 ,Integer.class),
+		JAVA_OBJECT            (Types.JAVA_OBJECT             ,Object.class),
+		LONGNVARCHAR           (Types.LONGNVARCHAR            ,String.class),
+		LONGVARBINARY          (Types.LONGVARBINARY           ,String.class),
+		LONGVARCHAR            (Types.LONGVARCHAR             ,String.class),
+		NCHAR                  (Types.NCHAR                   ,String.class),
+		NCLOB                  (Types.NCLOB                   ,String.class),
+		NULL                   (Types.NULL                    ,String.class),
+		NUMERIC                (Types.NUMERIC                 ,Double.class),
+		NVARCHAR               (Types.NVARCHAR                ,String.class),
+		OTHER                  (Types.OTHER                   ,String.class),
+		REAL                   (Types.REAL                    ,Double.class),
+		REF                    (Types.REF                     ,String.class),
+		REF_CURSOR             (Types.REF_CURSOR              ,String.class),
+		ROWID                  (Types.ROWID                   ,String.class),
+		SMALLINT               (Types.SMALLINT                ,Integer.class),
+		SQLXML                 (Types.SQLXML                  ,Map.class),
+		STRUCT                 (Types.STRUCT                  ,Map.class),
+		TIME                   (Types.TIME                    ,Date.class),
+		TIME_WITH_TIMEZONE     (Types.TIME_WITH_TIMEZONE      ,Date.class),
+		TIMESTAMP              (Types.TIMESTAMP               ,Date.class),
+		TIMESTAMP_WITH_TIMEZONE(Types.TIMESTAMP_WITH_TIMEZONE ,Date.class),
+		TINYINT                (Types.TINYINT                 ,Integer.class),
+		VARBINARY              (Types.VARBINARY               ,String.class),
+		VARCHAR                (Types.VARCHAR                 ,String.class)
+	;//java.sql.Types t;
+	int it;
+	Class c;
+	public static Map<Integer,T>mi;
+	public static Map<String,T>ms;
+	public static Map<Integer,Class>ci;
+	public static Map<String,Class>cs;
+	//T(java.sql.Types t,Class c){this.t=t;this.c=c;}
+	T(int t,Class c){it=t;this.c=c;}
+	public static T t(String p){
+		for(T x:values())if(x.name().equals( p ))return x;
+		return null;}
+	public static T t(int p){
+		for(T x:values())if(x.it==p)return x;
+		return null;}
+	public static void initMaps(){
+		T[]a=values();int n=a.length;
+		if(ms==null){ms=new HashMap<String,T>(n);//if(mi==null)
+			mi=new HashMap<Integer,T>(n);//if(cs==null)
+			cs=new HashMap<String,Class>(n);//if(ci==null)
+			ci=new HashMap<Integer,Class>(n);
+			for(T x:a){
+				ms.put( x.name(),x  );mi.put( x.it,x  );
+				cs.put( x.name(),x.c);ci.put( x.it,x.c);}}}
+}//enum T
 
-		public static MetaTbl initTblFromDb(String dbt){}
+	public static MetaTbl[]initFromDb(String dbName){
+		List<MetaTbl>lt=new LinkedList<>(  );List l=new LinkedList<C>(  );
+		try {Connection c = DB.c();
+			java.sql.DatabaseMetaData databaseMetaData = c.getMetaData();
+			ResultSet result = databaseMetaData.getTables(
+					null, null, null, null );
+			while ( result.next() ) {MetaTbl m=new MetaTbl();
+				lt.add( m);
+				m.dbName=result.getString( "TABLE_CAT" );
+				m.dbName=result.getString( "TABLE_SCHEM" );
+				m.dbtName=result.getString("TABLE_NAME" );
+				m.comment=result.getString("REMARKS" ); }
+			result.close();
+			for(MetaTbl m:lt)try
+			{	result = databaseMetaData.getColumns(
+					null, null, m.dbtName, null );
+				while ( result.next() ) {
+					C col = new C();
+					col.i = l.size();
+					l.add( col );
+					col.name = result.getString( "COLUMN_NAME" );
+					// col.columnType = result.getInt(5); //java.sql.Types.
+					col.type = result.getString( "TYPE_NAME" );
+					col.clss = T.t( col.type ).c;
+					col.comment = result.getString( "REMARKS" );
+				}
+				result.close();
+				m.cols = new C[ l.size() ];
+				l.toArray( m.cols );l.clear();
 
-		public static MetaTbl initTblFromJson(String dbt,Map json){}
+				result = databaseMetaData.getPrimaryKeys( null, null, m.dbtName );
+				while ( result.next() )
+					l.add( m.col( result.getString("COLUMN_NAME" ) ) );
+				result.close();
+				m.pkc = new C[ l.size() ];
+				l.toArray( m.pkc );l.clear();
 
-		public static MetaTbl initDbFromDb(String dbName){}
+				result = databaseMetaData.getImportedKeys(null,null, m.dbtName );
+				while ( result.next() ){
+					if(m.fk==null)
+						m.fk=new HashMap<C,Map<String,String>>(  );
+					String fk=result.getString( "FKCOLUMN_NAME" )
+						,tbl=result.getString( "PKTABLE_NAME" )
+						,clm=result.getString( "PKCOLUMN_NAME" );
+					Map<String,String>x=new HashMap<String,String>( );
+					x.put( "table",tbl );
+					x.put( "column",clm );
+					x.put( "fk",fk );
+					m.fk.put( m.col(fk),x);}
+				result.close();
+			}catch ( SQLException e ) {
+				TL.tl().error( e,"MetaTbl[]initFromDb",m ); }
+		} catch ( SQLException e ) {
+				TL.tl().error( e,"MetaTbl[]initFromDb" ); }
+		MetaTbl[]a=new MetaTbl[lt.size()];
+		lt.toArray( a );
+		return a;}
 
-		public static MetaTbl initDbFromJson(String dbName,Map json){}
+		//public static MetaTbl initFromJson(String dbt,Map json){return null;}
+		//public static MetaTbl initDbFromJson(String dbName,Map json){return null;}
 
-		public static Map dbAsMap(String dbName){}
-		public static Map tblAsMap(String dbtName){}
-		
+		public static Map dbAsMap(String dbName){return null;}
+		public Map tblAsMap(String dbtName){return TL.Util.mapCreate( "dbtName",dbtName
+			,"dbName",dbtName , "cols",cols , "pk",pkc , "fk",fk);}
+
 	public class Row extends TL.DB.Tbl<Integer> {
 		@F public Object[]vals;
 		@Override public String getName(){return dbtName;}
-		@Override public CI pkc(){return cols[pkc];}
-		@Override public String pkv(){return vals[pkc];}
-		@Override public String pkv(Integer v){return vals[pkc]=v;}
+		@Override public CI pkc(){return pkc[0];}
+		@Override public Integer pkv(){return vals!=null&&vals.length>pkc[0].i
+			&&!(vals[pkc[0].i]instanceof Integer)?(Integer ) vals[pkc[0].i]:null;}
+		@Override public Integer pkv(Integer v){return vals!=null
+			&&vals.length>pkc[0].i?(Integer)(vals[pkc[0].i]=v):null;}
 		@Override public C[]columns(){return cols;}
 		@Override public List creationDBTIndices(TL tl){return null;}
 		public MetaTbl tbl(){return MetaTbl.this;}
+
+		@Override public Object[]vals(){return vals;}
+		@Override public DB.Tbl vals ( Object[]p){vals=p;return this;}
+
+		//@Override public static Field[]fields(Class<?> c){return null;}
+		//@Override public static List<Field>fields(Class<?> c,List<Field>l){return null;}
+		public int cix(CI p){int i=-1;for ( C c:cols )if(c==p)return i;return -1;}
+		public int cix(String p){int i=-1;for ( C c:cols )if(c.name!=null&&c.name.equals( p ))return i;return -1;}
+
+		@Override public DB.Tbl v(CI p,Object v){vals[cix(p)]=v;return this;}
+		@Override public Object v(CI p){return vals[cix(p)];}
+		@Override DB.Tbl v(Field p,Object v){throw new IllegalArgumentException( "Field is not implemented" );}
+		@Override Object v(Field p){throw new IllegalArgumentException( "Field is not implemented" );}
 	}//class Row
 
 	}//class MetaTbl Table.Wrapper.Integer
@@ -336,8 +440,7 @@ public static TL Enter(HttpServletRequest r,HttpServletResponse response,HttpSes
 	tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));//Class c=App.class;c=App.Prop.class;c=App.JsonStorage.class;
 	if(App.JsonStorage.sttc==null)
 		p.log( Name,".Enter:App.JsonStorage.sttc=",App.JsonStorage.sttc );
-	if(App.Prop.sttc==null)
-		p.log( Name,".Enter:App.Prop.sttc=",App.Prop.sttc );
+	//if(App.MetaTbl.sttc==null)p.log( Name,".Enter:App.MetaTbl.sttc=",App.MetaTbl.sttc );
 	p.onEnter();
 	return p;}
 private void onEnter()throws IOException {
@@ -353,7 +456,7 @@ private void onEnter()throws IOException {
 			DB.Tbl.check(this);
 			//App.Domain.loadDomain0();
 		}
-		usr=(App.JsonStorage)h.s("usr");
+		usr=(Map)h.s("usr");//(App.JsonStorage)
 	}catch(Exception ex){error(ex,Name,".onEnter");}
 	//if(pages==null){rsp.setHeader("Retry-After", "60");rsp.sendError(503,"pages null");throw new Exception("pages null");}
 	if(h.logOut)out.w(h.comments[0]).w(Name).w(".tl.onEnter:\n").o(this).w(h.comments[1]);
@@ -489,7 +592,7 @@ public class H{
 		if( ServletFileUpload.isMultipartContent(req))try
 		{DiskFileItemFactory factory=new DiskFileItemFactory();
 			factory.setSizeThreshold(40000000);//MemoryThreshold);
-			String path=App.UploadPth;//app(this).getUploadPath();
+			String path="";//App.UploadPth;//app(this).getUploadPath();
 			String real=TL.context.getRealPath(TL.this, path);//getServletContext().getRealPath(path);
 			File f=null,uploadDir;
 			uploadDir=new File(real);
@@ -1015,15 +1118,16 @@ public static class DB {
 
 		@Override public String toString(){return toJson();}
 
-		public abstract String getName();
+		/**get table name*/public abstract String getName();
 
 		public Json.Output jsonOutput(TL.Json.Output o,String ind,String path)throws java.io.IOException{return jsonOutput( o,ind,path,true );}
 		public Json.Output jsonOutput(TL.Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException{
 			//if(o.comment)o.w("{//TL.Form:").w('\n').p(ind);else//.w(p.getClass().toString())
 			o.w('{');
-			Field[]a=fields();String i2=ind+'\n';
+			CI[]a=columns();//Field[]a=fields();
+			String i2=ind+'\n';
 			o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
-			for(Field f:a)
+			for(CI f:a)
 			{	o.w(',').oStr(f.getName(),i2).w(':')
 					 .o(v(f),ind,o.comment?path+'.'+f.getName():path);
 				if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
@@ -1039,7 +1143,7 @@ public static class DB {
 		public Tbl readReq(String prefix){
 			TL t=tl();CI[]a=columns();for(CI f:a){
 				String s=t.h.req(prefix==null||prefix.length()<1?prefix+f:f.toString());
-				Class <?>c=s==null?null:f.f().getType();
+				Class <?>c=s==null?null:f.getType();
 				Object v=null;try {
 					if(s!=null)v=Util.parse(s,c);
 					v(f,v);//f.set(this, v);
@@ -1051,17 +1155,16 @@ public static class DB {
 		public abstract CI[]columns();//public abstract FI[]flds();
 
 		public Object[]vals(){
-			Field[]a=fields();
+			CI[]a=columns();//Field[]a=fields();
 			Object[]r=new Object[a.length];
 			int i=-1;
-			for(Field f:a){i++;
+			for(CI f:a){i++;
 				r[i]=v(a[i]);
 			}return r;}
 
-
 		public Tbl vals (Object[]p){
-			Field[]a=fields();int i=-1;
-			for(Field f:a)
+			int i=-1;CI[]a=columns();//Field[]a=fields();
+			for(CI f:a)
 				v(f,p[++i]);
 			return this;}
 
@@ -1069,20 +1172,20 @@ public static class DB {
 			return asMap(null);}
 
 		public Map asMap(Map r){
-			Field[]a=fields();
+			CI[]a=columns();//Field[]a=fields();
 			if(r==null)r=new HashMap();
 			int i=-1;
-			for(Field f:a){i++;
+			for(CI f:a){i++;
 				r.put(f.getName(),v(a[i]));
 			}return r;}
 
 		public Tbl fromMap (Map p){
-			Field[]a=fields();
-			for(Field f:a)
+			CI[]a=columns();//Field[]a=fields();
+			for(CI f:a)
 				v(f,p.get(f.getName()));
 			return this;}
 
-		public Field[]fields(){return fields(getClass());}
+	/*	public Field[]fields(){return fields(getClass());}
 
 		public static Field[]fields(Class<?> c){
 			List<Field>l=fields(c,null);
@@ -1100,13 +1203,13 @@ public static class DB {
 			if(l==null)l=new LinkedList<Field>();
 			for(Field f:a){F i=f.getAnnotation(F.class);
 				if(i!=null)l.add(f);}
-			return l;}
+			return l;}*/
 
 		public Tbl v(CI p,Object v){return v(p.f(),v);}//this is beautiful(tear running down cheek)
 
 		public Object v(CI p){return v(p.f());}//this is beautiful(tear running down cheek)
 
-		public Tbl v(Field p,Object v){//this is beautiful(tear running down cheek)
+		Tbl v(Field p,Object v){//this is beautiful(tear running down cheek)
 			try{Class <?>t=p.getType();
 				if(v!=null && !t.isAssignableFrom( v.getClass() ))//t.isEnum()||t.isAssignableFrom(URL.class))
 					v=Util.parse(v instanceof String?(String)v:String.valueOf(v),t);
@@ -1114,7 +1217,7 @@ public static class DB {
 			}catch (Exception ex) {tl().error(ex,Name,".DB.Tbl.v(",this,",",p,",",v,")");}
 			return this;}
 
-		public Object v(Field p){//this is beautiful(tear running down cheek)
+		Object v(Field p){//this is beautiful(tear running down cheek)
 			try{return p.get(this);}
 			catch (Exception ex) {//IllegalArgumentException,IllegalAccessException
 				tl().error(ex,Name,".DB.Tbl.v(",this,",",p,")");return null;}}
@@ -1125,7 +1228,7 @@ public static class DB {
 
 		/**Interface for enum-items from different forms and sql-tables ,
 		 * the enum items represent a reference Column Fields for identifing the column and selection.*/
-		public interface CI{public Field f();}//interface I
+		public interface CI{public Field f();public String getName();public Class getType();}//interface I
 
 //}//public abstract static class Form
 
@@ -1139,7 +1242,6 @@ public static class DB {
 		public abstract CI pkc();
 		public abstract PK pkv();
 		public abstract PK pkv(PK v);
-		//public abstract CI[]columns();//@Override public CI[]flds(){return columns();}
 
 		public String sql(CI[]cols,Object[]where){
 			return sql(cols,where,null,null,getName());}
@@ -1279,10 +1381,10 @@ public static class DB {
 		public Object[][]select(CI[]col,Object[]where)throws Exception{
 			return DB.Q(sql(col,where), where);}
 		/**loads one row from the table*/
-		Tbl load(ResultSet rs)throws Exception{return load(rs,fields());}
+		Tbl load(ResultSet rs)throws Exception{return load(rs,columns());}
 		/**loads one row from the table*/
-		Tbl load(ResultSet rs,Field[]a)throws Exception{
-			int c=0;for(Field f:a)v(f,rs.getObject(++c));
+		Tbl load(ResultSet rs,CI[]a)throws Exception{
+			int c=0;for(CI f:a)v(f,rs.getObject(++c));
 			return this;}
 		/**loads one row from the table*/
 		public Tbl load(PK pk){
@@ -1294,8 +1396,8 @@ public static class DB {
 			catch(Exception x){t.error(x,Name,".DB.Tbl(",this,"):",pk);}
 			finally{DB.close(r,t);}
 			return this;}
-		public Tbl nullify(){return nullify(fields());}
-		public Tbl nullify(Field[]a){for(Field f:a)v(f,null);return this;}
+		public Tbl nullify(){return nullify(columns());}
+		public Tbl nullify(CI[]a){for(CI f:a)v(f,null);return this;}
 		// /**loads one row from the table*/ Tbl load(){return load(pkv());}
 
 		/**loads one row using column CI c */
@@ -1345,7 +1447,7 @@ public static class DB {
 			Map old=asMap();
 			readReq("");
 			Map val=asMap();
-			for(CI c:columns()){String n=c.f().getName();
+			for(CI c:columns()){String n=c.getName();
 				Object o=old.get(n),v=val.get(n);
 				if(o==v ||(o!=null && o.equals(v)))
 				{val.remove(n);old.remove(n);}
@@ -1376,14 +1478,14 @@ public static class DB {
 			Itrtr r=new Itrtr(sql(cols,where,groupBy),where,makeClones);
 			return r;}
 		public class Itrtr implements Iterator<Tbl>,Iterable<Tbl>{
-			public ResultSet rs=null;public int i=0;Field[]a;boolean makeClones=false;
+			public ResultSet rs=null;public int i=0;CI[]a;boolean makeClones=false;
 			public Itrtr(String sql,Object[]where,boolean makeClones){
-				this.makeClones=makeClones;a=fields();
+				this.makeClones=makeClones;a=columns();
 				try{rs=DB.R(sql, where);}
 				catch(Exception x){
 					tl().error(x,Name,".DB.Tbl(",this,").Itrtr.<init>:where=",where);}
 			}
-			public Itrtr(Object[]where){a=fields();
+			public Itrtr(Object[]where){a=columns();
 				try{rs=DB.R(sql(cols(Co.all),where), where);}
 				catch(Exception x){tl().error(x,Name,".DB.Tbl(",this,").Itrtr.<init>:where=",where);}}
 			@Override public Iterator<Tbl>iterator(){return this;}
@@ -1417,7 +1519,9 @@ public static class DB {
 			,or("or"),like("like"),in("in"),maxLogTime("max(`logTime`)")//,and("and"),prnthss("("),max("max(?)")
 			;String txt;
 			Co(String p){txt=p;}
-			public Field f(){return null;}
+			@Override public Field f(){return null;}
+			@Override public String getName(){return name();}
+			@Override public Class getType(){return String.class;}
 			public static Field f(String name,Class<? extends Tbl>c){
 				//for(Field f:fields(c))if(name.equals(f.getName()))return f;return null;
 				Field r=null;try{r=c.getField(name);}catch(Exception x)
@@ -1501,7 +1605,7 @@ public static class DB {
 					tl.h.a(n2,tl.now);
 				}}catch(Exception ex){tl.error( ex,Name,".DB.Tbl.check" );}
 		}
-		
+
 		public static boolean exists(Object[]where,String dbtName){return exists(where,null,dbtName);}
 
 		public static boolean exists(Object[]where,CI[]groupBy,String dbtName){
@@ -1555,7 +1659,7 @@ public static class Json{
 			else if(a instanceof String)oStr(String.valueOf(a),ind);
 			else if(a instanceof Boolean||a instanceof Number)w(a.toString());
 				//else if(a instanceof App.Tbl)((App.Tbl)a).jsonOutput(this,ind,path);
-			else if(a instanceof TL.DB.Tbl)((App.Tbl)a).jsonOutput(this,ind,path);//oDbTbl((TL.DB.Tbl)a,ind,path);
+			else if(a instanceof TL.DB.Tbl)((TL.DB.Tbl)a).jsonOutput(this,ind,path);//oDbTbl((TL.DB.Tbl)a,ind,path);
 			else if(a instanceof Map<?,?>)oMap((Map)a,ind,path);
 			else if(a instanceof Collection<?>)oCollctn((Collection)a,ind,path);
 			else if(a instanceof Object[])oArray((Object[])a,ind,path);
