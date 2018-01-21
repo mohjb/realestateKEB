@@ -163,7 +163,7 @@ public static class App {
 	*	db-Table Wrapper , with Integer primary-key
 	*/
 	public static class MetaTbl extends TL.DB.Tbl<Integer> {
-		public static Map<String,MetaData[]>dbs;
+		public static Map<String,MetaTbl[]>dbs;
 		public String dbName,dbtName="MetaTbl",comment;
 		@Override public String getName(){return dbtName;}
 		@Override public CI pkc(){return pkc[0];}//cols==null||pkc==null||pkc.length<1||pkc[0]>=cols.length?null:cols[pkc[0]];
