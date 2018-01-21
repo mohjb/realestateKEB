@@ -54,7 +54,7 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 		Object retVal=null;
 		if(op!=null){
 			Class[]prmTypes=op.getParameterTypes();
-			Class cl=op.getDeclaringClass();
+			Class cl=op.getDeclaringClass();Class[]ca={TL.class,String.class};
 			Annotation[][]prmsAnno=op.getParameterAnnotations();
 			int n=prmsAnno==null?0:prmsAnno.length,i=-1;
 			Object[]args=new Object[n];
@@ -63,7 +63,9 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 				Class c=prmTypes[++i];
 				String nm=pp!=null?pp.prmName():"arg"+i;//t.getName();
 				Object o=null;
-				if(TL.DB.Tbl.class.isAssignableFrom(c))
+				if(pp.prmInstance())
+					args[i]=cl.getMethod( "prmInstance",ca ).invoke( cl,tl,pp.prmName() );
+				else if(TL.DB.Tbl.class.isAssignableFrom(c))
 				{TL.DB.Tbl f=(TL.DB.Tbl)c.newInstance();args[i]=f;
 					o=tl.json.get(nm);
 					if(o instanceof Map)f.fromMap((Map)o);
@@ -119,7 +121,7 @@ Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
 public static class App {
 	static final String packageName= "dev201801",AppNm=packageName+".App";
 
-	static void staticInit(){ TL.registerOp( App.class); }
+	static void staticInit(){ TL.registerOp( App.class);  TL.registerOp( JsonStorage.class);  TL.registerOp( MetaTbl.class); }
 
 	static{staticInit();}
 
@@ -130,12 +132,12 @@ public static class App {
 		public static final String dbtName="JsonStorage";
 		@Override public String getName(){return dbtName;}
 		@Override public CI pkc(){return C.key;}
-		@F public String key;@F public Object value;String json;
+		@F public String app,key;@F public Object value;String json;
 
 		@Override public String pkv(){return key;}
 		@Override public String pkv(String v){return key=v;}
 
-		public enum C implements CI{key, value;
+		public enum C implements CI{app,key, value;
 			@Override public Field f(){return Co.f(name(), JsonStorage.class);}
 			@Override public String getName(){return name();}
 			@Override public Class getType(){return String.class;}
@@ -157,13 +159,79 @@ public static class App {
 		static{registered.add(JsonStorage.class);}
 		public static JsonStorage sttc=new JsonStorage( );
 
+	public static JsonStorage loadBy(String app,String key){
+		JsonStorage j=new JsonStorage(),x=null;
+		for(TL.DB.Tbl i:j.query(where( C.app,app,C.key,key )))
+			x=j;
+		return x;}
+
+	public static Object prmInstance(TL tl,String prmName){
+		Object o=tl.json.get( prmName )
+			,app=tl.json.get("app")
+			,key=tl.json.get("key");
+		JsonStorage j=key instanceof JsonStorage
+			?(JsonStorage)key
+			:app instanceof String && key instanceof String
+			?loadBy( (String)app,(String)key )
+				:null;
+		if(j!=null && key instanceof String)
+			tl.json.put( "key",j );
+		return j!=null && "key".equals( prmName )?j:o;}
+
+	@Op public static String
+	JspApp_create(String appName,Map<String,Object>keys){return null;}
+
+	@Op public static String
+	JspApp_generateJspFile_and_clientFiles(String appName){return null;}
+
+	@Op public static List<String>
+	JspApp_listKeys(String appName){return null;}
+
+	@Op public static Map<String,Map<String,Object>>
+	JspApp_getKeys(String appName,List<String>keys){return null;}
+/*
+* app files:the manifest
+* the jsp app , and list of cats of include-files
+* the angularjs-app / html file , and list of cats of include-files
+* list of js files
+* list of css files
+* list of image files
+*
+* urls , and opMethods
+*
+* ui-router-states
+*
+* angularjs-templates
+*
+* angularjs-directives
+* */
 	}//class JsonStorage
 
 	/**
 	*	db-Table Wrapper , with Integer primary-key
 	*/
-	public static class MetaTbl extends TL.DB.Tbl<Integer> {
-		public static Map<String,MetaTbl[]>dbs;
+ public static class MetaTbl extends TL.DB.Tbl<Integer> {
+	public static Map</**database-name*/String,Map</**table-name*/String,MetaTbl>>dbs=new HashMap<String,Map<String,MetaTbl>>();
+
+	public static Object prmInstance(TL tl,String prmName){
+		Object o=tl.json.get( prmName )
+			,d=tl.json.get("dbName")
+			,t=tl.json.get("dbtName");
+		Map</**table-name*/String,MetaTbl>
+			db=d instanceof String
+				?dbs.get((String)d):(Map)d;
+		if(db!=null && d instanceof String)
+			tl.json.put("dbName",db);
+		MetaTbl j=t instanceof String&&db!=null
+			?db.get((String)t):(MetaTbl ) t;
+		if(j!=null && t instanceof String)
+			tl.json.put( "dbtName",j );
+		return "dbName".equals( prmName )
+			?(db==null?d:db)
+			:"dbtName".equals( prmName )
+				?(j!=null?j:t)
+			:o;}
+
 		public String dbName,dbtName="MetaTbl",comment;
 		@Override public String getName(){return dbtName;}
 		@Override public CI pkc(){return pkc[0];}//cols==null||pkc==null||pkc.length<1||pkc[0]>=cols.length?null:cols[pkc[0]];
@@ -182,15 +250,53 @@ public static class App {
 		@Override public Integer pkv(){return null;}//pkc!=null&&pkc.length>0?pkc[0]:null;
 		@Override public Integer pkv(Integer v){return null;}//pkc!=null&&pkc.length>0?pkc[0]:null;
 
-		public static class C implements CI{String name,type,comment;Class clss;int i;
+		public class C implements CI,Json.Output.JsonOutput{String name,type,comment;Class clss;int i;
+			public C(String name,String type,String comment,int i){
+				this.name=name;this.type=type;this.comment=comment;this.i=i;
+				clss=T.t( type ).c;}
+
 			@Override public Field f(){return null;}
 			@Override public String getName(){return name;}
 			@Override public Class getType(){return clss;}
+			@Override public String toString() {
+				try {TL tl = TL.tl();
+					return tl.jo().clrSW().o( this ).toStrin_();
+				} catch ( Exception ex ) {}
+				return "{\"name\":\""+name+"\",\"type\":\""+type+"\",\"i\":"+i+",\"comment\":\""+comment+"\"}";
+			}
+			public Map asMap(){return TL.Util.mapCreate( "",name,"",type,"comment",comment,"i",i );}
+			@Override public Json.Output jsonOutput( Json.Output o, String ind, String path ) throws IOException {
+				o.w( "{\"name\":" ).oStr( name, "" )
+				.w( ",\"type\":" ).oStr( type,"" )
+				.w( ",\"i\":" ).p( i );
+				if(comment!=null)
+					o.w( ",\"comment\":" ).oStr( comment,"" );
+				return o.w( '}' ); }
 		}//C
 		@Override public C[]columns(){return cols;}
 
+		@Override public Json.Output jsonOutput( Json.Output o, String ind, String path ) throws IOException {
+			o.w( "{\"dbName\":").oStr( dbName ,ind).w( ",\"dbtName\":").oStr( dbtName ,ind).w( ",\"cols\":{");
+			for(C c:cols)c.jsonOutput( (c.i==0?o:o.w( ',' )).oStr( c.name,"" ).w( ':' ),ind,path );
+			o.w( "},\"pk\":[" );boolean comma=false;
+			for ( C c:pkc ){if(comma)o.w( ',' );else comma=true;
+					o.oStr( c.name,"" );}
+			o.w( "],\"fk\":{" );comma=false;
+			for ( C c:fk.keySet() ){if(comma)o.w( ',' );else comma=true;
+					o.oStr( c.name,"" ).w( ':' )
+					.oMap( fk.get( c ),ind,path );}
+			return o.w( "}}" ); }
+
+public static List asListOfMaps( C[]a){List l=TL.Util.lst(  );for ( C c:a )l.add( c.asMap() );return l; }
+public static List asListOfNames(C[]a){List l=TL.Util.lst(  );for ( C c:a )l.add( c.name );return l; }
+public static Map asMaps(Map<C,Map<String,String>>a){
+	Map m=TL.Util.mapCreate(  );
+	for ( C c:a.keySet() )m.put( c.name,a.get( c ) );
+	return m; }
+
+
 		@Override public List creationDBTIndices(TL tl){return null;}
-public enum T{Array(Types.ARRAY,Object[].class),
+  public enum T{Array(Types.ARRAY,Object[].class),
 		BIGINT                 (Types.BIGINT                  ,Long.class),
 		BIT                    (Types.BIT                     ,Boolean.class),
 		BINARY                 (Types.BINARY                  ,Boolean.class),
@@ -230,7 +336,7 @@ public enum T{Array(Types.ARRAY,Object[].class),
 		VARBINARY              (Types.VARBINARY               ,String.class),
 		VARCHAR                (Types.VARCHAR                 ,String.class)
 	;//java.sql.Types t;
-	int it;
+	int it;String txt;
 	Class c;
 	public static Map<Integer,T>mi;
 	public static Map<String,T>ms;
@@ -255,31 +361,31 @@ public enum T{Array(Types.ARRAY,Object[].class),
 				cs.put( x.name(),x.c);ci.put( x.it,x.c);}}}
 }//enum T
 
-	public static MetaTbl[]initFromDb(String dbName){
-		List<MetaTbl>lt=new LinkedList<>(  );List l=new LinkedList<C>(  );
+	public static Map<String,MetaTbl>initFromDb(String dbName){
+		Map<String,MetaTbl>tbls=new HashMap<String,MetaTbl>();//List<MetaTbl>lt=new LinkedList<>(  );
+		List l=new LinkedList<C>(  );
 		try {Connection c = DB.c();
 			java.sql.DatabaseMetaData databaseMetaData = c.getMetaData();
 			ResultSet result = databaseMetaData.getTables(
 					null, null, null, null );
 			while ( result.next() ) {MetaTbl m=new MetaTbl();
-				lt.add( m);
 				m.dbName=result.getString( "TABLE_CAT" );
 				m.dbName=result.getString( "TABLE_SCHEM" );
 				m.dbtName=result.getString("TABLE_NAME" );
-				m.comment=result.getString("REMARKS" ); }
+				m.comment=result.getString("REMARKS" );
+				tbls.put( m.dbtName,m);
+			}
 			result.close();
-			for(MetaTbl m:lt)try
+			for(MetaTbl m:tbls.values())try
 			{	result = databaseMetaData.getColumns(
 					null, null, m.dbtName, null );
 				while ( result.next() ) {
-					C col = new C();
-					col.i = l.size();
+					C col = m.new C(result.getString( "COLUMN_NAME" )
+						,result.getString( "TYPE_NAME" )
+						,result.getString( "REMARKS" )
+						,l.size());
 					l.add( col );
-					col.name = result.getString( "COLUMN_NAME" );
 					// col.columnType = result.getInt(5); //java.sql.Types.
-					col.type = result.getString( "TYPE_NAME" );
-					col.clss = T.t( col.type ).c;
-					col.comment = result.getString( "REMARKS" );
 				}
 				result.close();
 				m.cols = new C[ l.size() ];
@@ -309,17 +415,70 @@ public enum T{Array(Types.ARRAY,Object[].class),
 				TL.tl().error( e,"MetaTbl[]initFromDb",m ); }
 		} catch ( SQLException e ) {
 				TL.tl().error( e,"MetaTbl[]initFromDb" ); }
-		MetaTbl[]a=new MetaTbl[lt.size()];
-		lt.toArray( a );if(dbs==null)dbs=new HashMap();
-		dbs.put(dbName,a);
-		return a;}
+		dbs.put(dbName,tbls);
+		return tbls;}
 
 		//public static MetaTbl initFromJson(String dbt,Map json){return null;}
 		//public static MetaTbl initDbFromJson(String dbName,Map json){return null;}
+	//public static MetaTbl initFromMap(String dbName,String dbtName,List<Map<String,String>>cols){ MetaTbl m=new MetaTbl ();m.dbName=dbName;m.dbtName=dbtName;return m;}
 
-		public static Map dbAsMap(String dbName){return null;}
-		public Map tblAsMap(String dbtName){return TL.Util.mapCreate( "dbtName",dbtName
-			,"dbName",dbtName , "cols",cols , "pk",pkc , "fk",fk);}
+	public static Map dbAsMap(String dbName){
+		Map</**table-name*/String,MetaTbl>db=dbs.get( dbName );
+		Map m=null;
+		if(db!=null){
+			m=TL.Util.mapCreate( "dbName",dbName );
+			for(MetaTbl i:db.values())
+				m.put( i.dbtName,i.asMap(  ) );
+		}return m;}
+
+	@Override public Map asMap(){//String dbtName
+		return TL.Util.mapCreate( "dbtName",dbtName,"dbName",dbtName
+		, "cols",asListOfMaps( cols )
+		, "pk", asListOfNames( pkc)
+		, "fk", asMaps( fk)
+		);}
+
+	@Override public TL.DB.Tbl fromMap(Map m){
+		dbName=(String)m.get( "dbName" );
+		dbtName=(String)m.get( "dbtName" );
+		List l=(List)m.get( "cols" );
+		cols=new C[l.size()];int i=-1;
+		for(Object k:l){
+			Map x=(Map)k;
+			cols[++i]=new C((String)x.get( "name" )
+				,(String)x.get( "type" )
+				,(String)x.get( "comment" )
+				,(int)x.get( "i" ));}
+		l=(List)m.get( "pk" );
+		pkc=new C[l.size()];i=-1;
+		for(Object k:l)pkc[++i]=col((String)k);
+		Map x=(Map)m.get( "fk" );
+		fk=new HashMap<>(  );
+		for(Object o:x.keySet()){
+			C c=col( (String)o );
+			fk.put( c,(Map)x.get( o ) );
+		}
+		return this;
+	}
+
+	int createTable(){
+		StringBuilder b=new StringBuilder( "create table `")
+			.append(dbName ).append( "`.`")
+			.append(dbtName ).append( "`(" );
+		for ( C c:cols ){if(c.i>0)b.append( ',' );
+				T t=T.t( c.type );
+			b.append( '`' ).append( c.name ).append( "` " ).append( c.type ).append( ' ' ).append( t.txt );
+		}
+		int i=-1;b.append( ",primary key(" );
+		for ( C c:pkc ){if(++i>0)b.append( ',' );
+			b.append( '`' ).append( c.name ).append( "` " ); }
+		//for ( C c:fk){}
+		b.append( ");" );i=-1;
+		try {
+			i=TL.DB.x( b.toString() );
+		}catch ( Exception ex ){}
+		return i;
+	}
 
 	public class Row extends TL.DB.Tbl<Integer> {
 		@F public Object[]vals;
@@ -346,6 +505,122 @@ public enum T{Array(Types.ARRAY,Object[].class),
 		@Override DB.Tbl v(Field p,Object v){throw new IllegalArgumentException( "Field is not implemented" );}
 		@Override Object v(Field p){throw new IllegalArgumentException( "Field is not implemented" );}
 	}//class Row
+
+
+	@Op static public List</*String*/Object>
+	DB_names()throws SQLException{
+		return TL.DB.q1colList( "show databases" );}
+
+	@Op static public T[]
+	colTypes(){return T.values();}
+
+	@Op static public /*List<Map<String,Object>>*/Map</**table-name*/String,MetaTbl>
+	DB_get(@Op(prmName = "dbName") String dbName){
+		return initFromDb( dbName );}
+
+	@Op static public int
+	DB_create(@Op(prmName = "dbName") String dbName)throws SQLException{
+		int i= TL.DB.x( "create database `"+dbName.replaceAll( "`"," " )+"`" );
+		if(i>0)dbs.put(dbName,new HashMap</**table-name*/String,MetaTbl>());
+		return i;}
+
+	@Op static public int
+	DB_drop(@Op(prmName = "dbName") String dbName)throws SQLException{
+		int i= TL.DB.x( "drop database `"+dbName.replaceAll( "`"," " )+"`" );
+		if(i>0)dbs.remove( dbName );
+		return i;}
+
+	@Op static public MetaTbl
+	DBTbl_create(@Op(prmName = "dbName") String dbName
+		,@Op(prmName="dbtName") String dbtName
+		,@Op(prmName="cols") List<Map<String,String>>cols
+		,@Op(prmName = "pk") List<String>pk
+		,@Op(prmName = "fk") Map<String,Map<String,String>>fk
+		,TL tl){
+		 MetaTbl m=new MetaTbl();
+		 m.fromMap(tl.json  );
+		 m.createTable();
+		return m;
+	}
+
+	@Op static public int
+	DBTbl_drop(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName) throws SQLException{
+		return  TL.DB.x( "drop table `"+dbName.replaceAll( "`"," " )+"`.`"+dbtName.replaceAll( "`"," " )+"`" );}
+
+	@Op static public int
+	DBTbl_rename(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "newName") String newName)throws SQLException{
+		return  TL.DB.x( "rename table `"+dbName.replaceAll( "`"," " )+"`.`"+dbtName.replaceAll( "`"," " )+"` to `"+newName.replaceAll( "`"," " )+"`" );}
+
+	@Op static public int
+	DBTblCol_drop(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "col") String col){
+		return -1;}
+
+	@Op static public int
+	DBTblCol_insert(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "col") String col
+		,@Op(prmName = "beforeCol") String beforeCol
+		,@Op(prmName = "def") Map<String,String>def){
+		return -1;}
+
+	@Op static public int
+	DBTblCol_add(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "") String col
+		,@Op(prmName = "") Map<String,String>def){
+		return -1;}
+
+	@Op static public int
+	DBTblCol_alter(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "col") String col
+		,@Op(prmName = "def") Map<String,String>def){
+		return -1;}
+
+	@Op static public int
+	DBTblCol_rename(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "col") String col
+		,@Op(prmName = "newName") String newName){
+		return -1;}
+
+	@Op static public Object[]
+	DBTRow_get(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "pkv") Object[]pkv){
+		return null;}
+
+	@Op static public int
+	DBTRow_insert(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "vals") Object[]vals){
+		return -1;}
+
+	@Op static public int
+	DBTRow_update(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "set") Object[]set
+		,@Op(prmName = "where") Object[]where){
+		return -1;}
+
+	@Op static public int
+	DBTRow_delete(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "where") Object[]where){
+		return -1;}
+
+	@Op static public List<Object[]>
+	DBT_query(@Op(prmName = "dbName") String dbName
+		,@Op(prmName = "dbtName") String dbtName
+		,@Op(prmName = "where") Object[]where
+		,@Op(prmName = "groupBy") Object[]groupBy
+		,@Op(prmName = "orderBy") Object[]orderBy){
+		return null;}
 
 	}//class MetaTbl Table.Wrapper.Integer
 }//class App
@@ -404,10 +679,11 @@ public @interface Op{
 	boolean useClassName() default true;
 	//boolean caseSensitive() default true;
 	boolean nestJsonReq() default true;//if false , then only the returned-value from the method call is json-stringified as a response body, if true the returned-value is set in the json-request with prop-name "return"
-	boolean usrLoginNeeded() default true;
+	boolean usrLoginNeeded() default false;//true;
 	String httpMethod() default "";
 	String urlPath() default "\n"; //if no method name match from parameters, then this string is mathed with the requested url, "*" means method will match any request path
 	String prmName() default "";
+	boolean prmInstance() default false;
 }//Op
 static Map<String,Method>
 	ops=new HashMap<String,Method>(),
@@ -1114,7 +1390,7 @@ public static class DB {
 		}//ItRow
 	}//ItTbl
 	/**represents one entity , one row from a table in a relational database*/
-	public abstract static class Tbl<PK> {
+	public abstract static class Tbl<PK> implements Json.Output.JsonOutput {
 
 // /**encapsulating Html-form fields, use annotation Form.F for defining/mapping member-variables to html-form-fields*/ public abstract static class Form{
 
@@ -1188,14 +1464,12 @@ public static class DB {
 			return this;}
 
 	/*	public Field[]fields(){return fields(getClass());}
-
 		public static Field[]fields(Class<?> c){
 			List<Field>l=fields(c,null);
 			int n=l==null?0:l.size();
 			Field[]r=new Field[n];
 			if(n>0)l.toArray(r);
 			return r;}
-
 		public static List<Field>fields(Class<?> c,List<Field>l){
 			//this is beautiful(tear running down cheek)
 			Class s=c==null?c:c.getSuperclass();
@@ -1624,7 +1898,9 @@ public static class DB {
 public Json.Output o(Object...a)throws IOException{if(out!=null&&out.w!=null)for(Object s:a)out.w.write(s instanceof String?(String)s:String.valueOf(s));return out;}
 public static class Json{
 	public static class Output
-	{ public Writer w;public boolean restrictedAccess=false;int accessViolation=0;
+	{ public interface JsonOutput{ public Json.Output jsonOutput( Json.Output o, String ind, String path ) throws IOException ;}
+
+		public Writer w;public boolean restrictedAccess=false;int accessViolation=0;
 		public boolean initCache=false,includeObj=false,comment=false;
 		Map<Object, String> cache;
 		public static void out(Object o,Writer w,boolean initCache,boolean includeObj)
@@ -1660,8 +1936,8 @@ public static class Json{
 			if(a==null)w("null"); //Object\n.p(ind)
 			else if(a instanceof String)oStr(String.valueOf(a),ind);
 			else if(a instanceof Boolean||a instanceof Number)w(a.toString());
-				//else if(a instanceof App.Tbl)((App.Tbl)a).jsonOutput(this,ind,path);
-			else if(a instanceof TL.DB.Tbl)((TL.DB.Tbl)a).jsonOutput(this,ind,path);//oDbTbl((TL.DB.Tbl)a,ind,path);
+			else if(a instanceof JsonOutput)((JsonOutput)a).jsonOutput(this,ind,path);//oDbTbl((TL.DB.Tbl)a,ind,path);
+			//else if(a instanceof TL.DB.Tbl)((TL.DB.Tbl)a).jsonOutput(this,ind,path);//oDbTbl((TL.DB.Tbl)a,ind,path);
 			else if(a instanceof Map<?,?>)oMap((Map)a,ind,path);
 			else if(a instanceof Collection<?>)oCollctn((Collection)a,ind,path);
 			else if(a instanceof Object[])oArray((Object[])a,ind,path);
@@ -2056,7 +2332,6 @@ public static class Json{
 	case '@':
 		//refer to object from cache
 		break;
-
 	case 'function':break;//only a thought, cuz c is only a char
 		*/
 				case '(':nxt();
