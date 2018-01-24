@@ -74,7 +74,7 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 					else f.readReq("");
 				}else
 					args[i]=o=TL.class.equals(c)?tl//:Map.class.isAssignableFrom(c) &&(nm.indexOf("p")!=-1) &&(nm.indexOf("r")!=-1) &&(nm.indexOf("m")!=-1)?tl.json
-						 :tl.h.req(nm,c);
+						:tl.h.req(nm,c);
 			}catch(Exception ex){tl.error(ex,Name,".run:arg:i=",i);}
 			retVal=n==0?op.invoke(cl)
 				:n==1?op.invoke(cl,args[0])
@@ -150,8 +150,8 @@ public static class App {
 				,"text NOT NULL DEFAULT '-' "));//value
 			/*
 			CREATE TABLE `JsonStorage` (
-			  `key` varchar(255) PRIMARY KEY NOT NULL DEFAULT '-',
-			  `value` text NOT NULL DEFAULT '-'
+			`key` varchar(255) PRIMARY KEY NOT NULL DEFAULT '-',
+			`value` text NOT NULL DEFAULT '-'
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 			*/
 		}
@@ -236,13 +236,26 @@ public static class App {
 		@Override public String getName(){return dbtName;}
 		@Override public CI pkc(){return pkc[0];}//cols==null||pkc==null||pkc.length<1||pkc[0]>=cols.length?null:cols[pkc[0]];
 		/**indicies of the columns which are the primary key in cols,
-		 * if the table has compound keys(more than one column as a primary key),
-		 * then this array is of length greater than one,
-		 * if the the primary key is only one column then this array is of length one
-		 * */C[]pkc;
+		* if the table has compound keys(more than one column as a primary key),
+		* then this array is of length greater than one,
+		* if the the primary key is only one column then this array is of length one
+		* */C[]pkc;
 		C[]cols;
-		/**forgein keys*/Map<C,Map<String,String>>fk;
-
+		I[]indices;// **forgein keys*/Map<C,Map<String,String>>fk;
+		/*
+		//need a way to capture indicies and the columns of each index, e.g. unique ,btree, ect
+			List<Map<String,Map<String,String>>>
+			=> 
+			<index-type><index-name><index-columns>
+			
+			//need a way to capture info about columns for table creation
+			boolean notNull;
+			int length;//when applicable
+			String Default;//when applicable
+			boolean autoIcrement;//when applicable
+			onupdate,ondelete,forgein-key,primary-key
+			
+		*/
 		C col(String colName){
 			for ( C c:cols )if(c.name!=null && c.name.equals( colName ))return c;
 			return null;}
@@ -250,9 +263,16 @@ public static class App {
 		@Override public Integer pkv(){return null;}//pkc!=null&&pkc.length>0?pkc[0]:null;
 		@Override public Integer pkv(Integer v){return null;}//pkc!=null&&pkc.length>0?pkc[0]:null;
 
-		public class C implements CI,Json.Output.JsonOutput{String name,type,comment;Class clss;int i;
+		public class C implements CI,Json.Output.JsonOutput{
+			String name,type,comment,creation;Class clss;int i;
+
 			public C(String name,String type,String comment,int i){
 				this.name=name;this.type=type;this.comment=comment;this.i=i;
+				clss=T.t( type ).c;}
+
+			public C(String name,String type,int i,String comment,String creation){
+				this.name=name;this.type=type;this.i=i;
+				this.comment=comment;this.creation=creation;
 				clss=T.t( type ).c;}
 
 			@Override public Field f(){return null;}
@@ -262,17 +282,46 @@ public static class App {
 				try {TL tl = TL.tl();
 					return tl.jo().clrSW().o( this ).toStrin_();
 				} catch ( Exception ex ) {}
-				return "{\"name\":\""+name+"\",\"type\":\""+type+"\",\"i\":"+i+",\"comment\":\""+comment+"\"}";
+				return "{\"name\":\""+name+"\",\"type\":\""+type+"\",\"i\":"+i+",\"comment\":\""+comment+"\",\"creation\":\""+creation+"\"}";
 			}
-			public Map asMap(){return TL.Util.mapCreate( "",name,"",type,"comment",comment,"i",i );}
+			public Map asMap(){return TL.Util.mapCreate( "",name,"",type,"comment",comment,"i",i,"creation",creation );}
 			@Override public Json.Output jsonOutput( Json.Output o, String ind, String path ) throws IOException {
+				return jsonOutput( o,ind,path,true ); }
+			public Json.Output jsonOutput( Json.Output o
+				, String ind, String path,boolean closeBrace ) throws IOException {
 				o.w( "{\"name\":" ).oStr( name, "" )
 				.w( ",\"type\":" ).oStr( type,"" )
 				.w( ",\"i\":" ).p( i );
 				if(comment!=null)
 					o.w( ",\"comment\":" ).oStr( comment,"" );
-				return o.w( '}' ); }
+				if(creation!=null)
+					o.w( ",\"creation\":" ).oStr( creation,"" );
+				return closeBrace?o.w( '}' ):o; }
 		}//C
+
+		/**to capture info about db-table-indices*/public class I extends C{
+			C[]cols;public I(C[]cols,String...a){super(a[0],a[1],0,a[2],a[3]);}
+			@Override public String toString() {
+				try {TL tl = TL.tl();
+					return tl.jo().clrSW().o( this ).toStrin_();
+				} catch ( Exception ex ) {}
+				return "{\"name\":\""+name+"\",\"type\":\""+type
+				+"\",\"i\":"+i+",\"comment\":\""+comment
+				+"\",\"creation\":\""+creation+"\",\"cols\":\""+cols+"\"}";
+			}
+			public Map asMap(){return TL.Util.mapCreate( "name",name
+				,"type",type,"comment",comment,"i",i,"creation",creation,"cols",cols );}
+			@Override public Json.Output jsonOutput( Json.Output o
+				, String ind, String path ) throws IOException {
+				jsonOutput( o,ind,path,false );
+				o.w( ",\"cols\":[");boolean comma=false;
+				for ( C c:cols ){if(comma)o.w( ',' );else comma=true;
+					o.w( '`' ).w( c.name==null?"null":
+					c.name.replaceAll( "\n","_newline_" )
+					.replaceAll( "`","_backTic_" )).w( '`' );}
+				return o.w( "]}" );}
+		}//class I
+
 		@Override public C[]columns(){return cols;}
 
 		@Override public Json.Output jsonOutput( Json.Output o, String ind, String path ) throws IOException {
@@ -281,11 +330,10 @@ public static class App {
 			o.w( "},\"pk\":[" );boolean comma=false;
 			for ( C c:pkc ){if(comma)o.w( ',' );else comma=true;
 					o.oStr( c.name,"" );}
-			o.w( "],\"fk\":{" );comma=false;
-			for ( C c:fk.keySet() ){if(comma)o.w( ',' );else comma=true;
-					o.oStr( c.name,"" ).w( ':' )
-					.oMap( fk.get( c ),ind,path );}
-			return o.w( "}}" ); }
+			o.w( "],\"indices\":[" );comma=false;
+			if(indices!=null)for ( I c:indices ){if(comma)o.w( ',' );else comma=true;
+				c.jsonOutput( o,ind,path );}
+			return o.w( "]}" ); }
 
 public static List asListOfMaps( C[]a){List l=TL.Util.lst(  );for ( C c:a )l.add( c.asMap() );return l; }
 public static List asListOfNames(C[]a){List l=TL.Util.lst(  );for ( C c:a )l.add( c.name );return l; }
@@ -297,53 +345,55 @@ public static Map asMaps(Map<C,Map<String,String>>a){
 
 		@Override public List creationDBTIndices(TL tl){return null;}
   public enum T{Array(Types.ARRAY,Object[].class),
-		BIGINT                 (Types.BIGINT                  ,Long.class),
-		BIT                    (Types.BIT                     ,Boolean.class),
-		BINARY                 (Types.BINARY                  ,Boolean.class),
-		BLOB                   (Types.BLOB                    ,byte[].class),
-		BOOLEAN                (Types.BOOLEAN                 ,Boolean.class),
-		CHAR                   (Types.CHAR                    ,String.class),
-		CLOB                   (Types.CLOB                    ,String.class),
-		DATALINK               (Types.DATALINK                ,String.class),
-		DATE                   (Types.DATE                    ,Date.class),
-		DECIMAL                (Types.DECIMAL                 ,Double.class),
-		DISTINCT               (Types.DISTINCT                ,String.class),
-		DOUBLE                 (Types.DOUBLE                  ,Double.class),
-		FLOAT                  (Types.FLOAT                   ,Double.class),
-		INTEGER                (Types.INTEGER                 ,Integer.class),
-		JAVA_OBJECT            (Types.JAVA_OBJECT             ,Object.class),
-		LONGNVARCHAR           (Types.LONGNVARCHAR            ,String.class),
-		LONGVARBINARY          (Types.LONGVARBINARY           ,String.class),
-		LONGVARCHAR            (Types.LONGVARCHAR             ,String.class),
-		NCHAR                  (Types.NCHAR                   ,String.class),
-		NCLOB                  (Types.NCLOB                   ,String.class),
-		NULL                   (Types.NULL                    ,String.class),
-		NUMERIC                (Types.NUMERIC                 ,Double.class),
-		NVARCHAR               (Types.NVARCHAR                ,String.class),
-		OTHER                  (Types.OTHER                   ,String.class),
-		REAL                   (Types.REAL                    ,Double.class),
-		REF                    (Types.REF                     ,String.class),
-		REF_CURSOR             (Types.REF_CURSOR              ,String.class),
-		ROWID                  (Types.ROWID                   ,String.class),
-		SMALLINT               (Types.SMALLINT                ,Integer.class),
-		SQLXML                 (Types.SQLXML                  ,Map.class),
-		STRUCT                 (Types.STRUCT                  ,Map.class),
-		TIME                   (Types.TIME                    ,Date.class),
-		TIME_WITH_TIMEZONE     (Types.TIME_WITH_TIMEZONE      ,Date.class),
-		TIMESTAMP              (Types.TIMESTAMP               ,Date.class),
+		BIGINT				(Types.BIGINT				,Long.class		, "length" ),
+		BIT					(Types.BIT					,Boolean.class	, "length" ),
+		BINARY				(Types.BINARY				,Boolean.class),
+		BLOB				(Types.BLOB					,byte[].class	, "length" ),
+		BOOLEAN				(Types.BOOLEAN				,Boolean.class),
+		CHAR				(Types.CHAR					,String.class	, "length" ),
+		CLOB				(Types.CLOB					,String.class	, "length" ),
+		DATALINK			(Types.DATALINK				,String.class),
+		DATE				(Types.DATE					,Date.class),
+		DECIMAL				(Types.DECIMAL				,Double.class	, "length" ),
+		DISTINCT			(Types.DISTINCT				,String.class),
+		DOUBLE				(Types.DOUBLE				,Double.class	, "length" ),
+		FLOAT				(Types.FLOAT				,Double.class	, "length" ),
+		INTEGER				(Types.INTEGER				,Integer.class	, "length" ),
+		JAVA_OBJECT			(Types.JAVA_OBJECT			,Object.class),
+		LONGNVARCHAR		(Types.LONGNVARCHAR			,String.class	, "length" ),
+		LONGVARBINARY		(Types.LONGVARBINARY		,String.class	, "length" ),
+		LONGVARCHAR			(Types.LONGVARCHAR			,String.class	, "length" ),
+		NCHAR				(Types.NCHAR				,String.class	, "length" ),
+		NCLOB				(Types.NCLOB				,String.class	, "length" ),
+		NULL				(Types.NULL					,String.class),
+		NUMERIC				(Types.NUMERIC				,Double.class	, "length" ),
+		NVARCHAR			(Types.NVARCHAR				,String.class	, "length" ),
+		OTHER				(Types.OTHER				,String.class),
+		REAL				(Types.REAL					,Double.class	, "length" ),
+		REF					(Types.REF					,String.class),
+		REF_CURSOR			(Types.REF_CURSOR			,String.class),
+		ROWID				(Types.ROWID				,String.class),
+		SMALLINT			(Types.SMALLINT				,Integer.class	, "length" ),
+		SQLXML				(Types.SQLXML				,Map.class),
+		STRUCT				(Types.STRUCT				,Map.class),
+		TIME				(Types.TIME					,Date.class),
+		TIME_WITH_TIMEZONE	(Types.TIME_WITH_TIMEZONE	,Date.class),
+		TIMESTAMP			(Types.TIMESTAMP			,Date.class),
 		TIMESTAMP_WITH_TIMEZONE(Types.TIMESTAMP_WITH_TIMEZONE ,Date.class),
-		TINYINT                (Types.TINYINT                 ,Integer.class),
-		VARBINARY              (Types.VARBINARY               ,String.class),
-		VARCHAR                (Types.VARCHAR                 ,String.class)
+		TINYINT				(Types.TINYINT				,Integer.class	, "length" ),
+		VARBINARY			(Types.VARBINARY			,String.class	, "length" ),
+		VARCHAR				(Types.VARCHAR				,String.class	, "length" )
 	;//java.sql.Types t;
 	int it;String txt;
-	Class c;
+	Class c;String[]options;
 	public static Map<Integer,T>mi;
 	public static Map<String,T>ms;
 	public static Map<Integer,Class>ci;
 	public static Map<String,Class>cs;
 	//T(java.sql.Types t,Class c){this.t=t;this.c=c;}
 	T(int t,Class c){it=t;this.c=c;}
+	T(int t,Class c,String...options){it=t;this.c=c;this.options=options;}
+
 	public static T t(String p){
 		for(T x:values())if(x.name().equals( p ))return x;
 		return null;}
@@ -537,9 +587,9 @@ public static Map asMaps(Map<C,Map<String,String>>a){
 		,@Op(prmName = "pk") List<String>pk
 		,@Op(prmName = "fk") Map<String,Map<String,String>>fk
 		,TL tl){
-		 MetaTbl m=new MetaTbl();
-		 m.fromMap(tl.json  );
-		 m.createTable();
+		MetaTbl m=new MetaTbl();
+		m.fromMap(tl.json  );
+		m.createTable();
 		return m;
 	}
 
@@ -726,8 +776,8 @@ private void onEnter()throws IOException {
 	now=new Date();//seqObj=seqProp=now.getTime();
 	try{Object o=h.req.getContentType();
 		o=o==null?null
-			  :o.toString().contains("json")?Json.Prsr.parse(h.req)
-				   :o.toString().contains("part")?h.getMultiParts():null;
+			:o.toString().contains("json")?Json.Prsr.parse(h.req)
+				:o.toString().contains("part")?h.getMultiParts():null;
 		json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 		h.logOut=h.var("logOut",h.logOut);
 		if(h.getSession().isNew()){
@@ -840,7 +890,7 @@ public static class Util{//utility methods
 		else if(Character.class.isAssignableFrom(c)||(c.isPrimitive()&&"char".equals(c.getName())))
 			return s.length()<1?'\0':s.charAt(0);
 		else if(URL.class.isAssignableFrom(c))try {return new URL(
-			                                                         "file:" +TL.tl().h.getServletContext().getContextPath()+'/'+s);}
+																	"file:" +TL.tl().h.getServletContext().getContextPath()+'/'+s);}
 		catch (Exception ex) {TL.tl().error(ex,Name,".Util.parse:URL:p=",s," ,c=",c);}
 			boolean b=c==null?false:c.isEnum();
 			if(!b){Class ct=c.getEnclosingClass();b=ct==null?false:ct.isEnum();if(b)c=ct;}
@@ -927,14 +977,14 @@ public class H{
 	/**set an application-scope attribute*/
 	public void a(Object n,Object v){getServletContext().setAttribute(String.valueOf(n),v);}
 	/**get variable, a variable is considered
-	 1: a parameter from the http request
-	 2: if the request-parameter is not null then set it in the session with the attribute-name pn
-	 3: if the request-parameter is null then get pn attribute from the session
-	 4: if both the request-parameter and the session attribute are null then return null
-	 @parameters String pn Parameter/attribute Name
-	 HttpSession ss the session to get/set the attribute
-	 HttpServletRequest rq the http-request to get the parameter from.
-	 @return variable value.*/
+	1: a parameter from the http request
+	2: if the request-parameter is not null then set it in the session with the attribute-name pn
+	3: if the request-parameter is null then get pn attribute from the session
+	4: if both the request-parameter and the session attribute are null then return null
+	@parameters String pn Parameter/attribute Name
+	HttpSession ss the session to get/set the attribute
+	HttpServletRequest rq the http-request to get the parameter from.
+	@return variable value.*/
 	public Object var(String pn)
 	{HttpSession ss=getSession();
 		Object r=null;try{Object sVal=ss.getAttribute(pn);String reqv=req(pn);
@@ -1035,8 +1085,8 @@ public String logo(Object...a){String s=null;
 			s=o.toStrin_();
 			h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
 			if(h.logOut){out.flush().
-				                        w(h.comments[0]//"\n/*"
-				                        ).w(s).w(h.comments[1]//"*/\n"
+										w(h.comments[0]//"\n/*"
+										).w(s).w(h.comments[1]//"*/\n"
 			);}}catch(Exception ex){ex.printStackTrace();}return s;}
 /**calls the servlet log method*/
 public void log(Object...s){logA(s);}
@@ -1053,7 +1103,7 @@ public void error(Throwable x,Object...p){try{
 	h.getServletContext().log(s);
 	if(h.logOut)out.w(h.comments[0]//"\n/*
 	).w("error:").w(s.replaceAll("<", "&lt;"))
-		            .w("\n---\n").o(x).w(h.comments[1] );
+					.w("\n---\n").o(x).w(h.comments[1] );
 	if(x!=null)x.printStackTrace();}
 catch(Exception ex){ex.printStackTrace();}}
 
@@ -1068,9 +1118,9 @@ Connection dbc()throws SQLException {
 
 public static class DB {
 	/**returns a jdbc pooled Connection.
-	 uses MysqlConnectionPoolDataSource with a database from the enum context.DB.url.str,
-	 sets the pool as an application-scope attribute named context.DB.pool.str
-	 when first time called, all next calls uses this context.DB.pool.str*/
+	uses MysqlConnectionPoolDataSource with a database from the enum context.DB.url.str,
+	sets the pool as an application-scope attribute named context.DB.pool.str
+	when first time called, all next calls uses this context.DB.pool.str*/
 	public static synchronized Connection c()throws SQLException {
 		TL t=tl();
 		Object[]p=null,a=stack(t,null);//Object[])t.s(context.DB.reqCon.str);
@@ -1104,10 +1154,10 @@ public static class DB {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			                          ("jdbc:mysql://"+context.DB.server.str
-				                           +"/"+context.DB.dbName.str
-				                          ,context.DB.un.str,context.DB.pw.str
-			                          );Object[]b={r,null};
+									("jdbc:mysql://"+context.DB.server.str
+										+"/"+context.DB.dbName.str
+										,context.DB.un.str,context.DB.pw.str
+									);Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){t.error(e,Name,".DB.DriverManager:");}
 		return r;}
@@ -1208,29 +1258,29 @@ public static class DB {
 		}catch(Exception e){e.printStackTrace();}
 	}
 	/**returns a string or null, which is the result of executing sql,
-	 calls dpR() to set the variable-length-arguments parameters-p*/
+	calls dpR() to set the variable-length-arguments parameters-p*/
 	public static String q1str(String sql,Object...p)throws SQLException{return q1Str(sql,p);}
 	public static String q1Str(String sql,Object[]p)throws SQLException
 	{String r=null;ResultSet s=null;try{s=R(sql,p);r=s.next()?s.getString(1):null;}finally{close(s);}return r;}//CHANGED:2015.10.23.16.06:closeRS ; CHANGED:2011.01.24.04.07 ADDED close(s,dbc());
 	public static String newUuid()throws SQLException{return q1str("select uuid();");}
 	/**returns an java obj, which the result of executing sql,
-	 calls dpR() to set the variable-length-arguments parameters-p*/
+	calls dpR() to set the variable-length-arguments parameters-p*/
 	public static Object q1obj(String sql,Object...p)throws SQLException{return q1Obj(sql,p);}
 	public static Object q1Obj(String sql,Object[]p)throws SQLException {
 		ResultSet s=null;try{s=R(sql,p);return s.next()?s.getObject(1):null;}finally{close(s);}}
 	public static <T>T q1(String sql,Class<T>t,Object[]p)throws SQLException {
 		ResultSet s=null;try{s=R(sql,p);return s.next()?s.getObject(1,t):null;}finally{close(s);}}
 	/**returns an integer or df, which the result of executing sql,
-	 calls dpR() to set the variable-length-arguments parameters-p*/
+	calls dpR() to set the variable-length-arguments parameters-p*/
 	public static int q1int(String sql,int df,Object...p)throws SQLException{return q1Int(sql,df,p);}
 	public static int q1Int(String sql,int df,Object[]p)throws SQLException
 	{ResultSet s=null;try{s=R(sql,p);return s.next()?s.getInt(1):df;}finally{close(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
 	/**returns a double or df, which is the result of executing sql,
-	 calls dpR() to set the variable-length-arguments parameters-p*/
+	calls dpR() to set the variable-length-arguments parameters-p*/
 	public static double q1dbl(String sql,double df,Object...p)throws SQLException
 	{ResultSet s=null;try{s=R(sql,p);return s.next()?s.getDouble(1):df;}finally{close(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
 	/**returns as an array of rows of arrays of columns of values of the results of the sql
-	 , calls dbL() setting the variable-length-arguments values parameters-p*/
+	, calls dbL() setting the variable-length-arguments values parameters-p*/
 	public static Object[][]q(String sql,Object...p)throws SQLException{return Q(sql,p);}
 	public static Object[][]Q(String sql,Object[]p)throws SQLException
 	{List<Object[]>r=L(sql,p);Object b[][]=new Object[r.size()][];r.toArray(b);r.clear();return b;}
@@ -1239,8 +1289,8 @@ public static class DB {
 	/**calls L()*/
 	public static List<Object[]> l(String sql,Object...p)throws SQLException{return L(sql,p);}
 	/**returns a new linkedList of the rows of the results of the sql
-	 ,each row/element is an Object[] of the columns
-	 ,calls dbR() and dbcc() and dbclose(ResultSet,TL.dbc())*/
+	,each row/element is an Object[] of the columns
+	,calls dbR() and dbcc() and dbclose(ResultSet,TL.dbc())*/
 	public static List<Object[]> L(String sql,Object[]p)throws SQLException {
 		TL t=tl();ResultSet s=null;List<Object[]> r=null;try{s=R(sql,p);Object[]a;r=new LinkedList<Object[]>();
 			int cc=cc(s);while(s.next()){r.add(a=new Object[cc]);
@@ -1266,7 +1316,7 @@ public static class DB {
 		}finally
 		{close(s,tl);
 			if(tl.h.logOut)try{tl.log(tl.jo().w(Name).w(".DB.Lt:sql=")
-				                          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+										.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 			catch(IOException x){tl.error(x,Name,".DB.Lt:",sql);}
 		}
 	}
@@ -1276,7 +1326,7 @@ public static class DB {
 		while(s.next())r.add(s.getObject(1));return r;}
 	finally{TL t=tl();close(s,t);if(t.h.logOut)
 		try{t.log(t.jo().w(Name).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-			          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){t.error(x,Name,".DB.q1colList:",sql);}}}
+					.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){t.error(x,Name,".DB.q1colList:",sql);}}}
 	public static <T>List<T> q1colTList(String sql,Class<T>t,Object...p)throws SQLException
 	{ResultSet s=null;List<T> r=null;try{s=R(sql,p);r=new LinkedList<T>();//Class<T>t=null;
 		while(s.next())r.add(
@@ -1285,13 +1335,13 @@ public static class DB {
 		);return r;}
 	finally{TL tl=tl();close(s,tl);if(tl.h.logOut)
 		try{tl.log(tl.jo().w(Name).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-			           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,Name,".DB.q1colList:",sql);}}}
+					.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){tl.error(x,Name,".DB.q1colList:",sql);}}}
 	public static Object[] q1col(String sql,Object...p)throws SQLException
 	{List<Object> l=q1colList(sql,p);Object r[]=new Object[l.size()];l.toArray(r);l.clear();return r;}
 	public static <T>T[] q1colT(String sql,Class<T>t,Object...p)throws SQLException
 	{List<T> l=q1colTList(sql,t,p);T[]r=(T[]) java.lang.reflect.Array.newInstance(t,l.size());l.toArray(r);l.clear();return r;}
 	/**returns a row of columns of the result of sql
-	 ,calls dbR(),dbcc(),and dbclose(ResultSet,TL.dbc())*/
+	,calls dbR(),dbcc(),and dbclose(ResultSet,TL.dbc())*/
 	public static Object[] q1row(String sql,Object...p)throws SQLException{return q1Row(sql,p);}
 	public static Object[] q1Row(String sql,Object[]p)throws SQLException
 	{ResultSet s=null;try{s=R(sql,p);Object[]a=null;int cc=cc(s);if(s.next())
@@ -1299,8 +1349,8 @@ public static class DB {
 	catch(Exception ex){tl().error(ex,Name,".DB.q1Row:",sql);a[i]=s.getString(i+1);}}
 		return a;}finally{close(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
 	/**returns the result of (e.g. insert/update/delete) sql-statement
-	 ,calls dbP() setting the variable-length-arguments values parameters-p
-	 ,closes the preparedStatement*/
+	,calls dbP() setting the variable-length-arguments values parameters-p
+	,closes the preparedStatement*/
 	public static int x(String sql,Object...p)throws SQLException{return X(sql,p);}
 	public static int X(String sql,Object[]p)throws SQLException {
 		int r=-1;try{PreparedStatement s=P(sql,p,false);r=s.executeUpdate();s.close();return r;}
@@ -1321,7 +1371,7 @@ public static class DB {
 		{close(s,tl);
 			if(tl.h.logOut)try{
 				tl.log(tl.jo().w(Name).w(".DB.L:q2json=")
-					       .o(sql).w(",prms=").o(p).toStrin_());
+						.o(sql).w(",prms=").o(p).toStrin_());
 			}catch(IOException x){tl.error(x,Name,".DB.q1json:",sql);}
 		}
 	}
@@ -1407,7 +1457,7 @@ public static class DB {
 			o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
 			for(CI f:a)
 			{	o.w(',').oStr(f.getName(),i2).w(':')
-					 .o(v(f),ind,o.comment?path+'.'+f.getName():path);
+					.o(v(f),ind,o.comment?path+'.'+f.getName():path);
 				if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
 			}
 			if(closeBrace){
@@ -1503,14 +1553,14 @@ public static class DB {
 		public @interface F{	boolean prmPw() default false;boolean group() default false;boolean max() default false;boolean json() default false; }
 
 		/**Interface for enum-items from different forms and sql-tables ,
-		 * the enum items represent a reference Column Fields for identifing the column and selection.*/
+		* the enum items represent a reference Column Fields for identifing the column and selection.*/
 		public interface CI{public Field f();public String getName();public Class getType();}//interface I
 
 //}//public abstract static class Form
 
 		/**Sql-Column Interface, for enum -items that represent columns in sql-tables
-		 * the purpose of creating this interface is to centerlize
-		 * the definition of the names of columns in java source code*/
+		* the purpose of creating this interface is to centerlize
+		* the definition of the names of columns in java source code*/
 		//public interface CI extends FI{}//interface CI//			public String prefix();public String suffix();
 
 		public static CI[]cols(CI...p){return p;}
@@ -1557,23 +1607,23 @@ public static class DB {
 				Co.generate(sql,orderBy);}
 			return sql.toString();}
 		/** returns a list of 3 lists,
-		 * the 1st is a list for the db-table columns-CI
-		 * the 2nd is a list for the db-table-key-indices
-		 * the 3rd is a list for row insertion
-		 *
-		 * the 1st list, the definition of the column is a string
-		 * , e.i. varchar(255) not null
-		 * or e.i. int(18) primary key auto_increment not null
-		 * the 2nd list of the db-table key-indices(optional)
-		 * each dbt-key-index can be a CI or a list , if a list
-		 * each item has to be a List
-		 * ,can start with a prefix, e.i. unique , or key`ix1`
-		 * , the items of this list should be a CI
-		 * ,	or the item can be a list that has as the 1st item the CI
-		 * and the 2nd item the length of the index
-		 * the third list is optional, for each item in this list
-		 * is a list of values to be inserted into the created table
-		 */
+		* the 1st is a list for the db-table columns-CI
+		* the 2nd is a list for the db-table-key-indices
+		* the 3rd is a list for row insertion
+		*
+		* the 1st list, the definition of the column is a string
+		* , e.i. varchar(255) not null
+		* or e.i. int(18) primary key auto_increment not null
+		* the 2nd list of the db-table key-indices(optional)
+		* each dbt-key-index can be a CI or a list , if a list
+		* each item has to be a List
+		* ,can start with a prefix, e.i. unique , or key`ix1`
+		* , the items of this list should be a CI
+		* ,	or the item can be a list that has as the 1st item the CI
+		* and the 2nd item the length of the index
+		* the third list is optional, for each item in this list
+		* is a list of values to be inserted into the created table
+		*/
 		public abstract List creationDBTIndices(TL tl);
 		public void checkDBTCreation(TL tl){
 			String dtn=getName();Object o=tl.h.a(Name+":db:show tables");
@@ -1690,9 +1740,9 @@ public static class DB {
 			{String j=t.jo().clrSW().o(cv).toString();cv=j;}
 			catch (IOException e) {t.error(e,Name,".DB.Tbl.save(CI:",c,"):");}
 			try{DB.x("insert into `"+getName()+"` (`"+pkc+
-				         "`,`"+c+"`) values(?"//+Co.m(pkc).txt
-				         +",?"//+Co.m(c).txt
-				         +")",pkv,cv);
+						"`,`"+c+"`) values(?"//+Co.m(pkc).txt
+						+",?"//+Co.m(c).txt
+						+")",pkv,cv);
 				//Integer k=(Integer)pkv;
 				//TL.DB.Tbl.Log.log( TL.DB.Tbl.Log.Entity.valueOf(getName()), k, TL.DB.Tbl.Log.Act.Update, TL.Util.mapCreate(c,v(c)) );
 			}catch(Exception x){tl().error(x
@@ -1743,9 +1793,9 @@ public static class DB {
 			//log(TL.DB.Tbl.Log.Act.Delete);
 			return x;}
 		/**retrieve from the db table all the rows that match
-		 * the conditions in < where > , create an iterator
-		 * , e.g.<code>for(Tbl row:query(
-		 * 		Tbl.where( CI , < val > ) ))</code>*/
+		* the conditions in < where > , create an iterator
+		* , e.g.<code>for(Tbl row:query(
+		* 		Tbl.where( CI , < val > ) ))</code>*/
 		public Itrtr query(Object[]where){
 			Itrtr r=new Itrtr(where);
 			return r;}
@@ -1956,8 +2006,8 @@ public static class Json{
 			else if(a instanceof Cookie )oCookie((Cookie)a,ind,path);
 			else if(a instanceof java.util.UUID)w("\"").p(a.toString()).w(c?"\"/*uuid*/":"\"");
 			else{w("{\"class\":").oStr(a.getClass().getName(),ind)
-				     .w(",\"str\":").oStr(String.valueOf(a),ind)
-				     .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
+					.w(",\"str\":").oStr(String.valueOf(a),ind)
+					.w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
 				if(c)w("}//Object&cachePath=\"").p(path).w("\"\n").p(ind);
 				else w("}");}return this;}
 
@@ -2038,11 +2088,11 @@ public static class Json{
 			while(e.hasNext()){k=e.next();v=o.get(k);w(",");
 				o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 			if(c) w("}//")
-				      .p(o.getClass().getName())
-				      .w("&cachePath=\"")
-				      .p(path)
-				      .w("\"\n")
-				      .p(ind);else w("}");
+					.p(o.getClass().getName())
+					.w("&cachePath=\"")
+					.p(path)
+					.w("\"\n")
+					.p(ind);else w("}");
 			return this;}
 		public Output oReq(HttpServletRequest r,String ind,String path)throws IOException
 		{final boolean c=comment;try{boolean comma=false,c2;//,d[]
@@ -2126,15 +2176,15 @@ public static class Json{
 			return this;}
 		public Output oCookie(Cookie y,String ind,String path)throws IOException
 		{final boolean c=comment;try{(c?w("{//")
-			                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-			                             .w("\"Comment\":").o(y.getComment())
-			                             .w(",\"Domain\":").o(y.getDomain())
-			                             .w(",\"MaxAge\":").p(y.getMaxAge())
-			                             .w(",\"Name\":").o(y.getName())
-			                             .w(",\"Path\":").o(y.getPath())
-			                             .w(",\"Secure\":").p(y.getSecure())
-			                             .w(",\"Version\":").p(y.getVersion())
-			                             .w(",\"Value\":").o(y.getValue());
+											.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+										.w("\"Comment\":").o(y.getComment())
+										.w(",\"Domain\":").o(y.getDomain())
+										.w(",\"MaxAge\":").p(y.getMaxAge())
+										.w(",\"Name\":").o(y.getName())
+										.w(",\"Path\":").o(y.getPath())
+										.w(",\"Secure\":").p(y.getSecure())
+										.w(",\"Version\":").p(y.getVersion())
+										.w(",\"Value\":").o(y.getValue());
 		}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
@@ -2164,9 +2214,9 @@ public static class Json{
 
 		Output oSC(ServletContext y,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-			                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-			                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-			                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+																.w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+																.w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+																.w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 			if(c)
 				w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("}");
@@ -2215,7 +2265,7 @@ public static class Json{
 					.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
 			}//for i<=cc
 			if(c)w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
-				     ;else w("]");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSetMetaData:");}return this;}
+					;else w("]");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSetMetaData:");}return this;}
 		Output clrSW(){if(w instanceof StringWriter){((StringWriter)w).getBuffer().setLength(0);}return this;}
 		Output flush() throws IOException{w.flush();return this;}
 	} //class Output
@@ -2292,11 +2342,11 @@ public static class Json{
 						r=new Date(((Number)r).longValue());}
 					else r=m;break;
 				case '|':/**raw text , using Designated-Boundary-Text (DBT), the Designated-Boundary-Text may have a length of zero or one or more
-				 //|<Designated-Boundary-Text ,ending with | bar><then raw-text, until the same pattern repeats which is |<Designated-Boundary-Text>|
-				 //e.g. ||text maybe containing newlines ,and/or backslashes ,and/or a single hash  ,and/or single-quotation ,and/or double-quotation, and/or back-tic||
-				 //but in case the text(before-encoding) has two-consecutive-bar then the DBT length has to be longer than zero
-				 //e.g. |-| I'm raw text with two consecutive bars ||, the end|-|
-				 //or instead of a single dash, any specified text as Designated-Boundary-Text, then bar*/
+				//|<Designated-Boundary-Text ,ending with | bar><then raw-text, until the same pattern repeats which is |<Designated-Boundary-Text>|
+				//e.g. ||text maybe containing newlines ,and/or backslashes ,and/or a single hash  ,and/or single-quotation ,and/or double-quotation, and/or back-tic||
+				//but in case the text(before-encoding) has two-consecutive-bar then the DBT length has to be longer than zero
+				//e.g. |-| I'm raw text with two consecutive bars ||, the end|-|
+				//or instead of a single dash, any specified text as Designated-Boundary-Text, then bar*/
 					char h=c,z='\0';bNxt();
 					while(c!=z && c!=h )
 						bNxt();
@@ -2355,7 +2405,7 @@ public static class Json{
 				default:r=extractIdentifier();
 			}skipRWS();//skipWhiteSpace();
 			if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-				                    ||(cache!=null&&comments.startsWith("cacheReference"))))
+									||(cache!=null&&comments.startsWith("cacheReference"))))
 			{	if(i!=-1)
 			{	if(cache==null)
 				cache=new HashMap<String,Object>();
@@ -2374,15 +2424,15 @@ public static class Json{
 			{case 'n':buff('\n');break;case 't':buff('\t');break;
 				case 'r':buff('\r');break;case '0':buff('\0');break;
 				case 'x':case 'X':buff( (char)
-					                        java.lang.Integer.parseInt(
-						                        next(2)//p.substring(offset,offset+2)
-						                        ,16));nxt();//next();
+											java.lang.Integer.parseInt(
+												next(2)//p.substring(offset,offset+2)
+												,16));nxt();//next();
 				break;
 				case 'u':
 				case 'U':buff( (char)
-					               java.lang.Integer.parseInt(
-						               next(4)//p.substring(offset,offset+4)
-						               ,16));//next();next();next();//next();
+								java.lang.Integer.parseInt(
+									next(4)//p.substring(offset,offset+4)
+									,16));//next();next();next();//next();
 					break;default:if(c!='\0')buff(c);}}
 			else buff(c);
 				nxt();b=c!=first&&c!='\0';
@@ -2395,16 +2445,16 @@ public static class Json{
 			while(c!='\0'&&Character.isUnicodeIdentifierPart(c))bNxt();
 			String r=consume();
 			return "true".equals(r)?new Boolean(true)
-				       :"false".equals(r)?new Boolean(false)
-					        :"null".equals(r)?Literal.Null:"undefined".equals(r)?Literal.Undefined:r;}
+				:"false".equals(r)?new Boolean(false)
+				:"null".equals(r)?Literal.Null:"undefined".equals(r)?Literal.Undefined:r;}
 
 		public Object extractDigits(){
 			if(c=='0')//&&offset+1<len)
 			{char c2=peek();if(c2=='x'||c2=='X')
 			{nxt();nxt();
 				while((c>='A'&&c<='F')
-					      ||(c>='a'&&c<='f')
-					      ||Character.isDigit(c))bNxt();
+						||(c>='a'&&c<='f')
+						||Character.isDigit(c))bNxt();
 				String s=consume();
 				try{return Long.parseLong(s,16);}
 				catch(Exception ex){}return s;}
@@ -2555,8 +2605,8 @@ public static class Json{
 						lookahead.append(c);
 					}
 				}while( (b=(c==h ||
-					            Character.toUpperCase(c)==
-						            Character.toUpperCase(h))
+								Character.toUpperCase(c)==
+									Character.toUpperCase(h))
 				)&& (++i)<pn );
 			return b;}
 
