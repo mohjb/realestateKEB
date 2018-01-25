@@ -126,13 +126,33 @@ public static class App {
 	static{staticInit();}
 
 	/**
+	 * in JsonStorage-table the main app-entery has key="app",
+	 * and in this entry there is a javaObjectStream of a Map
+	 * and in this map there are the keys: serverFiles,clientFiles,dbts
+	 * with clientFiles is associated a List, having maps, each map
+	 * may have key "content" text , and , the map may have key "include" list
+	 * */
+	@Op public void clientOutput(@Op(prmName = "app")String app,@Op(prmName = "file")String file){
+
+	}
+
+	/**
+	 * in JsonStorage-table the main app-entery has key="app",
+	 * and in this entry there is a javaObjectStream of a Map
+	 * and in this map there are the keys: serverFiles,clientFiles,dbts
+	 * with serverFiles is associated a List, having maps, each map represents a file&content like a jsp-include
+	 * */
+	@Op public void generateJsp(@Op(prmName = "app")String app,@Op(prmName = "url")String url){}
+
+	/**
 	*	db-tbl ORM wrapper
 	*/
 	public static class JsonStorage extends TL.DB.Tbl</**primary key type*/String> {
 		public static final String dbtName="JsonStorage";
 		@Override public String getName(){return dbtName;}
 		@Override public CI pkc(){return C.key;}
-		@F public String app,key;@F public Object value;String json;
+		public static enum ContentType{txt,jsonObj,jsonArray,key,num,real,date,b64,javaObjectStream;}
+		@F public String app,key;@F ContentType typ;@F public Object value;
 
 		@Override public String pkv(){return key;}
 		@Override public String pkv(String v){return key=v;}
@@ -146,8 +166,10 @@ public static class App {
 
 		@Override public List creationDBTIndices(TL tl){
 			return TL.Util.lst(TL.Util.lst(
-				"varchar(255) PRIMARY KEY NOT NULL DEFAULT '-' "//key
-				,"text NOT NULL DEFAULT '-' "));//value
+				"varchar(255) PRIMARY KEY NOT NULL DEFAULT '-' "//app
+				,"varchar(255) PRIMARY KEY NOT NULL DEFAULT '-' "//key
+				,"enum('txt','jsonObj','jsonArray','key','num','real','date','b64','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
+					,"blob"));//value
 			/*
 			CREATE TABLE `JsonStorage` (
 			`key` varchar(255) PRIMARY KEY NOT NULL DEFAULT '-',
@@ -450,8 +472,7 @@ public static Map asMaps(Map<C,Map<String,String>>a){
 
 				result = databaseMetaData.getImportedKeys(null,null, m.dbtName );
 				while ( result.next() ){
-					if(m.fk==null)
-						m.fk=new HashMap<C,Map<String,String>>(  );
+					//if(m.fk==null)m.fk=new HashMap<C,Map<String,String>>(  );
 					String fk=result.getString( "FKCOLUMN_NAME" )
 						,tbl=result.getString( "PKTABLE_NAME" )
 						,clm=result.getString( "PKCOLUMN_NAME" );
@@ -459,7 +480,8 @@ public static Map asMaps(Map<C,Map<String,String>>a){
 					x.put( "table",tbl );
 					x.put( "column",clm );
 					x.put( "fk",fk );
-					m.fk.put( m.col(fk),x);}
+					l.add( fk );//m.fk.put( m.col(fk),x);
+					}
 				result.close();
 			}catch ( SQLException e ) {
 				TL.tl().error( e,"MetaTbl[]initFromDb",m ); }
@@ -485,7 +507,7 @@ public static Map asMaps(Map<C,Map<String,String>>a){
 		return TL.Util.mapCreate( "dbtName",dbtName,"dbName",dbtName
 		, "cols",asListOfMaps( cols )
 		, "pk", asListOfNames( pkc)
-		, "fk", asMaps( fk)
+		//, "fk", asMaps( fk)
 		);}
 
 	@Override public TL.DB.Tbl fromMap(Map m){
@@ -502,12 +524,12 @@ public static Map asMaps(Map<C,Map<String,String>>a){
 		l=(List)m.get( "pk" );
 		pkc=new C[l.size()];i=-1;
 		for(Object k:l)pkc[++i]=col((String)k);
-		Map x=(Map)m.get( "fk" );
-		fk=new HashMap<>(  );
+		/*Map x=(Map)m.get( "fk" );
+		//fk=new HashMap<>(  );
 		for(Object o:x.keySet()){
 			C c=col( (String)o );
-			fk.put( c,(Map)x.get( o ) );
-		}
+			//fk.put( c,(Map)x.get( o ) );
+		}*/
 		return this;
 	}
 
