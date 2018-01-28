@@ -85,7 +85,8 @@ xUrl='index.jsp';//2017.11.jsp
 			try{s=JSON.parse(s)
 			}catch(ex){
 				console.log('app.lsLoad:json-parse:error',ex)}
-		p.lsInitEntitiesCache(p.ls=s)
+		if(s)
+			p.lsInitEntitiesCache(p.ls=s)
 		if(forgein!=undefined)
 			p.lsSave(typeof(forgein)=='string'
 				?forgein
@@ -223,7 +224,7 @@ xUrl='index.jsp';//2017.11.jsp
 			cs('.onUsrF').display=app.usr.f?'':'none';//did('logoNotLog').style.display='none';did('logoLoggedin').style.display='grid'
 			location.hash='#!/main';//$state.go('main')
 		}
-		else $scope.msg='invalid login \n,'+(new Date)
+		else alert($scope.msg='invalid login \n,'+(new Date))
 	}
 	if(app.usr)
 		location.hash='#!/main'
@@ -237,8 +238,16 @@ xUrl='index.jsp';//2017.11.jsp
 	if(app){
 		$scope.app=app
 		$scope.dt=dt
-		
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , app=',app )
+		$scope.onNew=function onNew(ent){
+			var nm=prompt("Please enter a new for the new "+ent);
+			if(nm ){var tr={App:"app",Apps:"app",app:"app"
+					,fltr
+				};
+				if( app.ls.apps[nm])return alert('app-name('+nm+') already used');
+				app.ls.apps[nm]={title:nm}
+			}
+		}
 	}else{
 		$scope.usr=null;
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , no app')
