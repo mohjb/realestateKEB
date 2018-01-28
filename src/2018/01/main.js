@@ -61,11 +61,29 @@ xUrl='index.jsp';//2017.11.jsp
 					,firstName:'Secratery',lastName:'x',email:'bohamaem@gmail.com'
 					,level:'user',notes:'',created:'2017/07/06T16:00',f:0
 					,lastModified:'2017/07/06T21:05'}}
-			,dbs:{'test':{}},
+				,apps:[]
+				
+			,dbs:{'test':{tbls:[]}},
 		}// ls // localStorage
 		p.lsInitEntitiesCache(p.ls)
-	};p.lsReset();
-	
+	};
+	p.selected={app:0,state:0,controller:0,controllerMember:0,template:0
+		,directive:0,filter:0,service:0,resource:0,filter:0,db:0,dbt:0
+		,asset:0,jspInclude:0,jspOpMethod:0,jspTbl:0}
+	p.lsReset();
+	p.newApp=function(appName){
+		var r=p.selected.app={title:appName,states:[],controllers:[],templates
+			,directives:[],filters:[],services:[],resources:[],forms:[]
+			
+			//next are server-side
+			,assests:[],jspInclude:[],jspOpMethod:[],jspTbl:[]}
+		p.ls.apps.push(r);return r;}
+	p.newEnt=function(ent,nm,ap){
+		var r={title:nm,0:0}
+		ap[ent].push(r);
+		p.selected[ent]=r;
+		return r;
+		}
 	p.logout=function appLogout(state){p.usr=0;
 		cs('.onUsrF').display='none'
 		cs('.onLoggedIn').display='none'
@@ -96,9 +114,7 @@ xUrl='index.jsp';//2017.11.jsp
 		if(x && x.entityId){
 			var d=new Date(),n=d.getTime();
 			x.lastModified=n
-			console.log('app.chng',x,arguments)
-			if(x.entityId.startsWith('cntrct'))
-				p.compute(x);
+			console.log('app.chng',x,arguments)//if entityId.startsWith('') ) p.compute( )
 		}
 	}
 	p.blur=function(x){
@@ -241,11 +257,10 @@ xUrl='index.jsp';//2017.11.jsp
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , app=',app )
 		$scope.onNew=function onNew(ent){
 			var nm=prompt("Please enter a new for the new "+ent);
-			if(nm ){var tr={App:"app",Apps:"app",app:"app"
-					,fltr
-				};
+			if(nm ){var tr={App:"app",Apps:"app",app:"app",fltr:'filter'};
 				if( app.ls.apps[nm])return alert('app-name('+nm+') already used');
-				app.ls.apps[nm]={title:nm}
+				if(ent=='app')app.ls.apps[nm]=p.newApp(nm);
+				else p.newEnt(ent,nm,p.selected.app)
 			}
 		}
 	}else{
