@@ -37,12 +37,24 @@
 <templates>
 
 <template id="template.main" >
+	<a ng-click="app.logout()" href="#!/login)" class="menuItem bvl"><div class="menuItem">Logout</div></a> 
+	<h1>Client-side</h1>
+	<h2>States</h2><select ng-model="app.selected.states" ng-options="x.title for x in app.selected.app.states"></select><input type="button" value="new" ng-click="onNew('state')"/><hr/>
+	<h2>controllers</h2><select ng-model="app.selected.controller" ng-options="x.title for x in app.selected.app.controllers"></select><input type="button" value="new" ng-click="onNew('cntr')"/><hr/>
+	<h2>controller-members(functions/objects)</h2><select ng-model="app.selected.controllerMember" ng-options="x.title for x in app.selected.controller"></select><input type="button" value="new" ng-click="onNew('CntrlMmbr')"/><hr/>
+	<h2>templates</h2><select ng-model="app.selected.template" ng-options="x.title for x in app.selected.app.templates"></select><input type="button" value="new" ng-click="onNew('Tmplt')"/><hr/>
+	<h2>directives</h2><select ng-model="app.selected.directive" ng-options="x.title for x in app.selected.app.directives"></select><input type="button" value="new" ng-click="onNew('Drctv')"/><hr/>
+	<h2>filters</h2><select ng-model="app.selected.filter" ng-options="x.title for x in app.selected.app.filters"></select><input type="button" value="new" ng-click="onNew('Fltr')"/><hr/>
+	<h2>Form-template</h2><select ng-model="app.selected.filter" ng-options="x.title for x in app.selected.app.filters"></select><input type="button" value="new" ng-click="onNew('form')"/>new-entity-dbBased , newEntity-JsonStorageBased , <hr/>
+	<h1>Server-side</h1>
+	<h2>apps</h2><select ng-model="app.selected.app" ng-options="x.title for x in app.ls.apps"></select><input type="button" value="new" ng-click="onNew('app')"/><hr/>
+	<h2>dbs</h2><select ng-model="app.selected.db" ng-options="x.title for x in app.ls.dbs"></select><input type="button" value="new" ng-click="onNew('db')"/><hr/>
+	<h2>db-tables</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
+	<h2>Asset-file</h2><select ng-model="app.selected.db" ng-options="x.title for x in app.ls.dbs"></select><input type="button" value="new" ng-click="onNew('db')"/><hr/>
+	<h2>JspInclude/declaration</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
+	<h2>JspInclude/JspOpMethod</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
+	<h2>JspInclude/TL.DB.Tbl sub-class</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
 
-	<div class="tbl" style="grid-template-columns: repeat(3,1fr)">
-		<div class="menuItem"><h2 class="ghost st3d">Contracts Main Menu</h2></div>
-		<a ng-click="app.logout()" href="#!/login)" class="menuItem bvl"><div class="menuItem">Logout</div></a> 
-		<a ng-click="cntrcts.push(app.cntrct=app.newCntrct())" href="#!/cntrct" class="menuItem bvl"><div class="menuItem">New Contract</div></a>
-	</div>
 <hr/>
 	
 	
