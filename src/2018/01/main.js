@@ -72,12 +72,13 @@ xUrl='index.jsp';//2017.11.jsp
 		,asset:0,jspInclude:0,jspOpMethod:0,jspTbl:0}
 	p.lsReset();
 	p.newApp=function(appName){
-		var r=p.selected.app={title:appName,states:[],controllers:[],templates
+		var r=p.selected.app={title:appName,states:[],controllers:[],templates:[]
 			,directives:[],filters:[],services:[],resources:[],forms:[]
 			
 			//next are server-side
 			,assests:[],jspInclude:[],jspOpMethod:[],jspTbl:[]}
-		p.ls.apps.push(r);return r;}
+			//$http.post(op:'JsonStorage.set',app:appName,key:'app',var:r)//newApp
+		return p.ls.apps[appName]=r;}
 	p.newEnt=function(ent,nm,ap){
 		var r={title:nm,0:0}
 		ap[ent].push(r);
@@ -254,14 +255,15 @@ xUrl='index.jsp';//2017.11.jsp
 		$scope.app=app
 		$scope.dt=dt
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , app=',app )
-		$scope.onNew=function onNew(ent){
+		$scope.onNew=function onNew(ent){try{
 			var nm=prompt("Please enter a new for the new "+ent);
 			if(nm ){var tr={App:"app",Apps:"app",app:"app",fltr:'filter'};
 				if( app.ls.apps[nm])return alert('app-name('+nm+') already used');
-				if(ent=='app')app.ls.apps[nm]=app.newApp(nm);
+				if(ent=='app')app.newApp(nm);
 				else app.newEnt(ent,nm,p.selected.app)
-			}
-		}
+			}}catch(ex){
+				console.error(ex);
+				}}
 	}else{
 		$scope.usr=null;
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , no app')
