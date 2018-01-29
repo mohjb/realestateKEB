@@ -37,7 +37,7 @@
 <templates>
 
 <template id="template.main" >
-	<a ng-click="app.logout()" href="#!/login)" class="menuItem bvl"><div class="menuItem">Logout</div></a> 
+	<!--a ng-click="app.logout()" href="#!/login)" class="menuItem bvl"><div class="menuItem">Logout</div></a--> 
 	<h1>Client-side</h1>
 	<h2>States</h2><select ng-model="app.selected.states" ng-options="x.title for x in app.selected.app.states"></select><input type="button" value="new" ng-click="onNew('state')"/><hr/>
 	<h2>controllers</h2><select ng-model="app.selected.controller" ng-options="x.title for x in app.selected.app.controllers"></select><input type="button" value="new" ng-click="onNew('cntr')"/><hr/>
@@ -56,12 +56,8 @@
 	<h2>JspInclude/declaration</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
 	<h2>JspInclude/JspOpMethod</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
 	<h2>JspInclude/TL.DB.Tbl sub-class</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
-
 <hr/>
-
 </template>
-
-
 
 
 <template id="template.login" >
@@ -129,5 +125,5 @@ dbList<select ng-model="selectedDb" ng-options="m for m in dbs "></select>
 
 </template>
 
-</templates><div data-ng-if="loading"><!--Loading...--></div>
+</templates><div ng-if="loading"><!--Loading...--></div>
 </body></html>
