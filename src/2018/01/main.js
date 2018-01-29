@@ -82,8 +82,7 @@ xUrl='index.jsp';//2017.11.jsp
 		var r={title:nm,0:0}
 		ap[ent].push(r);
 		p.selected[ent]=r;
-		return r;
-		}
+		return r;}
 	p.logout=function appLogout(state){p.usr=0;
 		cs('.onUsrF').display='none'
 		cs('.onLoggedIn').display='none'
@@ -259,8 +258,8 @@ xUrl='index.jsp';//2017.11.jsp
 			var nm=prompt("Please enter a new for the new "+ent);
 			if(nm ){var tr={App:"app",Apps:"app",app:"app",fltr:'filter'};
 				if( app.ls.apps[nm])return alert('app-name('+nm+') already used');
-				if(ent=='app')app.ls.apps[nm]=p.newApp(nm);
-				else p.newEnt(ent,nm,p.selected.app)
+				if(ent=='app')app.ls.apps[nm]=app.newApp(nm);
+				else app.newEnt(ent,nm,p.selected.app)
 			}
 		}
 	}else{
