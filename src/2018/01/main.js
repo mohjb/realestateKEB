@@ -256,11 +256,26 @@ xUrl='index.jsp';//2017.11.jsp
 		$scope.dt=dt
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , app=',app )
 		$scope.onNew=function onNew(ent){try{
-			var nm=prompt("Please enter a new for the new "+ent);
+			var r,nm=prompt("Please enter a new for the new "+ent);
 			if(nm ){var tr={App:"app",Apps:"app",app:"app",fltr:'filter'};
 				if( app.ls.apps[nm])return alert('app-name('+nm+') already used');
-				if(ent=='app')app.newApp(nm);
-				else app.newEnt(ent,nm,p.selected.app)
+				if(ent=='app')r=app.newApp(nm);
+				else r=app.newEnt(ent,nm,p.selected.app)
+				var s={op:'JsonStorage.set',app:nm,key:'app',val:r}
+				$http.post(xUrl,s).then(
+				function(response){
+					var x=response.data['return'] 
+					,s=x&&x.content
+					,fn=app.ls.fileName=x.fileName
+					//if(s&&typeof(s)=='string')x.content=s=JSON.parse(x.content)
+					if(s)
+					{	app.lsLoad(s);if(!app.ls.fileName&&fn)
+						app.ls.fileName=fn;}
+					console.log('xlCtrl.loadFile:post:response:',x,s,response,arguments,$scope)
+				},function(response){
+					console.log('xlCtrl.loadFile:post:error:',response,arguments);
+				})//return ;
+				
 			}}catch(ex){
 				console.error(ex);
 				}}
