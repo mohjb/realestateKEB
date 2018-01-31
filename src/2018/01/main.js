@@ -212,8 +212,137 @@ xUrl='index.jsp';//2017.11.jsp
 					,cnn=t.innerHTML;
 					//console.log('config:func3:cntrctsReport',cnn);
 					return cnn;
-				}, 100);}
-		})
+				}, 100);}})
+		.state('dbs',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.dbs'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('uiRouterState',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.uiRouterState'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('templates',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.templates'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('controllers',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.controllers'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('directives',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.directives'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('filters',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.filters'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('services',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.services'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('resources',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.resources'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('forms',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.forms'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('assests',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.assests'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('opMethods',{
+		  url:'/',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.opMethods'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('tlDbTbl',{
+		  url:'/tlDbTbl',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:tlDbTbl');
+			return $timeout(function () 
+				{var x='template.tlDbTbl'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
+		.state('jspDeclarations',{
+		  url:'/jspDeclarations',controller:'Ctrl',
+		templateProvider: function ($timeout, $stateParams) {
+			console.log('config:func2:');
+			return $timeout(function () 
+				{var x='template.jspDeclarations'
+					,t=did(x)
+					,cnn=t.innerHTML;
+					return cnn;
+				}, 100);}})
 })//config
 .controller('loginCtrl',function loginCtrlController($scope,app,md5,$state,$rootScope){
  console.log('app.controller:loginCtrl:($scope'
