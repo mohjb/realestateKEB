@@ -23,8 +23,22 @@
     border-radius: 5px;
     padding: 3px;">
 	<div class="menuItem" style="min-width:300px"><img src="logo.png"></div>
-	<div class="menuItem bvl"><a href="#!/main">apps</a></div>
+	<h1>Server-side</h1>
+	<div class="menuItem bvl"><a href="#!/main">Apps</a></div>
 	<div class="menuItem bvl onUsrF" ><a href="#!/dbs">Databases and Tables</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/assets">Asset-Files</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/opMethods">OpMethods</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/tlDbTbl">TL.DB.Tbl subclasses</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/jspDeclarations">JspDeclarations</a></div>
+</div>
+<div width="100%" style="display:inline-flex ;
+    grid-gap: 3px;
+    grid-auto-rows: minmax(100px,auto);
+    grid-template-columns: repeat({{app.usr.f?6:2}},1fr);
+    background: rgba(240,240,255,.1);
+    border-radius: 5px;
+    padding: 3px;">
+	<hr/><h1>Client-side</h1>	
 	<div class="menuItem bvl onUsrF" ><a href="#!/uiRouterState">State</a></div>
 	<div class="menuItem bvl onUsrF" ><a href="#!/templates">Templates</a></div>
 	<div class="menuItem bvl onUsrF" ><a href="#!/controllers">Controllers/Scopes and Members</a></div>
@@ -32,42 +46,15 @@
 	<div class="menuItem bvl onUsrF" ><a href="#!/filters">Filters</a></div>
 	<div class="menuItem bvl onUsrF" ><a href="#!/services">Services</a></div>
 	<div class="menuItem bvl onUsrF" ><a href="#!/resources">Resources</a></div>
-	<div class="menuItem bvl onUsrF" ><a href="#!/">Forms</a></div>
-	<div class="menuItem bvl onUsrF" ><a href="#!/">Asset-Files</a></div>
-	<div class="menuItem bvl onUsrF" ><a href="#!/">OpMethods</a></div>
-	<div class="menuItem bvl onUsrF" ><a href="#!/tlDbTbl">TL.DB.Tbl subclasses</a></div>
-	<div class="menuItem bvl onUsrF" ><a href="#!/jspDeclarations">JspDeclarations</a></div>
+	<div class="menuItem bvl onUsrF" ><a href="#!/forms">Forms</a></div>
 	<!--div class="menuItem bvl"><a ng-click="app.logout()" href="#!/login">Logout</a></div-->
-</div></span>
+</div>
+</span>
 <div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="app">
 
 <main ui-view></main><sub>, by mohamadjb@gmail.com</sub></div>
 
 <templates>
-
-<template id="template.main" >
-	<!--a ng-click="app.logout()" href="#!/login)" class="menuItem bvl"><div class="menuItem">Logout</div></a--> 
-	<h1>Client-side</h1>
-	<h2>States</h2><select ng-model="app.selected.states" ng-options="x.title for x in app.selected.app.states"></select><input type="button" value="new" ng-click="onNew('state')"/><hr/>
-	<h2>controllers</h2><select ng-model="app.selected.controller" ng-options="x.title for x in app.selected.app.controllers"></select><input type="button" value="new" ng-click="onNew('cntr')"/><hr/>
-	<h2>controller-members(functions/objects)</h2><select ng-model="app.selected.controllerMember" ng-options="x.title for x in app.selected.controller"></select><input type="button" value="new" ng-click="onNew('CntrlMmbr')"/><hr/>
-	<h2>templates</h2><select ng-model="app.selected.template" ng-options="x.title for x in app.selected.app.templates"></select><input type="button" value="new" ng-click="onNew('Tmplt')"/><hr/>
-	<h2>directives</h2><select ng-model="app.selected.directive" ng-options="x.title for x in app.selected.app.directives"></select><input type="button" value="new" ng-click="onNew('Drctv')"/><hr/>
-	<h2>filters</h2><select ng-model="app.selected.filter" ng-options="x.title for x in app.selected.app.filters"></select><input type="button" value="new" ng-click="onNew('Fltr')"/><hr/>
-	<h2>service</h2><select ng-model="app.selected.service" ng-options="x.title for x in app.selected.app.services"></select><input type="button" value="new" ng-click="onNew('service')"/><hr/>
-	<h2>resource</h2><select ng-model="app.selected.resource" ng-options="x.title for x in app.selected.app.resources"></select><input type="button" value="new" ng-click="onNew('resource')"/><hr/>
-	<h2>Form-template</h2><select ng-model="app.selected.filter" ng-options="x.title for x in app.selected.app.forms"></select><input type="button" value="new" ng-click="onNew('form')"/>new-entity-dbBased , newEntity-JsonStorageBased , <hr/>
-	<h1>Server-side</h1>
-	<h2>apps</h2><select ng-model="app.selected.app" ng-options="x.title for x in app.ls.apps"></select><input type="button" value="new" ng-click="onNew('app')"/><hr/>
-	<h2>dbs</h2><select ng-model="app.selected.db" ng-options="x.title for x in app.ls.dbs"></select><input type="button" value="new" ng-click="onNew('db')"/><hr/>
-	<h2>db-tables</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
-	<h2>Asset-file</h2><select ng-model="app.selected.db" ng-options="x.title for x in app.ls.dbs"></select><input type="button" value="new" ng-click="onNew('db')"/><hr/>
-	<h2>JspInclude/declaration</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
-	<h2>JspInclude/JspOpMethod</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
-	<h2>JspInclude/TL.DB.Tbl sub-class</h2><select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select><input type="button" value="new" ng-click="onNew('dbt')"/><hr/>
-<hr/>
-</template>
-
 
 <template id="template.login" >
 	<h2>Login to your account</h2>
@@ -78,6 +65,180 @@
 	</form>
 	{{msg}}
 	<div class="cta"><a href="#"><!--Forgot your password?--></a></div>
+</template>
+
+<template id="template.main" >
+	<a ng-click="app.logout()" href="#!/login)" 
+		class="menuItem bvl"><div class="menuItem">Logout</div></a>
+	<h2>Apps</h2><select ng-model="app.selected.app"
+		ng-change="app.selectedChanged('app')"
+		ng-options="x.title for x in app.ls.apps"></select>
+		<input type="button" value="new" ng-click="onNew('app')"/>
+<hr/>
+<h2 onclick="x=did('jspUrls');s=x.style;s.display=s.display?'':'none'"
+	>Jsp-Urls<sub>(App={{app.selected.app.title}})</sub></h2>
+<div id="jspUrls" style="display:none"><select ng-model="app.selected.JspUrl" 
+		ng-change="app.selectedChanged('JspUrl')"
+		ng-options="x.title for x in app.selected.app.JspUrls"></select>
+		<input type="button" value="new" ng-click="onNew('JspUrl')"/>
+</div>
+<hr/>
+<h2 onclick="x=did('AngularUrl');s=x.style;s.display=s.display?'':'none'"
+	>AngularJsApp-Urls<sub>(App={{app.selected.app.title}})</sub></h2>
+<div id="AngularUrl" style="display:none"><select ng-model="app.selected.AngularUrl" 
+		ng-change="app.selectedChanged('AngularUrl')"
+		ng-options="x.title for x in app.selected.app.AngularUrls"></select>
+		<input type="button" value="new" ng-click="onNew('AngularUrl')"/>
+</div>
+</template>
+
+
+<template id="template.dbs" >
+<h2>Databases-List</h2><select ng-model="app.selected.db" 
+	ng-options="x.title for x in app.ls.dbs"></select>
+<input type="button" value="refresh db-list" ng-click="refreshDbs()"/>
+<input type="button" value="new" ng-click="onNew('db')"/>
+
+<hr/>
+
+<h2>Tables-List</h2>
+<select ng-model="app.selected.dbt" ng-options="x.title for x in app.selected.db.tbls"></select>
+<input type="button" value="refresh db-tables-list" ng-click="refreshDbTbls()"/>
+<input type="button" value="new" ng-click="onNew('dbt')"/>
+<hr/>
+
+<input type="button" value="refresh db-tables-list" ng-click="refreshDbTblCols()"/>
+Table-columns-List<select ng-model="app.selected.tbl_column" 
+	ng-options="m for m in app.selected.tbl.columns "></select>
+
+<select ng-init="rowsPerPage=[4,10,20,40,80,100,150,200,400,800]" 
+	ng-model="app.selected.tblRowsPerPage" 
+	ng-options="m for m in app.selected.tbl.columns "></select>
+Table-data-rows<table border=1>
+<tr><th ng-repeat="col in app.selected.tbl.cols">{{col.title}}</th></tr>
+<tr ng-repeat="row in app.selected.tbl.rows"><td 
+	ng-repeat="col in app.selected.tbl.cols">{{row[col.title]}}</td></tr>
+</table>
+</template>
+
+
+<template id="template.uiRouterState" >
+<h2>UI-Router-States-List<sub>(App={{app.selected.app.title}},Url={{app.selected.AngularUrl.title}})</sub></h2>
+<select ng-model="app.selected.state" 
+	ng-options="x.title for x in app.selected.app.states"></select>
+<input type="button" value="refresh UI-Router-State-list" ng-click="refreshUiRouterStates()"/>
+<input type="button" value="new" ng-click="onNew('state')"/>
+</template>
+
+
+<template id="template.templates" >
+<h2>Templates-List<sub>(App={{app.selected.app.title}},Url={{app.selected.AngularUrl.title}})</sub></h2><select 
+	ng-model="app.selected.template" 
+	ng-options="x.title for x in app.selected.app.templates"></select>
+<input type="button" value="new" ng-click="onNew('template')"/>
+<input type="button" value="refresh Templates-list" ng-click="refreshtemplates()"/>
+</template>
+
+
+<template id="template.directives" >
+<h2>Directives-List<sub>(App={{app.selected.app.title}},Url={{app.selected.AngularUrl.title}})</sub></h2>
+<select ng-model="app.selected.directive" 
+	ng-options="x.title for x in app.selected.app.directives"></select>
+<input type="button" value="new" ng-click="onNew('directive')"/>
+<input type="button" value="refresh Directives-list" ng-click="refreshDirectives()"/>
+</template>
+
+
+<template id="template.controllers" >
+<h2>Controllers-List<sub>(App={{app.selected.app.title}},Url={{app.selected.AngularUrl.title}})</sub></h2>
+<select ng-model="app.selected.controller" 
+	ng-options="x.title for x in app.selected.app.controllers"></select>
+<input type="button" value="new" ng-click="onNew('controller')"/>
+<input type="button" value="refresh Controllers-list" ng-click="refreshControllers()"/>
+<hr/>
+<h2>controller-members(functions/objects)</h2>
+<select ng-model="app.selected.controllerMember" 
+	ng-options="x.title for x in app.selected.controller"></select>
+<input type="button" value="new" ng-click="onNew('CntrlMmbr')"/>
+
+</template>
+
+
+<template id="template.filters" >
+<h2>Filters-List<sub>(App={{app.selected.app.title}},Url={{app.selected.AngularUrl.title}})</sub></h2><select ng-model="app.selected.filter" 
+	ng-options="x.title for x in app.selected.app.filters"></select>
+<input type="button" value="new" ng-click="onNew('filter')"/>
+<input type="button" value="refresh Controllers-list" ng-click="refreshFilters()"/>
+</template>
+
+
+<template id="template.services" >
+<h2>Services-List<sub>(App={{app.selected.app.title}},Url={{app.selected.AngularUrl.title}})</sub></h2><select ng-model="app.selected.service" 
+	ng-options="x.title for x in app.selected.app.services"></select>
+<input type="button" value="new" ng-click="onNew('service')"/>
+<input type="button" value="refresh Services-list" ng-click="refreshServices()"/>
+</template>
+
+
+<template id="template.resources" >
+<h2>Resources-List<sub>(App={{app.selected.app.title}},Url={{app.selected.AngularUrl.title}})</sub></h2><select ng-model="app.selected.resource" 
+	ng-options="x.title for x in app.selected.app.resources"></select>
+<input type="button" value="new" ng-click="onNew('resource')"/>
+<input type="button" value="refresh -list" ng-click="refresh()"/>
+
+</template>
+
+
+<template id="template.forms" >
+<h2>Form-template-List<sub>(App={{app.selected.app.title}},Url={{app.selected.AngularUrl.title}})</sub></h2>
+<select ng-model="app.selected.form" 
+	ng-options="x.title for x in app.selected.app.forms"></select>
+<input type="button" value="new" ng-click="onNew('form')"/>
+new-entity-dbBased , newEntity-JsonStorageBased ,
+<input type="button" value="refresh -list" ng-click="refresh()"/>
+</template>
+
+
+<template id="template.assets" >
+<h2>Asset-file<sub>(App={{app.selected.app.title}},Url={{app.selected.JspUrl.title}})</sub></h2>
+<select ng-model="app.selected.asset" 
+	ng-options="x.title for x in app.selected.app.assets"></select>
+<input type="button" value="new" ng-click="onNew('asset')"/>
+<input type="button" value="refresh -list" ng-click="refresh('asset')"/>
+image-file
+,css-file
+,js-file
+,json-file
+,html-file
+,menafest -file
+others
+</template>
+
+
+<template id="template.opMethods" >
+<h2>JspInclude/JspOpMethod -List<sub>(App={{app.selected.app.title}},Url={{app.selected.JspUrl.title}})</sub></h2>
+<select ng-model="app.selected.opMethod" 
+	ng-options="x.title for x in app.selected.app.opMethods"></select>
+<input type="button" value="new" ng-click="onNew('opMethod')"/>
+<input type="button" value="refresh -list" ng-click="refresh('opMethod')"/>
+</template>
+
+
+<template id="template.tlDbTbl" >
+<h2>JspInclude/TL.DB.Tbl sub-class -List<sub>(App={{app.selected.app.title}},Url={{app.selected.JspUrl.title}})</sub></h2>
+<select ng-model="app.selected.tlDbTbl" 
+	ng-options="x.title for x in app.selected.app.tlDbTbls"></select>
+<input type="button" value="new" ng-click="onNew('tlDbTbl')"/>
+<input type="button" value="refresh -list" ng-click="refresh('tlDbTbl')"/>
+</template>
+
+
+<template id="template.jspDeclarations" >
+<h2>JspInclude/declaration -List<sub>(App={{app.selected.app.title}},Url={{app.selected.JspUrl.title}})</sub></h2>
+<select ng-model="app.selected.jspDeclaration" 
+	ng-options="x.title for x in app.selected.app.jspDeclarations"></select>
+<input type="button" value="new" ng-click="onNew('jspDeclaration')"/>
+<input type="button" value="refresh -list" ng-click="refresh('jspDeclaration')"/>
 </template>
 
 
@@ -124,110 +285,6 @@
 	<div class="menuItem hding" style="text-align:right">Created by</div>
 	<div class="menuItem" style="text-align:left" >{{editUsr.usr}}</div>
 </div>
-</template>
-
-
-<template id="template.dbs" >
-<input type="button" value="refresh db-list" ng-click="refreshDbs()"/>
-Databases-List<select ng-model="app.selected.db" ng-options="m for m in app.ls.dbs "></select>
-<hr/>
-
-<input type="button" value="refresh db-tables-list" ng-click="refreshDbTbls()"/>
-Tables-List<select ng-model="app.selected.tbl" ng-options="m for m in app.selected.db.tbls "></select>
-<hr/>
-
-<input type="button" value="refresh db-tables-list" ng-click="refreshDbTblCols()"/>
-Table-columns-List<select ng-model="app.selected.tbl_column" ng-options="m for m in app.selected.tbl.columns "></select>
-
-<select ng-init="rowsPerPage=[4,10,20,40,80,100,150,200,400,800]" ng-model="app.selected.tblRowsPerPage" ng-options="m for m in app.selected.tbl.columns "></select>
-Table-data-rows<table border=1>
-<tr><th ng-repeat="col in app.selected.tbl.cols">{{col.title}}</th></tr>
-<tr ng-repeat="row in app.selected.tbl.rows"><td ng-repeat="col in app.selected.tbl.cols">{{row[col.title]}}</td></tr>
-</table>
-</template>
-
-
-<template id="template.uiRouterState" >
-<input type="button" value="refresh UI-Router-State-list" ng-click="refreshUiRouterStates()"/>
-UI-Router-States-List<select ng-model="app.selected.state" ng-options="m for m in app.selected.app.states "></select>
-<hr/>
-</template>
-
-
-<template id="template.templates" >
-<input type="button" value="refresh Templates-list" ng-click="refreshtemplates()"/>
-Templates-List<select ng-model="app.selected.template" ng-options="m for m in app.selected.app.templates "></select>
-<hr/>
-</template>
-
-
-<template id="template.directives" >
-<input type="button" value="refresh Directives-list" ng-click="refreshDirectives()"/>
-Directives-List<select ng-model="app.selected.directive" ng-options="m for m in app.selected.app.directives "></select>
-<hr/>
-</template>
-
-
-<template id="template.controllers" >
-<input type="button" value="refresh Controllers-list" ng-click="refreshControllers()"/>
-Controllers-List<select ng-model="app.selected.controller" ng-options="m for m in app.selected.app.controllers "></select>
-<hr/>
-</template>
-
-
-<template id="template.filters" >
-<input type="button" value="refresh Controllers-list" ng-click="refreshFilters()"/>
-Filters-List<select ng-model="app.selected.filter" ng-options="m for m in app.selected.app.filters "></select>
-<hr/>
-</template>
-
-
-<template id="template.services" >
-<input type="button" value="refresh Services-list" ng-click="refreshServices()"/>
-Services-List<select ng-model="app.selected.service" ng-options="m for m in app.selected.app.services "></select>
-<hr/>
-</template>
-
-
-<template id="template.resources" >
-<input type="button" value="refresh -list" ng-click="refresh()"/>
-resources-List<select ng-model="app.selected." ng-options="m for m in app.selected.app. "></select>
-<hr/>
-</template>
-
-
-<template id="template.forms" >
-<input type="button" value="refresh -list" ng-click="refresh()"/>
--List<select ng-model="app.selected." ng-options="m for m in app.selected.app. "></select>
-<hr/>
-</template>
-
-
-<template id="template.assests" >
-<input type="button" value="refresh -list" ng-click="refresh()"/>
-assests-List<select ng-model="app.selected." ng-options="m for m in app.selected.app. "></select>
-<hr/>
-</template>
-
-
-<template id="template.opMethods" >
-<input type="button" value="refresh -list" ng-click="refresh()"/>
-opMethods-List<select ng-model="app.selected." ng-options="m for m in app.selected.app. "></select>
-<hr/>
-</template>
-
-
-<template id="template.tlDbTbl" >
-<input type="button" value="refresh -list" ng-click="refresh()"/>
-tlDbTbl-List<select ng-model="app.selected." ng-options="m for m in app.selected.app. "></select>
-<hr/>
-</template>
-
-
-<template id="template.jspDeclarations" >
-<input type="button" value="refresh -list" ng-click="refresh()"/>
-jspDeclarations-List<select ng-model="app.selected." ng-options="m for m in app.selected.app. "></select>
-<hr/>
 </template>
 
 </templates><div ng-if="loading"><!--Loading...--></div>
