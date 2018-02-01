@@ -167,7 +167,7 @@ xUrl='index.jsp';//2017.11.jsp
 		$stateProvider.state(s,{
 		  url:'/'+s,controller:s+'Ctrl',
 		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:',s);
+			console.log('config:$stateProvider:templateProvider-function:',s);
 			return $timeout(function () 
 				{var x='template.'+s
 					,t=did(x)
@@ -177,172 +177,166 @@ xUrl='index.jsp';//2017.11.jsp
 				}, 100);}
 		})
 	}*/
-	$stateProvider.state('login',{
-		  url:'/login',controller:'loginCtrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:login');
-			return $timeout(function () 
-				{var x='template.login'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					//console.log('config:func3:login',cnn);
-					return cnn;
-				}, 100);}
-		})
-	.state('main',{
-		  url:'/main',controller:'mainCtrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:main');
-			return $timeout(function () 
-				{var x='template.main'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					//console.log('config:func3:main',cnn);
-					return cnn;
-				}, 100);}
-		})
-		
-		.state('usrs',{
-		  url:'/usrs',controller:'usrsCtrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:usrs');
-			return $timeout(function () 
-				{var x='template.usrs'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					//console.log('config:func3:cntrctsReport',cnn);
-					return cnn;
-				}, 100);}})
-		.state('dbs',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.dbs'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('uiRouterState',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.uiRouterState'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('templates',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.templates'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('controllers',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.controllers'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('directives',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.directives'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('filters',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.filters'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('services',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.services'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('resources',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.resources'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('forms',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.forms'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('assests',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.assests'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('opMethods',{
-		  url:'/',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.opMethods'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('tlDbTbl',{
-		  url:'/tlDbTbl',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:tlDbTbl');
-			return $timeout(function () 
-				{var x='template.tlDbTbl'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
-		.state('jspDeclarations',{
-		  url:'/jspDeclarations',controller:'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:func2:');
-			return $timeout(function () 
-				{var x='template.jspDeclarations'
-					,t=did(x)
-					,cnn=t.innerHTML;
-					return cnn;
-				}, 100);}})
+	$stateProvider
+ .state('login',{
+	  url:'/login',controller:'loginCtrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:login');
+		return $timeout(function () 
+			{var x='template.login'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				//console.log('config:func3:login',cnn);
+				return cnn;
+			}, 100);}
+	})
+ .state('main',{
+	  url:'/main',controller:'mainCtrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:main');
+		return $timeout(function () 
+			{var x='template.main'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				//console.log('config:func3:main',cnn);
+				return cnn;
+			}, 100);}
+	})
+	
+ .state('usrs',{
+	  url:'/usrs',controller:'usrsCtrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:usrs');
+		return $timeout(function () 
+			{var x='template.usrs'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				return cnn;
+			}, 100);}})
+ .state('dbs',{url:'/dbs'
+	,controller:function dbsCtrlController($scope,app ) {
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login'
+		$scope.app=app;console.log('dbsCntrl:' )}
+	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:dbs');return $timeout(function () 
+			{var x='template.dbs',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+ .state('uiRouterState',{url:'/uiRouterState'
+	,controller:function uiRouterStateCtrlController($scope,app ) {
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login'
+		$scope.app=app;console.log('uiRouterStateCntrl:' )},
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:uiRouterState');return $timeout(function () 
+			{var x='template.uiRouterState',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+ .state('templates',{url:'/templates'
+	,controller:function templatesCtrlController($scope,app ) {
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login'
+		$scope.app=app;console.log('templatesCntrl:' )},
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:templates');
+		return $timeout(function () 
+			{var x='template.templates',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+ .state('controllers',{url:'/controllers'
+	,controller:function controllerCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('controllersCntrl:' )}
+	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:controllers');return $timeout(function () 
+			{var x='template.controllers',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+ .state('directives',{url:'/directives'
+	,controller:function directivesCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('directivesCntrl:' )}
+	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:directives');return $timeout(function () 
+			{var x='template.directives',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+/*
+[------busted-----------------
+.*\.state\('([^']+)',\{.*url\:\'/\',controller:'Cntrl',.*templateProvider\: *function *\(\$timeout, *\$stateParams\) *\{.*console\.log\('config\:\$stateProvider\:templateProvider\-function\:'\)\;.*return +\$timeout\(function *\(\).*\{var x='template\.services'.*,t=did\(x\).*,cnn=t\.innerHTML\;.*return *cnn\;.*\}, 100\)\;\}\}\)
+
+ \.state\('([^']+)',\{.\s*url:'/',controller:'Ctrl',\s*templateProvider:\s*function\s*\(\$timeout,\s*\$stateParams\)\s*\{\s*console\.log\('config:\$stateProvider:templateProvider-function\:'\);\s*return\s*\$timeout\(function\s*\(\)\s*\{var\s*x\='template\.[^']*'\s*,t=did\(x\)\s*,cnn=t\.innerHTML;\s*return cnn;\s*}, 100\);\}\}\)
+
+ .state('\1',{url:'/\1'\n	,controller:function \1CtrlController($scope,app ){\n		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('\1Cntrl:' )}	,templateProvider: function ($timeout, $stateParams) {\n		console.log('config:$stateProvider:templateProvider-function:\1');return $timeout(function () \n			{var x='template.\1',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+------------------------------
+]
+
+ \.state\('([^']+)',\{.\s*url:'/',controller:'Ctrl'\s*,\s*templateProvider\s*:\s*function\s*\(\$timeout,\s*\$stateParams\)\s*\{\s*console\.log\('config:\$stateProvider:templateProvider-function:'\);\s*return\s*\$timeout\(function\s*\(\)\s*\{\s*var\s*x\s*='template\.[^']*'\s*,t=did\(x\)\s*,cnn=t\.innerHTML;\s*return cnn;\s*\},\s*100\);\}\}\)
+
+ .state('\1',{url:'/\1'\n	,controller:function \1CtrlController($scope,app ){\n		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('\1Cntrl:' )}	,templateProvider: function ($timeout, $stateParams) {\n		console.log('config:$stateProvider:templateProvider-function:\1');return $timeout(function () \n			{var x='template.\1',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+ */
+ .state('filters',{url:'/'
+	,controller:function directivesCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('filtersCntrl:' )}
+	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:');return $timeout(function () 
+			{var x='template.filters',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+ .state('services',{
+	url:'/',controller:'Ctrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:');
+		return $timeout(function () 
+			{var x='template.services'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				return cnn;
+			}, 100);}})
+ .state('resources',{
+	url:'/',controller:'Ctrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:');
+		return $timeout(function () 
+			{var x='template.resources'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				return cnn;
+			}, 100);}})
+ .state('forms',{
+	url:'/',controller:'Ctrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:');
+		return $timeout(function () 
+			{var x='template.forms'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				return cnn;
+			}, 100);}})
+ .state('assests',{
+	url:'/',controller:'Ctrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:');
+		return $timeout(function () 
+			{var x='template.assests'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				return cnn;
+			}, 100);}})
+ .state('opMethods',{
+	url:'/',controller:'Ctrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:');
+		return $timeout(function () 
+			{var x='template.opMethods'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				return cnn;
+			}, 100);}})
+ .state('tlDbTbl',{
+	url:'/tlDbTbl',controller:'Ctrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:tlDbTbl');
+		return $timeout(function () 
+			{var x='template.tlDbTbl'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				return cnn;
+			}, 100);}})
+ .state('jspDeclarations',{
+	url:'/jspDeclarations',controller:'Ctrl',
+	templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:');
+		return $timeout(function () 
+			{var x='template.jspDeclarations'
+				,t=did(x)
+				,cnn=t.innerHTML;
+				return cnn;
+			}, 100);}})
 })//config
 .controller('loginCtrl',function loginCtrlController($scope,app,md5,$state,$rootScope){
  console.log('app.controller:loginCtrl:($scope'
@@ -415,7 +409,7 @@ xUrl='index.jsp';//2017.11.jsp
 })
 
 
-.controller('usrsCtrl',function profilesCtrlController($scope,app ) {
+.controller('usrsCtrl',function usrsController($scope,app ) {
 	if(app instanceof Function)
 		app=app();
 	if(!app || !app.usr || !app.usr.f)
