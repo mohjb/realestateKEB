@@ -34,23 +34,7 @@ xUrl='index.jsp';//2017.11.jsp
 .module('app', ['ngSanitize','angular-md5','ui.router'] ))
 .factory('app', ['$http','md5', function appFactory($http,md5) {
 	var p=window.xa||{}
-	p.lsInitEntitiesCache=function(a){
-		var hitsCount=0
-		function itrtOver(a,depth){if(a instanceof Object)
-			for(var i in a){
-				var o=a[i];
-				if(o && o.entityId && !o.deleted)
-				{p.entities[o.entityId]=o;
-					hitsCount++}
-				if(depth>0)
-					itrtOver(o,depth-1)
-			}}
-		try{itrtOver(a,2);}
-			catch(ex){
-			console.log('app.lsInitEntitiesCache:error',a,ex)}
-		return hitsCount;
-	}
-	p.lsReset =function appLsReset(){p.entities={};
+	p.lsReset =function appLsReset(){
 		p.ls={usr:{
 				moh:{entityId:'user-moh',un:'moh',pw:'6f8f57715090da2632453988d9a1501b'
 					,firstName:'Mohammad',lastName:'Buhamad'
@@ -61,29 +45,66 @@ xUrl='index.jsp';//2017.11.jsp
 					,firstName:'Secratery',lastName:'x',email:'bohamaem@gmail.com'
 					,level:'user',notes:'',created:'2017/07/06T16:00',f:0
 					,lastModified:'2017/07/06T21:05'}}
-				,apps:[]
-				
+			,apps:[
+				{title:'test'
+				,JspUrls:{index:{title:'index'
+					,assets:[],jspIncludes:[],jspOpMethods:[],jspTbls:[]}}
+				,AngularUrls:{index:{title:'index',states:[],controllers:[],templates:[]
+					,directives:[],filters:[],services:[],resources:[],forms:[]}}}]
 			,dbs:{'test':{tbls:[]}},
 		}// ls // localStorage
-		p.lsInitEntitiesCache(p.ls)
 	};
-	p.selected={app:0,state:0,controller:0,controllerMember:0,template:0
-		,directive:0,filter:0,service:0,resource:0,filter:0,db:0,dbt:0
-		,asset:0,jspInclude:0,jspOpMethod:0,jspTbl:0}
+	p.selected={app:0
+		,JspUrl:0,AngularUrl:0
+		,db:0,dbt:0,asset:0,jspInclude:0,jspOpMethod:0,jspTbl:0
+		,state:0,controller:0,controllerMember:0,template:0
+		,directive:0,filter:0,service:0,resource:0
+		}
+	p.selectionEnts={app:[{ent:'JspUrl',def:'index'},{ent:'AngularUrl',def:'index'}]
+		,JspUrl:['asset','jspInclude','jspOpMethod','jspTbl']
+		,AngularUrl:['state','controller','controllerMember','template'
+			,'directive','filter','service','resource']}
 	p.lsReset();
 	p.newApp=function(appName){
-		var r=p.selected.app={title:appName,states:[],controllers:[],templates:[]
-			,directives:[],filters:[],services:[],resources:[],forms:[]
-			
-			//next are server-side
-			,assests:[],jspInclude:[],jspOpMethod:[],jspTbl:[]}
+		var r=p.selected.app={title:appName
+			,JspUrls:{index:p.newJspUrl('index')}
+			,AngularUrls:{index:p.newAngularUrl('index')}}
 			//$http.post(op:'JsonStorage.set',app:appName,key:'app',var:r)//newApp
 		return p.ls.apps[appName]=r;}
+	p.newJspUrl=function(nm){
+		var r=p.selected.JspUrl={title:nm
+			,assets:[],jspIncludes:[],jspOpMethods:[],jspTbls:[]}
+			//$http.post(op:'JsonStorage.set',app:appName,key:'app',var:r)//newApp
+		return p.selected.app.JspUrls[nm]=r;}
+	p.newAngularUrl=function(nm){
+		var r=p.selected.app.AngularUrls[nm]={title:appName,states:[],controllers:[],templates:[]
+			,directives:[],filters:[],services:[],resources:[],forms:[]}
+			//$http.post(op:'JsonStorage.set',app:appName,key:'app',var:r)//newApp
+		return p.selected.AngularUrl=r;}
 	p.newEnt=function(ent,nm,ap){
-		var r={title:nm,0:0}
-		ap[ent].push(r);
-		p.selected[ent]=r;
-		return r;}
+		if(ent=='app');
+		else if(ent=='JspUrl');
+		else if(ent=='AngularUrl');
+		else{
+			var r={title:nm,0:0}
+			ap[ent].push(r);
+			p.selected[ent]=r;
+		return r;}}
+	p.selectedChanged=function(ent,newSelection){
+		 console.log('selectedChanged:',ent,newSelection);
+		 var s=p.selected,a=s.app;
+		 /*if(ent=='app'){
+			p.selectedChanged('JspUrl',s.JspUrl=a.JspUrl['index']);
+			p.selectedChanged('AngularUrl',s.AngularUrl=a.AngularUrl['index']);}
+		 else */
+		 if(ent in p.selectionEnts//ent=='JspUrl' || ent=='AngularUrl'
+			)for(var i in p.selectionEnts[ent])
+			{var n=p.selectionEnts[ent][i];
+				s[n.ent||n]=0;
+				if(n.def)
+					p.selectedChanged(n.ent,s[n.ent]=a[n.ent][n.def]);
+			}
+		}
 	p.logout=function appLogout(state){p.usr=0;
 		cs('.onUsrF').display='none'
 		cs('.onLoggedIn').display='none'
@@ -161,22 +182,6 @@ xUrl='index.jsp';//2017.11.jsp
 .config(function appConfig($stateProvider,$urlRouterProvider){
 	console.log('config',this,arguments);
 	$urlRouterProvider.otherwise('/login');
-	/*var states=['login','main','cntrct','oh','profiles','cntrctsReport']
-	for(var i in states){var s=states[i]
-		console.log('config:for:',s);
-		$stateProvider.state(s,{
-		  url:'/'+s,controller:s+'Ctrl',
-		templateProvider: function ($timeout, $stateParams) {
-			console.log('config:$stateProvider:templateProvider-function:',s);
-			return $timeout(function () 
-				{var x='template.'+s
-					,t=did(x)
-					,cnn=t.innerHTML;
-					console.log('config:func3:',s,cnn);
-					return cnn;
-				}, 100);}
-		})
-	}*/
 	$stateProvider
  .state('login',{
 	  url:'/login',controller:'loginCtrl',
@@ -248,95 +253,50 @@ xUrl='index.jsp';//2017.11.jsp
 		console.log('config:$stateProvider:templateProvider-function:directives');return $timeout(function () 
 			{var x='template.directives',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
 /*
-[------busted-----------------
-.*\.state\('([^']+)',\{.*url\:\'/\',controller:'Cntrl',.*templateProvider\: *function *\(\$timeout, *\$stateParams\) *\{.*console\.log\('config\:\$stateProvider\:templateProvider\-function\:'\)\;.*return +\$timeout\(function *\(\).*\{var x='template\.services'.*,t=did\(x\).*,cnn=t\.innerHTML\;.*return *cnn\;.*\}, 100\)\;\}\}\)
-
- \.state\('([^']+)',\{.\s*url:'/',controller:'Ctrl',\s*templateProvider:\s*function\s*\(\$timeout,\s*\$stateParams\)\s*\{\s*console\.log\('config:\$stateProvider:templateProvider-function\:'\);\s*return\s*\$timeout\(function\s*\(\)\s*\{var\s*x\='template\.[^']*'\s*,t=did\(x\)\s*,cnn=t\.innerHTML;\s*return cnn;\s*}, 100\);\}\}\)
-
- .state('\1',{url:'/\1'\n	,controller:function \1CtrlController($scope,app ){\n		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('\1Cntrl:' )}	,templateProvider: function ($timeout, $stateParams) {\n		console.log('config:$stateProvider:templateProvider-function:\1');return $timeout(function () \n			{var x='template.\1',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
-------------------------------
-]
-
- \.state\('([^']+)',\{.\s*url:'/',controller:'Ctrl'\s*,\s*templateProvider\s*:\s*function\s*\(\$timeout,\s*\$stateParams\)\s*\{\s*console\.log\('config:\$stateProvider:templateProvider-function:'\);\s*return\s*\$timeout\(function\s*\(\)\s*\{\s*var\s*x\s*='template\.[^']*'\s*,t=did\(x\)\s*,cnn=t\.innerHTML;\s*return cnn;\s*\},\s*100\);\}\}\)
-
- .state('\1',{url:'/\1'\n	,controller:function \1CtrlController($scope,app ){\n		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('\1Cntrl:' )}	,templateProvider: function ($timeout, $stateParams) {\n		console.log('config:$stateProvider:templateProvider-function:\1');return $timeout(function () \n			{var x='template.\1',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+\.state\('([^']+)',\{\s*url:'/[^']*',controller:'Ctrl'\s*,\s*templateProvider\s*:\s*function\s*\(\$timeout,\s*\$stateParams\)\s*\{\s*console\.log\('config:\$stateProvider:templateProvider-function:'\);\s*return\s*\$timeout\(function\s*\(\)\s*\{\s*var\s*x\s*='template\.[^']*'\s*,t=did\(x\)\s*,cnn=t\.innerHTML;\s*return cnn;\s*\},\s*100\);\}\}\)
+ .state\('\1',{url:'/\1'\n	,controller:function \1CtrlController\($scope,app \){\n		if\(app instanceof Function\)app=app\(\);if\(!app || !app.usr\)return location.hash='#!/login';$scope.app=app;console.log\('\1Cntrl:' \)}	,templateProvider: function \($timeout, $stateParams\) {\n		console.log\('config:$stateProvider:templateProvider-function:\1'\);return $timeout\(function \(\) \n			{var x='template.\1',t=did\(x\),cnn=t.innerHTML;return cnn;}, 100\);}}\)
  */
- .state('filters',{url:'/'
-	,controller:function directivesCtrlController($scope,app ){
+ .state('filters',{url:'/filters'
+	,controller:function filtersCtrlController($scope,app ){
 		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('filtersCntrl:' )}
 	,templateProvider: function ($timeout, $stateParams) {
-		console.log('config:$stateProvider:templateProvider-function:');return $timeout(function () 
+		console.log('config:$stateProvider:templateProvider-function:filters');return $timeout(function () 
 			{var x='template.filters',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
- .state('services',{
-	url:'/',controller:'Ctrl',
-	templateProvider: function ($timeout, $stateParams) {
-		console.log('config:$stateProvider:templateProvider-function:');
-		return $timeout(function () 
-			{var x='template.services'
-				,t=did(x)
-				,cnn=t.innerHTML;
-				return cnn;
-			}, 100);}})
- .state('resources',{
-	url:'/',controller:'Ctrl',
-	templateProvider: function ($timeout, $stateParams) {
-		console.log('config:$stateProvider:templateProvider-function:');
-		return $timeout(function () 
-			{var x='template.resources'
-				,t=did(x)
-				,cnn=t.innerHTML;
-				return cnn;
-			}, 100);}})
- .state('forms',{
-	url:'/',controller:'Ctrl',
-	templateProvider: function ($timeout, $stateParams) {
-		console.log('config:$stateProvider:templateProvider-function:');
-		return $timeout(function () 
-			{var x='template.forms'
-				,t=did(x)
-				,cnn=t.innerHTML;
-				return cnn;
-			}, 100);}})
- .state('assests',{
-	url:'/',controller:'Ctrl',
-	templateProvider: function ($timeout, $stateParams) {
-		console.log('config:$stateProvider:templateProvider-function:');
-		return $timeout(function () 
-			{var x='template.assests'
-				,t=did(x)
-				,cnn=t.innerHTML;
-				return cnn;
-			}, 100);}})
- .state('opMethods',{
-	url:'/',controller:'Ctrl',
-	templateProvider: function ($timeout, $stateParams) {
-		console.log('config:$stateProvider:templateProvider-function:');
-		return $timeout(function () 
-			{var x='template.opMethods'
-				,t=did(x)
-				,cnn=t.innerHTML;
-				return cnn;
-			}, 100);}})
- .state('tlDbTbl',{
-	url:'/tlDbTbl',controller:'Ctrl',
-	templateProvider: function ($timeout, $stateParams) {
-		console.log('config:$stateProvider:templateProvider-function:tlDbTbl');
-		return $timeout(function () 
-			{var x='template.tlDbTbl'
-				,t=did(x)
-				,cnn=t.innerHTML;
-				return cnn;
-			}, 100);}})
- .state('jspDeclarations',{
-	url:'/jspDeclarations',controller:'Ctrl',
-	templateProvider: function ($timeout, $stateParams) {
-		console.log('config:$stateProvider:templateProvider-function:');
-		return $timeout(function () 
-			{var x='template.jspDeclarations'
-				,t=did(x)
-				,cnn=t.innerHTML;
-				return cnn;
-			}, 100);}})
+  .state('services',{url:'/services'
+	,controller:function servicesCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('servicesCntrl:' )}	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:services');return $timeout(function () 
+			{var x='template.services',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+  .state('resources',{url:'/resources'
+	,controller:function resourcesCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('resourcesCntrl:' )}	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:resources');return $timeout(function () 
+			{var x='template.resources',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+  .state('forms',{url:'/forms'
+	,controller:function formsCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('formsCntrl:' )}	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:forms');return $timeout(function () 
+			{var x='template.forms',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+  .state('assets',{url:'/assets'
+	,controller:function assetsCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('assetsCntrl:' )}	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:assets');return $timeout(function () 
+			{var x='template.assets',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+  .state('opMethods',{url:'/opMethods'
+	,controller:function opMethodsCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('opMethodsCntrl:' )}	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:opMethods');return $timeout(function () 
+			{var x='template.opMethods',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+ .state('tlDbTbl',{url:'/tlDbTbl'
+	,controller:function tlDbTblCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('tlDbTblCntrl:' )}	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:tlDbTbl');return $timeout(function () 
+			{var x='template.tlDbTbl',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
+  .state('jspDeclarations',{url:'/jspDeclarations'
+	,controller:function jspDeclarationsCtrlController($scope,app ){
+		if(app instanceof Function)app=app();if(!app || !app.usr)return location.hash='#!/login';$scope.app=app;console.log('jspDeclarationsCntrl:' )}	,templateProvider: function ($timeout, $stateParams) {
+		console.log('config:$stateProvider:templateProvider-function:jspDeclarations');return $timeout(function () 
+			{var x='template.jspDeclarations',t=did(x),cnn=t.innerHTML;return cnn;}, 100);}})
 })//config
 .controller('loginCtrl',function loginCtrlController($scope,app,md5,$state,$rootScope){
  console.log('app.controller:loginCtrl:($scope'
