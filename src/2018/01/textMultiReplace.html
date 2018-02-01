@@ -1,0 +1,41 @@
+<html>
+<HEAD>
+
+<TITLE>text multi-replace ,By MohamadJB@gmail.com</TITLE>
+<script>
+count=1
+function add(){
+	var div=document.getElementById('divFindReplace')
+	,x=++count,e=document.createElement('span')
+	,s=['<textarea id="find'
+	,'"></textarea><label for="find'
+	,'">find</label><textarea id="rplc'
+	,'"></textarea><label for="rplc'
+	,'">replace</label><hr/>\n'];
+	e.innerHTML= s.join('_'+x)
+	div.appendChild(e);
+}
+function replace(){
+	var txt=document.getElementById('txt')
+	,s=txt.value,f,r,i,x
+	for(i=1;i<=count;i++){
+		f=document.getElementById('find_'+i)
+		r=document.getElementById('rplc_'+i)
+		x=new RegExp(f.value,'g')
+		s=s.replace(x,r.value)
+	}
+	txt.value=s;
+}
+</script>
+</HEAD>
+<BODY>
+<textarea id="txt"></textarea><label for="txt">source</label><hr/>
+<div id=divFindReplace><span>
+<textarea id="find_1"></textarea><label for="find_1">find</label>
+<textarea id="rplc_1"></textarea><label for="rplc_1">replace</label><hr/></span>
+</div>
+<input type=button value="+" onclick="add()" />
+<input type=button value="replace" onclick="replace()" />
+
+</BODY>
+</html>
