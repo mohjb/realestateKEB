@@ -124,7 +124,11 @@ Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
 public static class App {
 	static final String packageName= "dev201801",AppNm=packageName+".App";
 
-	static void staticInit(){ TL.registerOp( App.class);  TL.registerOp( JsonStorage.class);  TL.registerOp( MetaTbl.class); }
+	static void staticInit(){ TL.registerOp( App.class);  
+		TL.registerOp( JsonStorage.class);  
+		TL.registerOp( MetaTbl.class); 
+		DB.Tbl.registered.add(JsonStorage.class);
+	}
 
 	static{staticInit();}
 
@@ -164,7 +168,7 @@ public static class App {
 		@Override public String[]pkvals(){String[]a={app,key};return a;}
 
 
-		public enum C implements CI{app,key, value;
+		public enum C implements CI{app,key,typ, value;
 			@Override public Field f(){return Co.f(name(), JsonStorage.class);}
 			@Override public String getName(){return name();}
 			@Override public Class getType(){return String.class;}
@@ -176,11 +180,14 @@ public static class App {
 				"varchar(255) PRIMARY KEY NOT NULL DEFAULT '-' "//app
 				,"varchar(255) PRIMARY KEY NOT NULL DEFAULT '-' "//key
 				,"enum('txt','jsonObj','jsonArray','key','num','real','date','b64','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
-				,"blob"));//value
+				,"blob"),TL.Util.lst("unique(`app`,`key`)")
+				);//value
 			/*
 			CREATE TABLE `JsonStorage` (
+			`app` varchar(255) PRIMARY KEY NOT NULL DEFAULT '-',
 			`key` varchar(255) PRIMARY KEY NOT NULL DEFAULT '-',
-			`value` text NOT NULL DEFAULT '-'
+			`value` blob NOT NULL DEFAULT '-',
+			unique(`app`,`key`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 			*/
 		}
