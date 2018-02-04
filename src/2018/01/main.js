@@ -69,7 +69,9 @@ xUrl='index.jsp';//2017.11.jsp
 		var r=p.selected.app={title:appName
 			,JspUrls:{index:p.newJspUrl('index')}
 			,AngularUrls:{index:p.newAngularUrl('index')}}
-			//$http.post(op:'JsonStorage.set',app:appName,key:'app',var:r)//newApp
+			$http.post({op:'JsonStorage.JspApp_create',app:appName,key:'app',val:r},
+				  function(response){console.log('mainCtrl:newApp:$http-ok:response=',response);}
+				  ,function(response){})//newApp
 		return p.ls.apps[appName]=r;}
 	p.newJspUrl=function(nm){
 		var r=p.selected.JspUrl={title:nm
