@@ -24,6 +24,7 @@
 ,org.apache.commons.fileupload.servlet.ServletFileUpload
 ,com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource"
 %><%TL.run(request,response,session,out,pageContext);%><%!
+
 /** * Created by mbohamad on 19/07/2017.*/
 public static class TL
 {public static final String Name=App.packageName+".TL";
@@ -69,17 +70,17 @@ public static void run(HttpServletRequest request,HttpServletResponse response,H
 					else f.readReq("");
 				}else
 					args[i]=o=TL.class.equals(c)?tl//:Map.class.isAssignableFrom(c) &&(nm.indexOf("p")!=-1) &&(nm.indexOf("r")!=-1) &&(nm.indexOf("m")!=-1)?tl.json
-					:tl.h.req(nm,c);
+						          :tl.h.req(nm,c);
 			}catch(Exception ex){tl.error(ex,Name,".run:arg:i=",i);}
 			retVal=n==0?op.invoke(cl)
-				:n==1?op.invoke(cl,args[0])
-				:n==2?op.invoke(cl,args[0],args[1])
-				:n==3?op.invoke(cl,args[0],args[1],args[2])
-				:n==4?op.invoke(cl,args[0],args[1],args[2],args[3])
-				:n==5?op.invoke(cl,args[0],args[1],args[2],args[3],args[4])
-				:n==6?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5])
-				:n==7?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5],args[6])
-           :op.invoke(cl,args);
+				       :n==1?op.invoke(cl,args[0])
+					        :n==2?op.invoke(cl,args[0],args[1])
+						         :n==3?op.invoke(cl,args[0],args[1],args[2])
+							          :n==4?op.invoke(cl,args[0],args[1],args[2],args[3])
+								           :n==5?op.invoke(cl,args[0],args[1],args[2],args[3],args[4])
+									            :n==6?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5])
+										             :n==7?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5],args[6])
+											              :op.invoke(cl,args);
 			//Op pp=op.getAnnotation(Op.class);
 			if(opAnno!=null && opAnno.nestJsonReq() && tl.json!=null){
 				tl.json.put("return",retVal);retVal=tl.json;}
@@ -116,7 +117,11 @@ Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
 public static class App {
 	static final String packageName= "dev201801",AppNm=packageName+".App";
 
-	static void staticInit(){ TL.registerOp( App.class);  TL.registerOp( JsonStorage.class);  TL.registerOp( MetaTbl.class); }
+	static void staticInit(){ TL.registerOp( App.class);  
+		TL.registerOp( JsonStorage.class);  
+		TL.registerOp( MetaTbl.class); 
+		DB.Tbl.registered.add(JsonStorage.class);
+	}
 
 	static{staticInit();}
 
@@ -145,14 +150,18 @@ public static class App {
 	public static class JsonStorage extends TL.DB.Tbl</**primary key type*/String> {
 		public static final String dbtName="JsonStorage";
 		@Override public String getName(){return dbtName;}
-		@Override public CI pkc(){return C.key;}
+		@Override public int pkcn(){return 2;}
+		@Override public CI pkc(int i){return i==0?C.app:C.key;}
+		@Override public CI[]pkcols(){C[]a={C.app,C.key};return a;}
 		public static enum ContentType{txt,jsonObj,jsonArray,key,num,real,date,b64,javaObjectStream;}
 		@F public String app,key;@F ContentType typ;@F public Object value;
 
-		@Override public String pkv(){return key;}
-		@Override public String pkv(String v){return key=v;}
+		@Override public String pkv(int i){return i==0?app:key;}
+		@Override public String[]pkv(String[]v){app=v[0];key=v[1];return v;}
+		@Override public String[]pkvals(){String[]a={app,key};return a;}
 
-		public enum C implements CI{app,key, value;
+
+		public enum C implements CI{app,key,typ, value;
 			@Override public Field f(){return Co.f(name(), JsonStorage.class);}
 			@Override public String getName(){return name();}
 			@Override public Class getType(){return String.class;}
@@ -164,11 +173,14 @@ public static class App {
 				"varchar(255) PRIMARY KEY NOT NULL DEFAULT '-' "//app
 				,"varchar(255) PRIMARY KEY NOT NULL DEFAULT '-' "//key
 				,"enum('txt','jsonObj','jsonArray','key','num','real','date','b64','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
-				,"blob"));//value
+				,"blob"),TL.Util.lst("unique(`app`,`key`)")
+				);//value
 			/*
 			CREATE TABLE `JsonStorage` (
+			`app` varchar(255) PRIMARY KEY NOT NULL DEFAULT '-',
 			`key` varchar(255) PRIMARY KEY NOT NULL DEFAULT '-',
-			`value` text NOT NULL DEFAULT '-'
+			`value` blob NOT NULL DEFAULT '-',
+			unique(`app`,`key`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 			*/
 		}
@@ -184,52 +196,66 @@ public static class App {
 
 		public static Object prmInstance(TL tl,String prmName){
 			Object o=tl.json.get( prmName )
-				,app=tl.json.get("app")
+				,app=tl.json.get("appName")
 				,key=tl.json.get("key");
 			JsonStorage j=key instanceof JsonStorage
-				              ?(JsonStorage)key
-				              :app instanceof String && key instanceof String
-					               ?loadBy( (String)app,(String)key )
-					               :null;
+				?(JsonStorage)key
+				:app instanceof String && key instanceof String
+					?loadBy( (String)app,(String)key )
+					:null;
 			if(j!=null && key instanceof String)
 				tl.json.put( "key",j );
 			return j!=null && "key".equals( prmName )?j:o;}
 
 		@Op public static String
-		JspApp_create(@Op(prmName = "app") String appName,@Op(prmName = "keys") Map<String,Object>keys){return null;}
+		JspApp_create(@Op(prmName="appName")String appName
+			,@Op(prmName="keys")Map<String,Object>keys){return null;}
 
-		//@Op public static String JspApp_generateJspFile_and_clientFiles(String appName){return null;}
-
-		@Op public static String JspApp_generateJspFile_and_clientFiles(@Op(prmName = "app") String appName){return null;}
-
-		@Op public static List<String>
-		JspApp_listApps() throws SQLException {
-			return DB.q1colTList("select distinct `"+C.app+"` from `"+dbtName+"`",String.class);}
+		@Op public static String
+		JspApp_generateJspFile_and_clientFiles(@Op(prmName="appName")String appName){return null;}
 
 		@Op public static List<String>
-		JspApp_listKeys(@Op(prmName = "app") String appName) throws SQLException {
-			return DB.q1colTList("select distinct `"+C.key+"` from `"+dbtName+"` where `"+C.app+"`=?",String.class,appName);}
+		JspApp_listApps(){
 
-	//@Op public static Map<String,Map<String,Object>>JspApp_getKeys(String appName,List<String>keys){return null;}
-	@Op public static void JspApp_getKeys(@Op(prmName = "app") String appName
-		,@Op(prmName = "keys") List<String>keys,TL tl) throws SQLException {
-		StringBuilder b=new StringBuilder("select * from `" +dbtName
-			+"` where `"+C.app+"`=? and `key` in (");
-		boolean comma =false;
-		for(String k:keys){
-			if(comma)b.append(',');else comma=true;
-			b.append('`').append(k).append('`');}
-		DB.q2json(b.append(')').toString(),appName);
-		tl.h.r("responseDone",true);}
+			return null;}
 
-	@Op public static int JspApp_setKeys(@Op(prmName
-		= "keys") List<Map>keys,TL tl) throws Exception {
-		int r=0;JsonStorage j=new JsonStorage();
-		for(Map m:keys)try{
-			j.fromMap(m).save();r++;}catch(Exception ex){
-			tl.error(ex,"JspApp_setKeys",m);}
-		return r;}
+		@Op public static List<String>
+		JspApp_listKeys(@Op(prmName="appName")String appName){return null;}
 
+		@Op public static Map<String,Map<String,Object>>
+		JspApp_getKeys(@Op(prmName="appName")String appName
+			,@Op(prmName="keys")List<String>keys){return null;}
+
+		@Op public static JsonStorage
+		set(@Op(prmName="appName")String appName
+			,@Op(prmName="key",prmInstance=true)JsonStorage j
+			,@Op(prmName="val")Object val)throws Exception{
+				j.value=val;
+				j.save();
+				return j;}
+
+		@Op public static JsonStorage
+		get(@Op(prmName="appName")String appName
+			,@Op(prmName="key",prmInstance=true)JsonStorage j){
+				j.app=appName;
+				j.load();
+				return j;}
+/*
+* app files:the manifest
+* the jsp app , and list of cats of include-files
+* the angularjs-app / html file , and list of cats of include-files
+* list of js files
+* list of css files
+* list of image files
+*
+* urls , and opMethods
+*
+* ui-router-states
+*
+* angularjs-templates
+*
+* angularjs-directives
+* */
 	}//class JsonStorage
 
 	/**
@@ -259,7 +285,10 @@ public static class App {
 
 		public String dbName,dbtName="MetaTbl",comment;
 		@Override public String getName(){return dbtName;}
-		@Override public CI pkc(){return pkc[0];}//cols==null||pkc==null||pkc.length<1||pkc[0]>=cols.length?null:cols[pkc[0]];
+		@Override public int pkcn(){return pkc==null?0:pkc.length;}
+		@Override public CI pkc(int i){return pkc==null||i>=pkc.length?null:pkc[i];}
+		@Override public CI[]pkcols(){return pkc;}
+
 		/**indicies of the columns which are the primary key in cols,
 		 * if the table has compound keys(more than one column as a primary key),
 		 * then this array is of length greater than one,
@@ -272,21 +301,20 @@ public static class App {
 			List<Map<String,Map<String,String>>>
 			=>
 			<index-type><index-name><index-columns>
-
 			//need a way to capture info about columns for table creation
 			boolean notNull;
 			int length;//when applicable
 			String Default;//when applicable
 			boolean autoIcrement;//when applicable
 			onupdate,ondelete,forgein-key,primary-key
-
 		*/
 		C col(String colName){
 			for ( C c:cols )if(c.name!=null && c.name.equals( colName ))return c;
 			return null;}
 
-		@Override public Integer pkv(){return null;}//pkc!=null&&pkc.length>0?pkc[0]:null;
-		@Override public Integer pkv(Integer v){return null;}//pkc!=null&&pkc.length>0?pkc[0]:null;
+		@Override public Integer pkv(int i){return null;}//pkc!=null&&pkc.length>0?pkc[0]:null;
+		@Override public Integer[]pkvals(){return null;}
+		@Override public Integer[]pkv(Integer[]v){return null;}
 
 		public class C implements CI,Json.Output.JsonOutput{
 			String name,type,comment,creation;Class clss;int i;
@@ -558,10 +586,11 @@ public static class App {
 		public class Row extends TL.DB.Tbl<Integer> {
 			@F public Object[]vals;
 			@Override public String getName(){return dbtName;}
-			@Override public CI pkc(){return pkc[0];}
-			@Override public Integer pkv(){return vals!=null&&vals.length>pkc[0].i
+			@Override public int pkcn(){return vals==null?0:vals.length;}
+			@Override public CI pkc(int i){return pkc==null?null:pkc[i];}
+			@Override public Integer pkv(int i){return vals!=null&&vals.length>pkc[0].i
 				                                      &&!(vals[pkc[0].i]instanceof Integer)?(Integer ) vals[pkc[0].i]:null;}
-			@Override public Integer pkv(Integer v){return vals!=null
+			@Override public Integer[]pkv(Integer[]v){return vals!=null
 				                                               &&vals.length>pkc[0].i?(Integer)(vals[pkc[0].i]=v):null;}
 			@Override public C[]columns(){return cols;}
 			@Override public List creationDBTIndices(TL tl){return null;}
@@ -1590,9 +1619,10 @@ public static class DB {
 
 		public static CI[]cols(CI...p){return p;}
 		public static Object[]where(Object...p){return p;}
-		public abstract CI pkc();
-		public abstract PK pkv();
-		public abstract PK pkv(PK v);
+		public abstract CI pkc(int i);public abstract CI[]pkcols();public abstract int pkcn();
+		public abstract PK pkv(int i);public abstract PK[]pkvals();
+		public abstract PK[]pkv(PK[]v);
+		public PK[]pka(PK...p){return p;}//static
 
 		public String sql(CI[]cols,Object[]where){
 			return sql(cols,where,null,null,getName());}
@@ -1738,9 +1768,9 @@ public static class DB {
 			int c=0;for(CI f:a)v(f,rs.getObject(++c));
 			return this;}
 		/**loads one row from the table*/
-		public Tbl load(PK pk){
+		public Tbl load(PK...pk){
 			ResultSet r=null;TL t=tl();
-			try{r=DB.r(sql(cols(Co.all), where(pkc()))
+			try{r=DB.r(sql(cols(Co.all), where(pkc(0)))
 				,pk);
 				if(r.next())load(r);
 				else{t.error(null,Name,".DB.Tbl(",this,").load(pk=",pk,"):resultset.next=false");nullify();}}
@@ -1758,41 +1788,62 @@ public static class DB {
 			catch(Exception x){tl().error(x,Name,".DB.Tbl(",this,").loadBy(",c,",",v,")");}
 			return this;}//loadBy
 
-		Tbl save(CI c){
-			CI pkc=pkc();
-			Object cv=v(c);PK pkv=pkv();TL t=TL.tl();
-			if(cv instanceof Map)try
-			{String j=t.jo().clrSW().o(cv).toString();cv=j;}
-			catch (IOException e) {t.error(e,Name,".DB.Tbl.save(CI:",c,"):");}
-			try{DB.x("insert into `"+getName()+"` (`"+pkc+
-				         "`,`"+c+"`) values(?"//+Co.m(pkc).txt
-				         +",?"//+Co.m(c).txt
-				         +")",pkv,cv);
+		Tbl save(CI c){int pkn=pkcn();if(pkn==1) {
+			CI pkc = pkc(0);
+			Object cv = v( c );
+			PK pkv = pkv(0);
+			TL t = TL.tl();
+			if ( cv instanceof Map ) try {
+				String j = t.jo().clrSW().o( cv ).toString();
+				cv = j;
+			} catch ( IOException e ) {
+				t.error( e, Name, ".DB.Tbl.save(CI:", c, "):" );
+			}
+			try {
+				DB.x( "insert into `" + getName() + "` (`" + pkc +
+						      "`,`" + c + "`) values(?"//+Co.m(pkc).txt
+						      + ",?"//+Co.m(c).txt
+						      + ")", pkv, cv );
 				//Integer k=(Integer)pkv;
 				//TL.DB.Tbl.Log.log( TL.DB.Tbl.Log.Entity.valueOf(getName()), k, TL.DB.Tbl.Log.Act.Update, TL.Util.mapCreate(c,v(c)) );
-			}catch(Exception x){tl().error(x
-				,Name,".DB.Tbl(",this,").save(",c,"):pkv=",pkv);}
-			return this;}//save
+			} catch ( Exception x ) {
+				tl().error( x
+						, Name, ".DB.Tbl(", this, ").save(", c, "):pkv=", pkv );
+			}
+		}else{
+			CI[]pkc = pkcols();
+			Object[]a=new Object[pkc.length+1];
+			a[0]=v( c );
+			PK[]pkv = pkvals();
+			TL t = TL.tl();
+			//if ( a[0] instanceof Map ) try { String j = t.jo().clrSW().o( a[0] ).toString();a[0] = j; } catch ( IOException e ) { t.error( e, Name, ".DB.Tbl.save(CI:", c, "):" ); }
+			try {StringBuilder b=new StringBuilder( "insert into `" )
+				.append( getName() ).append("` (`" ).append( c.toString() );
+				for(CI k:pkc)
+					b.append( "`,`" ).append( k.toString() );
+				b.append( "`) values(?");
+				for(int i=1;i<a.length;i++){a[i]=pkv[i-1];
+					b.append( ",?" );}
+				DB.X( b.append( ')' ).toString(),a );
+			} catch ( Exception x ) {
+				tl().error( x
+						, Name, ".DB.Tbl(", this, ").save(", c, "):pkv=", pkv );
+			}
+
+		}return this;}//save
 
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
 		public Tbl save() throws Exception{
-			PK pkv=pkv();CI pkc=pkc();boolean nw=pkv==null;//Map old=asMap();
-			if(nw){throw new UnsupportedOperationException();/*
-				int x=DB.q1int(//"select max(`" +pkc+"`)+1 from `"+getName()+"`"
-					sql("max(`"+pkc+"`)+1",null,null,null)
-					,1);
-				//v(pkc,pkv=x);
-				tl().log(Name,".DB.Tbl(",toJson(),").save-new:max(",pkc,") + 1:",x);*/
-			}CI[]cols=columns();
-			StringBuilder sql=new StringBuilder("insert into`").append(getName()).append("`( ");
-			Co.generate(sql, cols);//.toString();
-			sql.append(")values(").append(Co.prm.txt);//Co.m(cols[0]).txt
-			for(int i=1;i<cols.length;i++)
-				sql.append(",").append(Co.prm.txt);//Co.m(cols[i]).txt
-			sql.append(")");//int x=
+			CI[] cols = columns();
+			StringBuilder sql = new StringBuilder( "replace into`" ).append( getName() ).append( "`( " );
+			Co.generate( sql, cols );//.toString();
+			sql.append( ")values(" ).append( Co.prm.txt );//Co.m(cols[0]).txt
+			for ( int i = 1; i < cols.length; i++ )
+				sql.append( "," ).append( Co.prm.txt );//Co.m(cols[i]).txt
+			sql.append( ")" );//int x=
 			DB.X( sql.toString(), vals() ); //TODO: investigate vals() for json columns
-			tl().log("save",this);//log(nw?TL.DB.Tbl.Log.Act.New:TL.DB.Tbl.Log.Act.Update);
-			return this;}//save
+			tl().log( "save", this );//log(nw?TL.DB.Tbl.Log.Act.New:TL.DB.Tbl.Log.Act.Update);
+		return this;}//save
 
 		public Tbl readReq_save() throws Exception{
 			Map old=asMap();
@@ -1807,16 +1858,25 @@ public static class DB {
 			return this;
 		}//readReq_save
 		public Tbl readReq_saveNew() throws Exception{
-			PK pkv=pkv();readReq("");if(pkv()==null&&pkv!=null)pkv(pkv);
+			//PK pkv=pkv(0);
+			readReq("");//if(pkv(0)==null&&pkv!=null)pkv(pkv);
 			return save();//log(TL.DB.Tbl.Log.Act.Update,old);
 		}//readReq_save
 
 		//void log(TL.DB.Tbl.Log.Act act){	Map val=asMap();Integer k=(Integer)pkv();TL.DB.Tbl.Log.log( TL.DB.Tbl.Log.Entity.valueOf(getName()), k, act, val);}
-		public int delete() throws SQLException{
-			PK pkv=pkv();
-			int x=TL.DB.x("delete from `"+getName()+"` where `"+pkc()+"`=?", pkv);
-			//log(TL.DB.Tbl.Log.Act.Delete);
-			return x;}
+		public int delete() throws SQLException{int pkn=pkcn();if(pkn==1) {
+				PK pkv=pkv(0);
+				int x=TL.DB.x("delete from `"+getName()+"` where `"+pkc(0)+"`=?", pkv);
+				//log(TL.DB.Tbl.Log.Act.Delete);
+				return x;
+			}else{int x=-1;CI[]pkc=pkcols();PK[]pkv=pkvals();
+				StringBuilder b=new StringBuilder( "delete from `" )
+					.append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
+				for(int i=1;i<pkc.length;i++)
+					b.append( " and `" ).append( pkc[i] ).append( "`=?" );
+				DB.X( b.toString(),pkv );
+				return x;}}
+
 		/**retrieve from the db table all the rows that match
 		 * the conditions in < where > , create an iterator
 		 * , e.g.<code>for(Tbl row:query(
