@@ -112,10 +112,9 @@ public static void run(
  }//run op servlet.service
 
 public H h=new H();
-public Map<String,Object> ssn,usr//DB.Tbl.Usr//public DB.Tbl.Ssn ssn;
-,/**accessing request in json-format*/json;//
-public Date now;//public long seqObj,seqProp;
-//boolean doNew_appTblRow;
+public Map<String,Object> ssn,usr,/**accessing request in json-format*/json;
+public Date now;
+
 /**wrapping JspWriter or any other servlet writer in "out" */
 Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
 
@@ -151,6 +150,26 @@ public static class App {
 	 * */
 	@Op public void generateJsp(@Op(prmName = "app")String app,@Op(prmName = "url")String url){}
 
+
+	/*@Op public Object jsOp(@Op(prmName = "app")String appName
+		,@Op(prmName = "key",prmInstance = true)JsonStorage app
+		,@Op(prmName = "method")String m,TL tl) throws javax.script.ScriptException
+	{	javax.script.ScriptEngineManager man=(javax.script.ScriptEngineManager)tl.h.a( "ScriptEngineManager" );
+		if(man==null)
+			tl.h.a( "ScriptEngineManager",man=new javax.script.ScriptEngineManager() );
+		String engName="ScriptEngine.JavaScript."+app.app+"."+app.key;
+		javax.script.ScriptEngine engine =(javax.script.ScriptEngine)tl.h.s( engName );
+		if(engine==null) {
+			tl.h.s( engName, engine = man.getEngineByName( "JavaScript" ) );
+			engine.put( "tl",tl );
+			Object o=engine.eval( app.value.toString() );
+			engine.put( "JsonStorage_app",o);
+		}else
+			engine.put( "tl",tl);
+		engine.put(  "methodName",m);
+		return engine.eval( "JsonStorage_app[methodName](tl.json,tl)" );
+	}*/
+
 	/**
 	 *	db-tbl ORM wrapper
 	 */
@@ -160,7 +179,7 @@ public static class App {
 		@Override public int pkcn(){return 2;}
 		@Override public CI pkc(int i){return i==0?C.app:C.key;}
 		@Override public CI[]pkcols(){C[]a={C.app,C.key};return a;}
-		public static enum ContentType{txt,json,key,num,real,date, bytes,javaObjectStream;}
+		public static enum ContentType{txt,json,key,num,real,date, bytes,js,javaObjectStream;}
 		@F public String app,key;@F ContentType typ;@F public Object value;
 
 		@Override public String pkv(int i){return i==0?app:key;}
@@ -179,7 +198,7 @@ public static class App {
 			return TL.Util.lst(TL.Util.lst(
 				"varchar(255) NOT NULL DEFAULT '-' "//app
 				,"varchar(255) NOT NULL DEFAULT '-' "//key
-				,"enum('txt','json','key','num','real','date','bytes','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
+				,"enum('txt','json','key','num','real','date','bytes','js','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
 				,"blob"),TL.Util.lst("unique(`app`,`key`)")
 				);//value
 			/*
@@ -229,23 +248,54 @@ public static class App {
 
 		@Op public static JsonStorage
 		set(@Op(prmName="app")String appName
-			,@Op(prmName="key",prmInstance=true)JsonStorage j
-			,@Op(prmName="val")Object val)throws Exception{
-				j.value=val;
-				j.save();
-				return j;}
-
-	@Op public static JsonStorage
-		store(@Op(prmName="key")JsonStorage j )throws Exception{
+			,@Op(prmName="key")String key
+			,@Op(prmName="typ")ContentType typ
+			,@Op(prmName="val")Object val)throws Exception
+		{	JsonStorage j=new JsonStorage();
+			j.value=val;j.app=appName;j.key=key;j.typ=typ;
 			j.save();
 			return j;}
 
-		@Op public static JsonStorage
-		get(@Op(prmName="app")String appName
-			,@Op(prmName="key",prmInstance=true)JsonStorage j){
-				j.app=appName;
-				j.load();
-				return j;}
+	@Op public static JsonStorage
+		store(@Op(prmName="key")JsonStorage j )throws Exception{
+			if(j!=null)j.save();return j;}
+
+	@Op public static JsonStorage get(@Op(prmName="app")String appName
+		,@Op(prmName="key",prmInstance=true)JsonStorage j){ return j;}
+
+	@Op public static Object member(@Op(prmName = "app")String appName
+		,@Op(prmName = "member")String m
+		,@Op(prmName = "args")List args,TL tl) throws javax.script.ScriptException
+	{	javax.script.ScriptEngineManager man=(javax.script.ScriptEngineManager)tl.h.a( "ScriptEngineManager" );
+		if(man==null)
+			tl.h.a( "ScriptEngineManager",man=new javax.script.ScriptEngineManager() );
+		String engName="ScriptEngine.JavaScript."+appName;
+		javax.script.ScriptEngine engine =(javax.script.ScriptEngine)tl.h.s( engName );
+		if(engine==null) {
+			tl.h.s( engName, engine = man.getEngineByName( "JavaScript" ) );
+			engine.put( "tl",tl );
+			List<String>keys=null;
+				try {
+					keys=JsonStorage.JspApp_listKeys( appName );
+				} catch ( SQLException e ) {
+					e.printStackTrace();
+				}
+			List jl=TL.Util.lst(  );
+			Map jm=TL.Util.mapCreate(  );
+			for ( Object k:keys ){
+				JsonStorage j=JsonStorage.loadBy( appName,k.toString() );
+				jl.add( j );
+				jm.put( j.key,j.typ!=JsonStorage.ContentType.js
+					?j.value:engine.eval( j.value.toString() ));
+			}
+			engine.put( "JsonStorageApp",jm);
+			engine.put( "JsonStorageApp.JsonStorages",jl);
+		}else
+			engine.put( "tl",tl);
+		engine.put(  "member",m);
+		if(args!=null)engine.put(  "args",args);
+		return engine.eval( "JsonStorageApp[member]"+(args==null?"":"(args,tl.json,tl)") );
+	}
 
 		/**loads one row from the table*/
 		@Override DB.Tbl load(ResultSet rs,CI[]a)throws Exception{
