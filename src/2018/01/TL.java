@@ -6,31 +6,21 @@ package dev201801;
 /**
  * Created by Vaio-PC on 18/01/2018.
  */
-	import java.io.*;
-	import java.lang.annotation.Annotation;
-	import java.lang.reflect.Field;
-	import java.lang.reflect.Method;
-	import java.net.URL;
-	import java.sql.*;
-	import java.util.Map;
-	import java.util.List;
-	import java.util.Iterator;
-	import java.util.Collection;
-	import java.util.HashMap;
-	import java.util.LinkedList;
-	import java.util.Enumeration;
-	import java.util.Date;
-	import javax.servlet.ServletConfig;
-	import javax.servlet.ServletContext;
-	import javax.servlet.http.Cookie;
-	import javax.servlet.http.HttpServletRequest;
-	import javax.servlet.http.HttpServletResponse;
-	import javax.servlet.http.HttpSession;
-	import javax.servlet.jsp.PageContext;
-	import org.apache.commons.fileupload.FileItem;
-	import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-	import org.apache.commons.fileupload.servlet.ServletFileUpload;
-	import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import java.io.*;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.sql.*;
+import java.util.*;
+import java.util.Date;
+import javax.servlet.*;
+import javax.servlet.http.*;
+import javax.servlet.jsp.PageContext;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 /** * Created by mbohamad on 19/07/2017.*/
 public class TL
@@ -179,7 +169,7 @@ public static class App {
 		@Override public int pkcn(){return 2;}
 		@Override public CI pkc(int i){return i==0?C.app:C.key;}
 		@Override public CI[]pkcols(){C[]a={C.app,C.key};return a;}
-		public static enum ContentType{txt,json,key,num,real,date, bytes,js,javaObjectStream;}
+		public static enum ContentType{txt,json,key,num,real,date, bytes, serverSideJs,javaObjectStream;}
 		@F public String app,key;@F ContentType typ;@F public Object value;
 
 		@Override public String pkv(int i){return i==0?app:key;}
@@ -198,14 +188,14 @@ public static class App {
 			return TL.Util.lst(TL.Util.lst(
 				"varchar(255) NOT NULL DEFAULT '-' "//app
 				,"varchar(255) NOT NULL DEFAULT '-' "//key
-				,"enum('txt','json','key','num','real','date','bytes','js','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
+				,"enum('txt','json','key','num','real','date','bytes','serverSideJs','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
 				,"blob"),TL.Util.lst("unique(`app`,`key`)")
 				);//value
 			/*
 			CREATE TABLE `JsonStorage` (
 			`app` varchar(255) NOT NULL DEFAULT '-',
 			`key` varchar(255) NOT NULL DEFAULT '-',
-			`typ` enum('txt','json','key','num','real','date','bytes','javaObjectStream') NOT NULL DEFAULT 'txt',
+			`typ` enum('txt','json','key','num','real','date','bytes','serverSideJs','javaObjectStream') NOT NULL DEFAULT 'txt',
 			`value` blob NOT NULL DEFAULT '-',
 			unique(`app`,`key`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -235,66 +225,84 @@ public static class App {
 			return j!=null && "key".equals( prmName )?j:o;}
 
 		@Op public static List<String>
-		JspApp_listApps() throws SQLException {
-			return DB.q1colTList( "select distinct `"+C.app+"` from `"+dbtName+"`",String.class );}
+		listApps() throws SQLException {
+			return DB.q1colTList(
+				sql(cols( Co.distinct,C.app ),null,dbtName)
+				,String.class );}
 
-		//@Op public static String JspApp_create(@Op(prmName="app")String appName,@Op(prmName="keys")Map<String,Object>keys){return null;}
-		//@Op public static Map<String,Map<String,Object>> JspApp_getKeys(@Op(prmName="app")String appName,@Op(prmName="keys")List<String>keys){return null;}
-
-		@Op public static List<String>
-		JspApp_listKeys(@Op(prmName="app")String appName)throws SQLException{
-			return DB.q1colTList( "select distinct `"+C.key+"` from `"
-			+dbtName+"` where `"+C.app+"`=?",String.class ,appName);}
-
-		@Op public static JsonStorage
-		set(@Op(prmName="app")String appName
-			,@Op(prmName="key")String key
-			,@Op(prmName="typ")ContentType typ
-			,@Op(prmName="val")Object val)throws Exception
-		{	JsonStorage j=new JsonStorage();
-			j.value=val;j.app=appName;j.key=key;j.typ=typ;
-			j.save();
-			return j;}
-
-	@Op public static JsonStorage
-		store(@Op(prmName="key")JsonStorage j )throws Exception{
-			if(j!=null)j.save();return j;}
+	@Op public static List<String>
+		listKeys(@Op(prmName="app")String appName)throws SQLException{
+			return DB.q1colTList(
+				sql(cols(C.key ),where( C.app ,appName),dbtName)// Co.distinct,
+				,String.class ,appName); }
 
 	@Op public static JsonStorage get(@Op(prmName="app")String appName
 		,@Op(prmName="key",prmInstance=true)JsonStorage j){ return j;}
 
+	@Op public static List<JsonStorage>
+		getKeys(@Op(prmName="app")String appName,@Op(prmName="keys")List<String>keys){
+			List<JsonStorage>l=new LinkedList<>(  );
+			JsonStorage j=new JsonStorage();
+			for(DB.Tbl t:j.query(
+					where(C.app,appName
+					,TL.Util.lst( C.key,Co.in),keys )
+					,true))
+				l.add( (JsonStorage ) t );
+			return l;}
+
+	@Op public static JsonStorage
+		set(@Op(prmName="app")String appName
+			,@Op(prmName="key")String key
+			,@Op(prmName="typ")ContentType typ
+			,@Op(prmName="val")Object val,TL tl)throws Exception
+		{	JsonStorage j=new JsonStorage();
+			j.value=val;j.app=appName;j.key=key;j.typ=typ;
+			return store(j,tl);}
+
+	@Op public static JsonStorage
+		store(@Op(prmName="key")JsonStorage j ,TL tl)throws Exception
+	{if(j!=null){j.save();
+		if(j.typ==ContentType.serverSideJs ){
+			javax.script.ScriptEngine e =eng(j.app,false,tl);
+			if(e!=null){
+				Object o=e.eval( j.value.toString() );//engine.put( key ,o);
+				Map jm=(Map)e.get( "JsonStorageApp");
+				jm.put( j.key,o );//List jl=(List)e.get( "JsonStorageApp.JsonStorages");jl.add( j );
+			} } }return j;}
+
+	static javax.script.ScriptEngine eng(String appName,boolean createIfNotInit,TL tl){
+		String en="ScriptEngine.JavaScript."+appName;
+		javax.script.ScriptEngine e =(javax.script.ScriptEngine)tl.h.s( en );
+		if(e==null&& createIfNotInit) {
+			javax.script.ScriptEngineManager man=(javax.script.ScriptEngineManager)tl.h.a( "ScriptEngineManager" );
+			if(man==null )
+				tl.h.a( "ScriptEngineManager",man=new javax.script.ScriptEngineManager() );
+			tl.h.s( en, e = man.getEngineByName( "JavaScript" ) );
+			e.put( "tl",tl );
+			JsonStorage j=new JsonStorage();
+			Map jm=TL.Util.mapCreate(  );//List jl=TL.Util.lst(  );
+			for(DB.Tbl t:j.query( where(C.app,appName,C.typ	,ContentType.serverSideJs.toString()) ))
+				try{jm.put( j.key,e.eval( j.value.toString() ));}catch ( Exception ex ){
+				jm.put( j.key,TL.Util.mapCreate("sourceCode", j.value,"eval_Exception",ex ) );}
+			e.put( "JsonStorageApp",jm);//e.put( "JsonStorageApp.JsonStorages",jl);
+		}else if(e!=null)
+			e.put( "tl",tl);
+		return e; }
+
 	@Op public static Object member(@Op(prmName = "app")String appName
 		,@Op(prmName = "member")String m
 		,@Op(prmName = "args")List args,TL tl) throws javax.script.ScriptException
-	{	javax.script.ScriptEngineManager man=(javax.script.ScriptEngineManager)tl.h.a( "ScriptEngineManager" );
-		if(man==null)
-			tl.h.a( "ScriptEngineManager",man=new javax.script.ScriptEngineManager() );
-		String engName="ScriptEngine.JavaScript."+appName;
-		javax.script.ScriptEngine engine =(javax.script.ScriptEngine)tl.h.s( engName );
-		if(engine==null) {
-			tl.h.s( engName, engine = man.getEngineByName( "JavaScript" ) );
-			engine.put( "tl",tl );
-			List<String>keys=null;
-				try {
-					keys=JsonStorage.JspApp_listKeys( appName );
-				} catch ( SQLException e ) {
-					e.printStackTrace();
-				}
-			List jl=TL.Util.lst(  );
-			Map jm=TL.Util.mapCreate(  );
-			for ( Object k:keys ){
-				JsonStorage j=JsonStorage.loadBy( appName,k.toString() );
-				jl.add( j );
-				jm.put( j.key,j.typ!=JsonStorage.ContentType.js
-					?j.value:engine.eval( j.value.toString() ));
-			}
-			engine.put( "JsonStorageApp",jm);
-			engine.put( "JsonStorageApp.JsonStorages",jl);
-		}else
-			engine.put( "tl",tl);
-		engine.put(  "member",m);
-		if(args!=null)engine.put(  "args",args);
-		return engine.eval( "JsonStorageApp[member]"+(args==null?"":"(args,tl.json,tl)") );
+	{	javax.script.ScriptEngine e=eng(appName,true,tl);
+		e.put( "member",m);
+		if(args!=null)e.put(  "args",args);
+		return e.eval( "JsonStorageApp[member]"+(args==null?"":"(args,tl.json,tl)") );
+	}
+
+	@Op public static Object eval(@Op(prmName = "app")String appName
+		,@Op(prmName = "src")String src,TL tl) throws javax.script.ScriptException
+	{	javax.script.ScriptEngine e=eng(appName,true,tl);
+		e.put( "src",src);
+		return e.eval( src );
 	}
 
 		/**loads one row from the table*/
@@ -426,10 +434,10 @@ public static class App {
 			if(j!=null && t instanceof String)
 				tl.json.put( "dbtName",j );
 			return "dbName".equals( prmName )
-				       ?(db==null?d:db)
-				       :"dbtName".equals( prmName )
-					        ?(j!=null?j:t)
-					        :o;}
+				?(db==null?d:db)
+				:"dbtName".equals( prmName )
+				?(j!=null?j:t)
+				:o;}
 
 		public String dbName,dbtName="MetaTbl",comment;
 		@Override public String getName(){return dbtName;}
@@ -489,7 +497,7 @@ public static class App {
 			@Override public Json.Output jsonOutput( Json.Output o, String ind, String path ) throws IOException {
 				return jsonOutput( o,ind,path,true ); }
 			public Json.Output jsonOutput( Json.Output o
-				                             , String ind, String path,boolean closeBrace ) throws IOException {
+				, String ind, String path,boolean closeBrace ) throws IOException {
 				o.w( "{\"name\":" ).oStr( name, "" )
 					.w( ",\"type\":" ).oStr( type,"" )
 					.w( ",\"i\":" ).p( i );
@@ -507,8 +515,8 @@ public static class App {
 					return tl.jo().clrSW().o( this ).toStrin_();
 				} catch ( Exception ex ) {}
 				return "{\"name\":\""+name+"\",\"type\":\""+type
-					       +"\",\"i\":"+i+",\"comment\":\""+comment
-					       +"\",\"creation\":\""+creation+"\",\"cols\":\""+cols+"\"}";
+					+"\",\"i\":"+i+",\"comment\":\""+comment
+					+"\",\"creation\":\""+creation+"\",\"cols\":\""+cols+"\"}";
 			}
 			public Map asMap(){return TL.Util.mapCreate( "name",name
 				,"type",type,"comment",comment,"i",i,"creation",creation,"cols",cols );}
@@ -518,8 +526,8 @@ public static class App {
 				o.w( ",\"cols\":[");boolean comma=false;
 				for ( C c:cols ){if(comma)o.w( ',' );else comma=true;
 					o.w( '`' ).w( c.name==null?"null":
-						              c.name.replaceAll( "\n","_newline_" )
-							              .replaceAll( "`","_backTic_" )).w( '`' );}
+						c.name.replaceAll( "\n","_newline_" )
+						.replaceAll( "`","_backTic_" )).w( '`' );}
 				return o.w( "]}" );}
 		}//class I
 
@@ -632,9 +640,9 @@ public static class App {
 					null, null, m.dbtName, null );
 					while ( result.next() ) {
 						C col = m.new C(result.getString( "COLUMN_NAME" )
-							               ,result.getString( "TYPE_NAME" )
-							               ,result.getString( "REMARKS" )
-							               ,l.size());
+							,result.getString( "TYPE_NAME" )
+							,result.getString( "REMARKS" )
+							,l.size());
 						l.add( col );
 						// col.columnType = result.getInt(5); //java.sql.Types.
 					}
@@ -697,9 +705,9 @@ public static class App {
 			for(Object k:l){
 				Map x=(Map)k;
 				cols[++i]=new C((String)x.get( "name" )
-					               ,(String)x.get( "type" )
-					               ,(String)x.get( "comment" )
-					               ,(int)x.get( "i" ));}
+					,(String)x.get( "type" )
+					,(String)x.get( "comment" )
+					,(int)x.get( "i" ));}
 			l=(List)m.get( "pk" );
 			pkc=new C[l.size()];i=-1;
 			for(Object k:l)pkc[++i]=col((String)k);
@@ -709,8 +717,7 @@ public static class App {
 			C c=col( (String)o );
 			//fk.put( c,(Map)x.get( o ) );
 		}*/
-			return this;
-		}
+			return this;}
 
 		int createTable(){
 			StringBuilder b=new StringBuilder( "create table `")
@@ -795,11 +802,11 @@ public static class App {
 
 		@Op static public MetaTbl
 		DBTbl_create(@Op(prmName = "dbName") String dbName
-			            ,@Op(prmName="dbtName") String dbtName
-			            ,@Op(prmName="cols") List<Map<String,String>>cols
-			            ,@Op(prmName = "pk") List<String>pk
-			            ,@Op(prmName = "fk") Map<String,Map<String,String>>fk
-			            ,TL tl){
+			    ,@Op(prmName="dbtName") String dbtName
+			    ,@Op(prmName="cols") List<Map<String,String>>cols
+			    ,@Op(prmName = "pk") List<String>pk
+			    ,@Op(prmName = "fk") Map<String,Map<String,String>>fk
+			    ,TL tl){
 			MetaTbl m=new MetaTbl();
 			m.fromMap(tl.json  );
 			m.createTable();
@@ -808,67 +815,67 @@ public static class App {
 
 		@Op static public int
 		DBTbl_drop(@Op(prmName = "dbName") String dbName
-			          ,@Op(prmName = "dbtName") String dbtName) throws SQLException{
+			,@Op(prmName = "dbtName") String dbtName) throws SQLException{
 			return  TL.DB.x( "drop table `"+dbName.replaceAll( "`"," " )+"`.`"+dbtName.replaceAll( "`"," " )+"`" );}
 
 		@Op static public int
 		DBTbl_rename(@Op(prmName = "dbName") String dbName
-			            ,@Op(prmName = "dbtName") String dbtName
-			            ,@Op(prmName = "newName") String newName)throws SQLException{
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "newName") String newName)throws SQLException{
 			return  TL.DB.x( "rename table `"+dbName.replaceAll( "`"," " )+"`.`"+dbtName.replaceAll( "`"," " )+"` to `"+newName.replaceAll( "`"," " )+"`" );}
 
 		@Op static public int
 		DBTblCol_drop(@Op(prmName = "dbName") String dbName
-			             ,@Op(prmName = "dbtName") String dbtName
-			             ,@Op(prmName = "col") String col){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "col") String col){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_insert(@Op(prmName = "dbName") String dbName
-			               ,@Op(prmName = "dbtName") String dbtName
-			               ,@Op(prmName = "col") String col
-			               ,@Op(prmName = "beforeCol") String beforeCol
-			               ,@Op(prmName = "def") Map<String,String>def){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "col") String col
+			,@Op(prmName = "beforeCol") String beforeCol
+			,@Op(prmName = "def") Map<String,String>def){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_add(@Op(prmName = "dbName") String dbName
-			            ,@Op(prmName = "dbtName") String dbtName
-			            ,@Op(prmName = "") String col
-			            ,@Op(prmName = "") Map<String,String>def){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "") String col
+			,@Op(prmName = "") Map<String,String>def){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_alter(@Op(prmName = "dbName") String dbName
-			              ,@Op(prmName = "dbtName") String dbtName
-			              ,@Op(prmName = "col") String col
-			              ,@Op(prmName = "def") Map<String,String>def){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "col") String col
+			,@Op(prmName = "def") Map<String,String>def){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_rename(@Op(prmName = "dbName") String dbName
-			               ,@Op(prmName = "dbtName") String dbtName
-			               ,@Op(prmName = "col") String col
-			               ,@Op(prmName = "newName") String newName){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "col") String col
+			,@Op(prmName = "newName") String newName){
 			return -1;}
 
 		@Op static public Object[]
 		DBTRow_get(@Op(prmName = "dbName") String dbName
-			          ,@Op(prmName = "dbtName") String dbtName
-			          ,@Op(prmName = "pkv") Object[]pkv){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "pkv") Object[]pkv){
 			return null;}
 
 		@Op static public int
 		DBTRow_insert(@Op(prmName = "dbName") String dbName
-			             ,@Op(prmName = "dbtName") String dbtName
-			             ,@Op(prmName = "vals") Object[]vals){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "vals") Object[]vals){
 			return -1;}
 
 		@Op static public int
 		DBTRow_update(@Op(prmName = "dbName") String dbName
-			             ,@Op(prmName = "dbtName") String dbtName
-			             ,@Op(prmName = "set") Object[]set
-			             ,@Op(prmName = "where") Object[]where){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "set") Object[]set
+			,@Op(prmName = "where") Object[]where){
 			return -1;}
 
 		@Op static public int
@@ -879,10 +886,10 @@ public static class App {
 
 		@Op static public List<Object[]>
 		DBT_query(@Op(prmName = "dbName") String dbName
-			         ,@Op(prmName = "dbtName") String dbtName
-			         ,@Op(prmName = "where") Object[]where
-			         ,@Op(prmName = "groupBy") Object[]groupBy
-			         ,@Op(prmName = "orderBy") Object[]orderBy){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "where") Object[]where
+			,@Op(prmName = "groupBy") Object[]groupBy
+			,@Op(prmName = "orderBy") Object[]orderBy){
 			return null;}
 
 	}//class MetaTbl Table.Wrapper.Integer
@@ -891,10 +898,10 @@ public static class App {
 
 
 enum context{ROOT(
-	                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-	                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-	                 ,"/public_html/i1io/"
-	                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	,"/public_html/i1io/"
+	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -1366,10 +1373,10 @@ public static class DB {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			                          ("jdbc:mysql://"+context.DB.server.str
-				                           +"/"+context.DB.dbName.str
-				                          ,context.DB.un.str,context.DB.pw.str
-			                          );Object[]b={r,null};
+			("jdbc:mysql://"+context.DB.server.str
+			     +"/"+context.DB.dbName.str
+			    ,context.DB.un.str,context.DB.pw.str
+			);Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){t.error(e,Name,".DB.DriverManager:");}
 		return r;}
@@ -2072,15 +2079,16 @@ public static class DB {
 		}//Itrtr
 		/**Class for Utility methods on set-of-columns, opposed to operations on a single column*/
 		public enum Co implements CI {//Marker ,sql-preparedStatement-parameter
-			uuid("uuid()")
-			,now("now()")
-			,count("count(*)")
-			,all("*")
+			all("*")
 			,prm("?")
-			,password("password(?)")
 			,Null("null")
+			,now("now()")
+			,uuid("uuid()")
+			,count("count(*)")
+			,distinct("distinct")
+			,password("password(?)")
 			,lt("<"),le("<="),ne("<>"),gt(">"),ge(">=")
-			,or("or"),like("like"),in("in"),maxLogTime("max(`logTime`)")//,and("and"),prnthss("("),max("max(?)")
+			,or("or"),like("like"),in("in")//,and("and"),prnthss("("),max("max(?)")
 			;String txt;
 			Co(String p){txt=p;}
 			@Override public Field f(){return null;}
@@ -2093,8 +2101,7 @@ public static class DB {
 				return r;}
 
 			/**generate Sql into the StringBuilder*/
-			public static StringBuilder generate(StringBuilder b,CI[]col){
-				return generate(b,col,",");}
+			public static StringBuilder generate(StringBuilder b,CI[]col){ return generate(b,col,",");}
 
 			static StringBuilder generate(StringBuilder b,CI[]col,String separator){
 				if(separator==null)separator=",";
@@ -2102,6 +2109,8 @@ public static class DB {
 					if(i>0)b.append(separator);
 					if(col[i] instanceof Co)
 						b.append(((Co)col[i]).txt);
+					else if(col[i] ==Co.distinct && i+1<n)
+						b.append( col[i] ).append(" `").append(col[++i]).append("`");
 					else
 						b.append("`").append(col[i]).append("`");}
 				return b;}
@@ -2523,7 +2532,7 @@ public static class Json{
 			Prsr j=new Prsr();j.rdr=new java.io.StringReader(p);return j.parse();}
 
 		public static Object parse(HttpServletRequest p)throws Exception{
-			Prsr j=new Prsr();j.rdr=p.getReader();return j.parse();}
+			Prsr j=new Prsr();j.rdr=p.getReader();j.nxt(j.c=j.read());return j.parse();}
 
 		public static Object parseItem(Reader p)throws Exception{
 			Prsr j=new Prsr();j.rdr=p;return j.parseItem();}
