@@ -58,7 +58,7 @@ public static void run(
 			Class c=prmTypes[++i];
 			String nm=pp!=null?pp.prmName():"arg"+i;//t.getName();
 			Object o=null;
-			if(pp.prmInstance())
+			if(pp!=null && pp.prmInstance())
 				args[i]=cl.getMethod( "prmInstance",ca ).invoke( cl,tl,pp.prmName() );
 			else if(TL.DB.Tbl.class.isAssignableFrom(c))
 			{TL.DB.Tbl f=(TL.DB.Tbl)c.newInstance();args[i]=f;
@@ -152,7 +152,7 @@ public static class App {
 		if(engine==null) {
 			tl.h.s( engName, engine = man.getEngineByName( "JavaScript" ) );
 			engine.put( "tl",tl );
-			Object o=engine.eval( app.value.toString() );
+			Object o=engine.eval( app.val.toString() );
 			engine.put( "JsonStorage_app",o);
 		}else
 			engine.put( "tl",tl);
@@ -170,14 +170,14 @@ public static class App {
 		@Override public CI pkc(int i){return i==0?C.app:C.key;}
 		@Override public CI[]pkcols(){C[]a={C.app,C.key};return a;}
 		public static enum ContentType{txt,json,key,num,real,date, bytes, serverSideJs,javaObjectStream;}
-		@F public String app,key;@F ContentType typ;@F public Object value;
+		@F public String app,key;@F public ContentType typ;@F public Object val;
 
 		@Override public String pkv(int i){return i==0?app:key;}
 		@Override public String[]pkv(String[]v){app=v[0];key=v[1];return v;}
 		@Override public String[]pkvals(){String[]a={app,key};return a;}
 
 
-		public enum C implements CI{app,key,typ, value;
+		public enum C implements CI{app,key,typ, val;
 			@Override public Field f(){return Co.f(name(), JsonStorage.class);}
 			@Override public String getName(){return name();}
 			@Override public Class getType(){return String.class;}
@@ -186,19 +186,26 @@ public static class App {
 
 		@Override public List creationDBTIndices(TL tl){
 			return TL.Util.lst(TL.Util.lst(
-				"varchar(255) NOT NULL DEFAULT '-' "//app
-				,"varchar(255) NOT NULL DEFAULT '-' "//key
+				"varchar(255) NOT NULL DEFAULT '\uD83C\uDFE0' "//app \u1F3E0 🏠
+				,"varchar(255) NOT NULL DEFAULT '\uD83C\uDFE0' "//key
 				,"enum('txt','json','key','num','real','date','bytes','serverSideJs','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
 				,"blob"),TL.Util.lst("unique(`app`,`key`)")
-				);//value
+				);//val
 			/*
 			CREATE TABLE `JsonStorage` (
-			`app` varchar(255) NOT NULL DEFAULT '-',
-			`key` varchar(255) NOT NULL DEFAULT '-',
+			`app` varchar(255) NOT NULL DEFAULT '🏠',
+			`key` varchar(255) NOT NULL DEFAULT '🏠',
 			`typ` enum('txt','json','key','num','real','date','bytes','serverSideJs','javaObjectStream') NOT NULL DEFAULT 'txt',
-			`value` blob NOT NULL DEFAULT '-',
+			`val` blob ,
 			unique(`app`,`key`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+🔏  lock with ink pen Unicode code point: U+1F50F
+🔐  closed lock with key Unicode code point: U+1F510
+🔑  key Unicode code point: U+1F511
+🔒  lock Unicode code point: U+1F512
+🔓  open lock Unicode code point: U+1F513
 			*/
 		}
 
@@ -256,7 +263,7 @@ public static class App {
 			,@Op(prmName="typ")ContentType typ
 			,@Op(prmName="val")Object val,TL tl)throws Exception
 		{	JsonStorage j=new JsonStorage();
-			j.value=val;j.app=appName;j.key=key;j.typ=typ;
+			j.val =val;j.app=appName;j.key=key;j.typ=typ;
 			return store(j,tl);}
 
 	@Op public static JsonStorage
@@ -265,7 +272,7 @@ public static class App {
 		if(j.typ==ContentType.serverSideJs ){
 			javax.script.ScriptEngine e =eng(j.app,false,tl);
 			if(e!=null){
-				Object o=e.eval( j.value.toString() );//engine.put( key ,o);
+				Object o=e.eval( j.val.toString() );//engine.put( key ,o);
 				Map jm=(Map)e.get( "JsonStorageApp");
 				jm.put( j.key,o );//List jl=(List)e.get( "JsonStorageApp.JsonStorages");jl.add( j );
 			} } }return j;}
@@ -282,8 +289,8 @@ public static class App {
 			JsonStorage j=new JsonStorage();
 			Map jm=TL.Util.mapCreate(  );//List jl=TL.Util.lst(  );
 			for(DB.Tbl t:j.query( where(C.app,appName,C.typ	,ContentType.serverSideJs.toString()) ))
-				try{jm.put( j.key,e.eval( j.value.toString() ));}catch ( Exception ex ){
-				jm.put( j.key,TL.Util.mapCreate("sourceCode", j.value,"eval_Exception",ex ) );}
+				try{jm.put( j.key,e.eval( j.val.toString() ));}catch ( Exception ex ){
+				jm.put( j.key,TL.Util.mapCreate("sourceCode", j.val,"eval_Exception",ex ) );}
 			e.put( "JsonStorageApp",jm);//e.put( "JsonStorageApp.JsonStorages",jl);
 		}else if(e!=null)
 			e.put( "tl",tl);
@@ -307,19 +314,23 @@ public static class App {
 
 		/**loads one row from the table*/
 		@Override DB.Tbl load(ResultSet rs,CI[]a)throws Exception{
-			int c=0;for(CI f:a)if(f!=C.value)v(f,rs.getObject(++c));else
+			int c=0;for(CI f:a)if(f!=C.val )v(f,rs.getObject(++c));else
 			switch ( typ ){
-				case bytes:value=rs.getBytes( ++c );break;
-				case date:value=rs.getDate( ++c );break;
-				case num:value=rs.getLong( ++c );break;
-				case real:value=rs.getDouble( ++c );break;
+				case bytes:
+					val =rs.getBytes( ++c );break;
+				case date:
+					val =rs.getDate( ++c );break;
+				case num:
+					val =rs.getLong( ++c );break;
+				case real:
+					val =rs.getDouble( ++c );break;
 				case javaObjectStream:java.io.ObjectInputStream p=
 					new ObjectInputStream( rs.getBinaryStream( ++c ) );
-					value=p.readObject();break;
-				case json: value=Json.Prsr.parseItem(rs
+					val =p.readObject();break;
+				case json: val =Json.Prsr.parseItem(rs
 					.getCharacterStream( ++c ) );break;
 				default://case txt: case key:
-					value=rs.getString( ++c );break;
+					val =rs.getString( ++c );break;
 			}
 			return this;}
 
@@ -388,7 +399,7 @@ public static class App {
 			else typ=assesTyp( c );
 			return typ;}
 
-		public ContentType assesTyp(){return typ=assesTyp( value );}
+		public ContentType assesTyp(){return typ=assesTyp( val );}
 
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
 		@Override public DB.Tbl save() throws Exception{
@@ -401,16 +412,26 @@ public static class App {
 			sql.append( ")" );//int x=
 			Object[] vals = vals();
 			if(typ==ContentType.javaObjectStream) {
-				//PreparedStatement ps=DB.P( sql.toString(),vals() ); ps.setBinaryStream( C.value.ordinal()+1,stream );
+				//PreparedStatement ps=DB.P( sql.toString(),vals() ); ps.setBinaryStream( C.val.ordinal()+1,stream );
 				ByteArrayOutputStream b=new ByteArrayOutputStream(  );
 				ObjectOutputStream o=new ObjectOutputStream( b );
-				o.writeObject( value );o.flush();o.close();b.close();
-				vals[C.value.ordinal()]=b.toByteArray(); }
+				o.writeObject( val );o.flush();o.close();b.close();
+				vals[C.val.ordinal()]=b.toByteArray(); }
 			else if(typ==ContentType.json)
-				vals[C.value.ordinal()]=Json.Output.out( value );
+				vals[C.val.ordinal()]=Json.Output.out( val );
+			vals[C.typ.ordinal()]=(typ==null?ContentType.txt:typ).toString();
 			DB.X( sql.toString(), vals );
 			tl().log( "save", this );//log(nw?TL.DB.Tbl.Log.Act.New:TL.DB.Tbl.Log.Act.Update);
 		return this;}//save
+
+		
+		@Override public Json.Output jsonOutput(Json.Output o,String ind,String path)throws IOException{
+			o.w("{\"app\":").oStr(app,ind)
+			.w(",\"key\":").oStr(key,ind)
+			.w(",\"typ\":");
+			if(typ==null)o.w( "null" );
+			else o.oStr(typ.toString(),ind);
+			return o.w(",\"val\":").o( val,ind,path).w('}');}
 
  }//class JsonStorage
 
@@ -986,6 +1007,7 @@ public Json.Output getOut() throws IOException {return out;}
 public static TL Enter(HttpServletRequest r,HttpServletResponse response,HttpSession session,Writer out,PageContext pc) throws IOException{
 	TL p;if(ops==null || ops.size()==0)App.staticInit();
 	tl.set(p=new TL(r,response,out!=null?out:response.getWriter()));//Class c=App.class;c=App.Prop.class;c=App.JsonStorage.class;
+	//Dbg.p(App.JsonStorage.sttc);
 	if(App.JsonStorage.sttc==null)
 		p.log( Name,".Enter:App.JsonStorage.sttc=",App.JsonStorage.sttc );
 	//if(App.MetaTbl.sttc==null)p.log( Name,".Enter:App.MetaTbl.sttc=",App.MetaTbl.sttc );
@@ -2108,10 +2130,10 @@ public static class DB {
 				for(int n=col.length,i=0;i<n;i++){
 					if(i>0)b.append(separator);
 					if(col[i] instanceof Co)
-						b.append(((Co)col[i]).txt);
-					else if(col[i] ==Co.distinct && i+1<n)
-						b.append( col[i] ).append(" `").append(col[++i]).append("`");
-					else
+					{	b.append(((Co)col[i]).txt);
+						if(col[i] ==Co.distinct && i+1<n)
+							b.append(" `").append(col[++i]).append("`");
+					}else
 						b.append("`").append(col[i]).append("`");}
 				return b;}
 			static StringBuilder where(StringBuilder b,Object[]where){
@@ -2569,7 +2591,7 @@ public static class Json{
 
 		public Object parseItem()throws Exception{
 			Object r=null;int i;skipWhiteSpace();switch(c)
-			{ case '"':case '`':r=extractStringLiteral();break;
+			{ case '"':case '`':case '\'':r=extractStringLiteral();break;
 				case '0':case '1':case '2':case '3':case '4':
 				case '5':case '6':case '7':case '8':case '9':
 				case '-':case '+':case '.':r=extractDigits();break;
@@ -2705,7 +2727,7 @@ public static class Json{
 					v=parseItem();
 					skipWhiteSpace();
 				}//else if(c==','){nxt();
-				if(c!='\0'&&c!=bo){
+				if(c!='\0'&&c!=bc){
 					if(c!=',')
 						System.out.print(//throw new IllegalArgumentException(
 							"Object:"+rc()+" expected '"+bc+"' or ','");
