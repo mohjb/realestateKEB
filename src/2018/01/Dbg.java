@@ -74,16 +74,16 @@ public static class Req implements HttpServletRequest {
 	//public void addCookieHeader(String cookie) {cookieHeaders.add(cookie);}
 
 	Req init( String data) {contentLength=(bodyData=data).length();
-		inps = new ByteArrayInputStream(data.getBytes());
+		inps = new ByteArrayInputStream(data.getBytes());bufr=null;
 		return this;}
 
 	Req init( String mimeType, InputStream data, long totalBytes) {
 		contentType= mimeType;
 		if (data == null) {
-			inps = new ByteArrayInputStream(new byte[0]);
+			inps = new ByteArrayInputStream(new byte[0]);bufr=null;
 			contentLength = 0L;
 		} else {
-			inps = data;
+			inps = data;bufr=null;
 			contentLength = totalBytes;
 		}
 		chunkedTransfer = contentLength < 0;
@@ -982,8 +982,14 @@ public static void main(String[]args)throws Exception{
  s.pc.a=SrvltContxt.sttc();
  s.pc.q.ssn=new Ssn();
  String[]prms= {
-	//"{op:'JsonStorage.store',key:{app:'app',key:'app',value:'app'}}"
 	"{op:'JsonStorage.listApps'}"
+	,"{op:'JsonStorage.store',key:{app:'app',key:'app',val:'app'}}"
+	,"{op:'JsonStorage.set',app:'app',key:'app2',val:'app2'}"
+	,"{op:'JsonStorage.listKeys',app:'app'}"
+	,"{op:'JsonStorage.getKeys',app:'app',keys:['app']}"
+	,"{op:'JsonStorage.get',app:'app',key:'app2'}"
+	,"{op:'JsonStorage.member',app:'app',member:'app'}"
+	,"{op:'JsonStorage.eval',src:'5+7'}"
 	};
 	for(String p:prms){
 	s.pc.q.init(p);
