@@ -26,10 +26,10 @@ static final String Name="dev201801.Dbg";
 public static class Req implements HttpServletRequest {
 	Ssn ssn;//=new Ssn();
 	String contentType="text/json"
-			,protocolVersion=""
-			,uri="",bodyData//,data
-			,queryString=""
-					 ;//,method="POST";//
+		,protocolVersion=""
+		,uri="",bodyData//,data
+		,queryString=""
+			 ;//,method="POST";//
 	PC pc;Req(PC p){pc=p;}Req(PC p,String data){pc=p;init(data);}
 	InputStream inps;// from Http.Response.data
 	BufferedReader bufr;
@@ -170,7 +170,7 @@ public static class Req implements HttpServletRequest {
 				int p = line.indexOf(':');
 				if (p >= 0) {
 					String hname=line.substring(0, p).trim().toLowerCase(Locale.US)
-							,hval=line.substring(p + 1).trim();
+						,hval=line.substring(p + 1).trim();
 					if("cookie".equals(hval))
 						cookieHeaders.add( hval );else
 						headers.put(hname, hval);
@@ -624,7 +624,7 @@ public static class Rsp implements HttpServletResponse{
 		public String getDescription() {        return "" + this.requestStatus + " " + this.description;}
 
 	}
-JspWrtr jspWrtr=new JspWrtr();
+	JspWrtr jspWrtr=new JspWrtr();
 	PrintWriter out=new PrintWriter(jspWrtr);//System.out//strW);StringWriter strW=new StringWriter(); //TODO: with the server, must not initialize out, instead should remove the member-variable
 	@Override public void flushBuffer() throws IOException {if(out!=null)out.flush();if(sos!=null)sos.flush();}
 	@Override public int getBufferSize() {p(Name,".getBufferSize:0");return 0;}
@@ -727,10 +727,10 @@ JspWrtr jspWrtr=new JspWrtr();
 		@Override public void println( ) throws IOException { sb.append( '\n' );}
 
 
-	//public static class SrvltWrtr extends java.io.Writer{
+		//public static class SrvltWrtr extends java.io.Writer{
 		//SrvltWrtr
 		JspWrtr(){super(10,false);
-		p("SrvltWrtr.<init>");}
+			p("SrvltWrtr.<init>");}
 		StringBuilder sb=new StringBuilder();
 		@Override public void flush() throws IOException {p("SrvltWrtr.flush:",sb.toString());sb.setLength(0);}
 		@Override public void close() throws IOException {p("SrvltWrtr.close:",sb.toString());sb.setLength(0);}
@@ -746,7 +746,7 @@ JspWrtr jspWrtr=new JspWrtr();
 		@Override public Writer append(char p) throws IOException {sb.append(p);return this;}
 		//@Override public Writer append(String p)  {sb.append(p);super.;return this;}
 		//@Override public Writer append(String p, int off, int len) throws IOException {sb.append(p, off, len);return this;}
-	//}//public static class SrvltWrtr extends java.io.Writer
+		//}//public static class SrvltWrtr extends java.io.Writer
 	}//class JspWrtr , writer
 
 }//class Rsp
@@ -771,7 +771,7 @@ public static class PC extends javax.servlet.jsp.PageContext{
 	@Override public void include(String arg0) throws ServletException, IOException{}
 	@Override public void include(String arg0, boolean arg1) throws ServletException, IOException{}
 	@Override public void initialize(Servlet arg0, ServletRequest arg1, ServletResponse arg2, String arg3,
-		 boolean arg4, int arg5,boolean arg6) throws IOException, IllegalStateException, IllegalArgumentException{}
+	                                 boolean arg4, int arg5,boolean arg6) throws IOException, IllegalStateException, IllegalArgumentException{}
 	@Override public void release(){}
 	@Override public Object findAttribute(String n){Object o=q.getAttribute(n);
 		if(o==null)o=q.ssn.getAttribute(n);if(o==null)o=a.getAttribute(n);return o;}
@@ -814,7 +814,7 @@ public static class Srvlt extends GenericServlet{
 public static class FSrvlt extends Srvlt{
 	FSrvlt sttc=new FSrvlt();
 	@Override public void service(ServletRequest q,
-	ServletResponse p)throws ServletException, IOException {
+	                              ServletResponse p)throws ServletException, IOException {
 		p(Name,".FSrvlt.service:",q,",",p);}}
 
 //////////////////////////////////////////////////////////////////////
@@ -884,34 +884,34 @@ public static class SrvltContxt implements ServletContext{//static SrvltContxt s
 		final String def="application/octet-stream";
 		Map m=(Map)attribs.get( "mapFileExt2MimeType" );
 		if(m==null) {m=TL.Util.mapCreate(
-				"woff","application/font-woff"
-				,"woff2","application/font-woff2"
-				,"jar"  ,"application/java-archive"
-				,"js"   ,"application/javascript"
-				,"json" ,"application/json"
-				,"exe"  ,def
-				,"pdf"  ,"application/pdf"
-				,"7z"   ,"application/x-7z-compressed"
-				,"tgz"  ,"application/x-compressed"
-				,"gz"   ,"application/x-gzip"
-				,"tar"  ,"application/x-tar"
-				,"xhtml","application/xhtml+xml"
-				,"zip"  ,"application/zip"
-				,"mp3"  ,"audio/mpeg"
-				,"gif"  ,"image/gif"
-				,"jpg"  ,"image/jpeg"
-				,"jpeg" ,"image/jpeg"
-				,"png"  ,"image/png"
-				,"svg"  ,"image/svg+xml"
-				,"ico"  ,"image/x-icon"
-				,"css"  ,"text/css"
-				,"csv"  ,"text/csv"
-				,"htm"  ,"text/html; charset=utf-8"
-				,"html" ,"text/html; charset=utf-8"
-				,"txt"  ,"text/plain"
-				,"text" ,"text/plain"
-				,"log"  ,"text/plain"
-				,"xml"  ,"text/xml" );
+			"woff","application/font-woff"
+			,"woff2","application/font-woff2"
+			,"jar"  ,"application/java-archive"
+			,"js"   ,"application/javascript"
+			,"json" ,"application/json"
+			,"exe"  ,def
+			,"pdf"  ,"application/pdf"
+			,"7z"   ,"application/x-7z-compressed"
+			,"tgz"  ,"application/x-compressed"
+			,"gz"   ,"application/x-gzip"
+			,"tar"  ,"application/x-tar"
+			,"xhtml","application/xhtml+xml"
+			,"zip"  ,"application/zip"
+			,"mp3"  ,"audio/mpeg"
+			,"gif"  ,"image/gif"
+			,"jpg"  ,"image/jpeg"
+			,"jpeg" ,"image/jpeg"
+			,"png"  ,"image/png"
+			,"svg"  ,"image/svg+xml"
+			,"ico"  ,"image/x-icon"
+			,"css"  ,"text/css"
+			,"csv"  ,"text/csv"
+			,"htm"  ,"text/html; charset=utf-8"
+			,"html" ,"text/html; charset=utf-8"
+			,"txt"  ,"text/plain"
+			,"text" ,"text/plain"
+			,"log"  ,"text/plain"
+			,"xml"  ,"text/xml" );
 		}p=p==null?null:(String)m.get(p);
 		return p==null?def:p;}
 	@Override public RequestDispatcher getNamedDispatcher(String p){return null;}
@@ -953,7 +953,7 @@ public static class SrvltContxt implements ServletContext{//static SrvltContxt s
 					pc.q.initFromInputStream(  );
 					if(pc.q.cookieHeaders==null || pc.q.cookieHeaders.size()==0)
 					{	if(pc.q.cookieHeaders==null)
-							pc.q.cookieHeaders=new LinkedList<>(  );
+						pc.q.cookieHeaders=new LinkedList<>(  );
 
 					}
 					Servlet s=getServlet(pc.q.uri);
@@ -977,23 +977,23 @@ public static void p(Object...p){for(Object s:p)System.out.print(s);System.out.p
 public static void pa(String...p){for(String s:p)System.out.print(s);}
 
 public static void main(String[]args)throws Exception{
- Srvlt s=Srvlt.sttc;
- s.pc=new PC();
- s.pc.a=SrvltContxt.sttc();
- s.pc.q.ssn=new Ssn();
- String[]prms= {
-	"{op:'JsonStorage.listApps'}"
-	,"{op:'JsonStorage.store',key:{app:'app',key:'app',val:'app'}}"
-	,"{op:'JsonStorage.set',app:'app',key:'app2',val:'app2'}"
-	,"{op:'JsonStorage.listKeys',app:'app'}"
-	,"{op:'JsonStorage.getKeys',app:'app',keys:['app']}"
-	,"{op:'JsonStorage.get',app:'app',key:'app2'}"
-	,"{op:'JsonStorage.member',app:'app',member:'app'}"
-	,"{op:'JsonStorage.eval',src:'5+7'}"
+	Srvlt s=Srvlt.sttc;
+	s.pc=new PC();
+	s.pc.a=SrvltContxt.sttc();
+	s.pc.q.ssn=new Ssn();
+	String[]prms= {
+		"{op:'JsonStorage.listApps'}"
+		,"{op:'JsonStorage.store',key:{app:'app',key:'app',val:'app'}}"
+		,"{op:'JsonStorage.set',app:'app',key:'app2',val:'app2'}"
+		,"{op:'JsonStorage.listKeys',app:'app'}"
+		,"{op:'JsonStorage.getKeys',app:'app',keys:['app']}"
+		,"{op:'JsonStorage.get',app:'app',key:'app2'}"
+		,"{op:'JsonStorage.member',app:'app',member:'app'}"
+		,"{op:'JsonStorage.eval',src:'5+7'}"
 	};
 	for(String p:prms){
-	s.pc.q.init(p);
-	TL.run( s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.getWriter(),s.pc );s.pc.q.ssn.newlySsn=false;
-}}
+		s.pc.q.init(p);
+		TL.run( s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.getWriter(),s.pc );s.pc.q.ssn.newlySsn=false;
+	}}
 
 }//class Dbg
