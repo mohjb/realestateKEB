@@ -1,0 +1,139 @@
+<!DOCTYPE><html><head><link href="favic32.ico" rel="shortcut icon" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="/angular-1.6.4/angular.min.js"></script>
+<script src="/angular-1.6.4/angular-sanitize.min.js"></script>
+<script src="/angular-1.6.4/angular-md5.js"></script>
+<script src="/angular-1.6.4/angular-ui-router.js"></script>
+<script src="main.js"></script>
+
+<!-- template.XL dependencies-->
+
+
+<title>by mohamadjb@gmail.com</title>
+<link rel="stylesheet" href="main.css">
+</head>
+<body class="grad">
+<div style="position:absolute;top:0;left:0;x-width:1600px;min-width:250px;min-height:250px;x-height:847px;width:100%;height:100%;background-image:url(ab_left.png);z-index: -10"></div>
+<img class="onLoggedOut" src="logo.png">
+<span class="onLoggedIn"><div width="100%" style="display:inline-flex ;
+    grid-gap: 3px;
+    grid-auto-rows: minmax(100px,auto);
+    grid-template-columns: repeat({{app.usr.f?6:2}},1fr);
+    background: rgba(240,240,255,.1);
+    border-radius: 5px;
+    padding: 3px;">
+	<div class="menuItem" style="min-width:300px"><img src="logo.png"></div>
+	<h1>Server-side</h1>
+	<div class="menuItem bvl"><a href="#!/main">Apps</a></div>
+</div>
+</span>
+<div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="app">
+
+<main ui-view></main><sub>, by mohamadjb@gmail.com</sub></div>
+
+<templates>
+
+<template id="template.login" >
+	<h2>Login to your account</h2>
+	<form >
+		<input type="text" ng-model="un" placeholder="Username" autofocus ng-change="chng()" />
+		<input type="password" ng-model="pw" placeholder="Password"  ng-change="chng()" />
+		<input type="button" ng-click="clk()" value="Login" class="bvl" />
+	</form>
+	{{msg}}
+	<div class="cta"><a href="#"><!--Forgot your password?--></a></div>
+</template>
+
+<template id="template.main" >
+	<a ng-click="app.logout()" href="#!/login)" 
+		class="menuItem bvl"><div class="menuItem">Logout</div></a>
+	<h2>Apps</h2><select ng-model="app.selected.app"
+		ng-change="app.selectedChanged('app')"
+		ng-options="x.title for x in app.ls.apps"></select>
+		<input type="button" value="new" ng-click="onNew('app')"/>
+<hr/>
+
+<h2 onclick="x=did('jspUrls');s=x.style;s.display=s.display?'':'none'"
+	>Jsp-Urls<sub>(App={{app.selected.app.title}})</sub></h2>
+<div id="jspUrls" style="display:none"><select ng-model="app.selected.JspUrl" 
+		ng-change="app.selectedChanged('JspUrl')"
+		ng-options="x.title for x in app.selected.app.JspUrls"></select>
+		<input type="button" value="new" ng-click="onNew('JspUrl')"/>
+</div>
+
+<hr/>
+
+<h2 onclick="x=did('AngularUrl');s=x.style;s.display=s.display?'':'none'"
+	>AngularJsApp-Urls<sub>(App={{app.selected.app.title}})</sub></h2>
+<div id="AngularUrl" style="display:none"><select ng-model="app.selected.AngularUrl" 
+		ng-change="app.selectedChanged('AngularUrl')"
+		ng-options="x.title for x in app.selected.app.AngularUrls"></select>
+		<input type="button" value="new" ng-click="onNew('AngularUrl')"/>
+</div>
+
+<h2>JsonStorateApp keys</h2>
+<table border=1 ng-init="jsTyp=['txt','json','key','num','real','date','bytes','serverSideJs','javaObjectStream']">
+<tr><th>key-name</th><th>typ</th><th>val</th></tr>
+<tr ng-repeat="j in app.selected.app.keysList">
+<td ><a href="{{j }}">{{j }}</a></td>
+<td ><select ng-model="j.typ" ng-options="i for i in jsTyp"/></td>
+<td ><textarea ng-model="j.val"></textarea>
+<input type="button" ng-click="clkDelKey(newKey)" value="delete"/></td>
+</tr>
+<tfoot><tr>
+<td ng-init="newKey={app:app.selected.app.title}"><input ng-model="newKey.key"/></td>
+<td ><select ng-model="newKey.typ" ng-options="i for i in jsTyp"/></td>
+<td ><textarea ng-model="newKey.val"></textarea>
+<input type="button" ng-click="clkNewKey(newKey)" value="create"/></td>
+</tr></tfoot>
+</table>
+
+</template>
+
+<template id="template.usrs" >
+	<h2 class="ghost"><span class="neon">Users:</span><span class="st3d">{{editUsr.un}}</span></h2>
+	<select ng-model="editUsr" ng-options="c.un for c in app.ls.usr" ng-change="chng(c)"></select>
+	<input type="button" ng-click="editUsr=app.newUsr()" value="New User"/>
+ <div class="tbl" style="grid-template-columns: repeat(2,1fr)" ng-if="editUsr && !editUsr.deleted" >
+
+	<div class="menuItem hding" style="text-align:right">User-name</div>
+	<div class="menuItem" style="text-align:left" ><input type="button" ng-click="app.deleteEditUsr()" value="&#10062;Delete" /><h3>{{editUsr.un}}</h3></div>
+
+	<div class="menuItem hding" style="text-align:right">First-name</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.firstName" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Last-name</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.lastName" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">E-Mail</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.email" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Telephone</div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.tel" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Profile</div>
+	<div class="menuItem" style="text-align:left" ><select 
+		ng-options="i.Name for i in app.ls.profiles"
+		ng-change="app.chng(editUsr)" 
+		ng-blur="app.blur(editUsr)"
+		ng-model="editUsr.profile" ></select></div>
+
+	<div class="menuItem hding" style="text-align:right">Super-user</div>
+	<div class="menuItem" style="text-align:left" ><input type="checkbox" ng-model="editUsr.f" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+
+	<div class="menuItem hding" style="text-align:right">Remarks</div>
+	<div class="menuItem" style="text-align:left" ><textarea ng-model="editUsr.notes" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"></textarea></div>
+
+	<div class="menuItem hding" style="text-align:right">Last Modified</div>
+	<div class="menuItem" style="text-align:left" >{{dt(editUsr.lastModified)|date:"yyyy/MM/ddTHH:mm"}}</div>
+
+	<div class="menuItem hding" style="text-align:right">Created</div>
+	<div class="menuItem" style="text-align:left" >{{dt(editUsr.created)|date:"yyyy/MM/ddTHH:mm"}}</div>
+
+	<div class="menuItem hding" style="text-align:right">Created by</div>
+	<div class="menuItem" style="text-align:left" >{{editUsr.usr}}</div>
+</div>
+</template>
+
+</templates><div ng-if="loading"><!--Loading...--></div>
+</body></html>
