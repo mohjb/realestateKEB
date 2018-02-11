@@ -7,16 +7,16 @@ package dev201801;
  * Created by Vaio-PC on 18/01/2018.
  */
 import java.io.*;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.URL;
 import java.sql.*;
 import java.util.*;
+import java.net.URL;
 import java.util.Date;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import javax.servlet.jsp.PageContext;
+import java.lang.annotation.Annotation;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -29,8 +29,8 @@ public class TL
 public static void run(
 	HttpServletRequest request,HttpServletResponse response,
 	HttpSession session,Writer out,PageContext pc)throws IOException
- {TL tl=null;try
-  {tl=TL.Enter(request,response,session,out,pc);
+{TL tl=null;try
+{tl=TL.Enter(request,response,session,out,pc);
 	tl.h.r("contentType","text/json");//tl.logOut=tl.var("logOut",false);
 	Method op=ops.get(tl.h.req("op"));//Prm.op.toString()));
 	if(op==null)
@@ -69,7 +69,7 @@ public static void run(
 				else f.readReq("");
 			}else
 				args[i]=o=TL.class.equals(c)?tl//:Map.class.isAssignableFrom(c) &&(nm.indexOf("p")!=-1) &&(nm.indexOf("r")!=-1) &&(nm.indexOf("m")!=-1)?tl.json
-				:tl.h.req(nm,c);
+					:tl.h.req(nm,c);
 		}catch(Exception ex){tl.error(ex,Name,".run:arg:i=",i);}
 		retVal=n==0?op.invoke(cl)
 			:n==1?op.invoke(cl,args[0])
@@ -92,14 +92,14 @@ public static void run(
 		o.o(retVal);
 		tl.log(Name,".run:xhr-response:",tl.jo().o(retVal).toString());}
 	tl.getOut().flush();
-  }catch(Exception x){
+}catch(Exception x){
 	if(tl!=null){
 		tl.error(x,Name,":");
 		tl.getOut().o(x);
 	}else
 		x.printStackTrace();
-  }finally{TL.Exit();}
- }//run op servlet.service
+}finally{TL.Exit();}
+}//run op servlet.service
 
 public H h=new H();
 public Map<String,Object> ssn,usr,/**accessing request in json-format*/json;
@@ -113,9 +113,9 @@ Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
 public static class App {
 	static final String packageName= "dev201801",AppNm=packageName+".App";
 
-	static void staticInit(){ TL.registerOp( App.class);  
-		TL.registerOp( JsonStorage.class);  
-		TL.registerOp( MetaTbl.class); 
+	static void staticInit(){ TL.registerOp( App.class);
+		TL.registerOp( JsonStorage.class);
+		TL.registerOp( MetaTbl.class);
 		DB.Tbl.registered.add(JsonStorage.class);//JsonStorage.check( TL );
 	}
 
@@ -186,11 +186,11 @@ public static class App {
 
 		@Override public List creationDBTIndices(TL tl){
 			return TL.Util.lst(TL.Util.lst(
-				"varchar(255) NOT NULL DEFAULT '\uD83C\uDFE0' "//app \u1F3E0 🏠
-				,"varchar(255) NOT NULL DEFAULT '\uD83C\uDFE0' "//key
+				"varchar(255) NOT NULL DEFAULT 'home' "//app \u1F3E0 🏠
+				,"varchar(255) NOT NULL DEFAULT 'home' "//key
 				,"enum('txt','json','key','num','real','date','bytes','serverSideJs','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
 				,"blob"),TL.Util.lst("unique(`app`,`key`)")
-				);//val
+			);//val
 			/*
 			CREATE TABLE `JsonStorage` (
 			`app` varchar(255) NOT NULL DEFAULT '🏠',
@@ -199,8 +199,6 @@ public static class App {
 			`val` blob ,
 			unique(`app`,`key`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
 🔏  lock with ink pen Unicode code point: U+1F50F
 🔐  closed lock with key Unicode code point: U+1F510
 🔑  key Unicode code point: U+1F511
@@ -222,14 +220,14 @@ public static class App {
 			Object o=tl.json.get( prmName )
 				,app=tl.json.get("app")
 				,key=tl.json.get("key");
-			JsonStorage j=key instanceof JsonStorage
-				?(JsonStorage)key
+			JsonStorage j=o instanceof JsonStorage
+				?(JsonStorage)o
 				:app instanceof String && key instanceof String
-					?loadBy( (String)app,(String)key )
-					:null;
-			if(j!=null && key instanceof String)
-				tl.json.put( "key",j );
-			return j!=null && "key".equals( prmName )?j:o;}
+				?loadBy( (String)app,(String)key )
+				:null;
+			if(j!=null && o instanceof String)
+				tl.json.put( prmName,j );
+			return j!=null ?j:o;}//&& "key".equals( prmName )
 
 		@Op public static List<String>
 		listApps() throws SQLException {
@@ -237,101 +235,100 @@ public static class App {
 				sql(cols( Co.distinct,C.app ),null,dbtName)
 				,String.class );}
 
-	@Op public static List<String>
+		@Op public static List<String>
 		listKeys(@Op(prmName="app")String appName)throws SQLException{
 			return DB.q1colTList(
 				sql(cols(C.key ),where( C.app ,appName),dbtName)// Co.distinct,
 				,String.class ,appName); }
 
-	@Op public static JsonStorage get(@Op(prmName="app")String appName
-		,@Op(prmName="key",prmInstance=true)JsonStorage j){ return j;}
+		@Op public static JsonStorage get(@Op(prmName="app")String appName
+			,@Op(prmName="key",prmInstance=true)JsonStorage j){ return j;}
 
-	@Op public static List<JsonStorage>
+		@Op public static List<JsonStorage>
 		getKeys(@Op(prmName="app")String appName,@Op(prmName="keys")List<String>keys){
 			List<JsonStorage>l=new LinkedList<>(  );
 			JsonStorage j=new JsonStorage();
 			for(DB.Tbl t:j.query(
-					where(C.app,appName
+				where(C.app,appName
 					,TL.Util.lst( C.key,Co.in),keys )
-					,true))
+				,true))
 				l.add( (JsonStorage ) t );
 			return l;}
 
-	@Op public static JsonStorage
+		@Op public static JsonStorage
 		set(@Op(prmName="app")String appName
-			,@Op(prmName="key")String key
-			,@Op(prmName="typ")ContentType typ
-			,@Op(prmName="val")Object val,TL tl)throws Exception
+			   ,@Op(prmName="key")String key
+			   ,@Op(prmName="typ")ContentType typ
+			   ,@Op(prmName="val")Object val,TL tl)throws Exception
 		{	JsonStorage j=new JsonStorage();
 			j.val =val;j.app=appName;j.key=key;j.typ=typ;
 			return store(j,tl);}
 
-	@Op public static JsonStorage
+		@Op public static JsonStorage
 		store(@Op(prmName="key")JsonStorage j ,TL tl)throws Exception
-	{if(j!=null){j.save();
-		if(j.typ==ContentType.serverSideJs ){
-			javax.script.ScriptEngine e =eng(j.app,false,tl);
-			if(e!=null){
-				Object o=e.eval( j.val.toString() );//engine.put( key ,o);
-				Map jm=(Map)e.get( "JsonStorageApp");
-				jm.put( j.key,o );//List jl=(List)e.get( "JsonStorageApp.JsonStorages");jl.add( j );
-			} } }return j;}
+		{if(j!=null){j.save();
+			if(j.typ==ContentType.serverSideJs ){
+				javax.script.ScriptEngine e =eng(j.app,false,tl);
+				if(e!=null){
+					Object o=e.eval( j.val.toString() );//engine.put( key ,o);
+					Map jm=(Map)e.get( "JsonStorageApp");
+					jm.put( j.key,o );//List jl=(List)e.get( "JsonStorageApp.JsonStorages");jl.add( j );
+				} } }return j;}
 
-	static javax.script.ScriptEngine eng(String appName,boolean createIfNotInit,TL tl){
-		String en="ScriptEngine.JavaScript."+appName;
-		javax.script.ScriptEngine e =(javax.script.ScriptEngine)tl.h.s( en );
-		if(e==null&& createIfNotInit) {
-			javax.script.ScriptEngineManager man=(javax.script.ScriptEngineManager)tl.h.a( "ScriptEngineManager" );
-			if(man==null )
-				tl.h.a( "ScriptEngineManager",man=new javax.script.ScriptEngineManager() );
-			tl.h.s( en, e = man.getEngineByName( "JavaScript" ) );
-			e.put( "tl",tl );
-			JsonStorage j=new JsonStorage();
-			Map jm=TL.Util.mapCreate(  );//List jl=TL.Util.lst(  );
-			for(DB.Tbl t:j.query( where(C.app,appName,C.typ	,ContentType.serverSideJs.toString()) ))
-				try{jm.put( j.key,e.eval( j.val.toString() ));}catch ( Exception ex ){
-				jm.put( j.key,TL.Util.mapCreate("sourceCode", j.val,"eval_Exception",ex ) );}
-			e.put( "JsonStorageApp",jm);//e.put( "JsonStorageApp.JsonStorages",jl);
-		}else if(e!=null)
-			e.put( "tl",tl);
-		return e; }
+		static javax.script.ScriptEngine eng(String appName,boolean createIfNotInit,TL tl){
+			String en="ScriptEngine.JavaScript."+appName;
+			javax.script.ScriptEngine e =(javax.script.ScriptEngine)tl.h.s( en );
+			if(e==null&& createIfNotInit) {
+				javax.script.ScriptEngineManager man=(javax.script.ScriptEngineManager)tl.h.a( "ScriptEngineManager" );
+				if(man==null )
+					tl.h.a( "ScriptEngineManager",man=new javax.script.ScriptEngineManager() );
+				tl.h.s( en, e = man.getEngineByName( "JavaScript" ) );
+				e.put( "tl",tl );
+				JsonStorage j=new JsonStorage();
+				Map jm=TL.Util.mapCreate(  );//List jl=TL.Util.lst(  );
+				for(DB.Tbl t:j.query( where(C.app,appName,C.typ	,ContentType.serverSideJs.toString()) ))
+					try{jm.put( j.key,e.eval( j.val.toString() ));}catch ( Exception ex ){
+						jm.put( j.key,TL.Util.mapCreate("sourceCode", j.val,"eval_Exception",ex ) );}
+				e.put( "JsonStorageApp",jm);//e.put( "JsonStorageApp.JsonStorages",jl);
+			}else if(e!=null)
+				e.put( "tl",tl);
+			return e; }
 
-	@Op public static Object member(@Op(prmName = "app")String appName
-		,@Op(prmName = "member")String m
-		,@Op(prmName = "args")List args,TL tl) throws javax.script.ScriptException
-	{	javax.script.ScriptEngine e=eng(appName,true,tl);
-		e.put( "member",m);
-		if(args!=null)e.put(  "args",args);
-		return e.eval( "JsonStorageApp[member]"+(args==null?"":"(args,tl.json,tl)") );
-	}
+		@Op public static Object member(@Op(prmName = "app")String appName
+			,@Op(prmName = "member")String m,@Op(prmName = "args")List args,TL tl) throws javax.script.ScriptException
+		{	javax.script.ScriptEngine e=eng(appName,true,tl);
+			e.put( "member",m);
+			if(args!=null)e.put(  "args",args);
+			return e.eval( "JsonStorageApp[member]"+(args==null?"":"(args,tl.json,tl)") );
+		}
 
-	@Op public static Object eval(@Op(prmName = "app")String appName
-		,@Op(prmName = "src")String src,TL tl) throws javax.script.ScriptException
-	{	javax.script.ScriptEngine e=eng(appName,true,tl);
-		e.put( "src",src);
-		return e.eval( src );
-	}
+		@Op public static Object eval(@Op(prmName = "app")String appName
+			,@Op(prmName = "src")String src,TL tl) throws javax.script.ScriptException
+		{	javax.script.ScriptEngine e=eng(appName,true,tl);
+			e.put( "src",src);
+			return e.eval( src );
+		}
 
 		/**loads one row from the table*/
 		@Override DB.Tbl load(ResultSet rs,CI[]a)throws Exception{
 			int c=0;for(CI f:a)if(f!=C.val )v(f,rs.getObject(++c));else
-			switch ( typ ){
-				case bytes:
-					val =rs.getBytes( ++c );break;
-				case date:
-					val =rs.getDate( ++c );break;
-				case num:
-					val =rs.getLong( ++c );break;
-				case real:
-					val =rs.getDouble( ++c );break;
-				case javaObjectStream:java.io.ObjectInputStream p=
-					new ObjectInputStream( rs.getBinaryStream( ++c ) );
-					val =p.readObject();break;
-				case json: val =Json.Prsr.parseItem(rs
-					.getCharacterStream( ++c ) );break;
-				default://case txt: case key:
-					val =rs.getString( ++c );break;
-			}
+				switch ( typ ){
+					case bytes:
+						val =rs.getBytes( ++c );break;
+					case date:
+						val =rs.getDate( ++c );break;
+					case num:
+						val =rs.getLong( ++c );break;
+					case real:
+						val =rs.getDouble( ++c );break;
+					case javaObjectStream:java.io.ObjectInputStream p=
+						                      new ObjectInputStream( rs.getBinaryStream( ++c ) );
+						val =p.readObject();break;
+					case json: val =Json.Prsr.parseItem(rs
+						                                    .getCharacterStream( ++c ) );break;
+					default://case txt: case key:
+						val =rs.getString( ++c );break;
+				}
 			return this;}
 
 		public static ContentType assesTyp(Class p) {
@@ -340,25 +337,25 @@ public static class App {
 			else if(p .isAssignableFrom( String.class))typ=ContentType.txt;
 			else if(p .isAssignableFrom(Date.class ))typ=ContentType.date;
 			else if(p .isAssignableFrom( Double.class )
-				|| p.isAssignableFrom( Float.class ))typ=ContentType.real;
+				        || p.isAssignableFrom( Float.class ))typ=ContentType.real;
 			else if(p .isAssignableFrom(Number.class ))typ=ContentType.num;
 			else if(p .isArray()){Class c=p.getComponentType();
 				if(c.isAssignableFrom( Byte.class ))typ=ContentType.bytes;
 				else {t=assesTyp( c );
 					if(t==ContentType.bytes || t==ContentType.date
-						|| t==typ)
+						   || t==typ)
 						return typ;
 					return ContentType.json;
 				}
 			}
 			else if(p .isAssignableFrom(Map.class)
-				||p .isAssignableFrom(Iterator.class)
-				||p .isAssignableFrom(Enumeration.class)
-				||p .isAssignableFrom(Collection.class))
+				        ||p .isAssignableFrom(Iterator.class)
+				        ||p .isAssignableFrom(Enumeration.class)
+				        ||p .isAssignableFrom(Collection.class))
 			{java.lang.reflect.Type[]c=p.getGenericInterfaces();
 				t=assesTyp( c[p .isAssignableFrom(Map.class)?1:0].getClass());
 				if(t==ContentType.bytes || t==ContentType.date
-					|| t==ContentType.javaObjectStream)
+					   || t==ContentType.javaObjectStream)
 					return typ;
 				return ContentType.json; }
 			return typ;}
@@ -422,18 +419,18 @@ public static class App {
 			vals[C.typ.ordinal()]=(typ==null?ContentType.txt:typ).toString();
 			DB.X( sql.toString(), vals );
 			tl().log( "save", this );//log(nw?TL.DB.Tbl.Log.Act.New:TL.DB.Tbl.Log.Act.Update);
-		return this;}//save
+			return this;}//save
 
-		
+
 		@Override public Json.Output jsonOutput(Json.Output o,String ind,String path)throws IOException{
 			o.w("{\"app\":").oStr(app,ind)
-			.w(",\"key\":").oStr(key,ind)
-			.w(",\"typ\":");
+				.w(",\"key\":").oStr(key,ind)
+				.w(",\"typ\":");
 			if(typ==null)o.w( "null" );
 			else o.oStr(typ.toString(),ind);
 			return o.w(",\"val\":").o( val,ind,path).w('}');}
 
- }//class JsonStorage
+	}//class JsonStorage
 
 	/**
 	 *	db-Table Wrapper , with Integer primary-key
@@ -455,10 +452,10 @@ public static class App {
 			if(j!=null && t instanceof String)
 				tl.json.put( "dbtName",j );
 			return "dbName".equals( prmName )
-				?(db==null?d:db)
-				:"dbtName".equals( prmName )
-				?(j!=null?j:t)
-				:o;}
+				       ?(db==null?d:db)
+				       :"dbtName".equals( prmName )
+					        ?(j!=null?j:t)
+					        :o;}
 
 		public String dbName,dbtName="MetaTbl",comment;
 		@Override public String getName(){return dbtName;}
@@ -518,7 +515,7 @@ public static class App {
 			@Override public Json.Output jsonOutput( Json.Output o, String ind, String path ) throws IOException {
 				return jsonOutput( o,ind,path,true ); }
 			public Json.Output jsonOutput( Json.Output o
-				, String ind, String path,boolean closeBrace ) throws IOException {
+				                             , String ind, String path,boolean closeBrace ) throws IOException {
 				o.w( "{\"name\":" ).oStr( name, "" )
 					.w( ",\"type\":" ).oStr( type,"" )
 					.w( ",\"i\":" ).p( i );
@@ -536,8 +533,8 @@ public static class App {
 					return tl.jo().clrSW().o( this ).toStrin_();
 				} catch ( Exception ex ) {}
 				return "{\"name\":\""+name+"\",\"type\":\""+type
-					+"\",\"i\":"+i+",\"comment\":\""+comment
-					+"\",\"creation\":\""+creation+"\",\"cols\":\""+cols+"\"}";
+					       +"\",\"i\":"+i+",\"comment\":\""+comment
+					       +"\",\"creation\":\""+creation+"\",\"cols\":\""+cols+"\"}";
 			}
 			public Map asMap(){return TL.Util.mapCreate( "name",name
 				,"type",type,"comment",comment,"i",i,"creation",creation,"cols",cols );}
@@ -547,8 +544,8 @@ public static class App {
 				o.w( ",\"cols\":[");boolean comma=false;
 				for ( C c:cols ){if(comma)o.w( ',' );else comma=true;
 					o.w( '`' ).w( c.name==null?"null":
-						c.name.replaceAll( "\n","_newline_" )
-						.replaceAll( "`","_backTic_" )).w( '`' );}
+						              c.name.replaceAll( "\n","_newline_" )
+							              .replaceAll( "`","_backTic_" )).w( '`' );}
 				return o.w( "]}" );}
 		}//class I
 
@@ -661,9 +658,9 @@ public static class App {
 					null, null, m.dbtName, null );
 					while ( result.next() ) {
 						C col = m.new C(result.getString( "COLUMN_NAME" )
-							,result.getString( "TYPE_NAME" )
-							,result.getString( "REMARKS" )
-							,l.size());
+							               ,result.getString( "TYPE_NAME" )
+							               ,result.getString( "REMARKS" )
+							               ,l.size());
 						l.add( col );
 						// col.columnType = result.getInt(5); //java.sql.Types.
 					}
@@ -726,9 +723,9 @@ public static class App {
 			for(Object k:l){
 				Map x=(Map)k;
 				cols[++i]=new C((String)x.get( "name" )
-					,(String)x.get( "type" )
-					,(String)x.get( "comment" )
-					,(int)x.get( "i" ));}
+					               ,(String)x.get( "type" )
+					               ,(String)x.get( "comment" )
+					               ,(int)x.get( "i" ));}
 			l=(List)m.get( "pk" );
 			pkc=new C[l.size()];i=-1;
 			for(Object k:l)pkc[++i]=col((String)k);
@@ -742,8 +739,8 @@ public static class App {
 
 		int createTable(){
 			StringBuilder b=new StringBuilder( "create table `")
-				.append(dbName ).append( "`.`")
-				.append(dbtName ).append( "`(" );
+				                .append(dbName ).append( "`.`")
+				                .append(dbtName ).append( "`(" );
 			for ( C c:cols ){if(c.i>0)b.append( ',' );
 				T t=T.t( c.type );
 				b.append( '`' ).append( c.name ).append( "` " ).append( c.type ).append( ' ' ).append( t.txt );
@@ -768,12 +765,12 @@ public static class App {
 			@Override public CI[] pkcols() {return cols;}
 
 			@Override public Integer pkv(int i){return vals!=null&&vals.length>pkc[0].i
-				&&!(vals[pkc[0].i]instanceof Integer)?(Integer ) vals[pkc[0].i]:null;}
+				                                           &&!(vals[pkc[0].i]instanceof Integer)?(Integer ) vals[pkc[0].i]:null;}
 
 			@Override public Object[] pkvals() { return vals;}
 
 			@Override public Object[]pkv(Object[]v){return vals!=null
-				&&vals.length>pkc[0].i?(Object[])(vals[pkc[0].i]=v):null;}
+				                                               &&vals.length>pkc[0].i?(Object[])(vals[pkc[0].i]=v):null;}
 			@Override public C[]columns(){return cols;}
 			@Override public List creationDBTIndices(TL tl){return null;}
 			public MetaTbl tbl(){return MetaTbl.this;}
@@ -823,11 +820,11 @@ public static class App {
 
 		@Op static public MetaTbl
 		DBTbl_create(@Op(prmName = "dbName") String dbName
-			    ,@Op(prmName="dbtName") String dbtName
-			    ,@Op(prmName="cols") List<Map<String,String>>cols
-			    ,@Op(prmName = "pk") List<String>pk
-			    ,@Op(prmName = "fk") Map<String,Map<String,String>>fk
-			    ,TL tl){
+			            ,@Op(prmName="dbtName") String dbtName
+			            ,@Op(prmName="cols") List<Map<String,String>>cols
+			            ,@Op(prmName = "pk") List<String>pk
+			            ,@Op(prmName = "fk") Map<String,Map<String,String>>fk
+			            ,TL tl){
 			MetaTbl m=new MetaTbl();
 			m.fromMap(tl.json  );
 			m.createTable();
@@ -836,67 +833,67 @@ public static class App {
 
 		@Op static public int
 		DBTbl_drop(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName) throws SQLException{
+			          ,@Op(prmName = "dbtName") String dbtName) throws SQLException{
 			return  TL.DB.x( "drop table `"+dbName.replaceAll( "`"," " )+"`.`"+dbtName.replaceAll( "`"," " )+"`" );}
 
 		@Op static public int
 		DBTbl_rename(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "newName") String newName)throws SQLException{
+			            ,@Op(prmName = "dbtName") String dbtName
+			            ,@Op(prmName = "newName") String newName)throws SQLException{
 			return  TL.DB.x( "rename table `"+dbName.replaceAll( "`"," " )+"`.`"+dbtName.replaceAll( "`"," " )+"` to `"+newName.replaceAll( "`"," " )+"`" );}
 
 		@Op static public int
 		DBTblCol_drop(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "col") String col){
+			             ,@Op(prmName = "dbtName") String dbtName
+			             ,@Op(prmName = "col") String col){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_insert(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "col") String col
-			,@Op(prmName = "beforeCol") String beforeCol
-			,@Op(prmName = "def") Map<String,String>def){
+			               ,@Op(prmName = "dbtName") String dbtName
+			               ,@Op(prmName = "col") String col
+			               ,@Op(prmName = "beforeCol") String beforeCol
+			               ,@Op(prmName = "def") Map<String,String>def){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_add(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "") String col
-			,@Op(prmName = "") Map<String,String>def){
+			            ,@Op(prmName = "dbtName") String dbtName
+			            ,@Op(prmName = "") String col
+			            ,@Op(prmName = "") Map<String,String>def){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_alter(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "col") String col
-			,@Op(prmName = "def") Map<String,String>def){
+			              ,@Op(prmName = "dbtName") String dbtName
+			              ,@Op(prmName = "col") String col
+			              ,@Op(prmName = "def") Map<String,String>def){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_rename(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "col") String col
-			,@Op(prmName = "newName") String newName){
+			               ,@Op(prmName = "dbtName") String dbtName
+			               ,@Op(prmName = "col") String col
+			               ,@Op(prmName = "newName") String newName){
 			return -1;}
 
 		@Op static public Object[]
 		DBTRow_get(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "pkv") Object[]pkv){
+			          ,@Op(prmName = "dbtName") String dbtName
+			          ,@Op(prmName = "pkv") Object[]pkv){
 			return null;}
 
 		@Op static public int
 		DBTRow_insert(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "vals") Object[]vals){
+			             ,@Op(prmName = "dbtName") String dbtName
+			             ,@Op(prmName = "vals") Object[]vals){
 			return -1;}
 
 		@Op static public int
 		DBTRow_update(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "set") Object[]set
-			,@Op(prmName = "where") Object[]where){
+			             ,@Op(prmName = "dbtName") String dbtName
+			             ,@Op(prmName = "set") Object[]set
+			             ,@Op(prmName = "where") Object[]where){
 			return -1;}
 
 		@Op static public int
@@ -907,10 +904,10 @@ public static class App {
 
 		@Op static public List<Object[]>
 		DBT_query(@Op(prmName = "dbName") String dbName
-			,@Op(prmName = "dbtName") String dbtName
-			,@Op(prmName = "where") Object[]where
-			,@Op(prmName = "groupBy") Object[]groupBy
-			,@Op(prmName = "orderBy") Object[]orderBy){
+			         ,@Op(prmName = "dbtName") String dbtName
+			         ,@Op(prmName = "where") Object[]where
+			         ,@Op(prmName = "groupBy") Object[]groupBy
+			         ,@Op(prmName = "orderBy") Object[]orderBy){
 			return null;}
 
 	}//class MetaTbl Table.Wrapper.Integer
@@ -1018,8 +1015,8 @@ private void onEnter()throws IOException {
 	now=new Date();//seqObj=seqProp=now.getTime();
 	try{Object o=h.req.getContentType();
 		o=o==null?null
-			:o.toString().contains("json")?Json.Prsr.parse(h.req)
-			:o.toString().contains("part")?h.getMultiParts():null;
+			  :o.toString().contains("json")?Json.Prsr.parse(h.req)
+				   :o.toString().contains("part")?h.getMultiParts():null;
 		json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 		h.logOut=h.var("logOut",h.logOut);
 		if(h.getSession().isNew()){
@@ -1395,10 +1392,10 @@ public static class DB {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			("jdbc:mysql://"+context.DB.server.str
-			     +"/"+context.DB.dbName.str
-			    ,context.DB.un.str,context.DB.pw.str
-			);Object[]b={r,null};
+			                          ("jdbc:mysql://"+context.DB.server.str
+				                           +"/"+context.DB.dbName.str
+				                          ,context.DB.un.str,context.DB.pw.str
+			                          );Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){t.error(e,Name,".DB.DriverManager:");}
 		return r;}
@@ -1986,14 +1983,14 @@ public static class DB {
 				t.error( e, Name, ".DB.Tbl.save(CI:", c, "):" ); }
 			try {
 				DB.x( "insert into `" + getName() + "` (`" + pkc +
-					"`,`" + c + "`) values(?"//+Co.m(pkc).txt
-					+ ",?"//+Co.m(c).txt
-					+ ")", pkv, cv );
+					      "`,`" + c + "`) values(?"//+Co.m(pkc).txt
+					      + ",?"//+Co.m(c).txt
+					      + ")", pkv, cv );
 				//Integer k=(Integer)pkv;
 				//TL.DB.Tbl.Log.log( TL.DB.Tbl.Log.Entity.valueOf(getName()), k, TL.DB.Tbl.Log.Act.Update, TL.Util.mapCreate(c,v(c)) );
 			} catch ( Exception x ) {
 				tl().error( x, Name,".DB.Tbl(",
-					 this, ").save(", c, "):pkv=", pkv ); }
+					this, ").save(", c, "):pkv=", pkv ); }
 		}else{
 			CI[]pkc = pkcols();
 			Object[]a=new Object[pkc.length+1];
@@ -2002,7 +1999,7 @@ public static class DB {
 			TL t = TL.tl();
 			//if ( a[0] instanceof Map ) try { String j = t.jo().clrSW().o( a[0] ).toString();a[0] = j; } catch ( IOException e ) { t.error( e, Name, ".DB.Tbl.save(CI:", c, "):" ); }
 			try {StringBuilder b=new StringBuilder( "insert into `" )
-				.append( getName() ).append("` (`" ).append( c.toString() );
+				                     .append( getName() ).append("` (`" ).append( c.toString() );
 				for(CI k:pkc)
 					b.append( "`,`" ).append( k.toString() );
 				b.append( "`) values(?");
@@ -2011,7 +2008,7 @@ public static class DB {
 				DB.X( b.append( ')' ).toString(),a );
 			} catch ( Exception x ) {
 				tl().error( x, Name, ".DB.Tbl(",
-					 this, ").save(", c, "):pkv=", pkv ); }
+					this, ").save(", c, "):pkv=", pkv ); }
 		}return this;}//save
 
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
@@ -2025,7 +2022,7 @@ public static class DB {
 			sql.append( ")" );//int x=
 			DB.X( sql.toString(), vals() ); //TODO: investigate vals() for json columns
 			tl().log( "save", this );//log(nw?TL.DB.Tbl.Log.Act.New:TL.DB.Tbl.Log.Act.Update);
-		return this;}//save
+			return this;}//save
 
 		public Tbl readReq_save() throws Exception{
 			Map old=asMap();
@@ -2047,17 +2044,17 @@ public static class DB {
 
 		//void log(TL.DB.Tbl.Log.Act act){	Map val=asMap();Integer k=(Integer)pkv();TL.DB.Tbl.Log.log( TL.DB.Tbl.Log.Entity.valueOf(getName()), k, act, val);}
 		public int delete() throws SQLException{int pkn=pkcn();if(pkn==1) {
-				PK pkv=pkv(0);
-				int x=TL.DB.x("delete from `"+getName()+"` where `"+pkc(0)+"`=?", pkv);
-				//log(TL.DB.Tbl.Log.Act.Delete);
-				return x;
-			}else{int x=-1;CI[]pkc=pkcols();PK[]pkv=pkvals();
-				StringBuilder b=new StringBuilder( "delete from `" )
-					.append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
-				for(int i=1;i<pkc.length;i++)
-					b.append( " and `" ).append( pkc[i] ).append( "`=?" );
-				DB.X( b.toString(),pkv );
-				return x;}}
+			PK pkv=pkv(0);
+			int x=TL.DB.x("delete from `"+getName()+"` where `"+pkc(0)+"`=?", pkv);
+			//log(TL.DB.Tbl.Log.Act.Delete);
+			return x;
+		}else{int x=-1;CI[]pkc=pkcols();PK[]pkv=pkvals();
+			StringBuilder b=new StringBuilder( "delete from `" )
+				                .append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
+			for(int i=1;i<pkc.length;i++)
+				b.append( " and `" ).append( pkc[i] ).append( "`=?" );
+			DB.X( b.toString(),pkv );
+			return x;}}
 
 		/**retrieve from the db table all the rows that match
 		 * the conditions in < where > , create an iterator
@@ -2283,13 +2280,13 @@ public static class Json{
 		public Output oStr(String a,String indentation)throws IOException
 		{final boolean m=comment;if(a==null)return w(m?" null //String\n"+indentation:"null");
 			w('"');for(int n=a.length(),i=0;i<n;i++)
-			{char c=a.charAt(i);if(c=='\\')w('\\').w('\\');
-			else if(c=='"')w('\\').w('"');
-			else if(c=='\n'){w('\\').w('n');if(m)w("\"\n").p(indentation).w("+\"");}
-			else if(c=='\r')w('\\').w('r');
-			else if(c=='\t')w('\\').w('t');
-			else if(c=='\'')w('\\').w('\'');
-			else p(c);}return w('"');}
+		{char c=a.charAt(i);if(c=='\\')w('\\').w('\\');
+		else if(c=='"')w('\\').w('"');
+		else if(c=='\n'){w('\\').w('n');if(m)w("\"\n").p(indentation).w("+\"");}
+		else if(c=='\r')w('\\').w('r');
+		else if(c=='\t')w('\\').w('t');
+		else if(c=='\'')w('\\').w('\'');
+		else p(c);}return w('"');}
 		public Output oDt(java.util.Date a,String indentation)throws IOException
 		{if(a==null)return w(comment?" null //Date\n":"null");
 			//w("{\"class\":\"Date\",\"time\":0x").p(Long.toHexString( a.getTime()));//.w(",\"str\":").oStr(a.toString(),indentation);
@@ -2357,11 +2354,11 @@ public static class Json{
 			while(e.hasNext()){k=e.next();v=o.get(k);w(",");
 				o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 			if(c) w("}//")
-				.p(o.getClass().getName())
-				.w("&cachePath=\"")
-				.p(path)
-				.w("\"\n")
-				.p(ind);else w("}");
+				      .p(o.getClass().getName())
+				      .w("&cachePath=\"")
+				      .p(path)
+				      .w("\"\n")
+				      .p(ind);else w("}");
 			return this;}
 		public Output oReq(HttpServletRequest r,String ind,String path)throws IOException
 		{final boolean c=comment;try{boolean comma=false,c2;//,d[]
@@ -2445,15 +2442,15 @@ public static class Json{
 			return this;}
 		public Output oCookie(Cookie y,String ind,String path)throws IOException
 		{final boolean c=comment;try{(c?w("{//")
-			.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-			.w("\"Comment\":").o(y.getComment())
-			.w(",\"Domain\":").o(y.getDomain())
-			.w(",\"MaxAge\":").p(y.getMaxAge())
-			.w(",\"Name\":").o(y.getName())
-			.w(",\"Path\":").o(y.getPath())
-			.w(",\"Secure\":").p(y.getSecure())
-			.w(",\"Version\":").p(y.getVersion())
-			.w(",\"Value\":").o(y.getValue());
+			                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+			                             .w("\"Comment\":").o(y.getComment())
+			                             .w(",\"Domain\":").o(y.getDomain())
+			                             .w(",\"MaxAge\":").p(y.getMaxAge())
+			                             .w(",\"Name\":").o(y.getName())
+			                             .w(",\"Path\":").o(y.getPath())
+			                             .w(",\"Secure\":").p(y.getSecure())
+			                             .w(",\"Version\":").p(y.getVersion())
+			                             .w(",\"Value\":").o(y.getValue());
 		}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
@@ -2483,9 +2480,9 @@ public static class Json{
 
 		Output oSC(ServletContext y,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-			.w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-			.w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-			.w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+			                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+			                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+			                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 			if(c)
 				w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("}");
@@ -2528,10 +2525,10 @@ public static class Json{
 			for(int i=1;i<=cc;i++){
 				if(i>1){if(c)w("\n").p(i2).w(",");else w(",");}
 				w("{\"name\":").oStr(o.getColumnName( i ),i2)
-				.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
-				.w(",\"width\":").p(o.getColumnDisplaySize( i ))
-				.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
-				.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
+					.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
+					.w(",\"width\":").p(o.getColumnDisplaySize( i ))
+					.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
+					.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
 			}//for i<=cc
 			if(c)w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
 				     ;else w("]");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSetMetaData:");}return this;}
@@ -2620,7 +2617,7 @@ public static class Json{
 				default:r=extractIdentifier();
 			}skipRWS();//skipWhiteSpace();
 			if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-				||(cache!=null&&comments.startsWith("cacheReference"))))
+				                    ||(cache!=null&&comments.startsWith("cacheReference"))))
 			{	if(i!=-1)
 			{	if(cache==null)
 				cache=new HashMap<String,Object>();
@@ -2639,15 +2636,15 @@ public static class Json{
 			{case 'n':buff('\n');break;case 't':buff('\t');break;
 				case 'r':buff('\r');break;case '0':buff('\0');break;
 				case 'x':case 'X':buff( (char)
-					java.lang.Integer.parseInt(
-					next(2)//p.substring(offset,offset+2)
-					,16));nxt();//next();
+					                        java.lang.Integer.parseInt(
+						                        next(2)//p.substring(offset,offset+2)
+						                        ,16));nxt();//next();
 				break;
 				case 'u':
 				case 'U':buff( (char)
-					java.lang.Integer.parseInt(
-					next(4)//p.substring(offset,offset+4)
-					,16));//next();next();next();//next();
+					               java.lang.Integer.parseInt(
+						               next(4)//p.substring(offset,offset+4)
+						               ,16));//next();next();next();//next();
 					break;default:if(c!='\0')buff(c);}}
 			else buff(c);
 				nxt();b=c!=first&&c!='\0';
@@ -2660,18 +2657,18 @@ public static class Json{
 			while(c!='\0'&&Character.isUnicodeIdentifierPart(c))bNxt();
 			String r=consume();
 			return "true".equals(r)?new Boolean(true)
-				:"false".equals(r)?new Boolean(false)
-				:"null".equals(r)?Literal.Null
-				:"undefined".equals(r)?Literal.Undefined
-				:r;}
+				       :"false".equals(r)?new Boolean(false)
+					        :"null".equals(r)?Literal.Null
+						         :"undefined".equals(r)?Literal.Undefined
+							          :r;}
 
 		public Object extractDigits(){
 			if(c=='0')//&&offset+1<len)
 			{char c2=peek();if(c2=='x'||c2=='X')
 			{nxt();nxt();
 				while((c>='A'&&c<='F')
-					||(c>='a'&&c<='f')
-					||Character.isDigit(c))bNxt();
+					      ||(c>='a'&&c<='f')
+					      ||Character.isDigit(c))bNxt();
 				String s=consume();
 				try{return Long.parseLong(s,16);}
 				catch(Exception ex){}return s;}
@@ -2822,8 +2819,8 @@ public static class Json{
 						lookahead.append(c);
 					}
 				}while( (b=(c==h ||
-					Character.toUpperCase(c)==
-					Character.toUpperCase(h))
+					            Character.toUpperCase(c)==
+						            Character.toUpperCase(h))
 				)&& (++i)<pn );
 			return b;}
 
