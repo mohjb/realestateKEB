@@ -186,24 +186,24 @@ public static class App {
 
 		@Override public List creationDBTIndices(TL tl){
 			return TL.Util.lst(TL.Util.lst(
-				"varchar(255) NOT NULL DEFAULT 'home' "//app \u1F3E0 🏠
+				"varchar(255) NOT NULL DEFAULT 'home' "//app \u1F3E0 ??
 				,"varchar(255) NOT NULL DEFAULT 'home' "//key
 				,"enum('txt','json','key','num','real','date','bytes','serverSideJs','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
 				,"blob"),TL.Util.lst("unique(`app`,`key`)")
 			);//val
 			/*
 			CREATE TABLE `JsonStorage` (
-			`app` varchar(255) NOT NULL DEFAULT '🏠',
-			`key` varchar(255) NOT NULL DEFAULT '🏠',
+			`app` varchar(255) NOT NULL DEFAULT '??',
+			`key` varchar(255) NOT NULL DEFAULT '??',
 			`typ` enum('txt','json','key','num','real','date','bytes','serverSideJs','javaObjectStream') NOT NULL DEFAULT 'txt',
 			`val` blob ,
 			unique(`app`,`key`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-🔏  lock with ink pen Unicode code point: U+1F50F
-🔐  closed lock with key Unicode code point: U+1F510
-🔑  key Unicode code point: U+1F511
-🔒  lock Unicode code point: U+1F512
-🔓  open lock Unicode code point: U+1F513
+??  lock with ink pen Unicode code point: U+1F50F
+??  closed lock with key Unicode code point: U+1F510
+??  key Unicode code point: U+1F511
+??  lock Unicode code point: U+1F512
+??  open lock Unicode code point: U+1F513
 			*/
 		}
 
@@ -235,11 +235,19 @@ public static class App {
 				sql(cols( Co.distinct,C.app ),null,dbtName)
 				,String.class );}
 
-		@Op public static List<String>
+		@Op public static Map//List<String>
 		listKeys(@Op(prmName="app")String appName)throws SQLException{
-			return DB.q1colTList(
-				sql(cols(C.key ),where( C.app ,appName),dbtName)// Co.distinct,
-				,String.class ,appName); }
+			JsonStorage j=new JsonStorage();j.app=appName;
+			Map m=TL.Util.mapCreate();
+			for(DB.Tbl t:j.query(where( C.app ,appName)))
+			{String s=j.typ.toString();
+				List n=(List)m.get(s);
+				if(n==null)
+					m.put(s,n=TL.Util.lst());
+				n.add(j.key);}
+			return m;
+			//return DB.q1colTList(sql(cols(C.key ),where( C.app ,appName),dbtName)// Co.distinct,,String.class ,appName); 
+			}
 
 		@Op public static JsonStorage get(@Op(prmName="app")String appName
 			,@Op(prmName="key",prmInstance=true)JsonStorage j){ return j;}
