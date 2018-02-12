@@ -140,26 +140,6 @@ public static class App {
 	 * */
 	@Op public void generateJsp(@Op(prmName = "app")String app,@Op(prmName = "url")String url){}
 
-
-	/*@Op public Object jsOp(@Op(prmName = "app")String appName
-		,@Op(prmName = "key",prmInstance = true)JsonStorage app
-		,@Op(prmName = "method")String m,TL tl) throws javax.script.ScriptException
-	{	javax.script.ScriptEngineManager man=(javax.script.ScriptEngineManager)tl.h.a( "ScriptEngineManager" );
-		if(man==null)
-			tl.h.a( "ScriptEngineManager",man=new javax.script.ScriptEngineManager() );
-		String engName="ScriptEngine.JavaScript."+app.app+"."+app.key;
-		javax.script.ScriptEngine engine =(javax.script.ScriptEngine)tl.h.s( engName );
-		if(engine==null) {
-			tl.h.s( engName, engine = man.getEngineByName( "JavaScript" ) );
-			engine.put( "tl",tl );
-			Object o=engine.eval( app.val.toString() );
-			engine.put( "JsonStorage_app",o);
-		}else
-			engine.put( "tl",tl);
-		engine.put(  "methodName",m);
-		return engine.eval( "JsonStorage_app[methodName](tl.json,tl)" );
-	}*/
-
 	/**
 	 *	db-tbl ORM wrapper
 	 */
@@ -273,7 +253,7 @@ public static class App {
 			return store(j,tl);}
 
 		@Op public static JsonStorage
-		store(@Op(prmName="key")JsonStorage j ,TL tl)throws Exception
+		store(@Op(prmName="store")JsonStorage j ,TL tl)throws Exception
 		{if(j!=null){j.save();
 			if(j.typ==ContentType.serverSideJs ){
 				javax.script.ScriptEngine e =eng(j.app,false,tl);
@@ -357,9 +337,9 @@ public static class App {
 				}
 			}
 			else if(p .isAssignableFrom(Map.class)
-				        ||p .isAssignableFrom(Iterator.class)
-				        ||p .isAssignableFrom(Enumeration.class)
-				        ||p .isAssignableFrom(Collection.class))
+				||p .isAssignableFrom(Iterator.class)
+				||p .isAssignableFrom(Enumeration.class)
+				||p .isAssignableFrom(Collection.class))
 			{java.lang.reflect.Type[]c=p.getGenericInterfaces();
 				t=assesTyp( c[p .isAssignableFrom(Map.class)?1:0].getClass());
 				if(t==ContentType.bytes || t==ContentType.date
@@ -666,9 +646,9 @@ public static class App {
 					null, null, m.dbtName, null );
 					while ( result.next() ) {
 						C col = m.new C(result.getString( "COLUMN_NAME" )
-							               ,result.getString( "TYPE_NAME" )
-							               ,result.getString( "REMARKS" )
-							               ,l.size());
+							,result.getString( "TYPE_NAME" )
+							,result.getString( "REMARKS" )
+							,l.size());
 						l.add( col );
 						// col.columnType = result.getInt(5); //java.sql.Types.
 					}
@@ -731,9 +711,9 @@ public static class App {
 			for(Object k:l){
 				Map x=(Map)k;
 				cols[++i]=new C((String)x.get( "name" )
-					               ,(String)x.get( "type" )
-					               ,(String)x.get( "comment" )
-					               ,(int)x.get( "i" ));}
+					,(String)x.get( "type" )
+					,(String)x.get( "comment" )
+					,(int)x.get( "i" ));}
 			l=(List)m.get( "pk" );
 			pkc=new C[l.size()];i=-1;
 			for(Object k:l)pkc[++i]=col((String)k);
@@ -747,8 +727,8 @@ public static class App {
 
 		int createTable(){
 			StringBuilder b=new StringBuilder( "create table `")
-				                .append(dbName ).append( "`.`")
-				                .append(dbtName ).append( "`(" );
+				.append(dbName ).append( "`.`")
+				.append(dbtName ).append( "`(" );
 			for ( C c:cols ){if(c.i>0)b.append( ',' );
 				T t=T.t( c.type );
 				b.append( '`' ).append( c.name ).append( "` " ).append( c.type ).append( ' ' ).append( t.txt );
@@ -828,11 +808,11 @@ public static class App {
 
 		@Op static public MetaTbl
 		DBTbl_create(@Op(prmName = "dbName") String dbName
-			            ,@Op(prmName="dbtName") String dbtName
-			            ,@Op(prmName="cols") List<Map<String,String>>cols
-			            ,@Op(prmName = "pk") List<String>pk
-			            ,@Op(prmName = "fk") Map<String,Map<String,String>>fk
-			            ,TL tl){
+			,@Op(prmName="dbtName") String dbtName
+			,@Op(prmName="cols") List<Map<String,String>>cols
+			,@Op(prmName = "pk") List<String>pk
+			,@Op(prmName = "fk") Map<String,Map<String,String>>fk
+			,TL tl){
 			MetaTbl m=new MetaTbl();
 			m.fromMap(tl.json  );
 			m.createTable();
@@ -841,81 +821,81 @@ public static class App {
 
 		@Op static public int
 		DBTbl_drop(@Op(prmName = "dbName") String dbName
-			          ,@Op(prmName = "dbtName") String dbtName) throws SQLException{
+			,@Op(prmName = "dbtName") String dbtName) throws SQLException{
 			return  TL.DB.x( "drop table `"+dbName.replaceAll( "`"," " )+"`.`"+dbtName.replaceAll( "`"," " )+"`" );}
 
 		@Op static public int
 		DBTbl_rename(@Op(prmName = "dbName") String dbName
-			            ,@Op(prmName = "dbtName") String dbtName
-			            ,@Op(prmName = "newName") String newName)throws SQLException{
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "newName") String newName)throws SQLException{
 			return  TL.DB.x( "rename table `"+dbName.replaceAll( "`"," " )+"`.`"+dbtName.replaceAll( "`"," " )+"` to `"+newName.replaceAll( "`"," " )+"`" );}
 
 		@Op static public int
 		DBTblCol_drop(@Op(prmName = "dbName") String dbName
-			             ,@Op(prmName = "dbtName") String dbtName
-			             ,@Op(prmName = "col") String col){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "col") String col){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_insert(@Op(prmName = "dbName") String dbName
-			               ,@Op(prmName = "dbtName") String dbtName
-			               ,@Op(prmName = "col") String col
-			               ,@Op(prmName = "beforeCol") String beforeCol
-			               ,@Op(prmName = "def") Map<String,String>def){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "col") String col
+			,@Op(prmName = "beforeCol") String beforeCol
+			,@Op(prmName = "def") Map<String,String>def){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_add(@Op(prmName = "dbName") String dbName
-			            ,@Op(prmName = "dbtName") String dbtName
-			            ,@Op(prmName = "") String col
-			            ,@Op(prmName = "") Map<String,String>def){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "") String col
+			,@Op(prmName = "") Map<String,String>def){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_alter(@Op(prmName = "dbName") String dbName
-			              ,@Op(prmName = "dbtName") String dbtName
-			              ,@Op(prmName = "col") String col
-			              ,@Op(prmName = "def") Map<String,String>def){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "col") String col
+			,@Op(prmName = "def") Map<String,String>def){
 			return -1;}
 
 		@Op static public int
 		DBTblCol_rename(@Op(prmName = "dbName") String dbName
-			               ,@Op(prmName = "dbtName") String dbtName
-			               ,@Op(prmName = "col") String col
-			               ,@Op(prmName = "newName") String newName){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "col") String col
+			,@Op(prmName = "newName") String newName){
 			return -1;}
 
 		@Op static public Object[]
 		DBTRow_get(@Op(prmName = "dbName") String dbName
-			          ,@Op(prmName = "dbtName") String dbtName
-			          ,@Op(prmName = "pkv") Object[]pkv){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "pkv") Object[]pkv){
 			return null;}
 
 		@Op static public int
 		DBTRow_insert(@Op(prmName = "dbName") String dbName
-			             ,@Op(prmName = "dbtName") String dbtName
-			             ,@Op(prmName = "vals") Object[]vals){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "vals") Object[]vals){
 			return -1;}
 
 		@Op static public int
 		DBTRow_update(@Op(prmName = "dbName") String dbName
-			             ,@Op(prmName = "dbtName") String dbtName
-			             ,@Op(prmName = "set") Object[]set
-			             ,@Op(prmName = "where") Object[]where){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "set") Object[]set
+			,@Op(prmName = "where") Object[]where){
 			return -1;}
 
 		@Op static public int
 		DBTRow_delete(@Op(prmName = "dbName") String dbName
-			             ,@Op(prmName = "dbtName") String dbtName
-			             ,@Op(prmName = "where") Object[]where){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "where") Object[]where){
 			return -1;}
 
 		@Op static public List<Object[]>
 		DBT_query(@Op(prmName = "dbName") String dbName
-			         ,@Op(prmName = "dbtName") String dbtName
-			         ,@Op(prmName = "where") Object[]where
-			         ,@Op(prmName = "groupBy") Object[]groupBy
-			         ,@Op(prmName = "orderBy") Object[]orderBy){
+			,@Op(prmName = "dbtName") String dbtName
+			,@Op(prmName = "where") Object[]where
+			,@Op(prmName = "groupBy") Object[]groupBy
+			,@Op(prmName = "orderBy") Object[]orderBy){
 			return null;}
 
 	}//class MetaTbl Table.Wrapper.Integer
@@ -1023,8 +1003,8 @@ private void onEnter()throws IOException {
 	now=new Date();//seqObj=seqProp=now.getTime();
 	try{Object o=h.req.getContentType();
 		o=o==null?null
-			  :o.toString().contains("json")?Json.Prsr.parse(h.req)
-				   :o.toString().contains("part")?h.getMultiParts():null;
+		:o.toString().contains("json")?Json.Prsr.parse(h.req)
+		:o.toString().contains("part")?h.getMultiParts():null;
 		json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 		h.logOut=h.var("logOut",h.logOut);
 		if(h.getSession().isNew()){
@@ -1400,10 +1380,10 @@ public static class DB {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			                          ("jdbc:mysql://"+context.DB.server.str
-				                           +"/"+context.DB.dbName.str
-				                          ,context.DB.un.str,context.DB.pw.str
-			                          );Object[]b={r,null};
+			("jdbc:mysql://"+context.DB.server.str
+			     +"/"+context.DB.dbName.str
+			    ,context.DB.un.str,context.DB.pw.str
+			);Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){t.error(e,Name,".DB.DriverManager:");}
 		return r;}
@@ -1617,7 +1597,7 @@ public static class DB {
 		{close(s,tl);
 			if(tl.h.logOut)try{
 				tl.log(tl.jo().w(Name).w(".DB.L:q2json=")
-					       .o(sql).w(",prms=").o(p).toStrin_());
+				.o(sql).w(",prms=").o(p).toStrin_());
 			}catch(IOException x){tl.error(x,Name,".DB.q1json:",sql);}
 		}
 	}
@@ -1703,7 +1683,7 @@ public static class DB {
 			o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
 			for(CI f:a)
 			{	o.w(',').oStr(f.getName(),i2).w(':')
-					 .o(v(f),ind,o.comment?path+'.'+f.getName():path);
+					.o(v(f),ind,o.comment?path+'.'+f.getName():path);
 				if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
 			}
 			if(closeBrace){
@@ -1991,9 +1971,9 @@ public static class DB {
 				t.error( e, Name, ".DB.Tbl.save(CI:", c, "):" ); }
 			try {
 				DB.x( "insert into `" + getName() + "` (`" + pkc +
-					      "`,`" + c + "`) values(?"//+Co.m(pkc).txt
-					      + ",?"//+Co.m(c).txt
-					      + ")", pkv, cv );
+					"`,`" + c + "`) values(?"//+Co.m(pkc).txt
+					+ ",?"//+Co.m(c).txt
+					+ ")", pkv, cv );
 				//Integer k=(Integer)pkv;
 				//TL.DB.Tbl.Log.log( TL.DB.Tbl.Log.Entity.valueOf(getName()), k, TL.DB.Tbl.Log.Act.Update, TL.Util.mapCreate(c,v(c)) );
 			} catch ( Exception x ) {
@@ -2007,7 +1987,7 @@ public static class DB {
 			TL t = TL.tl();
 			//if ( a[0] instanceof Map ) try { String j = t.jo().clrSW().o( a[0] ).toString();a[0] = j; } catch ( IOException e ) { t.error( e, Name, ".DB.Tbl.save(CI:", c, "):" ); }
 			try {StringBuilder b=new StringBuilder( "insert into `" )
-				                     .append( getName() ).append("` (`" ).append( c.toString() );
+				.append( getName() ).append("` (`" ).append( c.toString() );
 				for(CI k:pkc)
 					b.append( "`,`" ).append( k.toString() );
 				b.append( "`) values(?");
@@ -2058,7 +2038,7 @@ public static class DB {
 			return x;
 		}else{int x=-1;CI[]pkc=pkcols();PK[]pkv=pkvals();
 			StringBuilder b=new StringBuilder( "delete from `" )
-				                .append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
+				.append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
 			for(int i=1;i<pkc.length;i++)
 				b.append( " and `" ).append( pkc[i] ).append( "`=?" );
 			DB.X( b.toString(),pkv );
@@ -2160,12 +2140,11 @@ public static class DB {
 								if(comma)b.append( ',' );else comma=true;
 								if(z instanceof Number)
 									b.append( z );else
-									b.append( '\'' )
-										.append(
-											(z instanceof String?(String)z:z.toString()
-											).replaceAll( "'","''" )
-										)
-										.append( '\'' );
+									b.append( '\'' ).append(
+										(z instanceof String?(String)z:z.toString()
+										).replaceAll( "'","''" )
+									)
+									.append( '\'' );
 							}b.append(")");
 						}else if(o instanceof Co)//o!=null)//if(ln==2 && )
 						{	Co m=(Co)o;o=l.get(0);
@@ -2450,15 +2429,15 @@ public static class Json{
 			return this;}
 		public Output oCookie(Cookie y,String ind,String path)throws IOException
 		{final boolean c=comment;try{(c?w("{//")
-			                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-			                             .w("\"Comment\":").o(y.getComment())
-			                             .w(",\"Domain\":").o(y.getDomain())
-			                             .w(",\"MaxAge\":").p(y.getMaxAge())
-			                             .w(",\"Name\":").o(y.getName())
-			                             .w(",\"Path\":").o(y.getPath())
-			                             .w(",\"Secure\":").p(y.getSecure())
-			                             .w(",\"Version\":").p(y.getVersion())
-			                             .w(",\"Value\":").o(y.getValue());
+			.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+			.w("\"Comment\":").o(y.getComment())
+			.w(",\"Domain\":").o(y.getDomain())
+			.w(",\"MaxAge\":").p(y.getMaxAge())
+			.w(",\"Name\":").o(y.getName())
+			.w(",\"Path\":").o(y.getPath())
+			.w(",\"Secure\":").p(y.getSecure())
+			.w(",\"Version\":").p(y.getVersion())
+			.w(",\"Value\":").o(y.getValue());
 		}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
@@ -2488,9 +2467,9 @@ public static class Json{
 
 		Output oSC(ServletContext y,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-			                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-			                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-			                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+			    .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+			    .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+			    .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 			if(c)
 				w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("}");
@@ -2533,13 +2512,13 @@ public static class Json{
 			for(int i=1;i<=cc;i++){
 				if(i>1){if(c)w("\n").p(i2).w(",");else w(",");}
 				w("{\"name\":").oStr(o.getColumnName( i ),i2)
-					.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
-					.w(",\"width\":").p(o.getColumnDisplaySize( i ))
-					.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
-					.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
+				.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
+				.w(",\"width\":").p(o.getColumnDisplaySize( i ))
+				.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
+				.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
 			}//for i<=cc
-			if(c)w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind)
-				     ;else w("]");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSetMetaData:");}return this;}
+			if(c)w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
+			else w("]");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSetMetaData:");}return this;}
 		Output clrSW(){if(w instanceof StringWriter){((StringWriter)w).getBuffer().setLength(0);}return this;}
 		Output flush() throws IOException{w.flush();return this;}
 	} //class Output
@@ -2625,7 +2604,7 @@ public static class Json{
 				default:r=extractIdentifier();
 			}skipRWS();//skipWhiteSpace();
 			if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-				                    ||(cache!=null&&comments.startsWith("cacheReference"))))
+			||(cache!=null&&comments.startsWith("cacheReference"))))
 			{	if(i!=-1)
 			{	if(cache==null)
 				cache=new HashMap<String,Object>();
@@ -2644,15 +2623,15 @@ public static class Json{
 			{case 'n':buff('\n');break;case 't':buff('\t');break;
 				case 'r':buff('\r');break;case '0':buff('\0');break;
 				case 'x':case 'X':buff( (char)
-					                        java.lang.Integer.parseInt(
-						                        next(2)//p.substring(offset,offset+2)
-						                        ,16));nxt();//next();
+					java.lang.Integer.parseInt(
+					    next(2)//p.substring(offset,offset+2)
+					    ,16));nxt();//next();
 				break;
 				case 'u':
 				case 'U':buff( (char)
-					               java.lang.Integer.parseInt(
-						               next(4)//p.substring(offset,offset+4)
-						               ,16));//next();next();next();//next();
+					java.lang.Integer.parseInt(
+					    next(4)//p.substring(offset,offset+4)
+					    ,16));//next();next();next();//next();
 					break;default:if(c!='\0')buff(c);}}
 			else buff(c);
 				nxt();b=c!=first&&c!='\0';
@@ -2665,18 +2644,18 @@ public static class Json{
 			while(c!='\0'&&Character.isUnicodeIdentifierPart(c))bNxt();
 			String r=consume();
 			return "true".equals(r)?new Boolean(true)
-				       :"false".equals(r)?new Boolean(false)
-					        :"null".equals(r)?Literal.Null
-						         :"undefined".equals(r)?Literal.Undefined
-							          :r;}
+				:"false".equals(r)?new Boolean(false)
+				:"null".equals(r)?Literal.Null
+				:"undefined".equals(r)?Literal.Undefined
+				:r;}
 
 		public Object extractDigits(){
 			if(c=='0')//&&offset+1<len)
 			{char c2=peek();if(c2=='x'||c2=='X')
 			{nxt();nxt();
 				while((c>='A'&&c<='F')
-					      ||(c>='a'&&c<='f')
-					      ||Character.isDigit(c))bNxt();
+					||(c>='a'&&c<='f')
+					||Character.isDigit(c))bNxt();
 				String s=consume();
 				try{return Long.parseLong(s,16);}
 				catch(Exception ex){}return s;}
@@ -2827,8 +2806,8 @@ public static class Json{
 						lookahead.append(c);
 					}
 				}while( (b=(c==h ||
-					            Character.toUpperCase(c)==
-						            Character.toUpperCase(h))
+					Character.toUpperCase(c)==
+					Character.toUpperCase(h))
 				)&& (++i)<pn );
 			return b;}
 
