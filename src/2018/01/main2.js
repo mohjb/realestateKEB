@@ -1,4 +1,4 @@
-JsonStorage=function JsonStorage(app,key,typ,val){
+main=JsonStorage=function JsonStorage(app,key,typ,val){
 	this.cp(app,key,typ,val);}
 
 JsonStorage.prototype={
@@ -11,7 +11,7 @@ JsonStorage.prototype={
 	,save:function(){var t=this,y=t.isTypJson();localStorage[t.app+'.'+t.key]=y?JSON.stringify(t.val):t.val;return t;}
 	,load:function(){var t=this,y=t.isTypJson(),s=localStorage[t.app+'.'+t.key];t.val=y?JSON.parse(s):s;}
 	,setVal:function(p){var t=this;t.val=p;return this;}
-	,getApp:function(){return apps[this.app];}
+	//,getApp:function(){return aps[this.app];}
 	,cp:function cp(app,key,typ,val){
 		var t=this;if(typeof(app)=='string')
 		{t.app=app;t.key=key;t.typ=typ;t.val=val;}
@@ -24,7 +24,7 @@ JsonStorage.prototype={
 		if(typ!=undefined) t.typ=typ;
 		t.save()
 		s=JSON.stringify({op:'JsonStorage.store',store:{app:t.app,key:t.key,typ:t.typ,val:t.val}});
-		t.getApp().http().post('index.jsp',s).then(
+		main.http.post('index.jsp',s).then(
             function(response){
                 var x=response.data,r=x&&x['return'];
 				console.log('JsonStorage.serverStore.http.post:response:',r,x,response,arguments)
@@ -36,7 +36,7 @@ JsonStorage.prototype={
 	});return t;}
 	,serverGet:function JsonStorageProtoGet(){
 		var t=this,s=JSON.stringify({op:'JsonStorage.get',app:t.app,key:t.key});
-		 t.getApp().http().post('index.jsp',s).then(
+		 main.http.post('index.jsp',s).then(
             function(response){
                 var x=response.data,r=x&&x['return'];
 				console.log('JsonStorage.serverGet.http.post:response:',r,x,response,arguments)
@@ -49,14 +49,13 @@ JsonStorage.prototype={
 
 JsonStorageApp=function JsonStorageApp(app,keysList,keys){
 	var t=this;if(typeof(app)=='string')
-	{t.app=app;apps[app]=t;t.val=keysList||[];t.keys=keys||{};}
-	else{t.app=app.app;t.val=app.val||[];t.keys=app.keys||{};}}
+	{t.app=app;main.aps[app]=t;t.val=keysList||{};t.keys=keys||{};}
+	else{t.app=app.app;t.val=app.val||{};t.keys=app.keys||{};}}
 
 JsonStorageApp.prototype=new JsonStorage('appProto','keysList','json','');
 
-appsList=JsonStorageApp.prototype.appsList=[]
-apps=JsonStorageApp.prototype.apps={}
-apps=JsonStorageApp.prototype.http=function(){return this._http;}
+//JsonStorageApp.prototype.apsList=[];JsonStorageApp.prototype.aps={}
+//JsonStorageApp.prototype.http=function(){return this._http;}
 
 JsonStorageApp.prototype.generateKeysList=function JsonStorageAppProtoGenerateKeysList(){
 	var t=this,l=t.keys,a={},x,y
@@ -67,19 +66,19 @@ JsonStorageApp.prototype.generateKeysList=function JsonStorageAppProtoGenerateKe
 JsonStorageApp.prototype.newKey=function JsonStorageAppProtoNewKey(key,typ,val){
 	var t=this,r=t.keys[key],n;if(r)return r;
 	r=t.keys[key]=new JsonStorage(t.app,key&&key.key?key.key:key,key&&key.typ?key.typ:typ,key&&key.val?key.val:val);
-	n=t.val[typ]
-	if(!n)n=t.val[typ]=[];
+	n=t.val[r.typ]
+	if(!n)n=t.val[r.typ]=[];
 	n.push(r)
 	//t.val=t.generateKeysList();
 	return r;}
 
 JsonStorageApp.prototype.refreshAppsList=function JsonStorageAppProtoRefreshAppsList(){
 	var t=this,s=JSON.stringify({op:'JsonStorage.listApps'});
-	 t.http().post('index.jsp',s).then(
+	 main.http.post('index.jsp',s).then(
 		function(response){
 			var x=response.data,r=x&&x['return'];
 			console.log('JsonStorageApp.refreshAppsList.http.post:response:',r,x,response,arguments)
-			appsList=JsonStorageApp.prototype.appsList=r
+			main.apsList=r
 		},function(response){
 			console.log('JsonStorageApp.refreshAppsList.http.post:error:',response,arguments);
 		})}
@@ -89,7 +88,7 @@ JsonStorageApp.prototype.serverGetKeys=function JsonStorageAppProtoServerGetKeys
 		for(var i in t.val)for(var j in t.val[i])
 			keysList.push(t.val[i][j]);}
 	s=JSON.stringify(o);
-	t.http().post('index.jsp',s).then(
+	main.http.post('index.jsp',s).then(
 		function(response){
 			var x=response.data,r=x&&x['return'];
 			console.log('JsonStorageApp.serverGetKeys.http.post:response:',r,x,response,arguments)
@@ -102,21 +101,21 @@ JsonStorageApp.prototype.serverGetKeys=function JsonStorageAppProtoServerGetKeys
 		})}
 JsonStorageApp.prototype.serverListKeys=function JsonStorageAppProtoServerListKeys(){
 	var t=this,s=JSON.stringify({op:'JsonStorage.listKeys',app:t.app});
-	 t.http().post('index.jsp',s).then(
+	 main.http.post('index.jsp',s).then(
 		function(response){
 			var x=response.data,r=x&&x['return'];
 			console.log('JsonStorageApp.serverListKeys.http.post:response:',r,x,response,arguments)
-			appsList=JsonStorageApp.prototype.appsList=r
+			apsList=r
 		},function(response){
 			console.log('JsonStorageApp.serverListKeys.http.post:error:',response,arguments);
 		})}
 JsonStorageApp.prototype.serverCreate=function JsonStorageAppProtoServerCreate(app){
 	var t=this,s=JSON.stringify({op:'JsonStorage.store',app:t.toJson()});
-	 t.serverStore(t.val,t.typ,function(tx,r){apps[t.app]=t.save();appsList.push(t.app);})}
+	 t.serverStore(t.val,t.typ,function(tx,r){main.aps[t.app]=t.save();main.apsList.push(t.app);})}
 
 JsonStorageApp.prototype.serverMember=function JsonStorageAppProtoServerMember(member,args){
 	var t=this,s=JSON.stringify({op:'JsonStorage.member',app:t.app,member:member,args:args});
-	 t.http().post('index.jsp',s).then(
+	 main.http.post('index.jsp',s).then(
 		function(response){
 			var x=response.data,r=x&&x['return'];
 			console.log('JsonStorageApp.serverMember.http.post:response:',r,x,response,arguments)
@@ -125,7 +124,7 @@ JsonStorageApp.prototype.serverMember=function JsonStorageAppProtoServerMember(m
 		})}
 JsonStorageApp.prototype.serverEval=function JsonStorageAppProtoServerEval(src){
 	var t=this,s=JSON.stringify({op:'JsonStorage.eval',app:t.app,src:src});
-	 t.http().post('index.jsp',s).then(
+	 main.http.post('index.jsp',s).then(
 		function(response){
 			var x=response.data,r=x&&x['return'];
 			console.log('JsonStorageApp.serverEval.http.post:response:',r,x,response,arguments)
@@ -168,14 +167,14 @@ function cs(p){
 xUrl='index.jsp';//2017.11.jsp
 
 (window.xa=(angular||{})
-.module('app', ['ngSanitize','angular-md5','ui.router'] ))
-.factory('app', ['$http','md5', function appFactory($http,md5) {
-	var p={//window.xa||{}
-	apps:apps
+.module('main', ['ngSanitize','angular-md5','ui.router'] ))
+.factory('main', ['$http','md5', function mainFactory($http,md5) {
+	var p=main={//window.xa||{}
+	aps:{},http:$http
 	,selected:{app:0}
-	,lsReset :function appLsReset(){
-		p.appsList=['usrs','test']
-		p.apps={test:p.selected.app=new JsonStorageApp({app:'test'
+	,lsReset :function mainLsReset(){
+		p.apsList=['usrs','test']
+		p.aps={test:p.selected.app=new JsonStorageApp({app:'test'
 				//keysList:['test']//this is val
 				,keys:{test:{app:'test',key:'test',typ:'txt',val:'test'}}})
 			,usrs:{app:'usrs',val:{'json':['moh']},keys:{
@@ -183,13 +182,14 @@ xUrl='index.jsp';//2017.11.jsp
 					,firstName:'Mohammad',lastName:'Buhamad'
 					,tel:'99876454',email:'mohamadjb@gmail.com'
 					,level:'fullAccess',notes:'',created:'2017/06/20T21:05',f:1
-					,lastModified:'2017/06/20T21:05',app:'usrs',key:'moh',typ:'json',val:0}}}
+					,lastModified:'2017/06/20T21:05'
+					,app:'usrs',key:'moh',typ:'json',val:0}}}
 		}// ls // localStorage
 	}
 
 	,newApp:function(appName){
 		var r=p.selected.app=new JsonStorageApp({key:appName, keys:{} ,val:[]})//val==keysList
-		p.selected.app._http=$http;r.serverCreate();
+		r.serverCreate();//p.selected.app._http=$http;
 		return r;}
 
 	,newKey:function(key,val,typ){
@@ -200,11 +200,7 @@ xUrl='index.jsp';//2017.11.jsp
 		return r;}
 	,selectedChanged:function(ent,newSelection){
 		 console.log('selectedChanged:',ent,newSelection);
-		 var s=p.selected,a=s.app;
-		 if(ent=='app'){
-			a._http=$http
-			}
-		// else 
+		 var s=p.selected,a=s.app;//if(ent=='app'){a._http=$http}// else 
 		}
 	,logout:function appLogout(state){p.usr=0;
 		cs('.onUsrF').display='none'
@@ -216,25 +212,25 @@ xUrl='index.jsp';//2017.11.jsp
 	,chng:function(x){if(x ){
 			var d=new Date(),n=d.getTime();
 			x.lastModified=n;p.selected.key=x;
-			console.log('app.chng',x,arguments)//if entityId.startsWith('') ) p.compute( )
+			console.log('main.chng',x,arguments)//if entityId.startsWith('') ) p.compute( )
 	}}
 	,blur:function(x){if(x ){
-			console.log('app.blur',x,arguments)
+			console.log('main.blur',x,arguments)
 			if( p.lsSaved<x.lastModified)
 				x.serverStore()
-	}}//else console.log('app.blur:no unique id found:',x)
+	}}//else console.log('main.blur:no unique id found:',x)
 
 	,newUsr:function(){
 		var un=prompt('Please Enter User-Name')
-		,pw,u,d=new Date(),n=d.getTime(),usrs=p.apps.usrs.keys;
+		,pw,u,d=new Date(),n=d.getTime(),usrs=p.aps.usrs.keys;
 		if(!un)return null;
 		if(usrs[un] && !usrs[un].deleted ){
 			alert('can not use user-name:'+un);return null;}
 		pw=prompt('Please enter password')
 		if(!pw)return null;
 		pw=md5.createHash(pw)
-		usrs[un]=u={un:un,pw:pw//,usr:app.usr.entityId
-			,firstName:'user '+Object.keys(p.apps.usrs).length+1
+		usrs[un]=u={un:un,pw:pw//,usr:main.usr.entityId
+			,firstName:'user '+Object.keys(p.aps.usrs).length+1
 			,lastName:'-',email:'',notes:'',level:'',f:0,tel:''
 			,created:n,lastModified:n}
 		//TODO: re-implement ;p.lsSave('usrs',un);
@@ -247,42 +243,43 @@ xUrl='index.jsp';//2017.11.jsp
 		var x=p.lastServerCheck.getTime()
 		,n=new Date().getTime();
 		if(x+120000<=n)
-		{console.log('app:polling server');
+		{console.log('main:polling server');
 			p.lsLoad('');}
 	},10000)
 	p.lastServerCheck=new Date();*/
 	//TODO: re-implement ;p.lsLoad()
 	p.lsReset();
-	return p;//function appFactoryCallback(message) {return p;}
+	return p;//function mainFactoryCallback(message) {return p;}
 }])
-.controller('mainCtrl',function mainCtrlController($scope,app ) {
-	if(app instanceof Function)
-		app=app();
-	
-	if(!app || !app.usr)
+.controller('mainCtrl',function mainCtrlController($scope,main ) {
+	if(!main || !main.usr)
 		return location.hash='#!/login'
-	if(app){
-		$scope.app=app
+	if(main){
+		$scope.main=main
 		$scope.dt=dt
 		$scope.rhinoEvalResult=''
 		$scope.ct=JsonStorage.prototype.ContentType
-		app.selectedChanged('app')
-		console.log('mainCntrl:version=',$scope.version='mainCntrl , app=',app )
-		$scope.onNew=function onNew(ent){try{
-			var r,nm=prompt("Please enter a new name for the new "+ent);
-			if(nm ){
-				if(ent=='app'){
-					if( app.apps[nm])return alert('app-name('+nm+') already used');
-					r=app.newApp(nm);
-				}
-				else r=app.newKey(nm,'txt','txt')
-			}}catch(ex){
+		main.selectedChanged('app')
+		console.log('mainCntrl:version=',$scope.version='mainCntrl , main=',main )
+		$scope.onNew=function onNew(ent,obj){try{
+			if(ent=='key'){if(obj.key=='keysList')return alert('keysList is a reserved-name, please enter any-other input');
+				if(confirm(
+			'Please confirm the creation of a new key:'+obj.key))
+			{var p=main.selected.app;obj.app=p.app;
+				p.newKey(obj).serverStore();
+				p.serverStore();
+			}}else{
+				var r,nm=prompt("Please enter a new name for the new "+ent);
+				if(nm ){
+					if( main.aps[nm])return alert('app-name('+nm+') already used');
+					r=main.newApp(nm);
+			}}}catch(ex){
 				console.error(ex);}}
 		$scope.refresh=function refresh(ent){try{
 			var nm=confirm("Please confirm reloading "+ent+'s');
 			if(nm ){if(ent=='app')
-				app.selected.app.refreshAppsList();
-				else app.selected.app.serverGetKeys()
+				main.selected.app.refreshAppsList();
+				else main.selected.app.serverGetKeys()
 			}}catch(ex){
 				console.error(ex);}}
 		$scope.clkDelKey=function clkDelKey(j){try{
@@ -293,13 +290,13 @@ xUrl='index.jsp';//2017.11.jsp
 		$scope.rhinoEvalRun=function rhinoEvalRun(j){try{
 			var nm=confirm("Please confirm :"+j);
 			if(nm ){
-				$scope.rhinoEvalResult=app.selected.app.serverEval(j)
+				$scope.rhinoEvalResult=main.selected.app.serverEval(j)
 			}}catch(ex){
 				console.error(ex);}}
 		$scope.serverAccess=function serverAccess(j){try{
 			var args=prompt("Please enter args array in json-format:"+j);
 			if(args ){
-				$scope.rhinoEvalResult=app.selected.app.serverMember(j.key,args)
+				$scope.rhinoEvalResult=main.selected.app.serverMember(j.key,args)
 			}}catch(ex){
 				console.error(ex);}}
 				
@@ -309,7 +306,7 @@ xUrl='index.jsp';//2017.11.jsp
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , no app')
 	}
 })
-.config(function appConfig($stateProvider,$urlRouterProvider){
+.config(function mainConfig($stateProvider,$urlRouterProvider){
 	console.log('config',this,arguments);
 	$urlRouterProvider.otherwise('/login');
 	$stateProvider
@@ -337,7 +334,7 @@ xUrl='index.jsp';//2017.11.jsp
 				return cnn;
 			}, 100);}
 	})
-	
+
  .state('usrs',{
 	  url:'/usrs',controller:'usrsCtrl',
 	templateProvider: function ($timeout, $stateParams) {
@@ -350,46 +347,43 @@ xUrl='index.jsp';//2017.11.jsp
 			}, 100);}})
 
 })//config
-.controller('loginCtrl',function loginCtrlController($scope,app,md5,$state,$rootScope){
- console.log('app.controller:loginCtrl:($scope'
- 		,$scope,',app',app,',md5',md5
+.controller('loginCtrl',function loginCtrlController($scope,main,md5,$state,$rootScope){
+ console.log('main.controller:loginCtrl:($scope'
+ 		,$scope,',main',main,',md5',md5
  		,',$state',$state,',$rootScope',$rootScope
  		,',arguments',arguments,',this',this,')')
 	$scope.un=''
 	$scope.pw=''
 	$scope.msg=''
-	if(app instanceof Function)app=app();
-	$scope.app=app;
+	$scope.main=main;
 	$scope.clk=
 	function calek(){
 		console.log('loginCtrl:clk',arguments,this);
-		var usrs=app.apps.usrs.keys,u=usrs[$scope.un]
+		var usrs=main.aps.usrs.keys,u=usrs[$scope.un]
 		if(!md5){console.error('controller:loginCtrl:function-clk:param-md5 not defined');
 			md5={createHash:function loginCtrlDummyMd5(){} } }
 		if(u && u.pw == md5.createHash($scope.pw)){
-			app.usr=u;
+			main.usr=u;
 			//TODO: DbLog.newEntry(login)
 			$scope.msg='login successful,\n'+(new Date)
 			cs('.onLoggedIn').display=''
 			cs('.onLoggedOut').display='none'
-			cs('.onUsrF').display=app.usr.f?'':'none';//did('logoNotLog').style.display='none';did('logoLoggedin').style.display='grid'
+			cs('.onUsrF').display=main.usr.f?'':'none';//did('logoNotLog').style.display='none';did('logoLoggedin').style.display='grid'
 			location.hash='#!/main';//$state.go('main')
 		}
 		else alert($scope.msg='invalid login \n,'+(new Date))
 	}
-	if(app.usr)
+	if(main.usr)
 		location.hash='#!/main'
 	})
-.controller('usrsCtrl',function usrsController($scope,app ) {
-	if(app instanceof Function)
-		app=app();
-	if(!app || !app.usr || !app.usr.f)
+.controller('usrsCtrl',function usrsController($scope,main ) {
+	if(!main || !main.usr || !main.usr.f)
 		return location.hash='#!/login'
-	$scope.app=app
+	$scope.main=main
 	$scope.chng=function chng(x){
 		if(!x)x=$scope.editUsr
 		else $scope.editUsr=x
 		x.f=!!x.f;}
-	$scope.chng(app.usr);
-	console.log('usrsCtrl:version=',$scope.version='usrsCtrl , app=',app )
+	$scope.chng(main.usr);
+	console.log('usrsCtrl:version=',$scope.version='usrsCtrl , main=',main )
 })
