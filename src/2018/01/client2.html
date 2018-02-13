@@ -19,7 +19,7 @@
 <span class="onLoggedIn"><div width="100%" style="display:inline-flex ;
     grid-gap: 3px;
     grid-auto-rows: minmax(100px,auto);
-    grid-template-columns: repeat({{app.usr.f?6:2}},1fr);
+    grid-template-columns: repeat({{main.usr.f?6:2}},1fr);
     background: rgba(240,240,255,.1);
     border-radius: 5px;
     padding: 3px;">
@@ -28,18 +28,18 @@
 	<div class="menuItem bvl"><a href="#!/main">Apps</a></div>
 </div>
 </span>
-<div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="app">
+<div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="main">
 	<main ui-view></main><sub>, by mohamadjb@gmail.com</sub>
 </div>
 
 <templates>
 
 <template id="template.main" >
-	<a ng-click="app.logout()" href="#!/login)" 
+	<a ng-click="main.logout()" href="#!/login)" 
 		class="menuItem bvl"><div class="menuItem">Logout</div></a>
-	<h2>Apps</h2><select ng-model="app.selected.app"
-		ng-change="app.selectedChanged('app')"
-		ng-options="x.app for x in app.apps"></select>
+	<h2>Apps</h2><select ng-model="main.selected.app"
+		ng-change="main.selectedChanged('app')"
+		ng-options="x.app for x in main.aps.apsList"></select>
 		<input type="button" value="refresh-List" ng-click="refresh('appsList')"/>
 		<input type="button" value="refresh-App" ng-click="refresh('app')"/>
 		<input type="button" value="new" ng-click="onNew('app')"/>
@@ -47,26 +47,26 @@
 
 <!--h2 onclick="x=did('jspUrls');s=x.style;s.display=s.display?'':'none'"
 	>Jsp-Urls<sub>(App={{app.selected.app.title}})</sub></h2>
-<div id="jspUrls" style="display:none"><select ng-model="app.selected.JspUrl" 
-		ng-change="app.selectedChanged('JspUrl')"
-		ng-options="x.title for x in app.selected.app.JspUrls"></select>
+<div id="jspUrls" style="display:none"><select ng-model="main.selected.JspUrl" 
+		ng-change="main.selectedChanged('JspUrl')"
+		ng-options="x.title for x in main.selected.app.JspUrls"></select>
 		<input type="button" value="new" ng-click="onNew('JspUrl')"/>
 </div>
 
 <hr/>
 
 <h2 onclick="x=did('AngularUrl');s=x.style;s.display=s.display?'':'none'"
-	>AngularJsApp-Urls<sub>(App={{app.selected.app.title}})</sub></h2>
-<div id="AngularUrl" style="display:none"><select ng-model="app.selected.AngularUrl" 
-		ng-change="app.selectedChanged('AngularUrl')"
-		ng-options="x.title for x in app.selected.app.AngularUrls"></select>
+	>AngularJsApp-Urls<sub>(App={{main.selected.app.title}})</sub></h2>
+<div id="AngularUrl" style="display:none"><select ng-model="main.selected.AngularUrl" 
+		ng-change="main.selectedChanged('AngularUrl')"
+		ng-options="x.title for x in main.selected.app.AngularUrls"></select>
 		<input type="button" value="new" ng-click="onNew('AngularUrl')"/>
 </div-->
 
 <h2>JsonStorageApp keys</h2>
 <table border=1 >
 <tr><th>key-name</th><th>typ</th><th>val</th></tr>
-<tr ng-repeat="j in app.selected.app.keys">
+<tr ng-repeat="j in main.selected.app.keys">
 <td >{{j.key }}
 	<input type="button" ng-click="clkDelKey(j)" value="delete"/>
 	<input type="button" ng-click="serverAccess(j)" ng-if="j.typ=='serverSideJs'" value="serverAccess"/>
@@ -76,10 +76,10 @@
 </td>
 </tr>
 <tfoot style="background-color:green"><tr>
-<td ng-init="newKey={app:app.selected.app.title}"><input ng-model="newKey.key"/></td>
+<td ng-init="newKey={app:main.selected.app.title}"><input ng-model="newKey.key"/></td>
 <td ><select ng-model="newKey.typ" ng-options="i for i in ct"></select></td>
 <td ><textarea ng-model="newKey.val"></textarea>
-<input type="button" ng-click="app.selected.app.newKey(newKey)" value="create"/></td>
+<input type="button" ng-click="onNew('key',newKey)" value="create"/></td>
 </tr></tfoot>
 </table>
 <input type="button" value="refresh" ng-click="refresh('key')"/>
@@ -104,37 +104,30 @@
 
 <template id="template.usrs" >
 	<h2 class="ghost"><span class="neon">Users:</span><span class="st3d">{{editUsr.un}}</span></h2>
-	<select ng-model="editUsr" ng-options="c.un for c in app.ls.usr" ng-change="chng(c)"></select>
-	<input type="button" ng-click="editUsr=app.newUsr()" value="New User"/>
+	<select ng-model="editUsr" ng-options="c.un for c in main.aps.usrs" ng-change="chng(c)"></select>
+	<input type="button" ng-click="editUsr=main.newUsr()" value="New User"/>
  <div class="tbl" style="grid-template-columns: repeat(2,1fr)" ng-if="editUsr && !editUsr.deleted" >
 
 	<div class="menuItem hding" style="text-align:right">User-name</div>
-	<div class="menuItem" style="text-align:left" ><input type="button" ng-click="app.deleteEditUsr()" value="&#10062;Delete" /><h3>{{editUsr.un}}</h3></div>
+	<div class="menuItem" style="text-align:left" ><input type="button" ng-click="main.deleteEditUsr()" value="&#10062;Delete" /><h3>{{editUsr.un}}</h3></div>
 
 	<div class="menuItem hding" style="text-align:right">First-name</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.firstName" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.firstName" ng-change="main.chng(editUsr)" ng-blur="main.blur(editUsr)"/></div>
 
 	<div class="menuItem hding" style="text-align:right">Last-name</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.lastName" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.lastName" ng-change="main.chng(editUsr)" ng-blur="main.blur(editUsr)"/></div>
 
 	<div class="menuItem hding" style="text-align:right">E-Mail</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.email" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.email" ng-change="main.chng(editUsr)" ng-blur="main.blur(editUsr)"/></div>
 
 	<div class="menuItem hding" style="text-align:right">Telephone</div>
-	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.tel" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
-
-	<div class="menuItem hding" style="text-align:right">Profile</div>
-	<div class="menuItem" style="text-align:left" ><select 
-		ng-options="i.Name for i in app.ls.profiles"
-		ng-change="app.chng(editUsr)" 
-		ng-blur="app.blur(editUsr)"
-		ng-model="editUsr.profile" ></select></div>
+	<div class="menuItem" style="text-align:left" ><input ng-model="editUsr.tel" ng-change="main.chng(editUsr)" ng-blur="main.blur(editUsr)"/></div>
 
 	<div class="menuItem hding" style="text-align:right">Super-user</div>
-	<div class="menuItem" style="text-align:left" ><input type="checkbox" ng-model="editUsr.f" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"/></div>
+	<div class="menuItem" style="text-align:left" ><input type="checkbox" ng-model="editUsr.f" ng-change="main.chng(editUsr)" ng-blur="main.blur(editUsr)"/></div>
 
 	<div class="menuItem hding" style="text-align:right">Remarks</div>
-	<div class="menuItem" style="text-align:left" ><textarea ng-model="editUsr.notes" ng-change="app.chng(editUsr)" ng-blur="app.blur(editUsr)"></textarea></div>
+	<div class="menuItem" style="text-align:left" ><textarea ng-model="editUsr.notes" ng-change="main.chng(editUsr)" ng-blur="main.blur(editUsr)"></textarea></div>
 
 	<div class="menuItem hding" style="text-align:right">Last Modified</div>
 	<div class="menuItem" style="text-align:left" >{{dt(editUsr.lastModified)|date:"yyyy/MM/ddTHH:mm"}}</div>
