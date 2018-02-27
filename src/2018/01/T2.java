@@ -1,26 +1,25 @@
-/**
- * Created by Vaio-PC on 1/26/2018.
- */
 package dev201801;
 
 /**
+ * Created by Vaio-PC on 2/23/2018.
+ * Created by Vaio-PC on 1/26/2018.
  * Created by Vaio-PC on 18/01/2018.
  */
-import java.io.*;
-import java.sql.*;
-import java.util.*;
-import java.net.URL;
-import java.util.Date;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import javax.servlet.jsp.PageContext;
-import java.lang.annotation.Annotation;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+	import java.io.*;
+	import java.sql.*;
+	import java.util.*;
+	import java.net.URL;
+	import java.util.Date;
+	import javax.servlet.*;
+	import javax.servlet.http.*;
+	import java.lang.reflect.Field;
+	import java.lang.reflect.Method;
+	import javax.servlet.jsp.PageContext;
+	import java.lang.annotation.Annotation;
+	import org.apache.commons.fileupload.FileItem;
+	import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+	import org.apache.commons.fileupload.servlet.ServletFileUpload;
+	import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 /** * Created by mbohamad on 19/07/2017.*/
 public class T2
@@ -69,17 +68,17 @@ public static void run(
 				else f.readReq("");
 			}else
 				args[i]=o=T2.class.equals(c)?tl//:Map.class.isAssignableFrom(c) &&(nm.indexOf("p")!=-1) &&(nm.indexOf("r")!=-1) &&(nm.indexOf("m")!=-1)?tl.json
-					:tl.h.req(nm,c);
+					          :tl.h.req(nm,c);
 		}catch(Exception ex){tl.error(ex,Name,".run:arg:i=",i);}
 		retVal=n==0?op.invoke(cl)
-			:n==1?op.invoke(cl,args[0])
-			:n==2?op.invoke(cl,args[0],args[1])
-			:n==3?op.invoke(cl,args[0],args[1],args[2])
-			:n==4?op.invoke(cl,args[0],args[1],args[2],args[3])
-			:n==5?op.invoke(cl,args[0],args[1],args[2],args[3],args[4])
-			:n==6?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5])
-			:n==7?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5],args[6])
-			:op.invoke(cl,args);
+			       :n==1?op.invoke(cl,args[0])
+				        :n==2?op.invoke(cl,args[0],args[1])
+					         :n==3?op.invoke(cl,args[0],args[1],args[2])
+						          :n==4?op.invoke(cl,args[0],args[1],args[2],args[3])
+							           :n==5?op.invoke(cl,args[0],args[1],args[2],args[3],args[4])
+								            :n==6?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5])
+									             :n==7?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5],args[6])
+										              :op.invoke(cl,args);
 		//Op pp=op.getAnnotation(Op.class);
 		if(opAnno!=null && opAnno.nestJsonReq() && tl.json!=null){
 			tl.json.put("return",retVal);retVal=tl.json;}
@@ -102,9 +101,9 @@ public static void run(
 }//run op servlet.service
 
 public H h=new H();
-public Map<String,Object> ssn,usr,/**accessing request in json-format*/json;
+public Map<String,Object> ssn,/**accessing request in json-format*/json;
 public Date now;
-
+App.Stor usr;
 /**wrapping JspWriter or any other servlet writer in "out" */
 Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
 
@@ -133,6 +132,17 @@ public static class App {
 
 	}
 
+	@Op public Stor login(@Op(prmName = "app")String app,@Op(prmName = "usr")String usr ,@Op(prmName = "pw")String pw,T2 tl){
+		Stor j=Stor.loadBy(app,usr);
+		if(j!=null&&j.val instanceof Map &&j.typ==Stor.ContentType.usr)
+		{Map m=(Map)j.val;
+			if(pw!=null&&pw.equals(m.get("pw")))
+			{tl.h.s("usr",tl.usr=j);
+				return j;
+		}}
+		return null;
+	}
+
 	/**
 	 *	db-tbl ORM wrapper
 	 */
@@ -148,7 +158,12 @@ public static class App {
 		@Override public String pkv(int i){return i==0?app:key;}
 		@Override public String[]pkv(String[]v){app=v[0];key=v[1];return v;}
 		@Override public String[]pkvals(){String[]a={app,key};return a;}
-
+		public Stor(){}
+		public Stor(String appName,String key){app=appName;this.key=key;}
+		public Stor(String appName,String key,ContentType c,Object v){this(appName,key);typ=c;val=v;}
+		@Override public Object[]wherePK(){
+			Object[]a={C.app,app,C.key,key};
+			return a;}
 
 		public enum C implements CI{app,key,typ, val;
 			@Override public Field f(){return Co.f(name(), Stor.class);}
@@ -199,60 +214,101 @@ public static class App {
 				,app=tl.json.get("app")
 				,key=tl.json.get("key");
 			Stor j=o instanceof Stor
-				?(Stor)o
-				:app instanceof String && key instanceof String
-				?loadBy( (String)app,(String)key )
-				:null;
+				       ?(Stor)o
+				       :app instanceof String && key instanceof String
+					        ?loadBy( (String)app,(String)key )
+					        :null;
 			if(j!=null && o instanceof String)
 				tl.json.put( prmName,j );
 			return j!=null ?j:o;}//&& "key".equals( prmName )
 
+		Perm perm(T2 tl){Perm p=Perm.loadBy(app,key,tl.usr==null?null:tl.usr.key);
+			return p;}
+
+		Perm perm(T2 tl,Perm.Act a)throws Perm.Exceptn{
+			Perm p=Perm.loadBy(app,key,tl.usr==null?null:tl.usr.key);
+			if(p==null||!p.has(a))
+				throw new Perm.Exceptn(tl,this,a,p);
+			return p;}
+
+		Perm perm(Perm.Act a)throws Perm.Exceptn{return perm(T2.tl(),a);}
+
 		@Op public static List<String>
-		listApps() throws SQLException {
+		listApps() throws Exception {
+			//Perm p=perm
 			return DB.q1colTList(
 				sql(cols( Co.distinct,C.app ),null,dbtName)
 				,String.class );}
 
 		@Op public static Map//List<String>
-		listKeys(@Op(prmName="app")String appName)throws SQLException{
-			Stor j=new Stor();j.app=appName;
+		listKeys(@Op(prmName="app")String appName,T2 tl)throws Exception{
+			Stor j=new Stor();j.app=appName;j.key="keysList";
+			//Perm p=j.perm(Perm.Act.listKeys);
 			Map m=T2.Util.mapCreate();
-			for(DB.Tbl t:j.query(where( C.app ,appName)))
+
+			for(DB.Tbl t:j.query(j.sql().toString(),where(tl!=null&&tl.usr!=null?tl.usr.key:null,Perm.Act.get)))
 			{String s=j.typ.toString();
 				List n=(List)m.get(s);
 				if(n==null)
 					m.put(s,n=T2.Util.lst());
 				n.add(j.key);}
 			return m;
-			//return DB.q1colTList(sql(cols(C.key ),where( C.app ,appName),dbtName)// Co.distinct,,String.class ,appName); 
+			//return DB.q1colTList(sql(cols(C.key ),where( C.app ,appName),dbtName)// Co.distinct,,String.class ,appName);
+		}
+
+		//StringBuilder sql(Perm.Act a){return sql(a,null);}
+
+		StringBuilder sql(Perm.Act a,List p){
+			StringBuilder sql = new StringBuilder("select ");
+			DB.Tbl.Co.generate(sql, columns());
+			sql.append(" from `").append(dbtName)
+				.append("`,`").append(Perm.dbtName)
+				.append("` where `").append(dbtName).append("`.`").append(C.app)
+				.append("`=`").append(Perm.dbtName).append("`.`").append(C.app)
+				.append("` and `").append(Perm.dbtName).append("`.`").append(Perm.C.key);
+			if(p == null)
+				sql.append("`=`").append(dbtName).append("`.`").append(C.key).append('`');
+			else {
+				sql.append("` in");
+				DB.Tbl.Co.genList(sql, p);
 			}
+			sql.append(" and `").append(Perm.dbtName).append("`.`")
+				.append(Perm.C.usr).append("`=? and `").append(Perm.dbtName).append("`.`")
+				.append(Perm.C.act).append("`&")
+				.append(Math.floor(Math.pow(2,1+a.ordinal())));
+			return sql;}
 
 		@Op public static Stor get(@Op(prmName="app")String appName
-			,@Op(prmName="key",prmInstance=true)Stor j){ return j;}
+			,@Op(prmName="key",prmInstance=true)Stor j)throws Perm.Exceptn{
+			Perm p=j.perm(Perm.Act.get);
+			return j;}
 
 		@Op public static List<Stor>
-		getKeys(@Op(prmName="app")String appName,@Op(prmName="keys")List<String>keys){
+		getKeys(@Op(prmName="app")String appName,@Op(prmName="keys")List<String>keys)throws Perm.Exceptn{
 			List<Stor>l=new LinkedList<>(  );
-			Stor j=new Stor();
+			Stor j=new Stor(appName,"keysList");
+			//Perm p=j.perm(Perm.Act.getKeys);
 			for(DB.Tbl t:j.query(
-				where(C.app,appName
-					,T2.Util.lst( C.key,Co.in),keys )
+				where(C.app,appName,T2.Util.lst( C.key,Co.in),keys )
 				,true))
 				l.add( (Stor ) t );
 			return l;}
 
 		@Op public static Stor
 		set(@Op(prmName="app")String appName
-			   ,@Op(prmName="key")String key
-			   ,@Op(prmName="typ")ContentType typ
-			   ,@Op(prmName="val")Object val,T2 tl)throws Exception
-		{	Stor j=new Stor();
-			j.val =val;j.app=appName;j.key=key;j.typ=typ;
+		   ,@Op(prmName="key")String key
+		   ,@Op(prmName="typ")ContentType typ
+		   ,@Op(prmName="val")Object val,T2 tl)throws Exception
+		{	Stor j=new Stor(appName,key,typ,val);
+			//        Perm p=j.perm(tl,Perm.Act.set);
 			return store(j,tl);}
 
 		@Op public static Stor
 		store(@Op(prmName="store")Stor j ,T2 tl)throws Exception
-		{if(j!=null){j.save();
+		{if(j!=null){Perm p=j.perm(tl,Perm.Act.set);
+			if(j.typ==ContentType.usr&&j.val instanceof Map){
+				Map m=(Map)j.val;Object o=m.get("pw");}//do md5 of pw
+			j.save();
 			if(j.typ==ContentType.serverSideJs ){
 				javax.script.ScriptEngine e =eng(j.app,false,tl);
 				if(e!=null){
@@ -260,7 +316,19 @@ public static class App {
 					Map jm=(Map)e.get( "JsonStorageApp");
 					jm.put( j.key,o );//List jl=(List)e.get( "JsonStorageApp.JsonStorages");jl.add( j );
 				} } }return j;}
-
+/*
+mysql> insert into tst values
+(1,'a'),(0,'')
+,(2,'b'),(3,'a,b')
+,(4,'c'),(5,'a,c'),(6,'b,c'),(7,'a,b,c')
+,(8,'d'),(9,'a,d'),(10,'b,d'),(11,'b,d,a'),(12,'c,d'),(13,'c,d,a'),(14,'c,d,b'),(15,'a,b,c,d')
+,(16,'e'),(17,'a,e'),(18,'e,b'),(19,'e,b,a'),(20,'c,e'),(21,'a,c,e'),(22,'b,c,e'),(23,'e,a,b,c'),(24,'d,e'),(25,'a,d,e')
+,(26,'b,d,e'),(27,'b,d,a,e'),(28,'c,d,e'),(29,'c,d,a,e'),(30,'c,d,b,e'),(31,'a,b,c,d,e')
+,(32,'f'),(33,'a,f'),(34,'b,f'),(35,'a,b,f'),(36,'c,f'),(37,'a,c,f'),(38,'b,c,f'),(39,'a,b,c,f'),(40,'d,f'),(41,'a,d,f')
+,(42,'b,d,f'),(43,'b,d,a,f'),(44,'c,d,f'),(45,'c,d,a,f'),(46,'c,d,b,f'),(47,'a,b,c,d,f')
+,(48,'e,f'),(49,'a,e,f'),(50,'e,f,b'),(51,'e,f,b,a'),(52,'c,e,f'),(53,'a,c,e,f'),(54,'b,c,e,f'),(55,'e,f,a,b,c'),(56,'d,e,f'),(57,'a,d,e,f')
+,(58,'b,d,e,f'),(59,'b,d,a,e,f'),(60,'c,d,e,f'),(61,'c,d,a,e,f'),(62,'c,d,b,e,f'),(63,'a,b,c,d,e,f')
+*/
 		static javax.script.ScriptEngine eng(String appName,boolean createIfNotInit,T2 tl){
 			String en="ScriptEngine.JavaScript."+appName;
 			javax.script.ScriptEngine e =(javax.script.ScriptEngine)tl.h.s( en );
@@ -280,17 +348,21 @@ public static class App {
 				e.put( "tl",tl);
 			return e; }
 
-		@Op public static Object member(@Op(prmName = "app")String appName
-			,@Op(prmName = "member")String m,@Op(prmName = "args")List args,T2 tl) throws javax.script.ScriptException
-		{	javax.script.ScriptEngine e=eng(appName,true,tl);
+		@Op public static Object call(@Op(prmName = "app")String appName
+		,@Op(prmName = "member")String m,@Op(prmName = "args")List args,T2 tl) throws Exception// javax.script.ScriptException
+		{	Stor j=loadBy(appName,m);
+			Perm p=j.perm(tl,Perm.Act.call);
+			javax.script.ScriptEngine e=eng(appName,true,tl);
 			e.put( "member",m);
 			if(args!=null)e.put(  "args",args);
 			return e.eval( "JsonStorageApp[member]"+(args==null?"":"(args,tl.json,tl)") );
 		}
 
 		@Op public static Object eval(@Op(prmName = "app")String appName
-			,@Op(prmName = "src")String src,T2 tl) throws javax.script.ScriptException
-		{	javax.script.ScriptEngine e=eng(appName,true,tl);
+			,@Op(prmName = "src")String src,T2 tl) throws Exception// javax.script.ScriptException
+		{	Stor j=loadBy(appName,"keysList");
+			j.perm(Perm.Act.eval);
+			javax.script.ScriptEngine e=eng(appName,true,tl);
 			e.put( "src",src);
 			return e.eval( src );
 		}
@@ -308,10 +380,9 @@ public static class App {
 					case real:
 						val =rs.getDouble( ++c );break;
 					case javaObjectStream:java.io.ObjectInputStream p=
-						                      new ObjectInputStream( rs.getBinaryStream( ++c ) );
+						new ObjectInputStream( rs.getBinaryStream( ++c ) );
 						val =p.readObject();break;
-					case json: val =Json.Prsr.parseItem(rs
-						                                    .getCharacterStream( ++c ) );break;
+					case usr:case json: val =Json.Prsr.parseItem(rs.getCharacterStream( ++c ) );break;
 					default://case txt: case key:
 						val =rs.getString( ++c );break;
 				}
@@ -333,7 +404,7 @@ public static class App {
 				ObjectOutputStream o=new ObjectOutputStream( b );
 				o.writeObject( val );o.flush();o.close();b.close();
 				vals[C.val.ordinal()]=b.toByteArray(); }
-			else if(typ==ContentType.json)
+			else if(typ==ContentType.json||typ==ContentType.usr)
 				vals[C.val.ordinal()]=Json.Output.out( val );
 			vals[C.typ.ordinal()]=(typ==null?ContentType.txt:typ).toString();
 			DB.X( sql.toString(), vals );
@@ -352,99 +423,190 @@ public static class App {
 	}//class Stor
 
 	/** Many2Many Permissions for Stor
-	 *	db-Table Wrapper 
+	 *	db-Table Wrapper
 	 pk is app+key+usr
 	 */
-	public static class Perm extends T2.DB.Tbl<String> {
-		
-		public static Object prmInstance(T2 tl,String prmName){
-			Object o=tl.json.get( prmName )
-				,u=tl.json.get("usr")
-				,a=tl.json.get("app")
-				,k=tl.json.get("key");
-			if(o instanceof Perm)return (Perm)o;
+public static class Perm extends T2.DB.Tbl<String> {
+	public Perm(){}
+	//	public Perm(String app,String key,String usr,Act[]p){super();}
+	public Perm(String app,String key,String usr,Act [] p){
+		this.app=app;this.key=key;this.usr=usr;addActs(p);}
 
-			return null;
-		}
+	public void addActs(Act [] p){
+			if(act==null)
+				act=new HashSet<Act>();
+			for(Act i:p)act.add(i);}
+
+	public void remActs(Act[]p){
+			if(act!=null)
+				for(Act i:p)act.remove(i);}
+
+	public void remAct(Act p){
+			if( act!=null)act.remove(p);}
+
+	public boolean has( String act){ return has(Act.a(act));}
+	public boolean has(Act p){ return act!=null&&act.contains(p);}
+
+	public static Set<Act>s(Act...p){
+			Set<Act>s=new HashSet<Act>();
+			for(Act i:p)s.add(i);
+			return s;}
+
+	public static Set<Act>sa(Act[]p){
+			Set<Act>s=new HashSet<Act>();
+			for(Act i:p)s.add(i);
+			return s;}
+
+	public static Act[]a(Act...p){return p;}
+
+	public static Object prmInstance(T2 tl,String prmName){
+		Object o=tl.json.get( prmName )
+			,u=tl.json.get("usr")
+			,a=tl.json.get("app")
+			,k=tl.json.get("key");
+		if(o instanceof Perm)return (Perm)o;
+		Perm j=loadBy(a.toString(),k.toString(),u.toString());
+		tl.json.put(prmName,j);
+		return j;}//"".equals(prmName)?j:o
 
 	public static Perm loadBy(String app,String key,String usr){
 		Perm r=(Perm)loadWhere(Perm.class,where(C.app,app,C.key,key,C.usr,usr));
 		return r;}
 
-		public final static String dbtName="Perm";
-		@Override public String getName(){return dbtName;}
-		@Override public int pkcn(){return 3;}
-		@Override public CI pkc(int i){return i==0?C.app:i==1?C.key:C.usr;}
-		@Override public CI[]pkcols(){CI[]a={C.app,C.key,C.usr};return a;}
+	public final static String dbtName="Perm";
+	@Override public String getName(){return dbtName;}
+	@Override public int pkcn(){return 3;}
+	@Override public CI pkc(int i){return i==0?C.app:i==1?C.key:C.usr;}
+	@Override public CI[]pkcols(){CI[]a={C.app,C.key,C.usr};return a;}
 
-		@F public String app,key,usr;@F public Set<Act>act;
+	@F public String app,key,usr;
+	@F public Set<Act>act;
+	@F public Date logTime,lastModified;
 
 	@Override public String pkv(int i){return i==0?app:i==1?key:usr;}
 
-		@Override public String[]pkvals(){String[]a={app,key,usr};return a;}
-		@Override public String[]pkv(String[]v){app=v[0];key=v[1];usr=v[2];return v;}
+	@Override public String[]pkvals(){String[]a={app,key,usr};return a;}
+	@Override public String[]pkv(String[]v){app=v[0];key=v[1];usr=v[2];return v;}
 
-		public Stor stor(){return Stor.loadBy(app,key);}
-		public Stor usr(){return Stor.loadBy(app,usr);}
+	@Override public Object[]wherePK(){
+		Object[]a={C.app,app,C.key,key,C.usr,usr};
+		return a;}
 
-		public enum Act{listApps,listKeys,set,create,get,getKeys,call,eval}
-		public enum C implements CI{app,key,usr,act;
-			@Override public Field f(){return Co.f( name(),Perm.class );}
-			@Override public String getName(){return name();}
-			@Override public Class getType(){return act==this?Act.class:String.class;}
-		}//C
+	public Stor stor(){return Stor.loadBy(app,key);}
+	public Stor usr(){return Stor.loadBy(app,usr);}
 
-		@Override public C[]columns(){return C.values();}
+	/**Actions*/
+	public enum Act{listApps,create,set,get,call,eval//listKeys,getKeys,
+		,permSet,permGet,permlistByUsr,permListByKey,permCreate,permDelete,permAddAct,permRemAct,permOtherUsrs;
+		public static Act a(String s){Act r=null;try{r=valueOf(s);}catch(Exception ex){}return r;}}
 
-		@Override public List creationDBTIndices(T2 tl){return null;}
+	public enum C implements CI{app,key,usr,act,logTime,LastModified;
+		@Override public Field f(){return Co.f( name(),Perm.class );}
+		@Override public String getName(){return name();}
+		@Override public Class getType(){return act==this?Act.class:String.class;}
+	}//C
 
-		@Op static public List<List<String>>
-		byUsr()throws SQLException{
-			return null;}
+	public static class Exceptn extends IllegalAccessException{
+		public Exceptn(T2 tl,Stor s,Act a,Perm p){super(tl+","+s+","+a+","+p);}}
 
-		@Op static public List<String>
-		usrsOfKey(){return null;}
+	@Override public C[]columns(){return C.values();}
 
-		@Op static public int
-		create(@Op(prmName = "dbName") String dbName)throws SQLException{
-			return -1;}
+	@Override public List creationDBTIndices(T2 tl){
+		StringBuilder acts=new StringBuilder("set(");
+		for(Act i:Act.values()){if(i.ordinal()>0)acts.append(',');
+			acts.append('\'').append(i.toString()).append('\'');
+		}acts.append(')');
+		return T2.Util.lst(T2.Util.lst(
+			"varchar(255) NOT NULL DEFAULT 'home' "//app \u1F3E0 ??
+			,"varchar(255) NOT NULL DEFAULT 'home' "//key
+			,"varchar(255) NOT NULL DEFAULT 'home' "//usr
+			,acts.toString()//act
+			,"timestamp onupdate current_timestamp default current_timestamp"//logTime
+			,"timestamp"//lastModified
+			),T2.Util.lst("unique(`app`,`key`)",
+				"key(`lastModified`,`logTime`)" ,
+				"key(`usr`,`app`)",
+				"key(`logTime`,`lastModified`)")
+		);//val
+		/*CREATE TABLE `Perm` (
+			`app` varchar(255) NOT NULL DEFAULT 'home',
+			`key` varchar(255) NOT NULL DEFAULT 'home',
+			`usr` varchar(255) NOT NULL DEFAULT 'home',
+			`act` set('listApps','listKeys','set','create','get','getKeys','call','eval'
+				,'permSet','permGet','permlistByUsr','permListByKey','permCreate','permDelete'),
+			`logTime` timestamp onupdate current_timestamp default current_timestamp,
+			`lastModified` timestamp,
+			unique(`app`,`key`,`usr`),
+			key(`lastModified`,`logTime`),
+			key(`usr`,`app`),
+			key(`logTime`,`lastModified`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+			??  lock with ink pen Unicode code point: U+1F50F
+			??  closed lock with key Unicode code point: U+1F510
+			??  key Unicode code point: U+1F511
+			??  lock Unicode code point: U+1F512
+			??  open lock Unicode code point: U+1F513*/}
 
-		@Op static public int
-		insert(@Op(prmName = "app") String dbName
-			,@Op(prmName = "key") String dbtName
-			,@Op(prmName = "usr") String col
-			,@Op(prmName = "act") List<String>act){
-			return -1;}
+	static{registered.add(Stor.class);}
+	public static Perm sttc=new Perm( );
 
-		@Op static public int
-		delete(@Op(prmName = "app") String app
-			,@Op(prmName = "key") String key
-			,@Op(prmName = "usr") String usr
-			,@Op(prmName = "act") List<String>act){
-			return -1;}
+	List<String>actsAsList(){return actsAsList(new LinkedList<String>());}
 
-		@Op static public boolean
-		has(@Op(prmName = "app") String app
-			,@Op(prmName = "key") String key
-			,@Op(prmName = "usr") String usr
-			,@Op(prmName = "act") String act){
-			return false;}
+	List<String>actsAsList(List<String>l){
+		for(Act i:act)l.add(i.toString());
+		return l;}
 
-		public Perm(){}
+	@Op static public List<List<String>>
+	byUsr(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+		p.stor().perm(Act.permlistByUsr);
+		List<List<String>> l = new LinkedList<List<String>>();List<String>x;
+		for(DB.Tbl t : p.query(where(C.app, p.app, C.usr, p.usr)))
+		{	l.add(x=new LinkedList<>());
+			x.add(p.key);p.actsAsList(x);}
+		return l;}
 
-		public boolean has(@Op(prmName = "act") String act){ return false;}
+	@Op static public List<List<String>>
+	usrsOfKey(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+		p.stor().perm(Act.permListByKey);
+		List<List<String>> l = new LinkedList<List<String>>();List<String>x;
+		for(DB.Tbl t : p.query(where(C.app, p.app, C.key, p.key)))
+		{	l.add(x=new LinkedList<>());
+			x.add(p.usr);p.actsAsList(x);}
+		return l;}
 
+	@Op static public DB.Tbl
+	create(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+		p.stor().perm(Act.permCreate);
+		return p.save();}
 
-	}//class Perm Table.Wrapper.Integer
+	@Op static public DB.Tbl
+	addAct(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+		p.stor().perm(Act.permAddAct);
+		return p.save();}
+
+	@Op static public DB.Tbl
+	remAct(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+		p.stor().perm(Act.permRemAct);
+		return p.save();}
+
+	@Op static public boolean
+	delete(@Op(prmName="app") String app
+    ,@Op(prmName="key")String key
+    ,@Op(prmName="usr")String usr
+    ,@Op(prmName="act")List<String>act)throws Exception{
+		Perm p=Stor.loadBy(app,key).perm(Act.permDelete);
+		 p.delete();return true;}
+
+	//@Op static public boolean has(@Op(prmName = "perm",prmInstance = true)Perm p,@Op(prmName = "act")Act a)throws Exception {return p.has(a);}
+
+ }//class Perm
 }//class App
 
-
-
 enum context{ROOT(
-	"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-	,"/public_html/i1io/"
-	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	                 ,"/public_html/i1io/"
+	                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -540,14 +702,14 @@ private void onEnter()throws IOException {
 	now=new Date();//seqObj=seqProp=now.getTime();
 	try{Object o=h.req.getContentType();
 		o=o==null?null
-		:o.toString().contains("json")?Json.Prsr.parse(h.req)
-		:o.toString().contains("part")?h.getMultiParts():null;
+			  :o.toString().contains("json")?Json.Prsr.parse(h.req)
+				   :o.toString().contains("part")?h.getMultiParts():null;
 		json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 		h.logOut=h.var("logOut",h.logOut);
 		if(h.getSession().isNew()){
 			DB.Tbl.check(this);//App.Domain.loadDomain0();
 		}
-		usr=(Map)h.s("usr");//(App.Stor)
+		usr=(App.Stor)h.s("usr");//(App.Stor)
 	}catch(Exception ex){error(ex,Name,".onEnter");}
 	//if(pages==null){rsp.setHeader("Retry-After", "60");rsp.sendError(503,"pages null");throw new Exception("pages null");}
 	if(h.logOut)out.w(h.comments[0]).w(Name).w(".tl.onEnter:\n").o(this).w(h.comments[1]);
@@ -652,8 +814,8 @@ public static class Util{//utility methods
 		else if(Date.class.equals(c))return parseDate(s);
 		else if(Character.class.isAssignableFrom(c)||(c.isPrimitive()&&"char".equals(c.getName())))
 			return s.length()<1?'\0':s.charAt(0);
-		else if(URL.class.isAssignableFrom(c))try {return new URL(
-			                                                         "file:" +T2.tl().h.getServletContext().getContextPath()+'/'+s);}
+		else if(URL.class.isAssignableFrom(c))try
+		{return new URL("file:" +T2.tl().h.getServletContext().getContextPath()+'/'+s);}
 		catch (Exception ex) {T2.tl().error(ex,Name,".Util.parse:URL:p=",s," ,c=",c);}
 			boolean b=c==null?false:c.isEnum();
 			if(!b){Class ct=c.getEnclosingClass();b=ct==null?false:ct.isEnum();if(b)c=ct;}
@@ -666,6 +828,17 @@ public static class Util{//utility methods
 		}catch(Exception x){//changed 2016.06.27 18:28
 			T2.tl().error(x, Name,".Util.<T>T parse(String s,Class):",s,c);}
 		return s;}
+
+	public static String md5(String s){
+		if(s!=null)try{java.security.MessageDigest m=
+			java.security.MessageDigest.getInstance("MD5");
+			//m.update(s.getBytes());
+			String r=new String(m.digest(s.getBytes()));
+			return r;
+		}catch(Exception x){//changed 2016.06.27 18:28
+			T2.tl().error(x, Name,".Util.md5(String s):",s);}
+		return "";}
+
 }//class Util
 
 public class H{
@@ -917,10 +1090,10 @@ public static class DB {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			("jdbc:mysql://"+context.DB.server.str
-			     +"/"+context.DB.dbName.str
-			    ,context.DB.un.str,context.DB.pw.str
-			);Object[]b={r,null};
+			                          ("jdbc:mysql://"+context.DB.server.str
+				                           +"/"+context.DB.dbName.str
+				                          ,context.DB.un.str,context.DB.pw.str
+			                          );Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){t.error(e,Name,".DB.DriverManager:");}
 		return r;}
@@ -1134,7 +1307,7 @@ public static class DB {
 		{close(s,tl);
 			if(tl.h.logOut)try{
 				tl.log(tl.jo().w(Name).w(".DB.L:q2json=")
-				.o(sql).w(",prms=").o(p).toStrin_());
+					       .o(sql).w(",prms=").o(p).toStrin_());
 			}catch(IOException x){tl.error(x,Name,".DB.q1json:",sql);}
 		}
 	}
@@ -1220,7 +1393,7 @@ public static class DB {
 			o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
 			for(CI f:a)
 			{	o.w(',').oStr(f.getName(),i2).w(':')
-					.o(v(f),ind,o.comment?path+'.'+f.getName():path);
+					 .o(v(f),ind,o.comment?path+'.'+f.getName():path);
 				if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
 			}
 			if(closeBrace){
@@ -1324,6 +1497,10 @@ public static class DB {
 		/**Sql-Column Interface, for enum -items that represent columns in sql-tables
 		 * the purpose of creating this interface is to centerlize
 		 * the definition of the names of columns in java source code*/
+
+		public Object[]wherePK(){Object[]c=pkcols(),v=pkvals(),a=new Object[c.length+v.length];
+			for(int i=0;i<c.length;i++){a[i*2]=c[i];a[i*2+1]=v[i];}
+			return a;}
 
 		public static CI[]cols(CI...p){return p;}
 		public static Object[]where(Object...p){return p;}
@@ -1475,8 +1652,8 @@ public static class DB {
 		Tbl load(ResultSet rs,CI[]a)throws Exception{
 			int c=0;for(CI f:a)v(f,rs.getObject(++c));
 			return this;}
-		/**loads one row from the table*/
-		public Tbl load(PK...pk){
+		/**loads one row from the table* /
+		public Tbl loadPK(PK...pk){
 			ResultSet r=null;T2 t=tl();
 			try{r=DB.r(sql(cols(Co.all), where(pkc(0)))
 				,pk);
@@ -1484,7 +1661,17 @@ public static class DB {
 				else{t.error(null,Name,".DB.Tbl(",this,").load(pk=",pk,"):resultset.next=false");nullify();}}
 			catch(Exception x){t.error(x,Name,".DB.Tbl(",this,"):",pk);}
 			finally{DB.close(r,t);}
+			return this;}*/
+		/**loads one row from the table*/
+		public Tbl load(){
+			ResultSet r=null;T2 t=tl();Object[]pk=wherePK();
+			try{r=DB.r(sql(cols(Co.all),pk),pk);
+				if(r.next())load(r);
+				else{t.error(null,Name,".DB.Tbl(",this,").load(pk=",pk,"):resultset.next=false");nullify();}}
+			catch(Exception x){t.error(x,Name,".DB.Tbl(",this,"):",pk);}
+			finally{DB.close(r,t);}
 			return this;}
+
 		public Tbl nullify(){return nullify(columns());}
 		public Tbl nullify(CI[]a){for(CI f:a)v(f,null);return this;}
 		// /**loads one row from the table*/ Tbl load(){return load(pkv());}
@@ -1523,9 +1710,9 @@ public static class DB {
 				t.error( e, Name, ".DB.Tbl.save(CI:", c, "):" ); }
 			try {
 				DB.x( "insert into `" + getName() + "` (`" + pkc +
-					"`,`" + c + "`) values(?"//+Co.m(pkc).txt
-					+ ",?"//+Co.m(c).txt
-					+ ")", pkv, cv );
+					      "`,`" + c + "`) values(?"//+Co.m(pkc).txt
+					      + ",?"//+Co.m(c).txt
+					      + ")", pkv, cv );
 				//Integer k=(Integer)pkv;
 				//T2.DB.Tbl.Log.log( T2.DB.Tbl.Log.Entity.valueOf(getName()), k, T2.DB.Tbl.Log.Act.Update, T2.Util.mapCreate(c,v(c)) );
 			} catch ( Exception x ) {
@@ -1539,7 +1726,7 @@ public static class DB {
 			T2 t = T2.tl();
 			//if ( a[0] instanceof Map ) try { String j = t.jo().clrSW().o( a[0] ).toString();a[0] = j; } catch ( IOException e ) { t.error( e, Name, ".DB.Tbl.save(CI:", c, "):" ); }
 			try {StringBuilder b=new StringBuilder( "insert into `" )
-				.append( getName() ).append("` (`" ).append( c.toString() );
+				                     .append( getName() ).append("` (`" ).append( c.toString() );
 				for(CI k:pkc)
 					b.append( "`,`" ).append( k.toString() );
 				b.append( "`) values(?");
@@ -1590,7 +1777,7 @@ public static class DB {
 			return x;
 		}else{int x=-1;CI[]pkc=pkcols();PK[]pkv=pkvals();
 			StringBuilder b=new StringBuilder( "delete from `" )
-				.append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
+				                .append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
 			for(int i=1;i<pkc.length;i++)
 				b.append( " and `" ).append( pkc[i] ).append( "`=?" );
 			DB.X( b.toString(),pkv );
@@ -1603,6 +1790,8 @@ public static class DB {
 		public Itrtr query(Object[]where){
 			Itrtr r=new Itrtr(where);
 			return r;}
+		public Itrtr query(String sql,Object[]where,boolean makeClones){
+			return new Itrtr(sql,where,makeClones);}
 		public Itrtr query(Object[]where,boolean makeClones){return query(columns(),where,null,makeClones);}
 		public Itrtr query(CI[]cols,Object[]where,CI[]groupBy,boolean makeClones){//return query(sql(cols,where,groupBy),where,makeClones);}//public Itrtr query(String sql,Object[]where,boolean makeClones){
 			Itrtr r=new Itrtr(sql(cols,where,groupBy),where,makeClones);
@@ -1673,6 +1862,19 @@ public static class DB {
 					}else
 						b.append("`").append(col[i]).append("`");}
 				return b;}
+			public static StringBuilder genList(StringBuilder b,List l){
+				b.append(" (");boolean comma=false;
+				for(Object z:l){
+					if(comma)b.append( ',' );else comma=true;
+					if(z instanceof Number)
+						b.append( z );else
+						b.append( '\'' ).append(
+							(z instanceof String?(String)z:z.toString()
+							).replaceAll( "'","''" )
+						)
+							.append( '\'' );
+				}b.append(")");
+				return b;}
 			static StringBuilder where(StringBuilder b,Object[]where){
 				if(where==null || where.length<1)return b;
 				b.append(" where ");
@@ -1687,17 +1889,7 @@ public static class DB {
 						if(o ==Co.in && i+1<n && where[i+1] instanceof List){
 							b.append('`').append(l.get(0)).append("` ").append(o);
 							l=(List)where[i+1];
-							b.append(" (");boolean comma=false;
-							for(Object z:l){
-								if(comma)b.append( ',' );else comma=true;
-								if(z instanceof Number)
-									b.append( z );else
-									b.append( '\'' ).append(
-										(z instanceof String?(String)z:z.toString()
-										).replaceAll( "'","''" )
-									)
-									.append( '\'' );
-							}b.append(")");
+							genList(b,l);
 						}else if(o instanceof Co)//o!=null)//if(ln==2 && )
 						{	Co m=(Co)o;o=l.get(0);
 							if(o instanceof CI || o instanceof Co)
@@ -1981,15 +2173,15 @@ public static class Json{
 			return this;}
 		public Output oCookie(Cookie y,String ind,String path)throws IOException
 		{final boolean c=comment;try{(c?w("{//")
-			.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-			.w("\"Comment\":").o(y.getComment())
-			.w(",\"Domain\":").o(y.getDomain())
-			.w(",\"MaxAge\":").p(y.getMaxAge())
-			.w(",\"Name\":").o(y.getName())
-			.w(",\"Path\":").o(y.getPath())
-			.w(",\"Secure\":").p(y.getSecure())
-			.w(",\"Version\":").p(y.getVersion())
-			.w(",\"Value\":").o(y.getValue());
+			                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+			                             .w("\"Comment\":").o(y.getComment())
+			                             .w(",\"Domain\":").o(y.getDomain())
+			                             .w(",\"MaxAge\":").p(y.getMaxAge())
+			                             .w(",\"Name\":").o(y.getName())
+			                             .w(",\"Path\":").o(y.getPath())
+			                             .w(",\"Secure\":").p(y.getSecure())
+			                             .w(",\"Version\":").p(y.getVersion())
+			                             .w(",\"Value\":").o(y.getValue());
 		}catch(Exception ex){T2.tl().error(ex,"Json.Output.Cookie:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			}catch(Exception ex){T2.tl().error(ex,"Json.Output.Cookie:");}else w("}");
@@ -2019,9 +2211,9 @@ public static class Json{
 
 		Output oSC(ServletContext y,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-			    .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-			    .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-			    .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+			                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+			                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+			                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 			if(c)
 				w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("}");
@@ -2064,10 +2256,10 @@ public static class Json{
 			for(int i=1;i<=cc;i++){
 				if(i>1){if(c)w("\n").p(i2).w(",");else w(",");}
 				w("{\"name\":").oStr(o.getColumnName( i ),i2)
-				.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
-				.w(",\"width\":").p(o.getColumnDisplaySize( i ))
-				.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
-				.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
+					.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
+					.w(",\"width\":").p(o.getColumnDisplaySize( i ))
+					.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
+					.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
 			}//for i<=cc
 			if(c)w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("]");}catch(Exception ex){T2.tl().error(ex,"Json.Output.ResultSetMetaData:");}return this;}
@@ -2156,7 +2348,7 @@ public static class Json{
 				default:r=extractIdentifier();
 			}skipRWS();//skipWhiteSpace();
 			if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-			||(cache!=null&&comments.startsWith("cacheReference"))))
+				                    ||(cache!=null&&comments.startsWith("cacheReference"))))
 			{	if(i!=-1)
 			{	if(cache==null)
 				cache=new HashMap<String,Object>();
@@ -2175,15 +2367,15 @@ public static class Json{
 			{case 'n':buff('\n');break;case 't':buff('\t');break;
 				case 'r':buff('\r');break;case '0':buff('\0');break;
 				case 'x':case 'X':buff( (char)
-					java.lang.Integer.parseInt(
-					    next(2)//p.substring(offset,offset+2)
-					    ,16));nxt();//next();
+					                        java.lang.Integer.parseInt(
+						                        next(2)//p.substring(offset,offset+2)
+						                        ,16));nxt();//next();
 				break;
 				case 'u':
 				case 'U':buff( (char)
-					java.lang.Integer.parseInt(
-					    next(4)//p.substring(offset,offset+4)
-					    ,16));//next();next();next();//next();
+					               java.lang.Integer.parseInt(
+						               next(4)//p.substring(offset,offset+4)
+						               ,16));//next();next();next();//next();
 					break;default:if(c!='\0')buff(c);}}
 			else buff(c);
 				nxt();b=c!=first&&c!='\0';
@@ -2196,18 +2388,18 @@ public static class Json{
 			while(c!='\0'&&Character.isUnicodeIdentifierPart(c))bNxt();
 			String r=consume();
 			return "true".equals(r)?new Boolean(true)
-				:"false".equals(r)?new Boolean(false)
-				:"null".equals(r)?Literal.Null
-				:"undefined".equals(r)?Literal.Undefined
-				:r;}
+				       :"false".equals(r)?new Boolean(false)
+					        :"null".equals(r)?Literal.Null
+						         :"undefined".equals(r)?Literal.Undefined
+							          :r;}
 
 		public Object extractDigits(){
 			if(c=='0')//&&offset+1<len)
 			{char c2=peek();if(c2=='x'||c2=='X')
 			{nxt();nxt();
 				while((c>='A'&&c<='F')
-					||(c>='a'&&c<='f')
-					||Character.isDigit(c))bNxt();
+					      ||(c>='a'&&c<='f')
+					      ||Character.isDigit(c))bNxt();
 				String s=consume();
 				try{return Long.parseLong(s,16);}
 				catch(Exception ex){}return s;}
@@ -2358,8 +2550,8 @@ public static class Json{
 						lookahead.append(c);
 					}
 				}while( (b=(c==h ||
-					Character.toUpperCase(c)==
-					Character.toUpperCase(h))
+					            Character.toUpperCase(c)==
+						            Character.toUpperCase(h))
 				)&& (++i)<pn );
 			return b;}
 
