@@ -132,16 +132,28 @@ public static class App {
 
 	}
 
-	@Op public Stor login(@Op(prmName = "app")String app,@Op(prmName = "usr")String usr ,@Op(prmName = "pw")String pw,T2 tl){
+	@Op public Stor login(@Op(prmName = "app")String app
+		,@Op(prmName = "usr")String usr
+		,@Op(prmName = "pw")String pw,T2 tl){
 		Stor j=Stor.loadBy(app,usr);
-		if(j!=null&&j.val instanceof Map &&j.typ==Stor.ContentType.usr)
-		{Map m=(Map)j.val;
-			if(pw!=null&&pw.equals(m.get("pw")))
-			{tl.h.s("usr",tl.usr=j);
+		if(j!=null&&j.typ==Stor.ContentType.usr&&j.val instanceof Map )
+		{Map m=(Map)j.val;Object o=m.get("pw");
+			if(pw!=null&&o instanceof String)
+			{o=T2.Util.md5( (String)o );
+				if(pw.equals( o )){
+				tl.h.s("usr",tl.usr=j);
 				return j;
-		}}
-		return null;
-	}
+		}}}
+		return null; }
+
+	@Op public boolean logout(@Op(prmName = "app")String app
+		,@Op(prmName = "usr")String usr,T2 tl){
+		if(tl!=null&&tl.usr!=null&&tl.usr.key.equals( usr )){
+			tl.h.s("usr",tl.usr=null);
+			tl.h.getSession().setMaxInactiveInterval( 1 );
+			return true;
+		}
+		return false;}
 
 	/**
 	 *	db-tbl ORM wrapper
@@ -159,6 +171,7 @@ public static class App {
 		@Override public String[]pkv(String[]v){app=v[0];key=v[1];return v;}
 		@Override public String[]pkvals(){String[]a={app,key};return a;}
 		public Stor(){}
+		public Stor(String appName){this(appName,"keysList");}
 		public Stor(String appName,String key){app=appName;this.key=key;}
 		public Stor(String appName,String key,ContentType c,Object v){this(appName,key);typ=c;val=v;}
 		@Override public Object[]wherePK(){
@@ -203,7 +216,7 @@ public static class App {
 		}
 
 		static{registered.add(Stor.class);}
-		public static Stor sttc=new Stor( );
+		//public static Stor sttc=new Stor( );
 
 		public static Stor loadBy(String app,String key){
 			Stor j=(Stor)loadWhere(Stor.class,where( C.app,app,C.key,key ));
@@ -211,13 +224,13 @@ public static class App {
 
 		public static Object prmInstance(T2 tl,String prmName){
 			Object o=tl.json.get( prmName )
-				,app=tl.json.get("app")
-				,key=tl.json.get("key");
-			Stor j=o instanceof Stor
-				       ?(Stor)o
-				       :app instanceof String && key instanceof String
-					        ?loadBy( (String)app,(String)key )
-					        :null;
+				,app=tl.json.get("app");//,key=tl.json.get("key");
+			Stor j=o instanceof Stor ?(Stor)o
+				:app instanceof Stor?(Stor)app
+				//:key instanceof Stor?(Stor)key
+			    :app instanceof String && o instanceof String
+				?loadBy( (String)app,(String)o )
+				:null;
 			if(j!=null && o instanceof String)
 				tl.json.put( prmName,j );
 			return j!=null ?j:o;}//&& "key".equals( prmName )
@@ -234,19 +247,18 @@ public static class App {
 		Perm perm(Perm.Act a)throws Perm.Exceptn{return perm(T2.tl(),a);}
 
 		@Op public static List<String>
-		listApps() throws Exception {
-			//Perm p=perm
+		listApps() throws Exception {//Perm p=perm
 			return DB.q1colTList(
 				sql(cols( Co.distinct,C.app ),null,dbtName)
 				,String.class );}
 
 		@Op public static Map//List<String>
 		listKeys(@Op(prmName="app")String appName,T2 tl)throws Exception{
-			Stor j=new Stor();j.app=appName;j.key="keysList";
-			//Perm p=j.perm(Perm.Act.listKeys);
+			Stor j=new Stor(appName);
 			Map m=T2.Util.mapCreate();
-
-			for(DB.Tbl t:j.query(j.sql().toString(),where(tl!=null&&tl.usr!=null?tl.usr.key:null,Perm.Act.get)))
+			for(DB.Tbl t:j.query(j.genSql(Perm.Act.get,null).toString()
+				,where(C.key,tl!=null&&tl.usr!=null?tl.usr.key:null
+				,Perm.C.act,Perm.Act.get),false))
 			{String s=j.typ.toString();
 				List n=(List)m.get(s);
 				if(n==null)
@@ -256,9 +268,24 @@ public static class App {
 			//return DB.q1colTList(sql(cols(C.key ),where( C.app ,appName),dbtName)// Co.distinct,,String.class ,appName);
 		}
 
+		@Op public static Map//List<String>
+		poll(@Op(prmName="app")String appName,long logTime,T2 tl)throws Exception{
+			Stor j=new Stor(appName);
+			Map m=T2.Util.mapCreate();
+			for(DB.Tbl t:j.query(j.genSql(Perm.Act.get,null).toString()
+				,where(C.key,tl!=null&&tl.usr!=null?tl.usr.key:null
+				,Perm.C.act,Perm.Act.get),false))
+			{String s=j.typ.toString();
+				List n=(List)m.get(s);
+				if(n==null)
+					m.put(s,n=T2.Util.lst());
+				n.add(j.key);}
+			return m;
+			//return DB.q1colTList(sql(cols(C.key ),where( C.app ,appName),dbtName)// Co.distinct,,String.class ,appName);
+		}
 		//StringBuilder sql(Perm.Act a){return sql(a,null);}
 
-		StringBuilder sql(Perm.Act a,List p){
+		StringBuilder genSql( Perm.Act a, List keysIn){
 			StringBuilder sql = new StringBuilder("select ");
 			DB.Tbl.Co.generate(sql, columns());
 			sql.append(" from `").append(dbtName)
@@ -266,16 +293,16 @@ public static class App {
 				.append("` where `").append(dbtName).append("`.`").append(C.app)
 				.append("`=`").append(Perm.dbtName).append("`.`").append(C.app)
 				.append("` and `").append(Perm.dbtName).append("`.`").append(Perm.C.key);
-			if(p == null)
+			if(keysIn == null)
 				sql.append("`=`").append(dbtName).append("`.`").append(C.key).append('`');
 			else {
 				sql.append("` in");
-				DB.Tbl.Co.genList(sql, p);
+				DB.Tbl.Co.genList(sql, keysIn);
 			}
 			sql.append(" and `").append(Perm.dbtName).append("`.`")
 				.append(Perm.C.usr).append("`=? and `").append(Perm.dbtName).append("`.`")
 				.append(Perm.C.act).append("`&")
-				.append(Math.floor(Math.pow(2,1+a.ordinal())));
+				.append(Math.floor(Math.pow(2,1+a.ordinal( ))));
 			return sql;}
 
 		@Op public static Stor get(@Op(prmName="app")String appName
@@ -284,13 +311,11 @@ public static class App {
 			return j;}
 
 		@Op public static List<Stor>
-		getKeys(@Op(prmName="app")String appName,@Op(prmName="keys")List<String>keys)throws Perm.Exceptn{
+		getKeys(@Op(prmName="app")String appName,
+			@Op(prmName="keys")List<String>keys)throws Perm.Exceptn{
 			List<Stor>l=new LinkedList<>(  );
-			Stor j=new Stor(appName,"keysList");
-			//Perm p=j.perm(Perm.Act.getKeys);
-			for(DB.Tbl t:j.query(
-				where(C.app,appName,T2.Util.lst( C.key,Co.in),keys )
-				,true))
+			Stor j=new Stor(appName);//Perm p=j.perm(Perm.Act.getKeys);
+			for(DB.Tbl t:j.query( j.genSql(Perm.Act.get,keys).toString(),null,true))
 				l.add( (Stor ) t );
 			return l;}
 
@@ -300,14 +325,16 @@ public static class App {
 		   ,@Op(prmName="typ")ContentType typ
 		   ,@Op(prmName="val")Object val,T2 tl)throws Exception
 		{	Stor j=new Stor(appName,key,typ,val);
-			//        Perm p=j.perm(tl,Perm.Act.set);
 			return store(j,tl);}
 
 		@Op public static Stor
 		store(@Op(prmName="store")Stor j ,T2 tl)throws Exception
 		{if(j!=null){Perm p=j.perm(tl,Perm.Act.set);
 			if(j.typ==ContentType.usr&&j.val instanceof Map){
-				Map m=(Map)j.val;Object o=m.get("pw");}//do md5 of pw
+				Map m=(Map)j.val;Object o=m.get("pw");
+				if(o instanceof String){o=T2.Util.md5( (String)o );
+				m.put("pw",o);}
+			}//do md5 of pw
 			j.save();
 			if(j.typ==ContentType.serverSideJs ){
 				javax.script.ScriptEngine e =eng(j.app,false,tl);
@@ -603,10 +630,10 @@ public static class Perm extends T2.DB.Tbl<String> {
 }//class App
 
 enum context{ROOT(
-	                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-	                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-	                 ,"/public_html/i1io/"
-	                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	,"/public_html/i1io/"
+	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -692,8 +719,7 @@ public static T2 Enter(HttpServletRequest r,HttpServletResponse response,HttpSes
 	T2 p;if(ops==null || ops.size()==0)App.staticInit();
 	tl.set(p=new T2(r,response,out!=null?out:response.getWriter()));//Class c=App.class;c=App.Prop.class;c=App.Stor.class;
 	//Dbg.p(App.Stor.sttc);
-	if(App.Stor.sttc==null)
-		p.log( Name,".Enter:App.Stor.sttc=",App.Stor.sttc );
+	//if(App.Stor.sttc==null) p.log( Name,".Enter:App.Stor.sttc=",App.Stor.sttc );
 	//if(App.Perm.sttc==null)p.log( Name,".Enter:App.Perm.sttc=",App.Perm.sttc );
 	p.onEnter();
 	return p;}
