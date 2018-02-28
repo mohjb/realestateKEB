@@ -25,7 +25,7 @@ public class Srvlt extends javax.servlet.http.HttpServlet {
 //	%><%TL.run(request, response, session, out, pageContext);%><%! // <?
 /**Created by moh on 14/7/17.*/
 
-	static final String packageName= "dev201801",SrvltName=packageName+".Srvlt";
+	static final String packageName= "dev201801",SrvltName=packageName+".Srvlt",UrlPrefix="";
 
 	static void staticInit(){ registerOp( Srvlt.class);
 		registerOp( Stor.class);
@@ -43,13 +43,15 @@ public class Srvlt extends javax.servlet.http.HttpServlet {
 	 * with clientFiles is associated a List, having maps, each map
 	 * may have key "content" text , and , the map may have key "include" list
 	 * */
-	@Op public void clientOutput(@Op(prmName = "app")String app,@Op(prmName = "file")String file){
+	@HttpMethod
+	public void clientOutput( @HttpMethod(prmName = "app")String app, @HttpMethod(prmName = "file")String file){
 
 	}
 
-	@Op public Stor login(@Op(prmName = "app")String app
-		,@Op(prmName = "usr")String usr 
-		,@Op(prmName = "pw")String pw,TL tl){
+	@HttpMethod
+	public Stor login( @HttpMethod(prmName = "app")String app
+		, @HttpMethod(prmName = "usr")String usr
+		, @HttpMethod(prmName = "pw")String pw, TL tl){
 		Stor j=Stor.loadBy(app,usr);
 		if(j!=null&&j.typ==Stor.ContentType.usr&&j.val instanceof Map )
 		{Map m=(Map)j.val;Object o=m.get("pw");
@@ -61,8 +63,9 @@ public class Srvlt extends javax.servlet.http.HttpServlet {
 		}}}
 		return null; }
 
-	@Op public boolean logout(@Op(prmName = "app")String app
-		,@Op(prmName = "usr")String usr,TL tl){
+	@HttpMethod
+	public boolean logout( @HttpMethod(prmName = "app")String app
+		, @HttpMethod(prmName = "usr")String usr, TL tl){
 		if(tl!=null&&tl.usr!=null&&tl.usr.key.equals( usr )){
 			tl.h.s("usr",tl.usr=null);
 			tl.h.getSession().setMaxInactiveInterval( 1 );
@@ -161,14 +164,16 @@ public class Srvlt extends javax.servlet.http.HttpServlet {
 
 		Perm perm(Perm.Act a)throws Perm.Exceptn{return perm(TL.tl(),a);}
 
-		@Op public static List<String>
+		@HttpMethod
+		public static List<String>
 		listApps() throws Exception {//Perm p=perm
 			return DB.q1colTList(
 				sql(cols( Co.distinct,C.app ),null,dbtName)
 				,String.class );}
 
-		@Op public static Map//List<String>
-		listKeys(@Op(prmName="app")String appName,TL tl)throws Exception{
+		@HttpMethod
+		public static Map//List<String>
+		listKeys( @HttpMethod(prmName="app")String appName, TL tl)throws Exception{
 			Stor j=new Stor(appName);
 			Map m=Util.mapCreate();
 			for(DB.Tbl t:j.query(j.genSql(Perm.Act.get,null).toString()
@@ -183,8 +188,9 @@ public class Srvlt extends javax.servlet.http.HttpServlet {
 			//return DB.q1colTList(sql(cols(C.key ),where( C.app ,appName),dbtName)// Co.distinct,,String.class ,appName);
 		}
 
-		@Op public static Map//List<String>
-		poll(@Op(prmName="app")String appName,long logTime,TL tl)throws Exception{
+		@HttpMethod
+		public static Map//List<String>
+		poll( @HttpMethod(prmName="app")String appName, long logTime, TL tl)throws Exception{
 			Stor j=new Stor(appName);
 			Map m=Util.mapCreate();
 			for(DB.Tbl t:j.query(j.genSql(Perm.Act.get,null).toString()
@@ -220,30 +226,34 @@ public class Srvlt extends javax.servlet.http.HttpServlet {
 				.append(Math.floor(Math.pow(2,1+a.ordinal( ))));
 			return sql;}
 
-		@Op public static Stor get(@Op(prmName="app")String appName
-			,@Op(prmName="key",prmInstance=true)Stor j)throws Perm.Exceptn{
+		@HttpMethod
+		public static Stor get( @HttpMethod(prmName="app")String appName
+			, @HttpMethod(prmName="key",prmInstance=true)Stor j)throws Perm.Exceptn{
 			Perm p=j.perm(Perm.Act.get);
 			return j;}
 
-		@Op public static List<Stor>
-		getKeys(@Op(prmName="app")String appName,
-			@Op(prmName="keys")List<String>keys)throws Perm.Exceptn{
+		@HttpMethod
+		public static List<Stor>
+		getKeys(@HttpMethod(prmName="app")String appName,
+			@HttpMethod(prmName="keys")List<String>keys)throws Perm.Exceptn{
 			List<Stor>l=new LinkedList<>(  );
 			Stor j=new Stor(appName);//Perm p=j.perm(Perm.Act.getKeys);
 			for(DB.Tbl t:j.query( j.genSql(Perm.Act.get,keys).toString(),null,true))
 				l.add( (Stor ) t );
 			return l;}
 
-		@Op public static Stor
-		set(@Op(prmName="app")String appName
-		   ,@Op(prmName="key")String key
-		   ,@Op(prmName="typ")ContentType typ
-		   ,@Op(prmName="val")Object val,TL tl)throws Exception
+		@HttpMethod
+		public static Stor
+		set( @HttpMethod(prmName="app")String appName
+		   , @HttpMethod(prmName="key")String key
+		   , @HttpMethod(prmName="typ")ContentType typ
+		   , @HttpMethod(prmName="val")Object val, TL tl)throws Exception
 		{	Stor j=new Stor(appName,key,typ,val);
 			return store(j,tl);}
 
-		@Op public static Stor
-		store(@Op(prmName="store")Stor j ,TL tl)throws Exception
+		@HttpMethod
+		public static Stor
+		store( @HttpMethod(prmName="store")Stor j , TL tl)throws Exception
 		{if(j!=null){Perm p=j.perm(tl,Perm.Act.set);
 			if(j.typ==ContentType.usr&&j.val instanceof Map){
 				Map m=(Map)j.val;Object o=m.get("pw");
@@ -290,8 +300,9 @@ mysql> insert into tst values
 				e.put( "tl",tl);
 			return e; }
 
-		@Op public static Object call(@Op(prmName = "app")String appName
-		,@Op(prmName = "member")String m,@Op(prmName = "args")List args,TL tl) throws Exception// javax.script.ScriptException
+		@HttpMethod
+		public static Object call( @HttpMethod(prmName = "app")String appName
+		, @HttpMethod(prmName = "member")String m, @HttpMethod(prmName = "args")List args, TL tl) throws Exception// javax.script.ScriptException
 		{	Stor j=loadBy(appName,m);
 			Perm p=j.perm(tl,Perm.Act.call);
 			javax.script.ScriptEngine e=eng(appName,true,tl);
@@ -300,8 +311,9 @@ mysql> insert into tst values
 			return e.eval( "JsonStorageApp[member]"+(args==null?"":"(args,tl.json,tl)") );
 		}
 
-		@Op public static Object eval(@Op(prmName = "app")String appName
-			,@Op(prmName = "src")String src,TL tl) throws Exception// javax.script.ScriptException
+		@HttpMethod
+		public static Object eval( @HttpMethod(prmName = "app")String appName
+			, @HttpMethod(prmName = "src")String src, TL tl) throws Exception// javax.script.ScriptException
 		{	Stor j=loadBy(appName,"keysList");
 			j.perm(Perm.Act.eval);
 			javax.script.ScriptEngine e=eng(appName,true,tl);
@@ -498,8 +510,9 @@ public static class Perm extends DB.Tbl<String> {
 		for(Act i:act)l.add(i.toString());
 		return l;}
 
-	@Op static public List<List<String>>
-	byUsr(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+	@HttpMethod
+	static public List<List<String>>
+	byUsr(@HttpMethod(prmName = "perm",prmInstance = true)Perm p)throws Exception {
 		p.stor().perm(Act.permlistByUsr);
 		List<List<String>> l = new LinkedList<List<String>>();List<String>x;
 		for(DB.Tbl t : p.query(where(C.app, p.app, C.usr, p.usr)))
@@ -507,8 +520,9 @@ public static class Perm extends DB.Tbl<String> {
 			x.add(p.key);p.actsAsList(x);}
 		return l;}
 
-	@Op static public List<List<String>>
-	usrsOfKey(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+	@HttpMethod
+	static public List<List<String>>
+	usrsOfKey(@HttpMethod(prmName = "perm",prmInstance = true)Perm p)throws Exception {
 		p.stor().perm(Act.permListByKey);
 		List<List<String>> l = new LinkedList<List<String>>();List<String>x;
 		for(DB.Tbl t : p.query(where(C.app, p.app, C.key, p.key)))
@@ -516,42 +530,53 @@ public static class Perm extends DB.Tbl<String> {
 			x.add(p.usr);p.actsAsList(x);}
 		return l;}
 
-	@Op static public DB.Tbl
-	create(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+	@HttpMethod
+	static public DB.Tbl
+	create(@HttpMethod(prmName = "perm",prmInstance = true)Perm p)throws Exception {
 		p.stor().perm(Act.permCreate);
 		return p.save();}
 
-	@Op static public DB.Tbl
-	addAct(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+	@HttpMethod
+	static public DB.Tbl
+	addAct(@HttpMethod(prmName = "perm",prmInstance = true)Perm p)throws Exception {
 		p.stor().perm(Act.permAddAct);
 		return p.save();}
 
-	@Op static public DB.Tbl
-	remAct(@Op(prmName = "perm",prmInstance = true)Perm p)throws Exception {
+	@HttpMethod
+	static public DB.Tbl
+	remAct(@HttpMethod(prmName = "perm",prmInstance = true)Perm p)throws Exception {
 		p.stor().perm(Act.permRemAct);
 		return p.save();}
 
-	@Op static public boolean
-	delete(@Op(prmName="app") String app
-    ,@Op(prmName="key")String key
-    ,@Op(prmName="usr")String usr
-    ,@Op(prmName="act")List<String>act)throws Exception{
+	@HttpMethod
+	static public boolean
+	delete(@HttpMethod(prmName="app") String app
+    ,@HttpMethod(prmName="key")String key
+    ,@HttpMethod(prmName="usr")String usr
+    ,@HttpMethod(prmName="act")List<String>act)throws Exception{
 		Perm p=Stor.loadBy(app,key).perm(Act.permDelete);
 		 p.delete();return true;}
 
-	//@Op static public boolean has(@Op(prmName = "perm",prmInstance = true)Perm p,@Op(prmName = "act")Act a)throws Exception {return p.has(a);}
+	//@HttpMethod static public boolean has(@HttpMethod(prmName = "perm",prmInstance = true)Perm p,@HttpMethod(prmName = "act")Act a)throws Exception {return p.has(a);}
 
  }//class Perm
 
 
-//public static void run( HttpServletRequest request,HttpServletResponse response, HttpSession session,Writer out)throws IOException
+ public static void debugService( HttpServletRequest request,HttpServletResponse response)throws IOException{
+	Srvlt s=new Srvlt();
+	s.service(request,response);
+ }
+
 @Override public void service(HttpServletRequest request,HttpServletResponse response)// throws Exception
 {TL tl=null;try
 {tl=TL.Enter(request,response);//,session,out);
 	tl.h.r("contentType","text/json");//tl.logOut=tl.var("logOut",false);
-	Method op=ops.get(tl.h.req("op"));//Prm.op.toString()));
+	String hm=tl.h.req.getMethod();
+	Method op=mth.get(hm);
 	if(op==null)
-		op=mth.get(tl.h.req.getMethod());
+		for (String s : mth.keySet())
+			if ( s.equalsIgnoreCase( hm ) )
+				op = mth.get(s);
 	if(op==null) {String p=tl.h.req.getContextPath();
 		for (String s : url.keySet())
 			if ( p.startsWith(s) || "*".equals(s) ) {//s == null || s.length() < 1 ||
@@ -559,9 +584,9 @@ public static class Perm extends DB.Tbl<String> {
 				if(!"*".equals(s))break;
 			}
 	}
-	Op opAnno=op==null?null:op.getAnnotation( Op.class );
-	tl.log("jsp:version2017.02.09.17.10:op=",op,opAnno);
-	if(tl.usr==null&& (opAnno==null || opAnno.usrLoginNeeded() ) )
+	HttpMethod httpMethodAnno =op==null?null:op.getAnnotation( HttpMethod.class );
+	tl.log("jsp:version2017.02.09.17.10:op=",op, httpMethodAnno );
+	if(tl.usr==null&& (httpMethodAnno ==null || httpMethodAnno.usrLoginNeeded() ) )
 		op=null;
 	Object retVal=null;
 	if(op!=null){
@@ -571,7 +596,7 @@ public static class Perm extends DB.Tbl<String> {
 		int n=prmsAnno==null?0:prmsAnno.length,i=-1;
 		Object[]args=new Object[n];
 		for(Annotation[]t:prmsAnno)try{
-			Op pp=t.length>0&&t[0] instanceof Op?(Op)t[0]:null;
+			HttpMethod pp=t.length>0&&t[0] instanceof HttpMethod ?(HttpMethod )t[0]:null;
 			Class c=prmTypes[++i];
 			String nm=pp!=null?pp.prmName():"arg"+i;//t.getName();
 			Object o=null;
@@ -597,8 +622,8 @@ public static class Perm extends DB.Tbl<String> {
 			:n==6?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5])
 			:n==7?op.invoke(cl,args[0],args[1],args[2],args[3],args[4],args[5],args[6])
 			:op.invoke(cl,args);
-		//Op pp=op.getAnnotation(Op.class);
-		if(opAnno!=null && opAnno.nestJsonReq() && tl.json!=null){
+		//HttpMethod pp=op.getAnnotation(HttpMethod.class);
+		if( httpMethodAnno !=null && httpMethodAnno.nestJsonReq() && tl.json!=null){
 			tl.json.put("return",retVal);retVal=tl.json;}
 	}
 	// else TL.Util.mapSet(tl.response,"msg","Operation not authorized ,or not applicable","return",false);
@@ -621,19 +646,21 @@ public static class Perm extends DB.Tbl<String> {
 
 /** annotation to designate a java method as an ajax/xhr entry point of execution*/
 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
-public @interface Op{
+public @interface HttpMethod {
 	boolean useClassName() default true;
 	//boolean caseSensitive() default true;
 	boolean nestJsonReq() default true;//if false , then only the returned-value from the method call is json-stringified as a response body, if true the returned-value is set in the json-request with prop-name "return"
 	boolean usrLoginNeeded() default false;//true;
-	String httpMethod() default "";
-	String urlPath() default "\n"; //if no method name match from parameters, then this string is mathed with the requested url, "*" means method will match any request path
+	//String httpMethod() default "";
+
+	/**if no method name match from parameters, then this string is matched with the requested url, "*" means method will match any request path*/
+	String urlPath() default "\n";
 	String prmName() default "";
 	boolean prmInstance() default false;
-}//Op
+}//HttpMethod
 
 static Map<String,Method>
-	ops=new HashMap<String,Method>(),
+	//ops=new HashMap<String,Method>(),
 	mth=new HashMap<String,Method>(),
 	url=new HashMap<String,Method>();
 
@@ -641,14 +668,13 @@ public static void registerOp(Class p){
 	Method[]b=p.getMethods();
 	String cn=p.getSimpleName();
 	for(Method m:b){
-		Op op= m.getAnnotation(Op.class);
-		if(op!=null)
+		HttpMethod httpMethod = m.getAnnotation(HttpMethod.class);
+		if( httpMethod !=null)
 		{	String s=m.getName();
-			ops.put(op.useClassName()?cn+"."+s:s,m);
-			if(!"\n".equals(op.urlPath()))
-				url.put(op.urlPath(),m);
-			if(!"".equals(op.httpMethod()))
-				mth.put(op.urlPath(),m);
+			mth.put( httpMethod.useClassName()?cn+"."+s:s,m);//ops.put( httpMethod.useClassName()?cn+"."+s:s,m);
+			if(!"\n".equals( httpMethod.urlPath()))
+				url.put( httpMethod.urlPath(),m);
+			//if(!"".equals( httpMethod.httpMethod())) mth.put( httpMethod.urlPath(),m);
 		}
 	}
 }//registerOp
@@ -675,7 +701,7 @@ public Json.Output getOut() throws IOException {return out;}
 
 /**sets a new TL-instance to the localThread*/
 public static TL Enter(HttpServletRequest r,HttpServletResponse response) throws IOException{
-	TL p;if(ops==null || ops.size()==0)Srvlt.staticInit();
+	TL p;if(mth==null || mth.size()==0)Srvlt.staticInit();
 	tl.set(p=new TL(r,response,response.getWriter()));
 	p.onEnter();
 	return p;}
