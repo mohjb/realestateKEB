@@ -37,7 +37,7 @@ public static class Req implements HttpServletRequest {
 	boolean chunkedTransfer;// from Http.Response
 	boolean keepAlive;      // from Http.Response
 	List<String> cookieHeaders;// from Http.Response
-	Method method=Method.GET;// from Http.Response.requestMethod
+	String methd;Method method=Method.GET;// from Http.Response.requestMethod
 	/**
 	 * HTTP Request methods, with the ability to decode a <code>String</code> back
 	 * to its enum value.
@@ -73,8 +73,10 @@ public static class Req implements HttpServletRequest {
 
 	//public void addCookieHeader(String cookie) {cookieHeaders.add(cookie);}
 
-	Req init( String data) {contentLength=(bodyData=data).length();
-		inps = new ByteArrayInputStream(data.getBytes());bufr=null;
+	Req init( String[] data) {contentLength=(bodyData=data[2]).length();
+		try {method=Method.valueOf( methd=data[0] );}catch ( Exception ex){}
+		uri=data[1];
+		inps = new ByteArrayInputStream(bodyData.getBytes());bufr=null;
 		return this;}
 
 	Req init( String mimeType, InputStream data, long totalBytes) {
@@ -467,8 +469,8 @@ public static class Req implements HttpServletRequest {
 	@Override public String getContentType() {p("Req.getContentType:",contentType);return contentType;}
 	@Override public String getContextPath() {return uri;}
 	@Override public DispatcherType getDispatcherType() {return null;}
-	@Override public ServletInputStream getInputStream() throws IOException
-	{return new ServletInputStream() {int i=0;
+	@Override public ServletInputStream getInputStream() throws IOException{
+	return new ServletInputStream() {int i=0;
 		@Override public int read() throws IOException{return bodyData.charAt(i++);}
 		@Override public void setReadListener(ReadListener p){}
 		@Override public boolean isReady() {return true;}
@@ -517,15 +519,15 @@ public static class Req implements HttpServletRequest {
 		@Override	public String nextElement() {return i.next();}};}
 	@Override public Enumeration<String> getHeaders(String p) {return null;}
 	@Override public int getIntHeader(String p) {return 0;}
-	@Override public String getMethod() {return method==null?"":method.name();}
+	@Override public String getMethod() {return method==null?methd:method.name();}
 	@Override public Part getPart(String p) throws IOException, ServletException {return null;}
 	@Override public Collection<Part> getParts() throws IOException, ServletException {return null;}
 	@Override public String getPathInfo() {return null;}
 	@Override public String getPathTranslated() {return null;}
 	@Override public String getQueryString() {return "/adoqs/xhr.jsp";}
 	@Override public String getRemoteUser() {return null;}
-	@Override public String getRequestURI() {return null;}
-	@Override public StringBuffer getRequestURL() {return null;}
+	@Override public String getRequestURI() {return uri;}
+	@Override public StringBuffer getRequestURL() {return new StringBuffer( uri);}
 	@Override public String getRequestedSessionId() {return null;}
 	@Override public String getServletPath() {return null;}
 	@Override public HttpSession getSession() {return ssn;}
@@ -538,7 +540,8 @@ public static class Req implements HttpServletRequest {
 	@Override public boolean isUserInRole(String p) {return false;}
 	@Override public void login(String p, String p2) throws ServletException {}
 	@Override public void logout() throws ServletException {}
-	@Override public <T extends HttpUpgradeHandler> T upgrade(Class<T> p) throws IOException, ServletException {return null;}
+	@Override public <T extends HttpUpgradeHandler> T upgrade(Class<T>
+		p) throws IOException, ServletException {return null;}
 
 }//class Req
 
@@ -558,7 +561,7 @@ public static class Rsp implements HttpServletResponse{
 	/**
 	 * Some HTTP response status codes
 	 */
-	public enum Status{//} implements IStatus
+	public enum Status{// implements IStatus
 		SWITCH_PROTOCOL(101, "Switching Protocols"),
 
 		OK(200, "OK"),
@@ -981,19 +984,23 @@ public static void main(String[]args)throws Exception{
 	s.pc=new PC();
 	s.pc.a=SrvltContxt.sttc();
 	s.pc.q.ssn=new Ssn();
-	String[]prms= {
-		"{op:'JsonStorage.listApps'}"
-		,"{op:'JsonStorage.store',key:{app:'app',key:'app',val:'app'}}"
-		,"{op:'JsonStorage.set',app:'app',key:'app2',val:'app2'}"
-		,"{op:'JsonStorage.listKeys',app:'app'}"
-		,"{op:'JsonStorage.getKeys',app:'app',keys:['app']}"
-		,"{op:'JsonStorage.get',app:'app',key:'app2'}"
-		,"{op:'JsonStorage.member',app:'app',member:'app'}"
-		,"{op:'JsonStorage.eval',src:'5+7'}"
+	String[][]prms= {/*1stString is method 
+			, 2ndString is url(class/app/typ/key) 
+				where typ is optional depending on method
+			, 3rdString is body ,and most methods
+				take the body as JsonStorage.val*/
+		 {"Stor.listApps"	,"app/keysList",""}
+		,{"Stor.store"		,"app/k1","{val:'app'}"}
+		,{"Stor.set"	 	,"app/k2","{val:'app2'}"}
+		,{"Stor.listKeys"	,"app/keysList","{}"}
+		,{"Stor.getKeys"	,"app/keysList","{keys:['app']}"}
+		,{"Stor.get"		,"app/apps","{}"}
+		,{"Stor.call"		,"app/app",""}
+		,{"Stor.eval"		,"app","{src:'5+7'}"}
 	};
-	for(String p:prms){
+	for(String[]p:prms){
 		s.pc.q.init(p);
-		TL.run( s.pc.q,s.pc.p,s.pc.q.ssn,s.pc.p.getWriter(),s.pc );s.pc.q.ssn.newlySsn=false;
+		dev201801.Srvlt.debugService( s.pc.q,s.pc.p );s.pc.q.ssn.newlySsn=false;
 	}}
 
 }//class Dbg
