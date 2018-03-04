@@ -73,9 +73,12 @@ public static class Req implements HttpServletRequest {
 
 	//public void addCookieHeader(String cookie) {cookieHeaders.add(cookie);}
 
-	Req init( String[] data) {contentLength=(bodyData=data[2]).length();
+	Req init( String[] data) {
 		try {method=Method.valueOf( methd=data[0] );}catch ( Exception ex){}
 		uri=data[1];
+		return init(bodyData=data[2]);}
+
+	Req init( String data) {contentLength=(bodyData=data).length();
 		inps = new ByteArrayInputStream(bodyData.getBytes());bufr=null;
 		return this;}
 
@@ -470,11 +473,11 @@ public static class Req implements HttpServletRequest {
 	@Override public String getContextPath() {return uri;}
 	@Override public DispatcherType getDispatcherType() {return null;}
 	@Override public ServletInputStream getInputStream() throws IOException{
-	return new ServletInputStream() {int i=0;
-		@Override public int read() throws IOException{return bodyData.charAt(i++);}
-		@Override public void setReadListener(ReadListener p){}
-		@Override public boolean isReady() {return true;}
-		@Override public boolean isFinished() {return i>=bodyData.length();}};}//new java.io.ByteArrayInputStream(data.getBytes());}//(new java.io.StringReader(data));//StringBufferInputStream(data);
+		return new ServletInputStream() {int i=0;
+			@Override public int read() throws IOException{return bodyData.charAt(i++);}
+			@Override public void setReadListener(ReadListener p){}
+			@Override public boolean isReady() {return true;}
+			@Override public boolean isFinished() {return i>=bodyData.length();}};}//new java.io.ByteArrayInputStream(data.getBytes());}//(new java.io.StringReader(data));//StringBufferInputStream(data);
 	@Override public String getLocalAddr() {return null;}
 	@Override public String getLocalName() {return null;}
 	@Override public int getLocalPort() {return 0;}
@@ -541,7 +544,7 @@ public static class Req implements HttpServletRequest {
 	@Override public void login(String p, String p2) throws ServletException {}
 	@Override public void logout() throws ServletException {}
 	@Override public <T extends HttpUpgradeHandler> T upgrade(Class<T>
-		p) throws IOException, ServletException {return null;}
+		                                                          p) throws IOException, ServletException {return null;}
 
 }//class Req
 
@@ -984,12 +987,12 @@ public static void main(String[]args)throws Exception{
 	s.pc=new PC();
 	s.pc.a=SrvltContxt.sttc();
 	s.pc.q.ssn=new Ssn();
-	String[][]prms= {/*1stString is method 
-			, 2ndString is url(class/app/typ/key) 
+	String[][]prms= {/*1stString is method
+			, 2ndString is url(class/app/typ/key)
 				where typ is optional depending on method
 			, 3rdString is body ,and most methods
 				take the body as JsonStorage.val*/
-		 {"Stor.listApps"	,"app/keysList",""}
+		{"Stor.listApps"	,"app/keysList",""}
 		,{"Stor.store"		,"app/k1","{val:'app'}"}
 		,{"Stor.set"	 	,"app/k2","{val:'app2'}"}
 		,{"Stor.listKeys"	,"app/keysList","{}"}
