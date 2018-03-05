@@ -36,20 +36,20 @@ static void staticInit(){
 
 static{staticInit();}
 
-/**clientOutput
+ /**clientOutput
  * in Stor-table the main app-entery has key="app",
  * and in this entry there is a javaObjectStream of a Map
  * and in this map there are the keys: serverFiles,clientFiles,dbts
  * with clientFiles is associated a List, having maps, each map
  * may have key "content" text , and , the map may have key "include" list
  * */
-@HttpMethod
-public void get( @HttpMethod(prmLoadByUrl = true)Stor page){
+ @HttpMethod public void
+ get( @HttpMethod(prmLoadByUrl = true)Stor page){
 
 }
 
-@HttpMethod
-public Stor login( @HttpMethod(prmLoadByUrl = true)Stor j
+ @HttpMethod public Stor
+ login( @HttpMethod(prmLoadByUrl = true)Stor j
 	, @HttpMethod(prmName = "pw")String pw, TL tl){
 	if(j!=null&&j.typ==Stor.ContentType.usr&&j.val instanceof Map )
 	{Map m=(Map)j.val;Object o=m.get("pw");
@@ -146,13 +146,13 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 
 	//Perm perm(TL tl){Perm p=Perm.loadBy(app,key,tl.usr==null?null:tl.usr.key);return p;}
 
-	Perm perm(TL tl,Perm.Act a)throws Perm.Exceptn{
+	Perm perm(TL tl,Perm.Act a)throws Perm.Violation{
 		Perm p=Perm.loadBy(app,key,tl.usr==null?null:tl.usr.key);
 		if(p==null||!p.has(a))
-			throw new Perm.Exceptn(tl,this,a,p);
+			throw new Perm.Violation(tl,this,a,p);
 		return p;}
 
-	Perm perm(Perm.Act a)throws Perm.Exceptn{return perm(TL.tl(),a);}
+	Perm perm(Perm.Act a)throws Perm.Violation{return perm(TL.tl(),a);}
 
 	@HttpMethod public static List<String>
 	listApps() throws Exception {//Perm p=perm
@@ -207,13 +207,13 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 		return sql;}
 
 	@HttpMethod public static Stor
-	get(@HttpMethod(prmLoadByUrl=true)Stor j)throws Perm.Exceptn {
+	get(@HttpMethod(prmLoadByUrl=true)Stor j)throws Perm.Violation {
 		Perm p=j.perm(Perm.Act.get);
 		return j;}
 
 	@HttpMethod public static List<Stor>
 	getKeys(@HttpMethod(prmUrlPart = true)String appName,
-	    @HttpMethod(prmBody = true)List<String>keys)throws Perm.Exceptn{
+	    @HttpMethod(prmBody = true)List<String>keys)throws Perm.Violation{
 		List<Stor>l=new LinkedList<>(  );
 		Stor j=new Stor(appName);//Perm p=j.perm(Perm.Act.getKeys);
 		for(DB.Tbl t:j.query( j.genSql(Perm.Act.get,keys,null).toString(),null,true))
@@ -361,6 +361,8 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 
 /** Many2Many Permissions for Stor
  *	db-Table Wrapper
+ *also use a trick of appending to the key column <usr>.<key>
+ *     in order to give permission to an admin-usr over permissions (Perm row) of other usr
  pk is app+key+usr
  */
 public static class Perm extends DB.Tbl<String> {
@@ -431,7 +433,7 @@ public static class Perm extends DB.Tbl<String> {
 
 	/**Actions*/
 	public enum Act{listApps,create,set,get,call,eval//listKeys,getKeys,
-		,permSet,permGet,permlistByUsr,permListByKey,permCreate,permDelete,permAddAct,permRemAct,permOtherUsrs;
+		,permSet,permGet,permlistByUsr,permListByKey,permCreate,permDelete,permAddAct,permRemAct;
 		public static Act a(String s){Act r=null;try{r=valueOf(s);}catch(Exception ex){}return r;}}
 
 	public enum C implements CI{app,key,usr,act,logTime,LastModified;
@@ -440,8 +442,8 @@ public static class Perm extends DB.Tbl<String> {
 		@Override public Class getType(){return act==this?Act.class:String.class;}
 	}//C
 
-	public static class Exceptn extends IllegalAccessException{
-		public Exceptn(TL tl,Stor s,Act a,Perm p){super(tl+","+s+","+a+","+p);}}
+	public static class Violation extends IllegalAccessException{
+		public Violation(TL tl,Stor s,Act a,Perm p){super(tl+","+s+","+a+","+p);}}
 
 	@Override public C[]columns(){return C.values();}
 
@@ -484,43 +486,52 @@ public static class Perm extends DB.Tbl<String> {
 	static{registered.add(Stor.class);}
 	public static Perm sttc=new Perm( );
 
-	List<String>actsAsList(){return actsAsList(new LinkedList<String>());}
+	List<String>actsAsList(){return addActs2List(new LinkedList<String>());}
 
-	List<String>actsAsList(List<String>l){
+	List<String>addActs2List(List<String>l){
 		for(Act i:act)l.add(i.toString());
 		return l;}
 
-	boolean chckOtherUsr(TL tl){
+/*	String getKeyOfUP(String subjectUsr,Act a,TL tl){
 		if(tl==null)tl=TL.tl();
-		return tl==null
-			||tl.usr==null
-			||tl.usr.key.equals( usr )
-			||act.contains( Act.permOtherUsrs ); }
+		return tl!=null
+			&&tl.usr!=null
+			&&tl.usr.key.equals( usr )
+			&&key!=null&&key.endsWith( "."+subjectUsr )
+			&&act.contains( a )//this.key=<Stor.key>.<subject-usr> & this.usr=<current-usr>|...
+			?key.substring( 0,key.length()-1-subjectUsr.length() ):null;}
 
-	boolean checkOtherUsr(TL tl) throws Exceptn {
-		if(chckOtherUsr (tl))return true;
-		else throw new Exceptn(tl,stor(),Act.permOtherUsrs,this); }
+	boolean havePermOverUsrPerm(String subjectUsr,Act a,TL tl) throws Violation {
+		if(getKeyOfUP (subjectUsr,a,tl)!=null )return true;
+		else throw new Violation(tl,stor(),a,this); }
+*/
+	/**load If Tl.Usr Has Perm Over SbjUsrPerm*/
+	Perm loadPerm(){TL tl=TL.tl();
+		Perm r=tl==null||tl.usr==null||tl.usr.key==null?null
+			:tl.usr.key.equals( usr )?this
+			:loadBy(app,key+'.'+usr,tl.usr.key);
+		return r;}
 
-	/**based on the usr, list all the keys */
+	/**based on the usr, list all the perm-s */
 	@HttpMethod static public List<List<String>>
-	byUsr(@HttpMethod(prmLoadByUrl= true)Perm p,TL tl)throws Exception {
-		p.stor().perm(Act.permlistByUsr);p.checkOtherUsr( tl );
+	byUsr(@HttpMethod(prmBody= true)Perm p,TL tl)throws Exception {
+		p.stor().perm(Act.permlistByUsr);
 		List<List<String>> l = new LinkedList<List<String>>();List<String>x;
+		Perm p2=p.loadPerm();if(p2==null)return null;
 		for(DB.Tbl t : p.query(where(C.app, p.app, C.usr, p.usr)))
-		{	l.add(x=new LinkedList<>());
-			x.add(p.key);p.actsAsList(x);}
+		{	p2=p.loadPerm();if(p2!=null){
+			l.add(x=new LinkedList<>());
+			x.add(p.key);p.addActs2List(x);}}
 		return l;}
 
-	/**based on key, list all usrs
-	 *
-	 * */
+	/**based on key, list all usrs */
 	@HttpMethod static public List<List<String>>
 	usrsOfKey(@HttpMethod(prmLoadByUrl = true)Perm p,TL tl)throws Exception {
 		p.stor().perm(Act.permListByKey);
 		List<List<String>> l = new LinkedList<List<String>>();List<String>x;
 		for(DB.Tbl t : p.query(where(C.app, p.app, C.key, p.key)))
 		{	l.add(x=new LinkedList<>());
-			x.add(p.usr);p.actsAsList(x);}
+			x.add(p.usr);p.addActs2List(x);}
 		return l;}
 
 	@HttpMethod static public DB.Tbl
@@ -567,8 +578,9 @@ public @interface HttpMethod {
 	boolean prmBody() default false;
 }//HttpMethod
 
-@Override public void service(HttpServletRequest request,HttpServletResponse response){TL tl=null;try
-{tl=TL.Enter(request,response);//,session,out);
+@Override public void service(HttpServletRequest request,HttpServletResponse response){
+	TL tl=null;Object retVal=null;try
+ {tl=TL.Enter(request,response);//,session,out);
 	tl.h.r("contentType","text/json");//tl.logOut=tl.var("logOut",false);
 	String hm=tl.h.req.getMethod();
 	Method op=mth.get(hm);
@@ -580,7 +592,6 @@ public @interface HttpMethod {
 	tl.log("jsp:version2017.02.09.17.10:op=",op, httpMethodAnno );
 	if(tl.usr==null&& (httpMethodAnno ==null || httpMethodAnno.usrLoginNeeded() ) )
 		op=null;
-	Object retVal=null;
 	if(op!=null){
 		Class[]prmTypes=op.getParameterTypes();
 		Class cl=op.getDeclaringClass();Class[]ca={TL.class,String.class};
