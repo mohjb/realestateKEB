@@ -992,14 +992,21 @@ public static void main(String[]args)throws Exception{
 				where typ is optional depending on method
 			, 3rdString is body ,and most methods
 				take the body as JsonStorage.val*/
-		{"Stor.listApps"	,"app/keysList",""}
-		,{"Stor.store"		,"app/k1","{val:'app'}"}
-		,{"Stor.set"	 	,"app/k2","{val:'app2'}"}
-		,{"Stor.listKeys"	,"app/keysList","{}"}
-		,{"Stor.getKeys"	,"app/keysList","{keys:['app']}"}
-		,{"Stor.get"		,"app/apps","{}"}
-		,{"Stor.call"		,"app/app",""}
-		,{"Stor.eval"		,"app","{src:'5+7'}"}
+		 {"Stor.listApps"	,"app/keysList" ,""					}//no params
+		,{"Stor.store"		,"app/k1"		,"{val:'app'}"		}//prmBody Stor
+		,{"Stor.listKeys"	,"app/keysList"	,"{}"				}//prmUrlPart appName
+		,{"Stor.getKeys"	,"app/keysList"	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
+		,{"Stor.get"		,"app/apps"		,"{}"				}//prmLoadByUrl Stor
+		,{"Stor.call"		,"app/app"		,""					}//prmUrlPart app, prmUrlPart func, prmBody List args
+		,{"Stor.eval"		,"app"			,"{src:'5+7'}"		}//prmUrlPart app , prmBody String src
+		,{"Stor.poll"		,"app/app"		,"5"				}//prmUrlPart appName, prmBody long
+
+		,{"Perm.byUsr"	 	,"/app/usr/key","{}"}//body Perm
+		,{"Perm.usrsOfKey"	,"/app/usr/key","{}"}//body Perm
+		,{"Perm.create"	    ,"/app/usr/key","{}"}//body Perm
+		,{"Perm.addAct"		,"/app/usr/key","{}"}//body Perm
+		,{"Perm.remAct"		,"/app/usr/key","{}"}//body Perm
+		,{"Perm.delete"		,"/app/usr/key","{}"}//body Perm
 	};
 	for(String[]p:prms){
 		s.pc.q.init(p);
