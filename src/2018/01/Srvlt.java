@@ -315,7 +315,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 				case real:
 					val =rs.getDouble( ++c );break;
 				case javaObjectStream:java.io.ObjectInputStream p=
-					                      new ObjectInputStream( rs.getBinaryStream( ++c ) );
+					new ObjectInputStream( rs.getBinaryStream( ++c ) );
 					val =p.readObject();break;
 				case usr:case json: val =Json.Prsr.parseItem(rs.getCharacterStream( ++c ) );break;
 				default://case txt: case key:
@@ -367,33 +367,61 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
  */
 public static class Perm extends DB.Tbl<String> {
 	public Perm(){}
-	//	public Perm(String app,String key,String usr,Act[]p){super();}
+	public Perm(String ap){this(ap,"keysList",TL.tl().usr.key,(Act[])null);}
+	public Perm(String app,String key,String usr,Set<Act>p){this(app,key,usr,(Act[])null);
+		if(p!=null){act=new HashSet<>(  );
+			act.addAll( p );}}
 	public Perm(String app,String key,String usr,Act [] p){
 		this.app=app;this.key=key;this.usr=usr;addActs(p);}
+	Perm copy(Perm p){app=p.app;key=p.key;usr=p.usr;
+		if(p.act==null)act=null;else{if(act==null)
+			act=new HashSet<>(  );
+			else act.clear();
+			act.addAll( p.act );
+		}return this;}
+	public Perm clone(){return new Perm(app,key,usr,act);}
 
 	public void addActs(Act [] p){
-		if(act==null)
+		if(act==null&&p!=null)
 			act=new HashSet<Act>();
+		if(p!=null)
 		for(Act i:p)act.add(i);}
 
-	public void remActs(Act[]p){
+	public void addActs(Set<Act > p){
+		if(act==null&&p !=null&&p.size()>0)
+			act=new HashSet<Act>();
+		if(p!=null)
+			for(Act i:p)act.add(i);}
+
+	public void remActs(Set<Act>p){
 		if(act!=null)
 			for(Act i:p)act.remove(i);}
 
-	public void remAct(Act p){
-		if( act!=null)act.remove(p);}
-
-	public boolean has( String act){ return has(Act.a(act));}
+	public boolean has(String act){ return has(Act.a(act));}
 	public boolean has(Act p){ return act!=null&&act.contains(p);}
 
 	public static Set<Act>s(Act...p){
-		Set<Act>s=new HashSet<Act>();
+		return sa(p);}
+
+	public static Set<Act>sa(Act[]p){
+		Set<Act>s=new HashSet();
 		for(Act i:p)s.add(i);
 		return s;}
 
-	public static Set<Act>sa(Act[]p){
-		Set<Act>s=new HashSet<Act>();
-		for(Act i:p)s.add(i);
+	public static Set<Act>s(Set<Act>s,String...p){
+		return sa(p);}
+
+	public static Set<Act>s(String...p){
+		return sa(p);}
+
+	public static Set<Act>sa(String[]p){
+		return sa(new HashSet(),p);}
+
+	public static Set<Act>sa(Set<Act>s,String[]p){
+		if(s==null)s=new HashSet();
+		for(String i:p)if(i.indexOf( ',' )!=-1)
+			sa(s,i.split( "," ));
+		else s.add(Act.a( i ));
 		return s;}
 
 	public static Act[]a(Act...p){return p;}
@@ -434,9 +462,12 @@ public static class Perm extends DB.Tbl<String> {
 	/**Actions*/
 	public enum Act{listApps,create,set,get,call,eval//listKeys,getKeys,
 		,permSet,permGet,permlistByUsr,permListByKey,permCreate,permDelete,permAddAct,permRemAct;
-		public static Act a(String s){Act r=null;try{r=valueOf(s);}catch(Exception ex){}return r;}}
+		public static Act a(String s){Act r=null;try{
+			if(s.indexOf( "'" )!=-1)
+				s=s.trim().replaceAll( "'","" );
+			r=valueOf(s);}catch(Exception ex){}return r;}}
 
-	public enum C implements CI{app,key,usr,act,logTime,LastModified;
+	public enum C implements CI{app,key,usr,act,logTime,lastModified;
 		@Override public Field f(){return Co.f( name(),Perm.class );}
 		@Override public String getName(){return name();}
 		@Override public Class getType(){return act==this?Act.class:String.class;}
@@ -483,16 +514,22 @@ public static class Perm extends DB.Tbl<String> {
 			??  lock Unicode code point: U+1F512
 			??  open lock Unicode code point: U+1F513*/}
 
-	static{registered.add(Stor.class);}
-	public static Perm sttc=new Perm( );
+	static{registered.add(Perm.class);}
 
-	List<String>actsAsList(){return addActs2List(new LinkedList<String>());}
+	//List<String>actsAsList(){return addActs2List(new LinkedList<String>());}
 
 	List<String>addActs2List(List<String>l){
+		if(l==null)l=new LinkedList<String>();
 		for(Act i:act)l.add(i.toString());
 		return l;}
 
-/*	String getKeyOfUP(String subjectUsr,Act a,TL tl){
+	/**load If Tl.Usr Has Perm Over SubjectUsrPerm*/
+	Perm loadPerm(){TL tl=TL.tl();
+		Perm r=tl==null||tl.usr==null||tl.usr.key==null?null
+			:tl.usr.key.equals( usr )?this
+			:loadBy(app,key+'.'+usr,tl.usr.key);
+		return r;
+	/*	String getKeyOfUP(String subjectUsr,Act a,TL tl){
 		if(tl==null)tl=TL.tl();
 		return tl!=null
 			&&tl.usr!=null
@@ -504,17 +541,11 @@ public static class Perm extends DB.Tbl<String> {
 	boolean havePermOverUsrPerm(String subjectUsr,Act a,TL tl) throws Violation {
 		if(getKeyOfUP (subjectUsr,a,tl)!=null )return true;
 		else throw new Violation(tl,stor(),a,this); }
-*/
-	/**load If Tl.Usr Has Perm Over SbjUsrPerm*/
-	Perm loadPerm(){TL tl=TL.tl();
-		Perm r=tl==null||tl.usr==null||tl.usr.key==null?null
-			:tl.usr.key.equals( usr )?this
-			:loadBy(app,key+'.'+usr,tl.usr.key);
-		return r;}
+	*/}
 
 	/**based on the usr, list all the perm-s */
 	@HttpMethod static public List<List<String>>
-	byUsr(@HttpMethod(prmBody= true)Perm p,TL tl)throws Exception {
+	byUsr(@HttpMethod(prmBody= true)Perm p)throws Exception {
 		p.stor().perm(Act.permlistByUsr);
 		List<List<String>> l = new LinkedList<List<String>>();List<String>x;
 		Perm p2=p.loadPerm();if(p2==null)return null;
@@ -526,36 +557,67 @@ public static class Perm extends DB.Tbl<String> {
 
 	/**based on key, list all usrs */
 	@HttpMethod static public List<List<String>>
-	usrsOfKey(@HttpMethod(prmLoadByUrl = true)Perm p,TL tl)throws Exception {
+	usrsOfKey(@HttpMethod(prmBody = true)Perm p)throws Exception {
 		p.stor().perm(Act.permListByKey);
 		List<List<String>> l = new LinkedList<List<String>>();List<String>x;
 		for(DB.Tbl t : p.query(where(C.app, p.app, C.key, p.key)))
-		{	l.add(x=new LinkedList<>());
-			x.add(p.usr);p.addActs2List(x);}
-		return l;}
+		{	Perm p2=p.loadPerm();if(p2!=null){
+				l.add(x=new LinkedList<>());
+				x.add(p.usr);p.addActs2List(x);
+		}}return l;}
 
 	@HttpMethod static public DB.Tbl
 	create(@HttpMethod(prmBody = true)Perm p)throws Exception {
-		p.stor().perm(Act.permCreate);
-		return p.save();}
+		Perm a=loadBy( p.app,"keysList",p.usr  );//new Perm(p.app);a.load();
+		if(a==null)return a;
+		a.stor().perm(Act.permCreate);
+		a=loadBy( p.app,p.key,p.usr );
+		return a!=null?null:p.save();}
 
 	@HttpMethod static public DB.Tbl
 	addAct(@HttpMethod(prmBody = true)Perm p)throws Exception {
-		p.stor().perm(Act.permAddAct);
-		return null;}//p.save();}
+		Perm d=loadBy(p.app,p.key,p.usr);
+		if(d==null)return null;
+		d.stor().perm(Act.permAddAct);
+		d.addActs( p.act );
+		d.save();
+		return d;}
 
 	@HttpMethod static public DB.Tbl
 	remAct(@HttpMethod(prmBody = true)Perm p)throws Exception {
 		p.stor().perm(Act.permRemAct);
-		return null;}
+		Perm d=loadBy( p.app,p.key,p.usr );
+		if(d!=null){int n=d.act==null?0:d.act.size();
+			d.remActs( p.act );
+			if(d.act.size()!=n){
+				d.save();
+				return d;}
+		}return null;}
 
 	@HttpMethod static public boolean
 	delete(@HttpMethod(prmBody = true)Perm p)throws Exception{
 		p.stor().perm(Act.permDelete);
 		p.delete();return true;}
 
-	//@HttpMethod static public boolean has(@HttpMethod(prmName = "perm",prmInstance = true)Perm p,@HttpMethod(prmName = "act")Act a)throws Exception {return p.has(a);}
-
+	@Override DB.Tbl v(Field p,Object v){
+		if(p.getName().equals( C.act.name() ))
+		{if(v==null)act=null;else{
+			if(act==null)act=new HashSet<>(  );
+			else act.clear();
+			if(v instanceof Collection) //act.addAll( (Collection)v );
+				for(Object o:(Collection)v)
+					if(o instanceof Act)
+						act.add( (Act)o );
+					else if(o!=null)
+						act.add(Act.a( o.toString() ));
+			else if(v instanceof String[])
+				for(String s:(String[])v)
+					act.add( Act.a( s ));
+			else //if(v instanceof String)
+				for(String s:v.toString().split( "," ))
+					act.add( Act.a( s ));
+		} }else super.v( p,v );
+		return this;}
 }//class Perm
 
 
@@ -1066,22 +1128,23 @@ public static class Util{//utility methods
 			TL.tl().error(x, SrvltName,".Util.<T>T parse(String s,T defval):",s,defval);}
 		return defval;}
 	public static Object parse(String s,Class c){
-		if(s!=null)try{if(String.class.equals(c))return s;
-		else if(Number.class.isAssignableFrom(c)||c.isPrimitive()) {
-			if (Integer.class.equals(c)|| "int"   .equals(c.getName())) return new Integer(s);
-			else if (Double .class.equals(c)|| "double".equals(c.getName())) return new Double(s);
-			else if (Float  .class.equals(c)|| "float" .equals(c.getName())) return new Float(s);
-			else if (Short  .class.equals(c)|| "short" .equals(c.getName())) return new Short(s);
-			else if (Long   .class.equals(c)|| "long"  .equals(c.getName())) return new Long(s);
-			else if (Byte   .class.equals(c)|| "byte"  .equals(c.getName())) return new Byte(s);
-		}///else return new Integer(s);}
-		else if(Boolean.class.equals(c)||(c.isPrimitive()&&"boolean".equals(c.getName())))return new Boolean(s);
-		else if(Date.class.equals(c))return parseDate(s);
-		else if(Character.class.isAssignableFrom(c)||(c.isPrimitive()&&"char".equals(c.getName())))
-			return s.length()<1?'\0':s.charAt(0);
-		else if(URL.class.isAssignableFrom(c))try
-		{return new URL("file:" +TL.tl().h.getServletContext().getContextPath()+'/'+s);}
-		catch (Exception ex) {TL.tl().error(ex,SrvltName,".Util.parse:URL:p=",s," ,c=",c);}
+		if(s!=null)try
+		{   if(String.class.equals(c))return s;
+			else if(Number.class.isAssignableFrom(c)||c.isPrimitive()) {
+				if (Integer.class.equals(c)|| "int"   .equals(c.getName())) return new Integer(s);
+				else if (Double .class.equals(c)|| "double".equals(c.getName())) return new Double(s);
+				else if (Float  .class.equals(c)|| "float" .equals(c.getName())) return new Float(s);
+				else if (Short  .class.equals(c)|| "short" .equals(c.getName())) return new Short(s);
+				else if (Long   .class.equals(c)|| "long"  .equals(c.getName())) return new Long(s);
+				else if (Byte   .class.equals(c)|| "byte"  .equals(c.getName())) return new Byte(s);
+			}///else return new Integer(s);}
+			else if(Boolean.class.equals(c)||(c.isPrimitive()&&"boolean".equals(c.getName())))return new Boolean(s);
+			else if(Date.class.equals(c))return parseDate(s);
+			else if(Character.class.isAssignableFrom(c)||(c.isPrimitive()&&"char".equals(c.getName())))
+				return s.length()<1?'\0':s.charAt(0);
+			else if(URL.class.isAssignableFrom(c))try
+			{return new URL("file:" +TL.tl().h.getServletContext().getContextPath()+'/'+s);}
+			catch (Exception ex) {TL.tl().error(ex,SrvltName,".Util.parse:URL:p=",s," ,c=",c);}
 			boolean b=c==null?false:c.isEnum();
 			if(!b){Class ct=c.getEnclosingClass();b=ct==null?false:ct.isEnum();if(b)c=ct;}
 			if(b){
@@ -1538,9 +1601,9 @@ public static class DB {
 			catch (Exception ex) {//IllegalArgumentException,IllegalAccessException
 				TL.tl().error(ex,SrvltName,".DB.Tbl.v(",this,",",p,")");return null;}}
 
-		/**Field annotation to designate a java member for use in a Html-Form-field/parameter*/
+		/**Field annotation to designate a java member for use in a dbTbl-column/field*/
 		@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
-		public @interface F{	boolean prmPw() default false;boolean group() default false;boolean max() default false;boolean json() default false; }
+		public @interface F{}
 
 		/**Interface for enum-items from different forms and sql-tables ,
 		 * the enum items represent a reference Column Fields for identifing the column and selection.*/
