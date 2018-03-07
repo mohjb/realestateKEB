@@ -74,7 +74,7 @@ public static class Req implements HttpServletRequest {
 	//public void addCookieHeader(String cookie) {cookieHeaders.add(cookie);}
 
 	Req init( String[] data) {
-		try {method=Method.valueOf( methd=data[0] );}catch ( Exception ex){}
+		try {method=Method.valueOf( methd=data[0] );}catch ( Exception ex){method=null;}
 		uri=data[1];
 		return init(bodyData=data[2]);}
 
@@ -987,13 +987,15 @@ public static void main(String[]args)throws Exception{
 	s.pc=new PC();
 	s.pc.a=SrvltContxt.sttc();
 	s.pc.q.ssn=new Ssn();
+
 	String[][]prms= {/*1stString is method
 			, 2ndString is url(class/app/typ/key)
 				where typ is optional depending on method
 			, 3rdString is body ,and most methods
 				take the body as JsonStorage.val*/
-		 {"Stor.listApps"	,"app/keysList" ,""					}//no params
-		,{"Stor.store"		,"app/k1"		,"{val:'app'}"		}//prmBody Stor
+		 {"Srvlt.login"		,"app/moh" 		,"{pw:'m'}"			}//json params
+		,{"Stor.listApps"	,"app/keysList" ,""					}//no params
+		,{"Stor.store"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
 		,{"Stor.listKeys"	,"app/keysList"	,"{}"				}//prmUrlPart appName
 		,{"Stor.getKeys"	,"app/keysList"	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
 		,{"Stor.get"		,"app/apps"		,"{}"				}//prmLoadByUrl Stor
@@ -1008,6 +1010,7 @@ public static void main(String[]args)throws Exception{
 		,{"Perm.remAct"		,"/app/usr/key","{}"}//body Perm
 		,{"Perm.delete"		,"/app/usr/key","{}"}//body Perm
 	};
+	//String sMd5=dev201801.Srvlt.Util.md5( "m" );
 	for(String[]p:prms){
 		s.pc.q.init(p);
 		dev201801.Srvlt.debugService( s.pc.q,s.pc.p );s.pc.q.ssn.newlySsn=false;
