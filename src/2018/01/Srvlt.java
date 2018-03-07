@@ -15,7 +15,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import dev201801.TL.Json;
 
-public class Srvlt extends javax.servlet.http.HttpServlet {
+public class Srvlt extends HttpServlet {
 
 /**
  * Created by Vaio-PC on 2/23/2018.
@@ -37,18 +37,33 @@ static void staticInit(){
 static{staticInit();}
 
  /**clientOutput
- * in Stor-table the main app-entery has key="app",
- * and in this entry there is a javaObjectStream of a Map
- * and in this map there are the keys: serverFiles,clientFiles,dbts
- * with clientFiles is associated a List, having maps, each map
- * may have key "content" text , and , the map may have key "include" list
+ * its assumed Stor page has val a List,
+  * the list has string entries,
+  * the entries are key references to other Stor entries k,
+  * the other entries k are output to the servlet-response,
+  * if any of the other entries k have typ=serverSideJs,
+  * then the val is assumed to be a rhino function,
+  * the function is called , and the return value of
+  * the function is outputted to the servlet-response
  * */
- @HttpMethod public void
- get( @HttpMethod(prmLoadByUrl = true)Stor page){
+ @HttpMethod(useClassName = false,usrLoginNeeded = false) public Object
+ get( @HttpMethod(prmLoadByUrl = true)Stor page,TL tl){
+	Perm p=Perm.loadBy( page.app,page.key, tl==null
+		||tl.usr==null||tl.usr.key==null?"":tl.usr.key);
+	if(p!=null&&p.has( Perm.Act.get )){
+		for(Object ko:(List)page.val)try{
+			Stor k=Stor.loadBy( page.app,ko.toString() );
+			if(k!=null && k.perm( Perm.Act.get )!=null){
+				if(k.typ==Stor.ContentType.serverSideJs
+					&& k.perm( Perm.Act.call )!=null)
+					tl.o(Stor.call( page.app,k.key,null,tl ));
+				else
+					tl.o(k.val);
+		}}catch ( Exception ex){tl.error( ex,SrvltName+".get" );}
+		return tl.h.r( "responseDone",true );
+	}return null;}
 
-}
-
- @HttpMethod public Stor
+ @HttpMethod(usrLoginNeeded = false) public Stor
  login( @HttpMethod(prmLoadByUrl = true)Stor j
 	, @HttpMethod(prmName = "pw")String pw, TL tl){
 	if(j!=null&&j.typ==Stor.ContentType.usr&&j.val instanceof Map )
@@ -108,9 +123,13 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 			,"varchar(255) NOT NULL DEFAULT 'home' "//key
 			,"enum('txt','json','key','num','real','date','bytes','serverSideJs','usr','javaObjectStream') NOT NULL DEFAULT 'txt' "//typ
 			,"blob"//val
-			,"timestamp onupdate current_timestamp default current_timestamp"//logTime
+			,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
 			,"timestamp"//lastModified
-			),Util.lst("unique(`app`,`key`)")
+			),Util.lst("unique(`app`,`key`)","key(`app`,`logTime`)","key(`app`,`lastModified`)")
+			,Util.lst(
+				Util.lst("app","keysList","json",Util.mapCreate(),tl.now,tl.now)
+				,Util.lst("app","moh","usr"
+				,Util.mapCreate( "un","moh","pw",Util.md5( "m" )),tl.now,tl.now))
 		);//val
 			/*
 			CREATE TABLE `Stor` (
@@ -143,8 +162,6 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 		String app=url.substring(0,i),key=url.substring(i+1);
 		Stor j=loadBy( app,key );
 		return j;}
-
-	//Perm perm(TL tl){Perm p=Perm.loadBy(app,key,tl.usr==null?null:tl.usr.key);return p;}
 
 	Perm perm(TL tl,Perm.Act a)throws Perm.Violation{
 		Perm p=Perm.loadBy(app,key,tl.usr==null?null:tl.usr.key);
@@ -408,14 +425,11 @@ public static class Perm extends DB.Tbl<String> {
 		for(Act i:p)s.add(i);
 		return s;}
 
-	public static Set<Act>s(Set<Act>s,String...p){
-		return sa(p);}
+	public static Set<Act>s(Set<Act>s,String...p){ return sa(p);}
 
-	public static Set<Act>s(String...p){
-		return sa(p);}
+	public static Set<Act>s(String...p){ return sa(p);}
 
-	public static Set<Act>sa(String[]p){
-		return sa(new HashSet(),p);}
+	public static Set<Act>sa(String[]p){ return sa(new HashSet(),p);}
 
 	public static Set<Act>sa(Set<Act>s,String[]p){
 		if(s==null)s=new HashSet();
@@ -484,17 +498,22 @@ public static class Perm extends DB.Tbl<String> {
 			acts.append('\'').append(i.toString()).append('\'');
 		}acts.append(')');
 		return Util.lst(Util.lst(
-			"varchar(255) NOT NULL DEFAULT 'home' "//app \u1F3E0 ??
-			,"varchar(255) NOT NULL DEFAULT 'home' "//key
-			,"varchar(255) NOT NULL DEFAULT 'home' "//usr
-			,acts.toString()//act
-			,"timestamp onupdate current_timestamp default current_timestamp"//logTime
-			,"timestamp"//lastModified
-			),Util.lst("unique(`app`,`key`)",
-			"key(`lastModified`,`logTime`)" ,
-			"key(`usr`,`app`)",
-			"key(`logTime`,`lastModified`)")
-		);//val
+				"varchar(255) NOT NULL DEFAULT 'home' "//app \u1F3E0 ??
+				,"varchar(255) NOT NULL DEFAULT 'home' "//key
+				,"varchar(255) NOT NULL DEFAULT 'home' "//usr
+				,acts.toString()//act
+				,"timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
+				,"timestamp"//lastModified
+			),Util.lst("unique(`app`,`key`,`usr`)",
+				"key(`app`,`logTime`)" ,
+				"key(`app`,`lastModified`)",
+				"key(`usr`,`app`)",
+				"key(`lastModified`,`logTime`)" ,
+				"key(`logTime`,`lastModified`)")
+			,Util.lst(
+				Util.lst("app","keysList","moh",Act.values(),tl.now,tl.now),
+				Util.lst("app","moh","moh",Act.values(),tl.now,tl.now)
+			) );
 		/*CREATE TABLE `Perm` (
 			`app` varchar(255) NOT NULL DEFAULT 'home',
 			`key` varchar(255) NOT NULL DEFAULT 'home',
@@ -599,24 +618,30 @@ public static class Perm extends DB.Tbl<String> {
 		p.stor().perm(Act.permDelete);
 		p.delete();return true;}
 
-	@Override DB.Tbl v(Field p,Object v){
-		if(p.getName().equals( C.act.name() ))
+	@Override DB.Tbl v(Field f,Object v){
+		if(f.getName().equals( C.act.name() ))
 		{if(v==null)act=null;else{
 			if(act==null)act=new HashSet<>(  );
 			else act.clear();
 			if(v instanceof Collection) //act.addAll( (Collection)v );
-				for(Object o:(Collection)v)
+			{for(Object o:(Collection)v)
 					if(o instanceof Act)
 						act.add( (Act)o );
 					else if(o!=null)
-						act.add(Act.a( o.toString() ));
+						act.add(Act.a( o.toString() ));}
 			else if(v instanceof String[])
 				for(String s:(String[])v)
 					act.add( Act.a( s ));
+			else if(v instanceof Object[])
+			{	for(Object o:(Object[])v)
+					if(o instanceof Act)
+						act.add( (Act)o );
+					else if(o!=null)
+						act.add(Act.a( o.toString() ));}
 			else //if(v instanceof String)
 				for(String s:v.toString().split( "," ))
 					act.add( Act.a( s ));
-		} }else super.v( p,v );
+		} }else super.v( f,v );
 		return this;}
 }//class Perm
 
@@ -872,8 +897,8 @@ public static final String TlName=Srvlt.packageName+".TL";
 		 HttpSession ss the session to get/set the attribute
 		 HttpServletRequest rq the http-request to get the parameter from.
 		 @return variable value.*/
-		public Object var(String pn)
-		{HttpSession ss=getSession();
+		public Object var(String pn){
+		HttpSession ss=getSession();
 			Object r=null;try{Object sVal=ss.getAttribute(pn);String reqv=req(pn);
 			if(reqv!=null&&!reqv.equals(sVal)){ss.setAttribute(pn,r=reqv);//logo(TlName,".h.var(",pn,")reqVal:sesssion.set=",r);
 			}
@@ -1159,9 +1184,9 @@ public static class Util{//utility methods
 
 	public static String md5(String s){
 		if(s!=null)try{java.security.MessageDigest m=
-			               java.security.MessageDigest.getInstance("MD5");
+			java.security.MessageDigest.getInstance("MD5");
 			//m.update(s.getBytes());
-			String r=new String(m.digest(s.getBytes()));
+			String r=new String(m.digest(s.getBytes()),"UTF-8");
 			return r;
 		}catch(Exception x){//changed 2016.06.27 18:28
 			TL.tl().error(x, SrvltName,".Util.md5(String s):",s);}
@@ -1549,8 +1574,7 @@ public static class DB {
 				v(f,p[++i]);
 			return this;}
 
-		public Map asMap(){
-			return asMap(null);}
+		public Map asMap(){ return asMap(null);}
 
 		public Map asMap(Map r){
 			CI[]a=columns();//Field[]a=fields();
