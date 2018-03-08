@@ -701,7 +701,7 @@ public @interface HttpMethod {
 			} else if ( pp != null && pp.prmLoadByUrl() ){
 				Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
 					m=prmClss.getMethod( "prmLoadByUrl", ca );
-				args[ i ] = m==null?null:m.invoke( tl, tl.h.req.getRequestURI() );
+				args[ i ] = m==null?null:m.invoke( prmClss,tl, tl.h.req.getRequestURI() );
 			}else if(DB.Tbl.class.isAssignableFrom(prmClss))
 			{DB.Tbl f=(DB.Tbl)prmClss.newInstance();args[i]=f;
 				if(pp!=null && pp.prmBody())
@@ -716,7 +716,7 @@ public @interface HttpMethod {
 				args[i]=prmClss.isAssignableFrom( String.class )
 					?readString( tl.h.req.getReader() )
 					:tl.bodyData;
-			else
+			else//refId:9473400 , www.acibillpay.com , tel:7164187187
 				args[i]=o=TL.class.equals(prmClss)?tl//:Map.class.isAssignableFrom(c) &&(nm.indexOf("p")!=-1) &&(nm.indexOf("r")!=-1) &&(nm.indexOf("m")!=-1)?tl.json
 					:tl.h.req(nm,prmClss);
 		}catch(Exception ex){tl.error(ex,SrvltName,".run:arg:i=",i);}
