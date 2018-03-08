@@ -91,7 +91,7 @@ public boolean logout( @HttpMethod(prmUrlPart = true)String app
  *pk is app+key
  */
 public static class Stor extends DB.Tbl</**primary key type*/String> {
-	public static final String dbtName="Stor";
+	public static final String dbtName="Stor",KL="KeysList";
 	@Override public String getName(){return dbtName;}
 	@Override public int pkcn(){return 2;}
 	@Override public CI pkc(int i){return i==0?C.app:C.key;}
@@ -103,7 +103,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 	@Override public String[]pkv(String[]v){app=v[0];key=v[1];return v;}
 	@Override public String[]pkvals(){String[]a={app,key};return a;}
 	public Stor(){}
-	public Stor(String appName){this(appName,"keysList");}
+	public Stor(String appName){this(appName,KL);}
 	public Stor(String appName,String key){app=appName;this.key=key;}
 	public Stor(String appName,String key,ContentType c,Object v){this(appName,key);typ=c;val=v;}
 	@Override public Object[]wherePK(){
@@ -127,7 +127,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 			,"timestamp"//lastModified
 			),Util.lst("unique(`app`,`key`)","key(`app`,`logTime`)","key(`app`,`lastModified`)")
 			,Util.lst(
-				Util.lst("app","keysList","json",Util.mapCreate(),tl.now,tl.now)
+				Util.lst("app",KL,"json",Util.mapCreate(),tl.now,tl.now)
 				,Util.lst("app","moh","usr"
 				,Util.mapCreate( "un","moh","pw",Util.md5( "m" )),tl.now,tl.now))
 		);//val
@@ -313,7 +313,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 	eval( @HttpMethod(prmUrlPart = true)String appName,
 		@HttpMethod(prmBody = true)String src,
 		TL tl) throws Exception{// javax.script.ScriptException
-		Stor j=loadBy(appName,"keysList");
+		Stor j=loadBy(appName,KL);
 		j.perm(Perm.Act.eval);
 		javax.script.ScriptEngine e=eng(appName,true,tl);
 		e.put( "src",src);
@@ -384,7 +384,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
  */
 public static class Perm extends DB.Tbl<String> {
 	public Perm(){}
-	public Perm(String ap){this(ap,"keysList",TL.tl().usr.key,(Act[])null);}
+	public Perm(String ap){this(ap,Stor.KL,TL.tl().usr.key,(Act[])null);}
 	public Perm(String app,String key,String usr,Set<Act>p){this(app,key,usr,(Act[])null);
 		if(p!=null){act=new HashSet<>(  );
 			act.addAll( p );}}
@@ -511,7 +511,7 @@ public static class Perm extends DB.Tbl<String> {
 				"key(`lastModified`,`logTime`)" ,
 				"key(`logTime`,`lastModified`)")
 			,Util.lst(
-				Util.lst("app","keysList","moh",Act.values(),tl.now,tl.now),
+				Util.lst("app",Stor.KL,"moh",Act.values(),tl.now,tl.now),
 				Util.lst("app","moh","moh",Act.values(),tl.now,tl.now)
 			) );
 		/*CREATE TABLE `Perm` (
@@ -587,7 +587,7 @@ public static class Perm extends DB.Tbl<String> {
 
 	@HttpMethod static public DB.Tbl
 	create(@HttpMethod(prmBody = true)Perm p)throws Exception {
-		Perm a=loadBy( p.app,"keysList",p.usr  );//new Perm(p.app);a.load();
+		Perm a=loadBy( p.app,Stor.KL,p.usr  );//new Perm(p.app);a.load();
 		if(a==null)return a;
 		a.stor().perm(Act.permCreate);
 		a=loadBy( p.app,p.key,p.usr );
@@ -685,22 +685,24 @@ public @interface HttpMethod {
 		Annotation[][]prmsAnno=op.getParameterAnnotations();
 		int n=prmsAnno==null?0:prmsAnno.length,i=-1,urlIndx=UrlPrefix.length();
 		Object[]args=new Object[n];
-		for(Annotation[]t:prmsAnno)try{
-			HttpMethod pp=t.length>0&&t[0] instanceof HttpMethod ?(HttpMethod )t[0]:null;
-			Class prmClss=prmTypes[++i];
-			String nm=pp!=null?pp.prmName():"arg"+i;//t.getName();
-			Object o=null;
-			if(pp!=null && pp.prmUrlPart()) {
-				String u=tl.h.req.getRequestURI();
-				int j=u.indexOf('/',urlIndx);
-				args[i] =u.indexOf(urlIndx,j==-1?u.length():j);
-				urlIndx=j+1;
-			}else if(pp!=null && pp.prmUrlRemaining()) {
-				String u=tl.h.req.getRequestURI();
-				args[i] =u.indexOf(urlIndx+1);
-			}else if(pp!=null && pp.prmLoadByUrl())
-				args[i]=cl.getMethod( "prmLoadByUrl",ca ).invoke( tl,tl.h.req.getRequestURI() );
-			else if(DB.Tbl.class.isAssignableFrom(prmClss))
+		for(Annotation[]t:prmsAnno)try {
+			HttpMethod pp = t.length > 0 && t[ 0 ] instanceof HttpMethod ? ( HttpMethod ) t[ 0 ] : null;
+			Class prmClss = prmTypes[ ++i ];
+			String nm = pp != null ? pp.prmName() : "arg" + i;//t.getName();
+			Object o = null;
+			if ( pp != null && pp.prmUrlPart() ) {
+				String u = tl.h.req.getRequestURI();
+				int j = u.indexOf( '/', urlIndx );
+				args[ i ] = u.indexOf( urlIndx, j == -1 ? u.length() : j );
+				urlIndx = j + 1;
+			} else if ( pp != null && pp.prmUrlRemaining() ) {
+				String u = tl.h.req.getRequestURI();
+				args[ i ] = u.indexOf( urlIndx + 1 );
+			} else if ( pp != null && pp.prmLoadByUrl() ){
+				Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
+					m=prmClss.getMethod( "prmLoadByUrl", ca );
+				args[ i ] = m==null?null:m.invoke( tl, tl.h.req.getRequestURI() );
+			}else if(DB.Tbl.class.isAssignableFrom(prmClss))
 			{DB.Tbl f=(DB.Tbl)prmClss.newInstance();args[i]=f;
 				if(pp!=null && pp.prmBody())
 					f.fromMap(tl.json);
