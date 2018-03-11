@@ -151,7 +151,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 			*/
 	}
 
-	static{registered.add(Stor.class);}
+	static{if(!registered.contains(Stor.class))registered.add(Stor.class);}
 
 	public static Stor loadBy(String app,String key){
 		Stor j=(Stor)loadWhere(Stor.class,where( C.app,app,C.key,key ));
@@ -331,7 +331,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 					val =rs.getLong( ++c );break;
 				case real:
 					val =rs.getDouble( ++c );break;
-				case javaObjectStream:java.io.ObjectInputStream p=
+				case javaObjectStream:ObjectInputStream p=
 					new ObjectInputStream( rs.getBinaryStream( ++c ) );
 					val =p.readObject();break;
 				case usr:case json: val =Json.Prsr.parseItem(rs.getCharacterStream( ++c ) );break;
@@ -533,7 +533,7 @@ public static class Perm extends DB.Tbl<String> {
 			??  lock Unicode code point: U+1F512
 			??  open lock Unicode code point: U+1F513*/}
 
-	static{registered.add(Perm.class);}
+	static{if(!DB.Tbl.registered.contains(Perm.class))registered.add(Perm.class);}
 
 	//List<String>actsAsList(){return addActs2List(new LinkedList<String>());}
 
@@ -644,12 +644,6 @@ public static class Perm extends DB.Tbl<String> {
 		} }else super.v( f,v );
 		return this;}
 }//class Perm
-
-
-public static void debugService( HttpServletRequest request,HttpServletResponse response)throws IOException{
-	Srvlt s=new Srvlt();
-	s.service(request,response);
-}
 
 /** annotation to designate a java method as an ajax/xhr entry point of execution*/
 @Retention(RetentionPolicy.RUNTIME)
@@ -1828,8 +1822,8 @@ public static class DB {
 
 		/**loads one row based on the where clause */
 		Tbl loadWhere(Object[]where){
-			try{Object[]a=DB.q1row(sql(cols(Co.all),where),where);
-				vals(a);}
+			try{load(DB.R( sql(cols(Co.all),where),where ));//Object[]a=DB.q1row(sql(cols(Co.all),where),where);vals(a);
+				}
 			catch(Exception x){TL.tl().error(x,SrvltName,".DB.Tbl(",this,").loadWhere(",where,")");}
 			return this;}//loadBy
 
