@@ -998,7 +998,8 @@ public static void main(String[]args)throws Exception{
 		,{"Stor.store"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
 		,{"Stor.listKeys"	,"app/keysList"	,"{}"				}//prmUrlPart appName
 		,{"Stor.getKeys"	,"app/keysList"	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
-		,{"Stor.get"		,"app/apps"		,"{}"				}//prmLoadByUrl Stor
+		//,{"Stor.get"		,"app/apps"		,"{}"				}//prmLoadByUrl Stor
+		,{"get"     		,"app/apps"		,"{}"				}//prmLoadByUrl Stor
 		,{"Stor.call"		,"app/app"		,""					}//prmUrlPart app, prmUrlPart func, prmBody List args
 		,{"Stor.eval"		,"app"			,"{src:'5+7'}"		}//prmUrlPart app , prmBody String src
 		,{"Stor.poll"		,"app/app"		,"5"				}//prmUrlPart appName, prmBody long
@@ -1009,11 +1010,14 @@ public static void main(String[]args)throws Exception{
 		,{"Perm.addAct"		,"/app/usr/key","{}"}//body Perm
 		,{"Perm.remAct"		,"/app/usr/key","{}"}//body Perm
 		,{"Perm.delete"		,"/app/usr/key","{}"}//body Perm
+		,{"Srvlt.logout"	,"app/moh" 		,"{pw:'m'}"			}//json params
 	};
-	//String sMd5=dev201801.Srvlt.Util.md5( "m" );
+
+	dev201801.Srvlt x=new dev201801.Srvlt();
+
 	for(String[]p:prms){
 		s.pc.q.init(p);
-		dev201801.Srvlt.debugService( s.pc.q,s.pc.p );s.pc.q.ssn.newlySsn=false;
+		x.service( s.pc.q,s.pc.p );s.pc.q.ssn.newlySsn=false;
 	}}
 
 }//class Dbg
