@@ -46,7 +46,7 @@ static{staticInit();}
  * the function is called , and the return value of
  * the function is outputted to the servlet-response
  * */
-@HttpMethod(useClassName = false,usrLoginNeeded = false) public Object
+@HttpMethod(useClassName = false,usrLoginNeeded = false) public static Object
 get( @HttpMethod(prmLoadByUrl = true)Stor page,TL tl){
 	Perm p=Perm.loadBy( page.app,page.key, tl==null
 	||tl.usr==null||tl.usr.key==null?"":tl.usr.key);
@@ -65,22 +65,31 @@ get( @HttpMethod(prmLoadByUrl = true)Stor page,TL tl){
 		return tl.h.r( "responseDone",true );
 	}return null;}
 
-@HttpMethod(usrLoginNeeded = false) public Stor
+	//need to do a forgot password recovery method
+@HttpMethod(usrLoginNeeded = false) public static Stor
 login(@HttpMethod(prmLoadByUrl = true)Stor j
 	 ,@HttpMethod(prmName = "pw")String pw, TL tl){
 	if(j!=null&&j.typ==Stor.ContentType.usr&&j.val instanceof Map )
 	{Map m=(Map)j.val;Object o=m.get("pw");
 		if(pw!=null&&o instanceof String)
-		{o=Util.md5( (String)o );
-			if(pw.equals( o )){
+		{String p=Util.b64d( pw );
+			p=Util.md5( p );
+			if(p.equals( o )){
 				tl.h.s("usr",tl.usr=j);
 				return j;
-			}}}
+			}else if (tl.h.var( "recovery",false ) && "moh".equals( j.key)){
+				tl.h.s("usr",tl.usr=j);
+				m.put( "pw",p );
+				try {j.save();} catch ( Exception ex ) {
+					tl.error( ex );
+				}
+				return j;
+			}
+		}}
 	return null; }
 
-@HttpMethod
-public boolean logout( @HttpMethod(prmUrlPart = true)String app
-	                     , @HttpMethod(prmUrlRemaining = true)String usr, TL tl){
+@HttpMethod public static boolean
+logout( @HttpMethod(prmUrlPart = true)String app, @HttpMethod(prmUrlRemaining = true)String usr, TL tl){
 	if(tl!=null&&tl.usr!=null&&tl.usr.key.equals( usr )){
 		tl.h.s("usr",tl.usr=null);
 		tl.h.getSession().setMaxInactiveInterval( 1 );
@@ -334,9 +343,9 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 				case real:
 					val =rs.getDouble( ++c );break;
 				case javaObjectStream:ObjectInputStream p=
-					                      new ObjectInputStream( rs.getBinaryStream( ++c ) );
+					new ObjectInputStream( rs.getBinaryStream( ++c ) );
 					val =p.readObject();break;
-				case usr:case json: val =Json.Prsr.parseItem(rs.getCharacterStream( ++c ) );break;
+				case usr:case json: val =Json.Prsr.parse(rs.getCharacterStream( ++c ) );break;//Item
 				default://case txt: case key:
 					val =rs.getString( ++c );break;
 			}
@@ -684,8 +693,8 @@ public @interface HttpMethod {
 
 @Override public void service(HttpServletRequest request,HttpServletResponse response){
 	TL tl=null;Object retVal=null;try
-	{tl=TL.Enter(request,response);//,session,out);
-		tl.h.r("contentType","text/json");//tl.logOut=tl.var("logOut",false);
+	{tl=TL.Enter(request,response);
+		tl.h.r("contentType","text/json");
 		String hm=tl.h.req.getMethod();
 		Method op=mth.get(hm);
 		if(op==null)
@@ -698,7 +707,7 @@ public @interface HttpMethod {
 			op=null;
 		if(op!=null){
 			Class[]prmTypes=op.getParameterTypes();
-			Class cl=op.getDeclaringClass();Class[]ca={TL.class,String.class};
+			Class cl=op.getDeclaringClass();
 			Annotation[][]prmsAnno=op.getParameterAnnotations();
 			int n=prmsAnno==null?0:prmsAnno.length,i=-1,urlIndx=UrlPrefix.length();
 			Object[]args=new Object[n];
@@ -716,6 +725,7 @@ public @interface HttpMethod {
 					String u = tl.h.req.getRequestURI();
 					args[ i ] = u.indexOf( urlIndx + 1 );
 				} else if ( pp != null && pp.prmLoadByUrl() ){
+					Class[]ca={TL.class,String.class};
 					Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
 						m=prmClss.getMethod( "prmLoadByUrl", ca );
 					args[ i ] = m==null?null:m.invoke( prmClss,tl, tl.h.req.getRequestURI() );
@@ -731,13 +741,13 @@ public @interface HttpMethod {
 						else f.readReq("");
 					}}else if(pp!=null && pp.prmBody())
 					args[i]=prmClss.isAssignableFrom( String.class )
-						        ?readString( tl.h.req.getReader() )
-						        :tl.bodyData;
+						?readString( tl.h.req.getReader() )
+						:tl.bodyData;
 				else//refId:9473400 , www.acibillpay.com , tel:7164187187
-					args[i]=o=TL.class.equals(prmClss)?tl//:Map.class.isAssignableFrom(c) &&(nm.indexOf("p")!=-1) &&(nm.indexOf("r")!=-1) &&(nm.indexOf("m")!=-1)?tl.json
-						          :tl.h.req(nm,prmClss);
+					args[i]=o=TL.class.equals(prmClss)?tl
+						:tl.h.req(nm,prmClss);
 			}catch(Exception ex){
-				tl.error(ex,SrvltName,".run:arg:i=",i);
+				tl.error(ex,SrvltName,".service:arg:i=",i);
 			}
 			retVal=n==0?op.invoke(cl)
 				:n==1?op.invoke(cl,args[0])
@@ -1230,6 +1240,26 @@ public static class Util{//utility methods
 			return r;
 		}catch(Exception x){//changed 2016.06.27 18:28
 			TL.tl().error(x, SrvltName,".Util.md5(String s):",s);
+		}
+		return "";}
+
+	public static String b64d(String s){
+		if(s!=null)try{
+			byte[]m=java.util.Base64.getDecoder().decode( s );
+			String r= new String(m,"UTF-8");
+			return r;
+		}catch(Exception x){//changed 2016.06.27 18:28
+			TL.tl().error(x, SrvltName,".Util.b64d(String s):",s);
+		}
+		return "";}
+
+	public static String b64e(String s){
+		if(s!=null)try{
+			byte[]m=s.getBytes();
+			String r=java.util.Base64.getEncoder().encodeToString( m );
+			return r;
+		}catch(Exception x){//changed 2016.06.27 18:28
+			TL.tl().error(x, SrvltName,".Util.b64e(String s):",s);
 		}
 		return "";}
 
