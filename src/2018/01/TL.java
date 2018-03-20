@@ -140,6 +140,26 @@ public static class App {
 	 * */
 	@Op public void generateJsp(@Op(prmName = "app")String app,@Op(prmName = "url")String url){}
 
+
+	/*@Op public Object jsOp(@Op(prmName = "app")String appName
+		,@Op(prmName = "key",prmInstance = true)JsonStorage app
+		,@Op(prmName = "method")String m,TL tl) throws javax.script.ScriptException
+	{	javax.script.ScriptEngineManager man=(javax.script.ScriptEngineManager)tl.h.a( "ScriptEngineManager" );
+		if(man==null)
+			tl.h.a( "ScriptEngineManager",man=new javax.script.ScriptEngineManager() );
+		String engName="ScriptEngine.JavaScript."+app.app+"."+app.key;
+		javax.script.ScriptEngine engine =(javax.script.ScriptEngine)tl.h.s( engName );
+		if(engine==null) {
+			tl.h.s( engName, engine = man.getEngineByName( "JavaScript" ) );
+			engine.put( "tl",tl );
+			Object o=engine.eval( app.val.toString() );
+			engine.put( "JsonStorage_app",o);
+		}else
+			engine.put( "tl",tl);
+		engine.put(  "methodName",m);
+		return engine.eval( "JsonStorage_app[methodName](tl.json,tl)" );
+	}*/
+
 	/**
 	 *	db-tbl ORM wrapper
 	 */
@@ -312,8 +332,7 @@ public static class App {
 					case javaObjectStream:java.io.ObjectInputStream p=
 						                      new ObjectInputStream( rs.getBinaryStream( ++c ) );
 						val =p.readObject();break;
-					case json: val =Json.Prsr.parseItem(rs
-						                                    .getCharacterStream( ++c ) );break;
+					case json: val =Json.Prsr.parse(rs.getCharacterStream( ++c ) );break;//Item
 					default://case txt: case key:
 						val =rs.getString( ++c );break;
 				}
@@ -2535,13 +2554,13 @@ public static class Json{
 		enum Literal{Undefined,Null};//,False,True
 
 		public static Object parse(String p)throws Exception{
-			Prsr j=new Prsr();j.rdr=new java.io.StringReader(p);return j.parse();}
+			return parse(new java.io.StringReader(p));}
 
 		public static Object parse(HttpServletRequest p)throws Exception{
-			Prsr j=new Prsr();j.rdr=p.getReader();j.nxt(j.c=j.read());return j.parse();}
+			return parse(p.getReader());}
 
-		public static Object parseItem(Reader p)throws Exception{
-			Prsr j=new Prsr();j.rdr=p;return j.parseItem();}
+		public static Object parse(Reader p)throws Exception{
+			Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());return j.parse();}//public static Object parseItem(Reader p)throws Exception{ Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());return j.parseItem();}
 
 		/**skip Redundent WhiteSpace*/void skipRWS(){
 			boolean b=Character.isWhitespace(c);
@@ -2570,8 +2589,7 @@ public static class Json{
 					r=parseItem();
 					l.add(r);
 				}r=l;}
-			return r;
-		}
+			return r;}
 
 		public Object parseItem()throws Exception{
 			Object r=null;int i;skipWhiteSpace();switch(c)
