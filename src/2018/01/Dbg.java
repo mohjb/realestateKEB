@@ -993,7 +993,7 @@ public static void main(String[]args)throws Exception{
 				where typ is optional depending on method
 			, 3rdString is body ,and most methods
 				take the body as JsonStorage.val*/
-		 {"Srvlt.login"		,"app/moh" 		,"{pw:'m'}"			}//json params
+		 {"Srvlt.login"		,"app/moh" 		,"{pw:'"+dev201801.Srvlt.Util.b64e("m")+"',recover:true}"}//json params
 		,{"Stor.listApps"	,"app/keysList" ,""					}//no params
 		,{"Stor.store"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
 		,{"Stor.listKeys"	,"app/keysList"	,"{}"				}//prmUrlPart appName
