@@ -65,10 +65,10 @@ get( @HttpMethod(prmLoadByUrl = true)Stor page,TL tl){
 		return tl.h.r( "responseDone",true );
 	}return null;}
 
-	//need to do a forgot password recovery method
+//need to do a forgot password recovery method
 @HttpMethod(usrLoginNeeded = false) public static Stor
 login(@HttpMethod(prmLoadByUrl = true)Stor j
-	 ,@HttpMethod(prmName = "pw")String pw, TL tl){
+	     ,@HttpMethod(prmName = "pw")String pw, TL tl){
 	if(j!=null&&j.typ==Stor.ContentType.usr&&j.val instanceof Map )
 	{Map m=(Map)j.val;Object o=m.get("pw");
 		if(pw!=null&&o instanceof String)
@@ -302,7 +302,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 			for(DB.Tbl t:j.query( where(C.app,appName,C.typ	,ContentType.serverSideJs.toString()) ))
 				try{jm.put( j.key,e.eval( j.val.toString() ));}catch ( Exception ex ){
 					jm.put( j.key,Util.mapCreate("sourceCode", j.val,"eval_Exception",ex ) );
-			}
+				}
 			e.put( "JsonStorageApp",jm);//e.put( "JsonStorageApp.JsonStorages",jl);
 		}else if(e!=null)
 			e.put( "tl",tl);
@@ -343,7 +343,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 				case real:
 					val =rs.getDouble( ++c );break;
 				case javaObjectStream:ObjectInputStream p=
-					new ObjectInputStream( rs.getBinaryStream( ++c ) );
+					                      new ObjectInputStream( rs.getBinaryStream( ++c ) );
 					val =p.readObject();break;
 				case usr:case json: val =Json.Prsr.parse(rs.getCharacterStream( ++c ) );break;//Item
 				default://case txt: case key:
@@ -741,11 +741,11 @@ public @interface HttpMethod {
 						else f.readReq("");
 					}}else if(pp!=null && pp.prmBody())
 					args[i]=prmClss.isAssignableFrom( String.class )
-						?readString( tl.h.req.getReader() )
-						:tl.bodyData;
+						        ?readString( tl.h.req.getReader() )
+						        :tl.bodyData;
 				else//refId:9473400 , www.acibillpay.com , tel:7164187187
 					args[i]=o=TL.class.equals(prmClss)?tl
-						:tl.h.req(nm,prmClss);
+						          :tl.h.req(nm,prmClss);
 			}catch(Exception ex){
 				tl.error(ex,SrvltName,".service:arg:i=",i);
 			}
@@ -1038,8 +1038,8 @@ public static class TL{
 					                        w(h.comments[0]//"\n/*"
 					                        ).w(s).w(h.comments[1]//"*/\n"
 				);}}catch(Exception ex){
-					ex.printStackTrace();
-		}return s;}
+				ex.printStackTrace();
+			}return s;}
 	/**calls the servlet log method*/
 	public void log(Object...s){logA(s);}
 	public void logA(Object[]s){try{
@@ -1074,10 +1074,10 @@ public static class TL{
 }//class TL
 
 enum context{ROOT(
-	                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-	                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-	                 ,"/public_html/i1io/"
-	                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	,"/public_html/i1io/"
+	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -1234,9 +1234,10 @@ public static class Util{//utility methods
 
 	public static String md5(String s){
 		if(s!=null)try{java.security.MessageDigest m=
-			               java.security.MessageDigest.getInstance("MD5");
+			java.security.MessageDigest.getInstance("MD5");
 			//m.update(s.getBytes());
-			String r=new String(m.digest(s.getBytes()),"UTF-8");
+			String r=java.util.Base64.getEncoder().
+				encodeToString(m.digest(s.getBytes()));
 			return r;
 		}catch(Exception x){//changed 2016.06.27 18:28
 			TL.tl().error(x, SrvltName,".Util.md5(String s):",s);
@@ -1301,8 +1302,8 @@ public static class DB {
 							r=(Connection)p[1];
 							if(t.h.logOut)t.log("new "+context.DB.pool.str+":"+p[0]);
 						}catch(Exception e){
-				t.log(SrvltName,".DB.MysqlConnectionPoolDataSource:",idb,",",isr,",",iun,ipw,t.h.logOut?p[2]:"",",",e);
-			}
+							t.log(SrvltName,".DB.MysqlConnectionPoolDataSource:",idb,",",isr,",",iun,ipw,t.h.logOut?p[2]:"",",",e);
+						}
 		}catch(Throwable e){
 			t.error(e,SrvltName,".DB.MysqlConnectionPoolDataSource:throwable:");
 		}//ClassNotFoundException
@@ -1483,7 +1484,7 @@ public static class DB {
 		}finally
 		{close(s,tl);
 			if(tl.h.logOut)try{tl.log(tl.jo().w(SrvltName).w(".DB.Lt:sql=")
-			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+				                          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 			catch(IOException x){
 				tl.error(x,SrvltName,".DB.Lt:",sql);
 			}
@@ -1493,10 +1494,10 @@ public static class DB {
 	public static List<Object> q1colList(String sql,Object...p)throws SQLException
 	{ResultSet s=null;List<Object> r=null;try{s=R(sql,p);r=new LinkedList<Object>();
 		while(s.next())r.add(s.getObject(1));return r;}
-		finally{TL t=TL.tl();close(s,t);if(t.h.logOut)
+	finally{TL t=TL.tl();close(s,t);if(t.h.logOut)
 		try{t.log(t.jo().w(SrvltName).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
-		t.error(x,SrvltName,".DB.q1colList:",sql);
+			          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+			t.error(x,SrvltName,".DB.q1colList:",sql);
 		}}}
 
 	public static <T>List<T> q1colTList(String sql,Class<T>t,Object...p)throws SQLException
@@ -1505,9 +1506,9 @@ public static class DB {
 			s.getObject(1,t));return r;}
 	finally{TL tl=TL.tl();close(s,tl);if(tl.h.logOut)
 		try{tl.log(tl.jo().w(SrvltName).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
-		tl.error(x,SrvltName,".DB.q1colList:",sql);
-	}}}
+			           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+			tl.error(x,SrvltName,".DB.q1colList:",sql);
+		}}}
 
 	public static Object[] q1col(String sql,Object...p)throws SQLException
 	{List<Object> l=q1colList(sql,p);Object r[]=new Object[l.size()];l.toArray(r);l.clear();return r;}
@@ -1826,7 +1827,7 @@ public static class DB {
 					tl.h.a(SrvltName+":db:show tables",o);
 				} catch (SQLException ex) {
 					tl.error(ex, SrvltName+".DB.Tbl.checkTableCreation:check-pt1:",dtn);
-			}
+				}
 			List l=(List)o;
 			try{if(o==null||(!l.contains( dtn )&&!l.contains( dtn.toLowerCase()))){
 				StringBuilder sql= new StringBuilder("CREATE TABLE `").append(dtn).append("` (\n");
