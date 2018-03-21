@@ -102,7 +102,7 @@ logout( @HttpMethod(prmUrlPart = true)String app, @HttpMethod(prmUrlRemaining = 
  *pk is app+key
  */
 public static class Stor extends DB.Tbl</**primary key type*/String> {
-	public static final String dbtName="Stor",KL="KeysList";
+	public static final String dbtName="Stor",KL="KeysList",aps="JsonStorageApp";
 	@Override public String getName(){return dbtName;}
 	@Override public int pkcn(){return 2;}
 	@Override public CI pkc(int i){return i==0?C.app:C.key;}
@@ -182,14 +182,14 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 
 	Perm perm(Perm.Act a)throws Perm.Violation{return perm(TL.tl(),a);}
 
-	@HttpMethod public static List<String>
-	listApps() throws Exception {//Perm p=perm
+	@HttpMethod public static List<String>//listApps
+	head() throws Exception {//Perm p=perm
 		return DB.q1colTList(
 			sql(cols( Co.distinct,C.app ),null,dbtName)
 			,String.class );}
 
-	@HttpMethod public static Map//List<String>
-	listKeys( @HttpMethod(prmUrlPart = true)String appName, TL tl)throws Exception{
+	@HttpMethod public static Map//List<String> // listKeys
+	options( @HttpMethod(prmUrlPart = true)String appName, TL tl)throws Exception{
 		Stor j=new Stor(appName);
 		Map m=Util.mapCreate();
 		for(DB.Tbl t:j.query(j.genSql(Perm.Act.get,null,null).toString()
@@ -202,8 +202,9 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 			n.add(j.key);}
 		return m; }
 
-	@HttpMethod public static List
-	poll( @HttpMethod(prmUrlPart = true)String appName, @HttpMethod(prmBody = true)long logTime, TL tl)throws Exception{
+	@HttpMethod public static List//poll
+	propfind( @HttpMethod(prmUrlPart = true)String appName,
+		@HttpMethod(prmBody = true)long logTime, TL tl)throws Exception{
 		Stor j=new Stor(appName);
 		List l=Util.lst(  );
 		for(DB.Tbl t:j.query(j.genSql(Perm.Act.get,null,logTime).toString()
@@ -239,8 +240,8 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 		Perm p=j.perm(Perm.Act.get);
 		return j;}
 
-	@HttpMethod public static List<Stor>
-	getKeys(@HttpMethod(prmUrlPart = true)String appName,
+	@HttpMethod public static List<Stor>//getKeys
+	connect(@HttpMethod(prmUrlPart = true)String appName,
 	        @HttpMethod(prmBody = true)List<String>keys)throws Perm.Violation{
 		List<Stor>l=new LinkedList<>(  );
 		Stor j=new Stor(appName);//Perm p=j.perm(Perm.Act.getKeys);
@@ -248,45 +249,56 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 			l.add( (Stor ) t );
 		return l;}
 
+	Stor stor(  TL tl,Perm.Act a)throws Exception{
+		Stor j=this;Perm p=(a==Perm.Act.create
+			?(exists( wherePK(),dbtName )
+			?null:new Stor(j.app)):j).perm(tl,a);
+		if(j.typ==ContentType.usr&&j.val instanceof Map){
+			Map m=(Map)j.val;Object o=m.get("pw");
+			if(o instanceof String){o=Util.md5( (String)o );
+				m.put("pw",o);} }
+		j.save();
+		if(j.typ==ContentType.serverSideJs ){
+			javax.script.ScriptEngine e =eng(j.app,false,tl);
+			if(e!=null){
+				Object o=e.eval( j.val.toString() );//engine.put( key ,o);
+				Map jm=(Map)e.get( aps);
+				jm.put( j.key,o );//List jl=(List)e.get( aps+".JsonStorages");jl.add( j );
+			} } return j; }
+
+	@HttpMethod public static Stor//create
+	post( @HttpMethod(prmBody = true)Stor j , TL tl)throws Exception{
+		return j==null?null:j.stor(tl,Perm.Act.create); }
+
+	@HttpMethod public static Stor//set
+	put( @HttpMethod(prmLoadByUrl= true)Stor j ,@HttpMethod(prmBody= true)String v, TL tl)throws Exception{
+		if(j!=null){switch ( j.typ ){
+			case num:j.val=Long.parseLong( v );break;
+			case date:j.val=Util.parseDate( v );break;
+			case real:j.val=Double.parseDouble( v );break;
+			case bytes:j.val=java.util.Base64.getDecoder().decode( v );break;
+			case json:case usr:	j.val=tl.bodyData;break;
+			default:// case txt:case key:case serverSideJs: //case javaObjectStream:
+				j.val=v;}
+		j.stor(tl,Perm.Act.set); }return j;}
+
+	@HttpMethod public static Stor//set
+	patch( @HttpMethod(prmBody = true)Stor j , TL tl)throws Exception{
+		return j==null?null:j.stor(tl,Perm.Act.set); }
+
 	@HttpMethod public static Stor
-	store( @HttpMethod(prmBody = true)Stor j , TL tl)throws Exception{
-		if(j!=null){Perm p=j.perm(tl,Perm.Act.set);
-			if(j.typ==ContentType.usr&&j.val instanceof Map){
-				Map m=(Map)j.val;Object o=m.get("pw");
-				if(o instanceof String){o=Util.md5( (String)o );
-					m.put("pw",o);}
-			}//do md5 of pw
-			j.save();
+	delete( @HttpMethod(prmUrlPart = true)String app ,@HttpMethod(prmUrlRemaining= true)String key , TL tl)throws Exception{
+		Stor j=new Stor( app,key );
+		if(j!=null){
+			j.typ=ContentType.valueOf( DB.q1Str( j.genSql( Perm.Act.delete,null,null ).toString() ,j.wherePK()) );
+			j.perm(tl,Perm.Act.delete);
 			if(j.typ==ContentType.serverSideJs ){
-				javax.script.ScriptEngine e =eng(j.app,false,tl);
-				if(e!=null){
-					Object o=e.eval( j.val.toString() );//engine.put( key ,o);
-					Map jm=(Map)e.get( "JsonStorageApp");
-					jm.put( j.key,o );//List jl=(List)e.get( "JsonStorageApp.JsonStorages");jl.add( j );
-				} } }return j;
-	/*
-	@HttpMethod
-	public static Stor
-	set( @HttpMethod(prmUrlPart = true)String appName
-		, @HttpMethod(prmUrlPart = true)String key
-		, @HttpMethod(prmHeader="typ")ContentType typ
-		, @HttpMethod(prmBody = true)Object val
-		, TL tl)throws Exception
-	{	Stor j=new Stor(appName,key,typ,val);
-		return store(j,tl);}
-	mysql> insert into tst values
-	(1,'a'),(0,'')
-	,(2,'b'),(3,'a,b')
-	,(4,'c'),(5,'a,c'),(6,'b,c'),(7,'a,b,c')
-	,(8,'d'),(9,'a,d'),(10,'b,d'),(11,'b,d,a'),(12,'c,d'),(13,'c,d,a'),(14,'c,d,b'),(15,'a,b,c,d')
-	,(16,'e'),(17,'a,e'),(18,'e,b'),(19,'e,b,a'),(20,'c,e'),(21,'a,c,e'),(22,'b,c,e'),(23,'e,a,b,c')
-	,(24,'d,e'),(25,'a,d,e'),(26,'b,d,e'),(27,'b,d,a,e'),(28,'c,d,e'),(29,'c,d,a,e'),(30,'c,d,b,e'),(31,'a,b,c,d,e')
-	,(32,'f'),(33,'a,f'),(34,'b,f'),(35,'a,b,f'),(36,'c,f'),(37,'a,c,f'),(38,'b,c,f'),(39,'a,b,c,f')
-	,(40,'d,f'),(41,'a,d,f'),(42,'b,d,f'),(43,'b,d,a,f'),(44,'c,d,f'),(45,'c,d,a,f'),(46,'c,d,b,f'),(47,'a,b,c,d,f')
-	,(48,'e,f'),(49,'a,e,f'),(50,'e,f,b'),(51,'e,f,b,a'),(52,'c,e,f'),(53,'a,c,e,f'),(54,'b,c,e,f'),(55,'e,f,a,b,c')
-	,(56,'d,e,f'),(57,'a,d,e,f'),(58,'b,d,e,f'),(59,'b,d,a,e,f'),(60,'c,d,e,f'),(61,'c,d,a,e,f'),(62,'c,d,b,e,f')
-	,(63,'a,b,c,d,e,f')
-	*/}
+			javax.script.ScriptEngine e =eng(j.app,false,tl);
+			if(e!=null){
+				Map jm=(Map)e.get( aps);
+				jm.remove( j.key );	} }
+			j.delete();return j;
+		}return null;}
 
 	static javax.script.ScriptEngine eng(String appName,boolean createIfNotInit,TL tl){
 		String en="ScriptEngine.JavaScript."+appName;
@@ -303,13 +315,13 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 				try{jm.put( j.key,e.eval( j.val.toString() ));}catch ( Exception ex ){
 					jm.put( j.key,Util.mapCreate("sourceCode", j.val,"eval_Exception",ex ) );
 				}
-			e.put( "JsonStorageApp",jm);//e.put( "JsonStorageApp.JsonStorages",jl);
+			e.put( aps,jm);//e.put( aps+".JsonStorages",jl);
 		}else if(e!=null)
 			e.put( "tl",tl);
 		return e; }
 
-	@HttpMethod public static Object
-	call(@HttpMethod(prmUrlPart = true)String appName,
+	@HttpMethod public static Object//call
+	trace(@HttpMethod(prmUrlPart = true)String appName,
 	     @HttpMethod(prmUrlRemaining = true)String m,
 	     @HttpMethod(prmBody = true)List args,
 	     TL tl) throws Exception{// javax.script.ScriptException
@@ -318,10 +330,10 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 		javax.script.ScriptEngine e=eng(appName,true,tl);
 		e.put( "member",m);
 		if(args!=null)e.put(  "args",args);
-		return e.eval( "JsonStorageApp[member]"+(args==null?"":".call(args)") ); }
+		return e.eval( aps+"[member]"+(args==null?"":".call(args)") ); }
 
-	@HttpMethod public static Object
-	eval( @HttpMethod(prmUrlPart = true)String appName,
+	@HttpMethod public static Object//eval
+	propPatch( @HttpMethod(prmUrlPart = true)String appName,
 	      @HttpMethod(prmBody = true)String src,
 	      TL tl) throws Exception{// javax.script.ScriptException
 		Stor j=loadBy(appName,KL);
@@ -485,8 +497,8 @@ public static class Perm extends DB.Tbl<String> {
 	public Stor usr(){return Stor.loadBy(app,usr);}
 
 	/**Actions*/
-	public enum Act{listApps,create,set,get,call,eval//listKeys,getKeys,
-		,permSet,permGet,permlistByUsr,permListByKey,permCreate,permDelete,permAddAct,permRemAct;
+	public enum Act{listApps,create,delete,set,get,call,eval//listKeys,getKeys,
+		,permCreate,permDelete,permSet,permGet,permlistByUsr,permListByKey,permAddAct,permRemAct;
 		public static Act a(String s){Act r=null;try{
 			if(s.indexOf( "'" )!=-1)
 				s=s.trim().replaceAll( "'","" );
@@ -594,7 +606,7 @@ public static class Perm extends DB.Tbl<String> {
 		}}return l;}
 
 	@HttpMethod static public DB.Tbl
-	create(@HttpMethod(prmBody = true)Perm p)throws Exception {
+	post(@HttpMethod(prmBody = true)Perm p)throws Exception {
 		Perm a=loadBy( p.app,Stor.KL,p.usr  );//new Perm(p.app);a.load();
 		if(a==null)return a;
 		a.stor().perm(Act.permCreate);
@@ -602,7 +614,7 @@ public static class Perm extends DB.Tbl<String> {
 		return a!=null?null:p.save();}
 
 	@HttpMethod static public DB.Tbl
-	addAct(@HttpMethod(prmBody = true)Perm p)throws Exception {
+	unlock(@HttpMethod(prmBody = true)Perm p)throws Exception {
 		Perm d=loadBy(p.app,p.key,p.usr);
 		if(d==null)return null;
 		d.stor().perm(Act.permAddAct);
@@ -611,7 +623,7 @@ public static class Perm extends DB.Tbl<String> {
 		return d;}
 
 	@HttpMethod static public DB.Tbl
-	remAct(@HttpMethod(prmBody = true)Perm p)throws Exception {
+	lock(@HttpMethod(prmBody = true)Perm p)throws Exception {
 		p.stor().perm(Act.permRemAct);
 		Perm d=loadBy( p.app,p.key,p.usr );
 		if(d!=null){int n=d.act==null?0:d.act.size();
