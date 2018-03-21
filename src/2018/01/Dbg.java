@@ -994,23 +994,46 @@ public static void main(String[]args)throws Exception{
 			, 3rdString is body ,and most methods
 				take the body as JsonStorage.val*/
 		 {"Srvlt.login"		,"app/moh" 		,"{pw:'"+dev201801.Srvlt.Util.b64e("m")+"',recover:true}"}//json params
-		,{"Stor.listApps"	,"app/keysList" ,""					}//no params
-		,{"Stor.store"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
-		,{"Stor.listKeys"	,"app/keysList"	,"{}"				}//prmUrlPart appName
+		,{"Stor.listApps"	,"app/keysList" ,""		}//no params
+		,{"Stor.create"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
+		,{"Stor.set"		,"app/k1"		,"{app:'app',key:'app',val:'v1'}"}//prmBody Stor
+		,{"Stor.put"		,"app/k1"		,"{app:'app',key:'app',val:'v1'}"}//prmBody Stor
+		,{"Stor.listKeys"	,"app/keysList"	,"{}"	}//prmUrlPart appName
 		,{"Stor.getKeys"	,"app/keysList"	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
-		//,{"Stor.get"		,"app/apps"		,"{}"				}//prmLoadByUrl Stor
-		,{"get"     		,"app/apps"		,"{}"				}//prmLoadByUrl Stor
-		,{"Stor.call"		,"app/app"		,""					}//prmUrlPart app, prmUrlPart func, prmBody List args
-		,{"Stor.eval"		,"app"			,"{src:'5+7'}"		}//prmUrlPart app , prmBody String src
-		,{"Stor.poll"		,"app/app"		,"5"				}//prmUrlPart appName, prmBody long
+		//,{"Stor.get"		,"app/apps"		,"{}"	}//prmLoadByUrl Stor
+		,{"get"     		,"app/app"		,"{}"	}//prmLoadByUrl Stor
+		,{"Stor.call"		,"app/app"		,""		}//prmUrlPart app, prmUrlPart func, prmBody List args
+		,{"Stor.eval"		,"app"			,"{src:'5+7'}"	}//prmUrlPart app , prmBody String src
+		,{"Stor.poll"		,"app/app"		,"5"	}//prmUrlPart appName, prmBody long
+		,{"Stor.erase"		,"app/app"		,"5"	}//prmUrlPart appName, prmBody long
 
-		,{"Perm.byUsr"	 	,"/app/usr/key","{}"}//body Perm
-		,{"Perm.usrsOfKey"	,"/app/usr/key","{}"}//body Perm
-		,{"Perm.create"	    ,"/app/usr/key","{}"}//body Perm
-		,{"Perm.addAct"		,"/app/usr/key","{}"}//body Perm
-		,{"Perm.remAct"		,"/app/usr/key","{}"}//body Perm
-		,{"Perm.delete"		,"/app/usr/key","{}"}//body Perm
-		,{"Srvlt.logout"	,"app/moh" 		,"{pw:'m'}"			}//json params
+		,{"Perm.byUsr"	 	,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.usrsOfKey"	,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.create"	    ,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.addAct"		,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.remAct"		,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.erase"		,"/app/usr/key","{}"    }//body Perm
+
+		//the following are intentional errors
+		,{"Stor.create"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
+		,{"Stor.set"		,"app/k1"		,"{app:'app',key:'app',val:'v1'}"}//prmBody Stor
+		,{"Stor.listKeys"	,"app/keysList"	,"{}"	}//prmUrlPart appName
+		,{"Stor.getKeys"	,"app/keysList"	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
+		//,{"Stor.get"		,"app/apps"		,"{}"	}//prmLoadByUrl Stor
+		,{"get"     		,"app/app"		,"{}"	}//prmLoadByUrl Stor
+		,{"Stor.call"		,"app/app"		,""		}//prmUrlPart app, prmUrlPart func, prmBody List args
+		,{"Stor.eval"		,"app"			,"{src:'5+7'}"	}//prmUrlPart app , prmBody String src
+		,{"Stor.poll"		,"app/app"		,"5"	}//prmUrlPart appName, prmBody long
+		,{"Stor.erase"		,"app/app"		,"5"	}//prmUrlPart appName, prmBody long
+
+		,{"Perm.byUsr"	 	,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.usrsOfKey"	,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.create"	    ,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.addAct"		,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.remAct"		,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.erase"		,"/app/usr/key","{}"    }//body Perm
+
+		,{"Srvlt.logout"	,"app/moh"	,"{}"	    }//json params
 	};
 
 	dev201801.Srvlt x=new dev201801.Srvlt();
