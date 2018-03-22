@@ -993,22 +993,22 @@ public static void main(String[]args)throws Exception{
 				where typ is optional depending on method
 			, 3rdString is body ,and most methods
 				take the body as JsonStorage.val*/
-		 {"Srvlt.login"		,"app/moh" 		,"{pw:'"+dev201801.Srvlt.Util.b64e("m")+"',recover:true}"}//json params
-		,{"Stor.listApps"	,"app/keysList" ,""		}//no params
+		 {"Srvlt.login"		,"app/moh" 		,"{pw:'"+dev201801.Srvlt.Util.b64e("m")+"',recovery:true}"}//json params
+		,{"Stor.listApps"	,"app" ,""		}//no params
 		,{"Stor.create"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
 		,{"Stor.set"		,"app/k1"		,"{app:'app',key:'app',val:'v1'}"}//prmBody Stor
 		,{"Stor.put"		,"app/k1"		,"{app:'app',key:'app',val:'v1'}"}//prmBody Stor
 		,{"Stor.listKeys"	,"app/keysList"	,"{}"	}//prmUrlPart appName
-		,{"Stor.getKeys"	,"app/keysList"	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
+		,{"Stor.getKeys"	,"app"      	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
 		//,{"Stor.get"		,"app/apps"		,"{}"	}//prmLoadByUrl Stor
 		,{"get"     		,"app/app"		,"{}"	}//prmLoadByUrl Stor
 		,{"Stor.call"		,"app/app"		,""		}//prmUrlPart app, prmUrlPart func, prmBody List args
 		,{"Stor.eval"		,"app"			,"{src:'5+7'}"	}//prmUrlPart app , prmBody String src
-		,{"Stor.poll"		,"app/app"		,"5"	}//prmUrlPart appName, prmBody long
-		,{"Stor.erase"		,"app/app"		,"5"	}//prmUrlPart appName, prmBody long
+		,{"Stor.poll"		,"app"  		,"5"	}//prmUrlPart appName, prmBody long
+		,{"Stor.erase"		,"app/app"		,""	}//prmUrlPart appName, prmBody long
 
-		,{"Perm.byUsr"	 	,"/app/usr/key","{}"    }//body Perm
-		,{"Perm.usrsOfKey"	,"/app/usr/key","{}"    }//body Perm
+		,{"Perm.byUsr"	 	,"/app/usr","{}"    }//body Perm
+		,{"Perm.usrsOfKey"	,"/app/key","{}"    }//body Perm
 		,{"Perm.create"	    ,"/app/usr/key","{}"    }//body Perm
 		,{"Perm.addAct"		,"/app/usr/key","{}"    }//body Perm
 		,{"Perm.remAct"		,"/app/usr/key","{}"    }//body Perm
@@ -1016,15 +1016,14 @@ public static void main(String[]args)throws Exception{
 
 		//the following are intentional errors
 		,{"Stor.create"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
-		,{"Stor.set"		,"app/k1"		,"{app:'app',key:'app',val:'v1'}"}//prmBody Stor
-		,{"Stor.listKeys"	,"app/keysList"	,"{}"	}//prmUrlPart appName
-		,{"Stor.getKeys"	,"app/keysList"	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
-		//,{"Stor.get"		,"app/apps"		,"{}"	}//prmLoadByUrl Stor
+		,{"Stor.set"		,"app/k1"		,"{app:'xpp',key:'app',val:'v1'}"}//prmBody Stor
+		,{"Stor.listKeys"	,"app"	,"{}"	}//prmUrlPart appName
+		,{"Stor.getKeys"	,"apx"	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
 		,{"get"     		,"app/app"		,"{}"	}//prmLoadByUrl Stor
-		,{"Stor.call"		,"app/app"		,""		}//prmUrlPart app, prmUrlPart func, prmBody List args
-		,{"Stor.eval"		,"app"			,"{src:'5+7'}"	}//prmUrlPart app , prmBody String src
-		,{"Stor.poll"		,"app/app"		,"5"	}//prmUrlPart appName, prmBody long
-		,{"Stor.erase"		,"app/app"		,"5"	}//prmUrlPart appName, prmBody long
+		,{"Stor.call"		,"x/t"	    	,""		}//prmUrlPart app, prmUrlPart func, prmBody List args
+		,{"Stor.eval"		,"v"			,"{src:'5+7'}"	}//prmUrlPart app , prmBody String src
+		,{"Stor.poll"		,"x"		    ,"5"	}//prmUrlPart appName, prmBody long
+		,{"Stor.erase"		,"app"		,""	}//prmUrlPart appName, prmBody long
 
 		,{"Perm.byUsr"	 	,"/app/usr/key","{}"    }//body Perm
 		,{"Perm.usrsOfKey"	,"/app/usr/key","{}"    }//body Perm
