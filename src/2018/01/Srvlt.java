@@ -49,7 +49,7 @@ static{staticInit();}
 @HttpMethod(useClassName = false,usrLoginNeeded = false) public static Object
 get( @HttpMethod(prmLoadByUrl = true)Stor page,TL tl){
 	Perm p=Perm.loadBy( page.app,page.key, tl==null
-	||tl.usr==null||tl.usr.key==null?"":tl.usr.key);
+		||tl.usr==null||tl.usr.key==null?"":tl.usr.key);
 	if(p!=null&&p.has( Perm.Act.get )){
 		for(Object ko:(List)page.val)try{
 			Stor k=Stor.loadBy( page.app,ko.toString() );
@@ -65,10 +65,10 @@ get( @HttpMethod(prmLoadByUrl = true)Stor page,TL tl){
 		return tl.h.r( "responseDone",true );
 	}return null;}
 
- //need to do a forgot password recovery method
- @HttpMethod(usrLoginNeeded = false) public static Stor
- login(@HttpMethod(prmLoadByUrl = true)Stor j
-	,@HttpMethod(prmName = "pw")String pw, TL tl){
+//need to do a forgot password recovery method
+@HttpMethod(usrLoginNeeded = false) public static Stor
+login(@HttpMethod(prmLoadByUrl = true)Stor j
+	     ,@HttpMethod(prmName = "pw")String pw, TL tl){
 	if(j!=null&&j.typ==Stor.ContentType.usr&&j.val instanceof Map )
 	{Map m=(Map)j.val;Object o=m.get("pw");
 		if(pw!=null&&o instanceof String)
@@ -185,19 +185,20 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 		return p!=null&&p.has(a);}
 
 	boolean check(TL tl,Perm.Act a)throws Perm.Violation{
-		Perm p=perm( tl );
-		return p!=null&&p.check( a );}
+		Perm p=perm( tl );if(p==null)
+			throw new Perm.Violation(TL.tl(),this,a,null);
+		return p.check( a );}
 
 	@HttpMethod public static List<String>//head
 	listApps() throws Exception {//Perm p=perm
-		 List<String>x=DB.q1colTList(
+		List<String>x=DB.q1colTList(
 			sql(cols( Co.distinct,C.app ),null,dbtName)
 			,String.class ),l=new LinkedList<>(  );
-		 Stor p=new Stor("");
-		 if(x!=null)for(String s:x){
-		 	p.app=s;if(p.hasPerm( Perm.Act.get ))
-		 	l.add( s );}
-		 return l;}
+		Stor p=new Stor("");
+		if(x!=null)for(String s:x){
+			p.app=s;if(p.hasPerm( Perm.Act.get ))
+				l.add( s );}
+		return l;}
 
 	@HttpMethod public static Map//List<String> //options
 	listKeys( @HttpMethod(prmUrlPart = true)String appName, TL tl)throws Exception{
@@ -215,7 +216,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 
 	@HttpMethod public static List//propfind
 	poll( @HttpMethod(prmUrlPart = true)String appName,
-		@HttpMethod(prmBody = true)long logTime, TL tl)throws Exception{
+	      @HttpMethod(prmBody = true)long logTime, TL tl)throws Exception{
 		Stor j=new Stor(appName);
 		List l=Util.lst(  );
 		for(DB.Tbl t:j.query(j.genSql(Perm.Act.get,null,logTime).toString()
@@ -261,20 +262,29 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 		return l;}
 
 	Stor stor(  TL tl,Perm.Act a)throws Exception{
-		Stor j=this;//Perm p=(a==Perm.Act.create?(exists( wherePK(),dbtName ) ?null:new Stor(j.app)):j).perm( tl);
-		j.check( tl,a );
-		if(j.typ==ContentType.usr&&j.val instanceof Map){
-			Map m=(Map)j.val;Object o=m.get("pw");
+		if(a==Perm.Act.create){
+			if( exists( wherePK(),dbtName ) )
+				return null;
+			String k=key;
+			key=KL;
+			check(tl,a);
+			key=k;
+		} else
+			check( tl,a );
+		if(typ==ContentType.usr&&val instanceof Map){
+			Map m=(Map)val;Object o=m.get("pw");
 			if(o instanceof String){o=Util.md5( (String)o );
 				m.put("pw",o);} }
-		j.save();
-		if(j.typ==ContentType.serverSideJs ){
-			javax.script.ScriptEngine e =eng(j.app,false,tl);
+		save();
+		Perm p=new Perm(app,key,tl.usr.key, Perm.Act.values());
+		p.save();
+		if(typ==ContentType.serverSideJs ){
+			javax.script.ScriptEngine e =eng(app,false,tl);
 			if(e!=null){
-				Object o=e.eval( j.val.toString() );//engine.put( key ,o);
+				Object o=e.eval( val.toString() );//engine.put( key ,o);
 				Map jm=(Map)e.get( aps);
-				jm.put( j.key,o );//List jl=(List)e.get( aps+".JsonStorages");jl.add( j );
-			} } return j; }
+				jm.put( key,o );//List jl=(List)e.get( aps+".JsonStorages");jl.add( );
+			} } return this; }
 
 	@HttpMethod public static Stor//post
 	create( @HttpMethod(prmBody = true)Stor j , TL tl)throws Exception{
@@ -282,7 +292,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 
 	@HttpMethod public static Stor//set
 	put( @HttpMethod(prmLoadByUrl= true)Stor j
-		,@HttpMethod(prmBody= true)String v, TL tl)throws Exception{
+		   ,@HttpMethod(prmBody= true)String v, TL tl)throws Exception{
 		if(j!=null){switch ( j.typ ){
 			case num:j.val=Long.parseLong( v );break;
 			case date:j.val=Util.parseDate( v );break;
@@ -291,7 +301,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 			case json:case usr:	j.val=tl.bodyData;break;
 			default:// case txt:case key:case serverSideJs: //case javaObjectStream:
 				j.val=v;}
-		j.stor(tl,Perm.Act.set); }return j;}
+			j.stor(tl,Perm.Act.set); }return j;}
 
 	@HttpMethod public static Stor
 	set( @HttpMethod(prmBody = true)Stor j , TL tl)throws Exception{
@@ -299,16 +309,16 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 
 	@HttpMethod public static Stor
 	delete( @HttpMethod(prmUrlPart = true)String app
-		,@HttpMethod(prmUrlRemaining= true)String key , TL tl)throws Exception{
+		      ,@HttpMethod(prmUrlRemaining= true)String key , TL tl)throws Exception{
 		Stor j=new Stor( app,key );
 		if(j!=null){
 			j.typ=ContentType.valueOf( DB.q1Str( j.genSql( Perm.Act.delete,null,null ).toString() ,j.wherePK()) );
 			j.check( tl,Perm.Act.delete);
 			if(j.typ==ContentType.serverSideJs ){
-			javax.script.ScriptEngine e =eng(j.app,false,tl);
-			if(e!=null){
-				Map jm=(Map)e.get( aps);
-				jm.remove( j.key );	} }
+				javax.script.ScriptEngine e =eng(j.app,false,tl);
+				if(e!=null){
+					Map jm=(Map)e.get( aps);
+					jm.remove( j.key );	} }
 			j.delete();return j;
 		}return null;}
 
@@ -367,7 +377,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 				case real:
 					val =rs.getDouble( ++c );break;
 				case javaObjectStream:ObjectInputStream p=
-					new ObjectInputStream( rs.getBinaryStream( ++c ) );
+					                      new ObjectInputStream( rs.getBinaryStream( ++c ) );
 					val =p.readObject();break;
 				case usr:case json: val =Json.Prsr.parse(rs.getCharacterStream( ++c ) );break;//Item
 				default://case txt: case key:
@@ -580,9 +590,9 @@ public static class Perm extends DB.Tbl<String> {
 			:tl.usr.key.equals( usr )?this
 			:loadBy(app,key+chr+usr,tl.usr.key);
 		return r;}
-boolean check(Act a) throws Violation {if(!has( a ))
-	throw new Violation(TL.tl(),a,this);
-	return true;}
+	boolean check(Act a) throws Violation {if(!has( a ))
+		throw new Violation(TL.tl(),a,this);
+		return true;}
 
 	/**based on the usr, list all the perm-s */
 	@HttpMethod static public List<List<String>>
@@ -608,12 +618,18 @@ boolean check(Act a) throws Violation {if(!has( a ))
 		}}return l;}
 
 	@HttpMethod static public DB.Tbl//post
-	create(@HttpMethod(prmBody = true)Perm p)throws Exception {
+	create(@HttpMethod(prmBody = true)Perm p,TL tl)throws Exception {
 		Perm a=loadBy( p.app,Stor.KL,p.usr  );//new Perm(p.app);a.load();
 		if(a==null)return a;
 		a.check(Act.permCreate);
 		a=loadBy( p.app,p.key,p.usr );
-		return a!=null?null:p.save();}
+		if(a!=null)return null;
+		p.save();
+		if(p.usr!=null&&!p.usr.equals(tl.usr.key))
+		{a=new Perm(p.app,p.key+chr+p.usr,tl.usr.key,Act.values());
+			a.save();
+		}
+		return p;}
 
 	@HttpMethod static public DB.Tbl//unlock
 	addActs(@HttpMethod(prmBody = true)Perm p)throws Exception {
@@ -755,11 +771,11 @@ public @interface HttpMethod {
 						else f.readReq("");
 					}}else if(pp!=null && pp.prmBody())
 					args[i]=prmClss.isAssignableFrom( String.class )
-						        ?readString( tl.h.req.getReader() )
-						        :tl.bodyData;
-				else//refId:9473400 , www.acibillpay.com , tel:7164187187
+						?readString( tl.h.req.getReader() )
+						:tl.bodyData;
+				else
 					args[i]=o=TL.class.equals(prmClss)?tl
-						          :tl.h.req(nm,prmClss);
+						:tl.h.req(nm,prmClss);
 			}catch(Exception ex){
 				tl.error(ex,SrvltName,".service:arg:i=",i);
 			}
@@ -1048,8 +1064,8 @@ public static class TL{
 				s=o.toStrin_();
 				h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
 				if(h.logOut){out.flush().
-					w(h.comments[0]//"\n/*"
-					).w(s).w(h.comments[1]//"*/\n"
+					                        w(h.comments[0]//"\n/*"
+					                        ).w(s).w(h.comments[1]//"*/\n"
 				);}}catch(Exception ex){
 				ex.printStackTrace();
 			}return s;}
@@ -1087,10 +1103,10 @@ public static class TL{
 }//class TL
 
 enum context{ROOT(
-	"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-	,"/public_html/i1io/"
-	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	                 ,"/public_html/i1io/"
+	                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -1247,10 +1263,10 @@ public static class Util{//utility methods
 
 	public static String md5(String s){
 		if(s!=null)try{java.security.MessageDigest m=
-			java.security.MessageDigest.getInstance("MD5");
+			               java.security.MessageDigest.getInstance("MD5");
 			//m.update(s.getBytes());
 			String r=java.util.Base64.getEncoder().
-				encodeToString(m.digest(s.getBytes()));
+				                                      encodeToString(m.digest(s.getBytes()));
 			return r;
 		}catch(Exception x){//changed 2016.06.27 18:28
 			TL.tl().error(x, SrvltName,".Util.md5(String s):",s);
@@ -1420,7 +1436,7 @@ public static class DB {
 			e.printStackTrace();
 		}}
 	public static void close(ResultSet r){close(r,TL.tl(),false);}
-	public static void close(ResultSet r,boolean closeC){close(r,TL.tl(),closeC);}
+	//public static void close(ResultSet r,boolean closeC){close(r,TL.tl(),closeC);}
 	public static void close(ResultSet r,TL tl){close(r,tl,false);}
 	public static void close(ResultSet r,TL tl,boolean closeC){
 		if(r!=null)try{
@@ -1564,7 +1580,7 @@ public static class DB {
 		{close(s,tl);
 			if(tl.h.logOut)try{
 				tl.log(tl.jo().w(SrvltName).w(".DB.L:q2json=")
-					.o(sql).w(",prms=").o(p).toStrin_());
+					       .o(sql).w(",prms=").o(p).toStrin_());
 			}catch(IOException x){
 				tl.error(x,SrvltName,".DB.q1json:",sql);
 			}
@@ -1935,20 +1951,21 @@ public static class DB {
 		Tbl loadWhere(Object[]where){
 			ResultSet rs=null;
 			try{rs=DB.R( sql(cols(Co.all),where),where );
-				if(rs.next())
+				if(rs.next()){
 					load(rs);
+					return this;
+				}
 			}
 			catch(Exception x){
 				TL.tl().error(x,SrvltName,".DB.Tbl(",this,").loadWhere(",where,")");
 			}finally {
 				close(rs);
-			}return this;}//loadBy
+			}return null;}//loadBy
 
 		/**loads one row based on the where clause */
 		public static Tbl loadWhere(Class<? extends Tbl>c,Object[]where){
-			Tbl t=null,z;
-			try{z=c.newInstance();
-				z.loadWhere( where );t=z;
+			Tbl t=null;
+			try{t=c.newInstance().loadWhere( where );
 			}catch(Exception x){
 				TL.tl().error(x,SrvltName,".DB.Tbl(",t,").loadWhere(",c,",",where,")");
 			}
@@ -1967,9 +1984,9 @@ public static class DB {
 			}
 			try {
 				DB.x( "insert into `" + getName() + "` (`" + pkc +
-					"`,`" + c + "`) values(?"//+Co.m(pkc).txt
-					+ ",?"//+Co.m(c).txt
-					+ ")", pkv, cv );
+					      "`,`" + c + "`) values(?"//+Co.m(pkc).txt
+					      + ",?"//+Co.m(c).txt
+					      + ")", pkv, cv );
 				//Integer k=(Integer)pkv;
 				//DB.Tbl.Log.log( DB.Tbl.Log.Entity.valueOf(getName()), k, DB.Tbl.Log.Act.Update, TL.Util.mapCreate(c,v(c)) );
 			} catch ( Exception x ) {
@@ -1984,7 +2001,7 @@ public static class DB {
 			TL t = TL.tl();
 
 			try {StringBuilder b=new StringBuilder( "insert into `" )
-				    .append( getName() ).append("` (`" ).append( c.toString() );
+				                     .append( getName() ).append("` (`" ).append( c.toString() );
 				for(CI k:pkc)
 					b.append( "`,`" ).append( k.toString() );
 				b.append( "`) values(?");
@@ -2031,7 +2048,7 @@ public static class DB {
 			return x;
 		}else{int x=-1;CI[]pkc=pkcols();PK[]pkv=pkvals();
 			StringBuilder b=new StringBuilder( "delete from `" )
-				.append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
+				                .append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
 			for(int i=1;i<pkc.length;i++)
 				b.append( " and `" ).append( pkc[i] ).append( "`=?" );
 			DB.X( b.toString(),pkv );
