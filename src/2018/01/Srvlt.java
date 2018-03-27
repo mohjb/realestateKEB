@@ -46,29 +46,29 @@ static{staticInit();}
  * the function is called , and the return value of
  * the function is outputted to the servlet-response
  * */
-@HttpMethod(useClassName = false,usrLoginNeeded = false) public static Object
-get( @HttpMethod(prmLoadByUrl = true)Stor page,TL tl){
+ @HttpMethod(useClassName = false,usrLoginNeeded = false) public static Object
+ get( @HttpMethod(prmLoadByUrl = true)Stor page,TL tl){
 	Perm p=Perm.loadBy( page.app,page.key, tl==null
 		||tl.usr==null||tl.usr.key==null?"":tl.usr.key);
 	if(p!=null&&p.has( Perm.Act.get )){
 		for(Object ko:(List)page.val)try{
 			Stor k=Stor.loadBy( page.app,ko.toString() );
 			if(k!=null && k.hasPerm( Perm.Act.get )){
-				if(k.typ==Stor.ContentType.serverSideJs
-					   && k.hasPerm( Perm.Act.call ))
+				if(k.typ==Stor.ContentType.serverSideJs&&
+					k.hasPerm( Perm.Act.call ) )
 					tl.o(Stor.call( page.app,k.key,null,tl ));
 				else
 					tl.o(k.val);
 			}}catch ( Exception ex){
-			tl.error( ex,SrvltName+".get" );
-		}
+				tl.error( ex,SrvltName+".get" );
+				}
 		return tl.h.r( "responseDone",true );
 	}return null;}
 
-//need to do a forgot password recovery method
-@HttpMethod(usrLoginNeeded = false) public static Stor
-login(@HttpMethod(prmLoadByUrl = true)Stor j
-	     ,@HttpMethod(prmName = "pw")String pw, TL tl){
+ //need to do a forgot password recovery method
+ @HttpMethod(usrLoginNeeded = false) public static Stor
+ login(@HttpMethod(prmLoadByUrl = true)Stor j
+	,@HttpMethod(prmName = "pw")String pw, TL tl){
 	if(j!=null&&j.typ==Stor.ContentType.usr&&j.val instanceof Map )
 	{Map m=(Map)j.val;Object o=m.get("pw");
 		if(pw!=null&&o instanceof String)
@@ -76,20 +76,13 @@ login(@HttpMethod(prmLoadByUrl = true)Stor j
 			p=Util.md5( p );
 			if(p.equals( o )){
 				tl.h.s("usr",tl.usr=j);
-				return j;
-			}else if (tl.h.req( "recovery",false ) && "moh".equals( j.key)){
-				tl.h.s("usr",tl.usr=j);
-				m.put( "pw",p );
-				try {j.save();} catch ( Exception ex ) {
-					tl.error( ex );
-				}
-				return j;
-			}
-		}}
-	return null; }
+				return j;}}}
+	return null;}
 
-@HttpMethod public static boolean
-logout( @HttpMethod(prmUrlPart = true)String app, @HttpMethod(prmUrlRemaining = true)String usr, TL tl){
+ @HttpMethod public static boolean
+ logout(@HttpMethod(prmUrlPart = true)String app ,
+	@HttpMethod(prmUrlRemaining = true)String usr,
+	TL tl){
 	if(tl!=null&&tl.usr!=null&&tl.usr.key.equals( usr )){
 		tl.h.s("usr",tl.usr=null);
 		tl.h.getSession().setMaxInactiveInterval( 1 );
@@ -141,26 +134,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 				Util.lst("app",KL,"json",Util.mapCreate(),tl.now,tl.now)
 				,Util.lst("app","moh","usr"
 					,Util.mapCreate( "un","moh","pw",Util.md5( "m" )),tl.now,tl.now))
-		);//val
-			/*
-			CREATE TABLE `Stor` (
-			`app` varchar(255) NOT NULL DEFAULT '??',
-			`key` varchar(255) NOT NULL DEFAULT '??',
-			`typ` enum('txt','json','key','num','real','date','bytes','serverSideJs','usr','javaObjectStream') NOT NULL DEFAULT 'txt',
-			`val` blob ,
-			`logTime` timestamp onupdate current_timestamp default current_timestamp,
-			`lastModified` timestamp,
-			unique(`app`,`key`),
-			key(`lastModified`,`logTime`),
-			key(`logTime`,`lastModified`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-??  lock with ink pen Unicode code point: U+1F50F
-??  closed lock with key Unicode code point: U+1F510
-??  key Unicode code point: U+1F511
-??  lock Unicode code point: U+1F512
-??  open lock Unicode code point: U+1F513
-			*/
-	}
+		);}
 
 	static{if(!registered.contains(Stor.class))registered.add(Stor.class);}
 
@@ -319,7 +293,7 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 				if(e!=null){
 					Map jm=(Map)e.get( aps);
 					jm.remove( j.key );	} }
-			j.delete();return j;
+			j.delete();return j;//TODO: delete all perms and perms with key-combined
 		}return null;}
 
 	static javax.script.ScriptEngine eng(String appName,boolean createIfNotInit,TL tl){
@@ -415,9 +389,9 @@ public static class Stor extends DB.Tbl</**primary key type*/String> {
 			.w(",\"").w(C.typ.name()).w("\":");
 		if(typ==null)o.w( "null" );
 		else o.oStr(typ.toString(),ind);
-		o.w( ",\"").w( C.logTime     .toString()).w("\":" ).p( logTime==null?null:logTime.getTime() )
-			.w( ",\"").w( C.lastModified.toString()).w("\":" ).p( lastModified==null?null:lastModified.getTime() );
-		return o.w(",\"val\":").o( val,ind,path).w('}');}
+		o.w(",\"").w(C.logTime      .name()).w("\":" );if(logTime     ==null)o.w("null");else o.p(logTime.getTime() );
+		o.w(",\"").w(C.lastModified .name()).w("\":" );if(lastModified==null)o.w("null");else o.p(lastModified.getTime() );
+		return o.w(",\"").w(C.val.name()).w("\":").o( val,ind,path).w('}');}
 
 }//class Stor
 
@@ -498,7 +472,7 @@ public static class Perm extends DB.Tbl<String> {
 		Perm r=(Perm)loadWhere(Perm.class,where(C.app,app,C.key,key,C.usr,usr));
 		return r;}
 
-	public final static String dbtName="Perm",chr="@";
+	public final static String dbtName="Perm", Combine ="@";
 	@Override public String getName(){return dbtName;}
 	@Override public int pkcn(){return 3;}
 	@Override public CI pkc(int i){return i==0?C.app:i==1?C.key:C.usr;}
@@ -588,7 +562,7 @@ public static class Perm extends DB.Tbl<String> {
 	Perm loadPerm(){TL tl=TL.tl();
 		Perm r=tl==null||tl.usr==null||tl.usr.key==null?null
 			:tl.usr.key.equals( usr )?this
-			:loadBy(app,key+chr+usr,tl.usr.key);
+			:loadBy(app,key+ Combine +usr,tl.usr.key);
 		return r;}
 	boolean check(Act a) throws Violation {if(!has( a ))
 		throw new Violation(TL.tl(),a,this);
@@ -608,14 +582,68 @@ public static class Perm extends DB.Tbl<String> {
 
 	/**based on key, list all usrs */
 	@HttpMethod static public List<List<String>>
-	usrsOfKey(@HttpMethod(prmBody = true)Perm p)throws Exception {
+	usrsOfKey(@HttpMethod(prmLoadByUrl = true)Stor s,TL tl)throws Exception {
+		Perm p2,p=loadBy( s.app,s.key,tl.usr.key );
+			//p=new Perm(s.app,s.key,tl.usr.key,(Act[])null);
 		p.check(Act.permListByKey);
 		List<List<String>> l = new LinkedList<List<String>>();List<String>x;
 		for(DB.Tbl t : p.query(where(C.app, p.app, C.key, p.key)))
-		{	Perm p2=p.loadPerm();if(p2!=null){
+		{	p2=p.loadPerm();if(p2!=null){
 			l.add(x=new LinkedList<>());
 			x.add(p.usr);p.addActs2List(x);
-		}}return l;}
+		}}
+		//for(Perm t : p.permsCombined(tl) ) {	l.add(x=new LinkedList<>());x.add(t.usr);t.addActs2List(x); }
+		return l;}
+
+	/*List<String>keysWithUsr(){
+		List<String>l=null,x;
+		StringBuilder b=new StringBuilder( "select `")
+			.append( C.key.name()).append( "` from `").append( dbtName )
+			.append("` where `" ).append( C.app ).append( "`='").append( app )
+			.append("' and `").append( C.key.name()).append( "` like '").append( key ).append("@%'");
+		try {x=DB.q1colTList( b.toString(),String.class );
+			Perm p2,p=new Perm(app);
+			l=new LinkedList<>(  );
+			for ( String k:x ){p.key=k;
+				p2=p.loadPerm();if(p2!=null)
+					l.add( k );
+			}
+		} catch ( SQLException e ) {
+			e.printStackTrace();
+		}
+		return l;}*/
+
+	StringBuilder sqlComb(){
+		StringBuilder sql=new StringBuilder( "select ")
+			.append( Co.all.txt).append( " from `")
+			.append( dbtName ).append("` where `" )
+			.append( C.app ).append( "`='").append( app )
+			.append("' and `").append( C.key.name())
+			.append( "` like '").append( key ).append("@%'");
+		return sql;
+	}
+
+	/** returns a list of perms , based on the key with the combine char */
+	List<Perm> listCombined(TL tl){
+		List<Perm>l=new LinkedList<>(  );Perm p=this,p2;
+		ResultSet x=null;String u=tl.usr==null?null:tl.usr.key;
+		try {x=DB.r( p.sqlComb().toString() );
+			while ( x.next() ){
+				p.load( x );
+				boolean b=p.usr!=null&&p.usr.equals( u )&&p.has( Act.permGet );
+				p2=b?null:p.loadPerm();
+				if(b||p2!=null)
+					l.add( p.clone() );
+			}
+		} catch ( Exception e ) {
+			e.printStackTrace();
+		}finally {DB.close( x );}
+		return l;}
+
+	/** returns a list of perms , based on the key with the combine char */
+	@HttpMethod static public List<Perm>
+	listCombined(@HttpMethod(prmBody = true)Perm p,TL tl){
+		return p.listCombined(tl);}
 
 	@HttpMethod static public DB.Tbl//post
 	create(@HttpMethod(prmBody = true)Perm p,TL tl)throws Exception {
@@ -626,7 +654,7 @@ public static class Perm extends DB.Tbl<String> {
 		if(a!=null)return null;
 		p.save();
 		if(p.usr!=null&&!p.usr.equals(tl.usr.key))
-		{a=new Perm(p.app,p.key+chr+p.usr,tl.usr.key,Act.values());
+		{a=new Perm(p.app,p.key+ Combine +p.usr,tl.usr.key,Act.values());
 			a.save();
 		}
 		return p;}
@@ -1064,8 +1092,8 @@ public static class TL{
 				s=o.toStrin_();
 				h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
 				if(h.logOut){out.flush().
-					                        w(h.comments[0]//"\n/*"
-					                        ).w(s).w(h.comments[1]//"*/\n"
+					w(h.comments[0]//"\n/*"
+					).w(s).w(h.comments[1]//"*/\n"
 				);}}catch(Exception ex){
 				ex.printStackTrace();
 			}return s;}
@@ -1103,10 +1131,10 @@ public static class TL{
 }//class TL
 
 enum context{ROOT(
-	                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-	                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-	                 ,"/public_html/i1io/"
-	                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	,"/public_html/i1io/"
+	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -1263,10 +1291,10 @@ public static class Util{//utility methods
 
 	public static String md5(String s){
 		if(s!=null)try{java.security.MessageDigest m=
-			               java.security.MessageDigest.getInstance("MD5");
+			    java.security.MessageDigest.getInstance("MD5");
 			//m.update(s.getBytes());
 			String r=java.util.Base64.getEncoder().
-				                                      encodeToString(m.digest(s.getBytes()));
+				encodeToString(m.digest(s.getBytes()));
 			return r;
 		}catch(Exception x){//changed 2016.06.27 18:28
 			TL.tl().error(x, SrvltName,".Util.md5(String s):",s);
@@ -1339,10 +1367,10 @@ public static class DB {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			                          ("jdbc:mysql://"+context.DB.server.str
-				                           +"/"+context.DB.dbName.str
-				                          ,context.DB.un.str,context.DB.pw.str
-			                          );Object[]b={r,null};
+			("jdbc:mysql://"+context.DB.server.str
+				+"/"+context.DB.dbName.str
+				,context.DB.un.str,context.DB.pw.str
+			);Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){
 			t.error(e,SrvltName,".DB.DriverManager:");
@@ -1513,7 +1541,7 @@ public static class DB {
 		}finally
 		{close(s,tl);
 			if(tl.h.logOut)try{tl.log(tl.jo().w(SrvltName).w(".DB.Lt:sql=")
-				                          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 			catch(IOException x){
 				tl.error(x,SrvltName,".DB.Lt:",sql);
 			}
@@ -1525,7 +1553,7 @@ public static class DB {
 		while(s.next())r.add(s.getObject(1));return r;}
 	finally{TL t=TL.tl();close(s,t);if(t.h.logOut)
 		try{t.log(t.jo().w(SrvltName).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-			          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 			t.error(x,SrvltName,".DB.q1colList:",sql);
 		}}}
 
@@ -1535,7 +1563,7 @@ public static class DB {
 			s.getObject(1,t));return r;}
 	finally{TL tl=TL.tl();close(s,tl);if(tl.h.logOut)
 		try{tl.log(tl.jo().w(SrvltName).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-			           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 			tl.error(x,SrvltName,".DB.q1colList:",sql);
 		}}}
 
@@ -1984,9 +2012,9 @@ public static class DB {
 			}
 			try {
 				DB.x( "insert into `" + getName() + "` (`" + pkc +
-					      "`,`" + c + "`) values(?"//+Co.m(pkc).txt
-					      + ",?"//+Co.m(c).txt
-					      + ")", pkv, cv );
+					"`,`" + c + "`) values(?"//+Co.m(pkc).txt
+					+ ",?"//+Co.m(c).txt
+					+ ")", pkv, cv );
 				//Integer k=(Integer)pkv;
 				//DB.Tbl.Log.log( DB.Tbl.Log.Entity.valueOf(getName()), k, DB.Tbl.Log.Act.Update, TL.Util.mapCreate(c,v(c)) );
 			} catch ( Exception x ) {
@@ -2001,7 +2029,7 @@ public static class DB {
 			TL t = TL.tl();
 
 			try {StringBuilder b=new StringBuilder( "insert into `" )
-				                     .append( getName() ).append("` (`" ).append( c.toString() );
+				.append( getName() ).append("` (`" ).append( c.toString() );
 				for(CI k:pkc)
 					b.append( "`,`" ).append( k.toString() );
 				b.append( "`) values(?");
@@ -2138,6 +2166,7 @@ public static class DB {
 					}else
 						b.append("`").append(col[i]).append("`");}
 				return b;}
+
 			public static StringBuilder genList(StringBuilder b,List l){
 				b.append(" (");boolean comma=false;
 				for(Object z:l){
@@ -2151,11 +2180,15 @@ public static class DB {
 							.append( '\'' );
 				}b.append(")");
 				return b;}
+
 			static StringBuilder where(StringBuilder b,Object[]where){
 				if(where==null || where.length<1)return b;
 				b.append(" where ");
 				for(int n=where.length,i=0;i<n;i++){Object o=where[i];
 					if(i>0)b.append(" and ");
+					if(o==Co.or && i+1<n && where[i+1] instanceof List){
+
+					}else
 					if(o instanceof Co)b.append(o);else
 					if(o instanceof CI)
 						b.append('`').append(o).append("`=")
@@ -2180,6 +2213,7 @@ public static class DB {
 					i++;
 				}//for
 				return b;}
+
 		}//enum Co
 
 		/**output to jspOut one row of json of this row*/
