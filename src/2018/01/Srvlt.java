@@ -1404,7 +1404,7 @@ public static class DB {
 		if(odd){if(p.length==1)
 			r.setObject(1,p[0]);else
 			for(int i=1,n=p.length;p!=null&&i<n;i+=2)if((!(p[i] instanceof List)) ) // ||!(p[i-1] instanceof List)||((List)p[i-1]).size()!=2||((List)p[i-1]).get(1)!=Tbl.Co.in )
-				r.setObject(i/2+1,p[i]);//if(t.logOut)TL.log("dbP:"+i+":"+p[i]);
+				r.setObject(i/2+1,p[i]);//if(t.logOut)TL.log("dbP:"+i+":"+p[i]);//TODO: recursive case with Co.or and Co.and
 		}else
 			for(int i=0;p!=null&&i<p.length;i++)
 			{r.setObject(i+1,p[i]);if(t.h.logOut)t.log("dbP:"+i+":"+p[i]);}
@@ -2139,7 +2139,7 @@ public static class DB {
 			,distinct("distinct")
 			,password("password(?)")
 			,lt("<"),le("<="),ne("<>"),gt(">"),ge(">=")
-			,or("or"),like("like"),in("in")//,and("and"),prnthss("("),max("max(?)")
+			,or("or"),like("like"),in("in"),and("and")//,prnthss("("),max("max(?)")
 			;String txt;
 			Co(String p){txt=p;}
 			@Override public Field f(){return null;}
@@ -2186,37 +2186,47 @@ public static class DB {
 				b.append(" where ");
 				for(int n=where.length,i=0;i<n;i++){Object o=where[i];
 					if(i>0)b.append(" and ");
-					if(o==Co.or && i+1<n && where[i+1] instanceof List){
-						List l=(List)where[i+1];
-						for(Object e:l){
-
-						}
-					}else
-					if(o instanceof Co)b.append(o);else
-					if(o instanceof CI)
-						b.append('`').append(o).append("`=")
-							.append('?');//Co.m(o).txt
-					else if(o instanceof List){List l=(List)o;
-						o=l.size()>1?l.get(1):null;
-						if(o ==Co.in && i+1<n && where[i+1] instanceof List){
-							b.append('`').append(l.get(0)).append("` ").append(o);
-							l=(List)where[i+1];
-							genList(b,l);
-						}else if(o instanceof Co)//o!=null)//if(ln==2 && )
-						{	Co m=(Co)o;o=l.get(0);
-							if(o instanceof CI || o instanceof Co)
-								b.append('`').append(o).append('`');
-							else
-								TL.tl().log(SrvltName,".DB.Tbl.Co.where:unknown where-clause item:o=",o);
-							b.append(m.txt).append("?");
-						}else
-							TL.tl().log(SrvltName,".DB.Tbl.Co.where:unknown where-clause item: o=",o);
-					}
-					else TL.tl().error(null,SrvltName,".DB.Tbl.Col.where:for:",o);
+					where(b,o,i+1<n ?where[i+1]:null);
 					i++;
-				}//for
+				}//for //where(b,Co.and,where);
 				return b;}
 
+			/**
+			 * in the case of Co.and and Co.or
+			 * the even-prm is Co.or or Co.and , and the odd-prm is a list
+			 * */
+			static StringBuilder where(StringBuilder b,Object o,Object o1){
+				if(o==null )return b;
+				if((o==Co.and || o==Co.or )&& o1 instanceof List){
+					List l=(List)o1;int c=0;b.append( '(' );
+					for(Object e:l){
+						if(c++>0)//b.append( " or " );
+							b.append( ' ' ).append( o ).append( ' ' );
+						where(b,e,c<l.size() ?l.get( c ):null);
+					}b.append( ')' );
+				}else
+				if(o instanceof Co)b.append(o);else
+				if(o instanceof CI)
+					b.append('`').append(o).append("`=")
+						.append('?');//Co.m(o).txt
+				else if(o instanceof List){List l=(List)o;
+					o=l.size()>1?l.get(1):null;
+					if(o ==Co.in && o1 instanceof List){
+						b.append('`').append(l.get(0)).append("` ").append(o);
+						l=(List)o1;
+						genList(b,l);
+					}else if(o instanceof Co)//o!=null)//if(ln==2 && )
+					{	Co m=(Co)o;o=l.get(0);
+						if(o instanceof CI || o instanceof Co)
+							b.append('`').append(o).append('`');
+						else
+							TL.tl().log(SrvltName,".DB.Tbl.Co.where:unknown where-clause item:o=",o);
+						b.append(m.txt).append("?");
+					}else
+						TL.tl().log(SrvltName,".DB.Tbl.Co.where:unknown where-clause item: o=",o);
+				}
+				else TL.tl().error(null,SrvltName,".DB.Tbl.Col.where:for:",o);
+			return b;}
 		}//enum Co
 
 		/**output to jspOut one row of json of this row*/
