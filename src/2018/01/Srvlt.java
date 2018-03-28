@@ -2187,7 +2187,10 @@ public static class DB {
 				for(int n=where.length,i=0;i<n;i++){Object o=where[i];
 					if(i>0)b.append(" and ");
 					if(o==Co.or && i+1<n && where[i+1] instanceof List){
+						List l=(List)where[i+1];
+						for(Object e:l){
 
+						}
 					}else
 					if(o instanceof Co)b.append(o);else
 					if(o instanceof CI)
