@@ -122,14 +122,6 @@ public static class Txt extends DB.Tbl<String> {
 					,"key(`"+C.logTime+"`,`"+C.key+"`)")
 			);}
 
-		@Override public Json.Output jsonOutput(Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException {
-			try {
-				super.jsonOutput(o,ind,path,closeBrace);
-			}catch(Exception ex){
-				ex.printStackTrace();
-			}
-			return o;}
-
 		static{if(!registered.contains(L.class))registered.add(L.class);}
 
 	}//class Log
@@ -206,8 +198,7 @@ public static class Txt extends DB.Tbl<String> {
 		} else
 			tl.o(prm.txt);
 		tl.h.r("responseDone", true);
-		return prm;
-	}
+		return prm; }
 
 	@HttpMethod public static List<Txt>
 	getKeys(@HttpMethod(prmLoadByUrl= true) Txt j,
@@ -216,14 +207,6 @@ public static class Txt extends DB.Tbl<String> {
 		if(j!=null)l.add(j);
 		if(keys!=null)for(String k:keys)l.add(loadBy(k));
 		return l;}
-
-@Override public Json.Output jsonOutput(Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException {
-	try {
-		super.jsonOutput(o,ind,path,closeBrace);
-	}catch(Exception ex){
-		ex.printStackTrace();
-	}
-	return o;}
 
 	@Override public DB.Tbl save() throws Exception {
 		L.l(this);return super.save();}
@@ -330,8 +313,8 @@ public static class Txt extends DB.Tbl<String> {
 
 		@HttpMethod public static boolean
 		logout(//@HttpMethod(prmUrlPart = true) String app,
-		       @HttpMethod(prmUrlRemaining = true) String usr,
-		       TL tl) {
+		   @HttpMethod(prmUrlRemaining = true) String usr,
+		   TL tl) {
 			if(tl != null && tl.usr != null ) {//&& ((Txt)tl.usr.get("Txt")).key.equals(usr)
 				tl.h.s("usr", tl.usr = null);
 				tl.h.getSession().setMaxInactiveInterval(1);
@@ -344,19 +327,12 @@ public static class Txt extends DB.Tbl<String> {
 		@Retention(RetentionPolicy.RUNTIME)
 		public @interface HttpMethod {
 			boolean useClassName() default true;
-
 			boolean nestJsonReq() default true;//if false , then only the returned-value from the method call is json-stringified as a response body, if true the returned-value is set in the json-request with prop-name "return"
-
 			boolean usrLoginNeeded() default true;
-
 			String prmName() default "";
-
 			boolean prmUrlPart() default false;
-
 			boolean prmUrlRemaining() default false;
-
 			boolean prmLoadByUrl() default false;
-
 			boolean prmBody() default false;
 		}//HttpMethod
 
@@ -415,11 +391,11 @@ public static class Txt extends DB.Tbl<String> {
 								}
 							} else if(pp != null && pp.prmBody())
 								args[i] = prmClss.isAssignableFrom(String.class)
-									          ? readString(tl.h.req.getReader())
-									          : tl.bodyData;
+									? readString(tl.h.req.getReader())
+									: tl.bodyData;
 							else
 								args[i] = o = TL.class.equals(prmClss) ? tl
-									              : tl.h.req(nm, prmClss);
+									: tl.h.req(nm, prmClss);
 						} catch(Exception ex) {
 							tl.error(ex, SrvltName, ".service:arg:i=", i);
 						}
@@ -721,8 +697,8 @@ public static class Txt extends DB.Tbl<String> {
 					s=o.toStrin_();
 					h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
 					if(h.logOut){out.flush().
-						                        w(h.comments[0]//"\n/*"
-						                        ).w(s).w(h.comments[1]//"*/\n"
+						w(h.comments[0]//"\n/*"
+						).w(s).w(h.comments[1]//"*/\n"
 					);}}catch(Exception ex){
 					ex.printStackTrace();
 				}return s;}
@@ -743,7 +719,7 @@ public static class Txt extends DB.Tbl<String> {
 			h.getServletContext().log(s);
 			if(h.logOut)out.w(h.comments[0]//"\n/*
 			).w("error:").w(s.replaceAll("<", "&lt;"))
-				            .w("\n---\n").o(x).w(h.comments[1] );
+				.w("\n---\n").o(x).w(h.comments[1] );
 			if(x!=null)x.printStackTrace();}
 		catch(Exception ex){
 			ex.printStackTrace();
@@ -920,10 +896,9 @@ public static class Txt extends DB.Tbl<String> {
 
 		public static String md5(String s){
 			if(s!=null)try{java.security.MessageDigest m=
-				               java.security.MessageDigest.getInstance("MD5");
+				java.security.MessageDigest.getInstance("MD5");
 				//m.update(s.getBytes());
-				String r=java.util.Base64.getEncoder().
-					                                      encodeToString(m.digest(s.getBytes()));
+				String r=java.util.Base64.getEncoder().encodeToString(m.digest(s.getBytes()));
 				return r;
 			}catch(Exception x){//changed 2016.06.27 18:28
 				TL.tl().error(x, SrvltName,".Util.md5(String s):",s);
@@ -996,10 +971,10 @@ public static class Txt extends DB.Tbl<String> {
 			if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 			if(r==null)try
 			{r=java.sql.DriverManager.getConnection
-				                          ("jdbc:mysql://"+context.DB.server.str
-					                           +"/"+context.DB.dbName.str
-					                          ,context.DB.un.str,context.DB.pw.str
-				                          );Object[]b={r,null};
+				("jdbc:mysql://"+context.DB.server.str
+					+"/"+context.DB.dbName.str
+					,context.DB.un.str,context.DB.pw.str
+				);Object[]b={r,null};
 				t.h.s(context.DB.reqCon.str,b);
 			}catch(Throwable e){
 				t.error(e,SrvltName,".DB.DriverManager:");
@@ -1170,7 +1145,7 @@ public static class Txt extends DB.Tbl<String> {
 			}finally
 			{close(s,tl);
 				if(tl.h.logOut)try{tl.log(tl.jo().w(SrvltName).w(".DB.Lt:sql=")
-					                          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+					.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 				catch(IOException x){
 					tl.error(x,SrvltName,".DB.Lt:",sql);
 				}
@@ -1182,7 +1157,7 @@ public static class Txt extends DB.Tbl<String> {
 			while(s.next())r.add(s.getObject(1));return r;}
 		finally{TL t=TL.tl();close(s,t);if(t.h.logOut)
 			try{t.log(t.jo().w(SrvltName).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-				          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 				t.error(x,SrvltName,".DB.q1colList:",sql);
 			}}}
 
@@ -1192,7 +1167,7 @@ public static class Txt extends DB.Tbl<String> {
 				s.getObject(1,t));return r;}
 		finally{TL tl=TL.tl();close(s,tl);if(tl.h.logOut)
 			try{tl.log(tl.jo().w(SrvltName).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-				           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 				tl.error(x,SrvltName,".DB.q1colList:",sql);
 			}}}
 
@@ -1237,7 +1212,7 @@ public static class Txt extends DB.Tbl<String> {
 			{close(s,tl);
 				if(tl.h.logOut)try{
 					tl.log(tl.jo().w(SrvltName).w(".DB.L:q2json=")
-						       .o(sql).w(",prms=").o(p).toStrin_());
+						.o(sql).w(",prms=").o(p).toStrin_());
 				}catch(IOException x){
 					tl.error(x,SrvltName,".DB.q1json:",sql);
 				}
@@ -1327,12 +1302,14 @@ public static class Txt extends DB.Tbl<String> {
 				//if(o.comment)o.w("{//TL.Form:").w('\n').p(ind);else//.w(p.getClass().toString())
 				o.w('{');
 				CI[]a=columns();//Field[]a=fields();
-				String i2=ind+'\n';
+				String i2=ind+'\t';
 				o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
-				for(CI f:a)
+				for(CI f:a)try
 				{	o.w(',').oStr(f.getName(),i2).w(':')
-						 .o(v(f),ind,o.comment?path+'.'+f.getName():path);
+						.o(v(f),ind,o.comment?path+'.'+f.getName():path);
 					if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
+				}catch(Exception ex){
+					ex.printStackTrace();
 				}
 				if(closeBrace){
 					if(o.comment)
@@ -1641,14 +1618,13 @@ public static class Txt extends DB.Tbl<String> {
 				}
 				try {
 					DB.x( "insert into `" + getName() + "` (`" + pkc +
-						      "`,`" + c + "`) values(?"//+Co.m(pkc).txt
-						      + ",?"//+Co.m(c).txt
-						      + ")", pkv, cv );
+						"`,`" + c + "`) values(?"//+Co.m(pkc).txt
+						+ ",?"//+Co.m(c).txt
+						+ ")", pkv, cv );
 					//Integer k=(Integer)pkv;
 					//DB.Tbl.Log.log( DB.Tbl.Log.Entity.valueOf(getName()), k, DB.Tbl.Log.Act.Update, TL.Util.mapCreate(c,v(c)) );
 				} catch ( Exception x ) {
-					TL.tl().error( x, SrvltName,".DB.Tbl(",
-						this, ").save(", c, "):pkv=", pkv );
+					TL.tl().error( x, SrvltName,".DB.Tbl(",this, ").save(", c, "):pkv=", pkv );
 				}
 			}else{
 				CI[]pkc = pkcols();
@@ -1658,7 +1634,7 @@ public static class Txt extends DB.Tbl<String> {
 				TL t = TL.tl();
 
 				try {StringBuilder b=new StringBuilder( "insert into `" )
-					                     .append( getName() ).append("` (`" ).append( c.toString() );
+					.append( getName() ).append("` (`" ).append( c.toString() );
 					for(CI k:pkc)
 						b.append( "`,`" ).append( k.toString() );
 					b.append( "`) values(?");
@@ -1705,7 +1681,7 @@ public static class Txt extends DB.Tbl<String> {
 				return x;
 			}else{int x=-1;CI[]pkc=pkcols();PK[]pkv=pkvals();
 				StringBuilder b=new StringBuilder( "delete from `" )
-					                .append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
+					.append( getName() ).append("` where `" ).append( pkc[0] ).append( "`=?" );
 				for(int i=1;i<pkc.length;i++)
 					b.append( " and `" ).append( pkc[i] ).append( "`=?" );
 				DB.X( b.toString(),pkv );
@@ -2040,11 +2016,11 @@ public static class Txt extends DB.Tbl<String> {
 				while(e.hasNext()){k=e.next();v=o.get(k);w(",");
 					o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 				if(c) w("}//")
-					      .p(o.getClass().getName())
-					      .w("&cachePath=\"")
-					      .p(path)
-					      .w("\"\n")
-					      .p(ind);else w("}");
+					.p(o.getClass().getName())
+					.w("&cachePath=\"")
+					.p(path)
+					.w("\"\n")
+					.p(ind);else w("}");
 				return this;}
 			public Output oReq(HttpServletRequest r,String ind,String path)throws IOException
 			{final boolean c=comment;try{boolean comma=false,c2;//,d[]
@@ -2128,15 +2104,15 @@ public static class Txt extends DB.Tbl<String> {
 				return this;}
 			public Output oCookie(Cookie y,String ind,String path)throws IOException
 			{final boolean c=comment;try{(c?w("{//")
-				                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-				                             .w("\"Comment\":").o(y.getComment())
-				                             .w(",\"Domain\":").o(y.getDomain())
-				                             .w(",\"MaxAge\":").p(y.getMaxAge())
-				                             .w(",\"Name\":").o(y.getName())
-				                             .w(",\"Path\":").o(y.getPath())
-				                             .w(",\"Secure\":").p(y.getSecure())
-				                             .w(",\"Version\":").p(y.getVersion())
-				                             .w(",\"Value\":").o(y.getValue());
+				.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+				.w("\"Comment\":").o(y.getComment())
+				.w(",\"Domain\":").o(y.getDomain())
+				.w(",\"MaxAge\":").p(y.getMaxAge())
+				.w(",\"Name\":").o(y.getName())
+				.w(",\"Path\":").o(y.getPath())
+				.w(",\"Secure\":").p(y.getSecure())
+				.w(",\"Version\":").p(y.getVersion())
+				.w(",\"Value\":").o(y.getValue());
 			}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}
 				if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 				}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
@@ -2166,9 +2142,9 @@ public static class Txt extends DB.Tbl<String> {
 
 			Output oSC(ServletContext y,String ind,String path)
 			{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-				                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-				                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-				                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+				.w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+				.w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+				.w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 				if(c)
 					w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 				else w("}");
@@ -2321,15 +2297,15 @@ public static class Txt extends DB.Tbl<String> {
 				{case 'n':buff('\n');break;case 't':buff('\t');break;
 					case 'r':buff('\r');break;case '0':buff('\0');break;
 					case 'x':case 'X':buff( (char)
-						                        java.lang.Integer.parseInt(
-							                        next(2)//p.substring(offset,offset+2)
-							                        ,16));nxt();//next();
+						java.lang.Integer.parseInt(
+						next(2)//p.substring(offset,offset+2)
+						,16));nxt();//next();
 					break;
 					case 'u':
 					case 'U':buff( (char)
-						               java.lang.Integer.parseInt(
-							               next(4)//p.substring(offset,offset+4)
-							               ,16));//next();next();next();//next();
+						java.lang.Integer.parseInt(
+						next(4)//p.substring(offset,offset+4)
+						,16));//next();next();next();//next();
 						break;default:if(c!='\0')buff(c);}}
 				else buff(c);
 					nxt();b=c!=first&&c!='\0';
@@ -2342,18 +2318,18 @@ public static class Txt extends DB.Tbl<String> {
 				while(c!='\0'&&Character.isUnicodeIdentifierPart(c))bNxt();
 				String r=consume();
 				return "true".equals(r)?new Boolean(true)
-					       :"false".equals(r)?new Boolean(false)
-						        :"null".equals(r)?Literal.Null
-							         :"undefined".equals(r)?Literal.Undefined
-								          :r;}
+					:"false".equals(r)?new Boolean(false)
+					:"null".equals(r)?Literal.Null
+					:"undefined".equals(r)?Literal.Undefined
+					:r;}
 
 			public Object extractDigits(){
 				if(c=='0')//&&offset+1<len)
 				{char c2=peek();if(c2=='x'||c2=='X')
 				{nxt();nxt();
 					while((c>='A'&&c<='F')
-						      ||(c>='a'&&c<='f')
-						      ||Character.isDigit(c))bNxt();
+						||(c>='a'&&c<='f')
+						||Character.isDigit(c))bNxt();
 					String s=consume();
 					try{return Long.parseLong(s,16);}
 					catch(Exception ex){}return s;}
@@ -2504,8 +2480,8 @@ public static class Txt extends DB.Tbl<String> {
 							lookahead.append(c);
 						}
 					}while( (b=(c==h ||
-						            Character.toUpperCase(c)==
-							            Character.toUpperCase(h))
+						Character.toUpperCase(c)==
+						Character.toUpperCase(h))
 					)&& (++i)<pn );
 				return b;}
 
