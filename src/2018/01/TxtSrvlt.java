@@ -20,14 +20,25 @@ import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
  */
 public class TxtSrvlt extends HttpServlet {
 
-public static class Txt extends DB.Tbl<String> {
+public static class Txt extends DB.Tbl<Integer> {
 	public static final String dbtName = "Txt";
+	@F public int id,parent,/*bit pattern:world+group+owner * dspwr
+	0	non
+	1	read
+	2	rx
+	3	rxp
+	4	rxw
+	5	rx+remRead
+	6	rxwPsd
+	7	rwxPsd
 
+	bit3=createSub
+	*/ perm;
 	@F public String key, txt,owner,group;
-	@F public Date logTime;@F public int perm;//bit pattern:world+group+owner * dsxwr
+	@F public Date logTime;
 
 	public enum C implements DB.Tbl.CI {
-		key, txt, owner,group,logTime,perm;
+		id,parent,perm,key, txt, owner,group,logTime;
 		@Override public Field f() {
 			return Co.f(name(), Txt.class);
 		}
@@ -52,11 +63,11 @@ public static class Txt extends DB.Tbl<String> {
 		return C.key;
 	}
 	@Override public CI[] pkcols() {C[] a = {C.key};return a;}
-	@Override public String pkv(int i) {
-		return key;
+	@Override public Integer pkv(int i) {
+		return id;
 	}
-	@Override public String[] pkv(String[] v) {key = v[0];return v;}
-	@Override public String[] pkvals() {String[] a = {key};return a;}
+	@Override public Integer[] pkv(Integer[] v) {id = v[0];return v;}
+	@Override public Integer[] pkvals() {Integer[] a = {id};return a;}
 
 	public Txt() {}
 	public Txt(String key) {this.key = key;}
@@ -72,38 +83,47 @@ public static class Txt extends DB.Tbl<String> {
 		ex.printStackTrace();
 	}return null;}
 
-	static final String TblCrtPk[]={"varchar(255) ","Primary Key ","NOT NULL "};
+	static final String TblPk[]={"int(10)"," Primary Key"," NOT NULL"," auto_increment"};
 	static final List TblColDefinition= Util.lst(
-		TblCrtPk[0]+TblCrtPk[1]+TblCrtPk[2]//key
+		TblPk[0]+ TblPk[1]+ TblPk[2]+ TblPk[3]//id
+		, "int(10) NOT NULL DEFAULT 0 "//parent
+		, "int(10) NOT NULL DEFAULT 47 "//perm
+		,"varchar(255) NOT NULL "//key
 		, "text NOT NULL "//txt
 		, "varchar(127) NOT NULL DEFAULT 'home' "//owner
 		, "varchar(127)NOT NULL DEFAULT 'home' "//group
 		, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
-		, "int(10) NOT NULL DEFAULT 47 "//perm
 		);
 	@Override public List creationDBTIndices(TL tl) {
 		return Util.lst(TblColDefinition
-			, Util.lst("key(`"+C.group+"`,`"+C.owner+"`)"
-				,"key(`"+C.logTime+"`)")
-			,Util.lst(Util.lst("usr.moh","{pw:'"+Util.md5("m")+"'}","moh","app1",new Date(),47))
+			, Util.lst("unique(`"+C.id+"`,`"+C.key+"`)"
+				,Util.lst(C.group,C.owner)
+				,Util.lst(C.parent,C.id)
+				,Util.lst(C.logTime))
+			,Util.lst(
+				Util.lst(1,0,0xff,"users","{}","moh","super",new Date()),
+				Util.lst(2,0,255,"apps","{}","moh","super",new Date()),
+				Util.lst(3,1,255,"moh","{pw:'"+Util.md5("m")+"'}","moh","super",new Date())
+				)
+			,L.class
 		);}
 
 	static {if(! registered.contains(Txt.class)) registered.add(Txt.class);}
 
-
-	static class L extends DB.Tbl<String>{
+	public static class L extends DB.Tbl<Integer>{
 		public static final String dbtName="TxtLog";
+		@F public int id,parent, perm;//bit pattern:world+group+owner * dsxwr
 		@F public String key, txt,owner,group;
-		@F public Date logTime;@F int perm;
+		@F public Date logTime;
 
 		public String getName(){return dbtName;}
 		@Override public C[]columns(){return C.values();}
 		@Override public int pkcn(){return 2;}
-		@Override public CI pkc(int i){return i==0?C.key:C.logTime;}
-		@Override public CI[]pkcols(){C[]a={C.key,C.logTime};return a;}
-		@Override public String pkv(int i){return i==0?key:String.valueOf( logTime);}
-		@Override public String[]pkv(String[]v){key=v[0];logTime=Util.parse( v[1],new Date() );return v;}
-		@Override public String[]pkvals(){String[]a={key,String.valueOf( logTime)};return a;}
+		@Override public CI pkc(int i){return i==0?C.id:C.logTime;}
+		@Override public CI[]pkcols(){C[]a={C.id,C.logTime};return a;}
+	@Override public Integer pkv(int i) { return i==0?id:hashCode(); }
+	@Override public Integer[] pkv(Integer[] v) {id = v[0];return v;}
+	@Override public Integer[] pkvals() {Integer[] a = {id,hashCode()};return a;}
 		public L(){logTime=new Date() ;}
 		public L(String key){this.key=key;logTime=new Date() ;}
 		public L(String key,String txt, String ownr,String grp,Date lt,int prm) {
@@ -115,20 +135,25 @@ public static class Txt extends DB.Tbl<String> {
 
 		@Override public List creationDBTIndices(TL tl){
 			List l=new LinkedList();l.addAll(TblColDefinition);
-			l.set(0,TblCrtPk[0]+TblCrtPk[2]);
+			l.set(0, TblPk[0]+ TblPk[2]);
 			return Util.lst(l
-				,Util.lst("unique(`"+C.key+"`,`"+C.logTime+"`)"
-					,"key(`"+C.group+"`,`"+C.owner+"`)"
-					,"key(`"+C.logTime+"`,`"+C.key+"`)")
-			);}
-
-		static{if(!registered.contains(L.class))registered.add(L.class);}
-
+				,Util.lst("unique(`"+C.id+"`,`"+C.logTime+"`)"
+					,Util.lst(C.group,C.owner,C.logTime)
+					,Util.lst(C.parent,C.id,C.logTime)
+					,Util.lst(C.logTime,C.id,C.key)) );}
 	}//class Log
 
 	public static Txt loadBy(String key) {
-		Txt j = (Txt) loadWhere(Txt.class, where(C.key, key));
+		return loadBy( key, ( Integer ) TL.tl().h.var("parent",0 ) );}
+	public static Txt loadBy(String key,int parent) {
+		Txt j = (Txt) loadWhere(Txt.class, where(C.key, key,C.parent,parent));
 		return j;}
+	public static Txt loadBy(int id) {
+		Txt j = (Txt) loadWhere(Txt.class, where(C.id, id));
+		return j;}
+
+	public Txt child(String key){
+		return loadBy( key,id );}
 
 	public static Txt prmLoadByUrl(TL tl, String url) {
 		Txt j = loadBy(url);
@@ -136,7 +161,7 @@ public static class Txt extends DB.Tbl<String> {
 
 	@HttpMethod public static List
 	listKeys() throws Exception {//TODO: check permission
-		List l = DB.L(sql(cols(C.key,C.logTime,C.owner,C.group,C.perm),null,dbtName),null);
+		List l = DB.L(sql(cols(C.id,C.key,C.logTime,C.owner,C.group,C.perm),null,dbtName),null);
 		return l;}
 
 	@HttpMethod public static List
@@ -285,9 +310,7 @@ public static class Txt extends DB.Tbl<String> {
 		static void staticInit() {
 			registerMethods(TxtSrvlt.class);
 			registerMethods(Txt.class);
-			if(! DB.Tbl.registered.contains(Txt.class)) DB.Tbl.registered.add(Txt.class);
-			if(! DB.Tbl.registered.contains(Txt.L.class)) DB.Tbl.registered.add(Txt.L.class);
-		}
+			if(! DB.Tbl.registered.contains(Txt.class)) DB.Tbl.registered.add(Txt.class); }
 
 		static {staticInit();}
 
@@ -312,9 +335,7 @@ public static class Txt extends DB.Tbl<String> {
 			return null;}
 
 		@HttpMethod public static boolean
-		logout(//@HttpMethod(prmUrlPart = true) String app,
-		   @HttpMethod(prmUrlRemaining = true) String usr,
-		   TL tl) {
+		logout(@HttpMethod(prmUrlRemaining = true) String usr, TL tl) {
 			if(tl != null && tl.usr != null ) {//&& ((Txt)tl.usr.get("Txt")).key.equals(usr)
 				tl.h.s("usr", tl.usr = null);
 				tl.h.getSession().setMaxInactiveInterval(1);
@@ -360,6 +381,9 @@ public static class Txt extends DB.Tbl<String> {
 					Object[] args = new Object[n];
 					String url=tl.h.req.getRequestURI();
 					url=url.substring(UrlPrefix.length());
+					int[]ja={url.indexOf( '|' ),url.indexOf( '/' )};if(ja[0]!=-1&&ja[0]<ja[1]){
+						tl.h.s( "parent",Util.parseInt( url.substring( 0,ja[0] ) ,0) );
+						url=url.substring( ja[0]+1 );}
 					for(Annotation[] t : prmsAnno)
 						try {
 							HttpMethod pp = t.length > 0 && t[0] instanceof HttpMethod ? (HttpMethod) t[0] : null;
@@ -650,15 +674,15 @@ public static class Txt extends DB.Tbl<String> {
 					defval=Util.parseInt(s, defval);}
 				return defval;}
 
-			public Date req(String n,Date defval)
-			{Object o=req(n);
+			public Date req(String n,Date defval){
+				Object o=req(n);
 				if(o instanceof Date)defval=(Date)o;
 				else if(o instanceof Number)defval=new Date(((Number)o).longValue());
 				else if(o!=null)defval=Util.parseDate(o instanceof String?(String)o:(o.toString()));
 				return defval;}
 
-			public double req(String n,double defval)
-			{Object o=reqo(n);
+			public double req(String n,double defval) {
+				Object o=reqo(n);
 				if(o instanceof Double)defval=(Double)o;
 				else if(o instanceof Number)defval=((Number)o).doubleValue();
 				else if(o!=null){
@@ -667,8 +691,8 @@ public static class Txt extends DB.Tbl<String> {
 						defval=new Double(s);}
 				return defval;}
 
-			public <T>T req(String n,T defVal)
-			{Object o=reqo(n);if(o instanceof String)
+			public <T>T req(String n,T defVal) {
+				Object o=reqo(n);if(o instanceof String)
 				defVal=Util.parse((String)o,defVal);
 			else if( defVal.getClass( ).isInstance( o )) {//o instanceof T
 				T o1 = ( T ) o;
@@ -676,8 +700,8 @@ public static class Txt extends DB.Tbl<String> {
 			}else if(o!=null)defVal=Util.parse( o.toString(),defVal );
 				return defVal;}
 
-			public Object req(String n,Class c)
-			{Object o=reqo(n);
+			public Object req(String n,Class c) {
+				Object o=reqo(n);
 				if(c.isInstance( o ))return o;
 				else if (o !=null){
 					String s=o instanceof String?(String)o:o.toString();
@@ -1446,10 +1470,11 @@ public static class Txt extends DB.Tbl<String> {
 					sql.append(" order by ");
 					Co.generate(sql,orderBy);}
 				return sql.toString();}
-			/** returns a list of 3 lists,
+			/** returns a list of 3 lists,(only the first is mandatory ,the rest are optional)
 			 * the 1st is a list for the db-table columns-CI
 			 * the 2nd is a list for the db-table-key-indices
 			 * the 3rd is a list for row insertion
+			 * 4th element is a Class<DB.Tbl> , a dependency that will be created before this table.
 			 *
 			 * the 1st list, the definition of the column is a string
 			 * , e.i. varchar(255) not null
@@ -1475,9 +1500,16 @@ public static class Txt extends DB.Tbl<String> {
 					}
 				List l=(List)o;
 				try{if(o==null||(!l.contains( dtn )&&!l.contains( dtn.toLowerCase()))){
+					List a=creationDBTIndices(tl),b=(List)a.get(0);
+					if(a.size()>3){
+						Class<Tbl> c=(Class)a.get( 3 );
+						try{Tbl t=c.newInstance();
+							t.checkDBTCreation( tl );
+						}catch(Exception ex){
+							ex.printStackTrace();
+						}}
 					StringBuilder sql= new StringBuilder("CREATE TABLE `").append(dtn).append("` (\n");
 					CI[]ci=columns();int an,x=0;
-					List a=creationDBTIndices(tl),b=(List)a.get(0);
 					for(CI i:ci){
 						if(x>0 )
 							sql.append("\n,");
@@ -1522,10 +1554,7 @@ public static class Txt extends DB.Tbl<String> {
 							vals(p);
 							try {save();} catch (Exception ex) {
 								tl.error(ex, SrvltName,".DB.Tbl.checkTableCreation:insertion",c);
-							}
-						}
-				}
-				} catch (SQLException ex) {
+							} } } } catch (SQLException ex) {
 					tl.error(ex, SrvltName,".DB.Tbl.checkTableCreation:errMain:",dtn);
 				}
 			}//checkTableCreation
