@@ -92,7 +92,7 @@ public static class Txt extends DB.Tbl {//<Integer>
 			,L.class
 		);}
 
-	static {if(! registered.contains(Txt.class)) 
+	static {if(! registered.contains(Txt.class))
 		registered.add(Txt.class);}
 
 	public static class L extends DB.Tbl{//<Integer>
@@ -104,7 +104,7 @@ public static class Txt extends DB.Tbl {//<Integer>
 		@Override public String getName(){return dbtName;}
 		@Override public C[]columns(){return C.values();}
 		@Override public Object[]wherePK(){Object[]a={C.id,id,C.logTime,logTime};return a;}
-		
+
 		public L(){logTime=new Date() ;}
 		public L(String key){this.key=key;logTime=new Date() ;}
 		public L(String key,String txt, String ownr,String grp,Date lt,int prm) {
@@ -292,7 +292,7 @@ public static class Txt extends DB.Tbl {//<Integer>
 	static void staticInit() {
 			registerMethods(TxtSrvlt.class);
 			registerMethods(Txt.class);
-			if(! DB.Tbl.registered.contains(Txt.class)) DB.Tbl.registered.add(Txt.class); 
+			if(! DB.Tbl.registered.contains(Txt.class)) DB.Tbl.registered.add(Txt.class);
 			addOnEnterRequestListener( Txt.class ); }
 
 	static {staticInit();}
@@ -317,7 +317,7 @@ public static class Txt extends DB.Tbl {//<Integer>
 		if(m!=null)
 			OnEnterRequestListeners.add( c );
 	}}
-	
+
 	//need to do a forgot password recovery method
 	@HttpMethod(usrLoginNeeded = false) public static Map
 	login(@HttpMethod(prmLoadByUrl = true) Txt j
@@ -521,7 +521,7 @@ static class TL{
 			List<Class> l=(List)h.s( "OnEnterRequestListeners" );
 				for(Class c:l)
 				{m=c.getMethod("OnEnterRequest", ca);
-					if(m!=null) 
+					if(m!=null)
 						m.invoke(c, tl);}
 		}catch(Exception ex){
 			error(ex,TlName,".onEnter");
@@ -1311,7 +1311,7 @@ static class DB {
 		}//ItRow
 	}//ItTbl
 	/**represents one entity , one row from a table in a relational database*/
- public abstract static class Tbl implements Json.Output.JsonOutput {//<PK> 
+ public abstract static class Tbl implements Json.Output.JsonOutput {//<PK>
 // /**encapsulating Html-form fields, use annotation Form.F for defining/mapping member-variables to html-form-fields*/ public abstract static class Form{
 	@Override public String toString(){return toJson();}
 
@@ -1637,21 +1637,21 @@ static class DB {
 			for ( int i = 1; i < cols.length; i++ )
 				sql.append( "," ).append( Co.prm.txt );//Co.m(cols[i]).txt
 			sql.append( ")" );//int x=
-			DB.X( sql.toString(), vals() ); 
+			DB.X( sql.toString(), vals() );
 			TL.tl().log( "save", this );//log(nw?DB.Tbl.Log.Act.New:DB.Tbl.Log.Act.Update);
 			return this;}//save
 
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
-		public Tbl update(CI c) throws Exception{
-			CI[] cols = columns();
-			StringBuilder sql = new StringBuilder( "update`" ).append( getName() ).append( "`( " );
-			Co.generate( sql, cols );//.toString();
-			sql.append( ")values(" ).append( Co.prm.txt );//Co.m(cols[0]).txt
-			for ( int i = 1; i < cols.length; i++ )
-				sql.append( "," ).append( Co.prm.txt );//Co.m(cols[i]).txt
-			sql.append( ")" );//int x=
-			DB.X( sql.toString(), vals() ); 
-			TL.tl().log( "save", this );//log(nw?DB.Tbl.Log.Act.New:DB.Tbl.Log.Act.Update);
+		public Tbl update(CI...c) throws Exception{
+			StringBuilder sql = new StringBuilder( "update`" )
+			.append( getName() ).append( "` set `" )
+			.append( c[0]).append( "`=?" );
+			if(c.length>1)for(CI x:c)
+				if(x!=c[0])sql.append( " , `" ).append( x ).append( "`=?" );
+			Object[]p=wherePK(),a=new Object[c.length+p.length/2];
+			
+			DB.X( sql.toString(), vals() );
+			TL.tl().log( "update", this );//log(nw?DB.Tbl.Log.Act.New:DB.Tbl.Log.Act.Update);
 			return this;}//save
 
 		//void log(DB.Tbl.Log.Act act){	Map val=asMap();Integer k=(Integer)pkv();DB.Tbl.Log.log( DB.Tbl.Log.Entity.valueOf(getName()), k, act, val);}
