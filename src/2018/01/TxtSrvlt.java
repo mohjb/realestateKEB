@@ -28,18 +28,12 @@ public static class Txt extends DB.Tbl {//<Integer>
 
 	public enum C implements DB.Tbl.CI {
 		id,parent,perm,key, txt, owner,group,logTime;
-		@Override public Field f() {
-			return Co.f(name(), Txt.class);
-		}
-		@Override public String getName() {
-			return name();
-		}
-		@Override public Class getType() {
-			return String.class;
-		}
+		@Override public Field f() {return Co.f(name(), Txt.class);}
+		@Override public String getName() {return name();}
+		@Override public Class getType() {return String.class;}
 	}//enum C
 
-	public enum P{non(0),read(1),call(3),permRead(7)
+	public enum P {non(0),read(1),call(3),permRead(7)
 		,readSub(15),write(31),createSub(63)
 		,permWrite(127),delete(255),eval(511)
 		,a(0),b(0),c(0),d(0),e(0),f(0);
@@ -77,7 +71,7 @@ public static class Txt extends DB.Tbl {//<Integer>
 		, "varchar(127) NOT NULL DEFAULT 'home' "//owner
 		, "varchar(127)NOT NULL DEFAULT 'home' "//group
 		, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
-		);
+	);
 	@Override public List creationDBTIndices(TL tl) {
 		return Util.lst(TblColDefinition
 			, Util.lst("unique(`"+C.id+"`,`"+C.key+"`)"
@@ -88,7 +82,7 @@ public static class Txt extends DB.Tbl {//<Integer>
 				Util.lst(1,0,0xff,"users","{}","moh","super",new Date()),
 				Util.lst(2,0,255,"apps","{}","moh","super",new Date()),
 				Util.lst(3,1,255,"moh","{pw:'"+Util.md5("m")+"'}","moh","super",new Date())
-				)
+			)
 			,L.class
 		);}
 
@@ -208,14 +202,32 @@ public static class Txt extends DB.Tbl {//<Integer>
 
 	@HttpMethod public static List<Txt>
 	getKeys(@HttpMethod(prmLoadByUrl= true) Txt j,
-		@HttpMethod(prmBody = true) List<String> keys) {//TODO: check permission
+	        @HttpMethod(prmBody = true) List<String> keys) {//TODO: check permission
 		List<Txt> l = new LinkedList<>();
 		if(j!=null)l.add(j);
 		if(keys!=null)for(String k:keys)l.add(loadBy(k));
 		return l;}
 
-	@Override public DB.Tbl save() throws Exception {
-		L.l(this);return super.save();}
+	@HttpMethod public static Map
+	load(@HttpMethod(prmLoadByUrl= true) Txt p,TL tl) {//TODO: check permission
+		Map m=new HashMap();List l=new LinkedList();Txt j=p.id==0?p:loadBy(p.parent);
+		m.put("txt",p);
+		m.put("path",l);
+		if(p!=j && j!=null && j.id!=0)
+			l.add(Util.lst(j.id,j.key));
+		while(j!=null&& j.id!=0){
+			j.id=j.parent;j.load();//j=loadBy(j.parent);
+			l.add(Util.lst(j.id,j.key));}
+		m.put("children",l=new LinkedList());
+		for(DB.Tbl t:p.query(where(C.parent,p.id)))
+			l.add(Util.lst(p.id,p.key));
+		return m;}
+
+	@Override public DB.Tbl create() throws Exception {
+		L.l(this);return super.create();}
+
+	@Override public DB.Tbl update(CI...p) throws Exception {
+		L.l(this);return super.update(p);}
 
 	@Override public int delete() throws SQLException {
 		L.l(this);return super.delete();}
@@ -275,206 +287,206 @@ public static class Txt extends DB.Tbl {//<Integer>
 
 }//Txt
 
-	/**
-		 * Created by Vaio-PC on 2/23/2018.
-		 * Created by Vaio-PC on 1/26/2018.
-		 * Created by Vaio-PC on 18/01/2018.
-		 * Created by moh on 14/7/17.
-		 */
+/**
+ * Created by Vaio-PC on 2/23/2018.
+ * Created by Vaio-PC on 1/26/2018.
+ * Created by Vaio-PC on 18/01/2018.
+ * Created by moh on 14/7/17.
+ */
 
-	static final String packageName = "dev201801"
-		, SrvltName = packageName + ".TxtSrvlt"
-		, UrlPrefix = "/txtSrvlt/";
+static final String packageName = "dev201801"
+	, SrvltName = packageName + ".TxtSrvlt"
+	, UrlPrefix = "/txtSrvlt/";
 
-	static Map<String, Method> mth = new HashMap<String, Method>();
-	static List<Class>OnEnterRequestListeners=new LinkedList<Class> ();
+static Map<String, Method> mth = new HashMap<String, Method>();
+static List<Class>OnEnterRequestListeners=new LinkedList<Class> ();
 
-	static void staticInit() {
-			registerMethods(TxtSrvlt.class);
-			registerMethods(Txt.class);
-			if(! DB.Tbl.registered.contains(Txt.class)) DB.Tbl.registered.add(Txt.class);
-			addOnEnterRequestListener( Txt.class ); }
+static void staticInit() {
+	registerMethods(TxtSrvlt.class);
+	registerMethods(Txt.class);
+	if(! DB.Tbl.registered.contains(Txt.class)) DB.Tbl.registered.add(Txt.class);
+	addOnEnterRequestListener( Txt.class ); }
 
-	static {staticInit();}
+static {staticInit();}
 
-	public static void registerMethods(Class p) {
-			Method[] b = p.getMethods();
-			String cn = p.getSimpleName();
-			for(Method m : b) {
-				HttpMethod h = m.getAnnotation(HttpMethod.class);
-				if(h != null) {
-					String s = m.getName();
-					mth.put(h.useClassName() ? cn + "." + s : s, m);
-				}
-			}
-		}//registerOp
+public static void registerMethods(Class p) {
+	Method[] b = p.getMethods();
+	String cn = p.getSimpleName();
+	for(Method m : b) {
+		HttpMethod h = m.getAnnotation(HttpMethod.class);
+		if(h != null) {
+			String s = m.getName();
+			mth.put(h.useClassName() ? cn + "." + s : s, m);
+		}
+	}
+}//registerOp
 
-	public static void addOnEnterRequestListener(Class c){
-		if(!OnEnterRequestListeners.contains( c ))
-		{Class[] ca = {TL.class };Method m =null;
+public static void addOnEnterRequestListener(Class c){
+	if(!OnEnterRequestListeners.contains( c ))
+	{Class[] ca = {TL.class };Method m =null;
 		try{m=c.getMethod("OnEnterRequest", ca);}catch(Exception ex){}
 		// m.invoke(prmClss, tl, url);
 		if(m!=null)
 			OnEnterRequestListeners.add( c );
 	}}
 
-	//need to do a forgot password recovery method
-	@HttpMethod(usrLoginNeeded = false) public static Map
-	login(@HttpMethod(prmLoadByUrl = true) Txt j
+//need to do a forgot password recovery method
+@HttpMethod(usrLoginNeeded = false) public static Map
+login(@HttpMethod(prmLoadByUrl = true) Txt j
 		, @HttpMethod(prmName = "pw") String pw, TL tl)throws Exception {
-		if(j==null)
-			j=Txt.loadBy("usr."+tl.h.req.getRequestURI().substring(UrlPrefix.length()));
-		if(j != null ){Object js=j.jt();
-			if( js instanceof Map) {
-				Map m = (Map) js;
-				Object o = m.get("pw");
-				if(pw != null && o instanceof String) {
-					String p = Util.b64d(pw);
-					p = Util.md5(p);
-					if(p.equals(o)) {
-						Map x=new HashMap();x.putAll(m);
-						m.put("Txt",j);//m.put("key",j.key);
-						tl.h.s("usr", tl.usr =m);
-						//addOnEnterRequestListener( tl,Txt.class );
-						return x;}}}}
-		return null;}
+	if(j==null)
+		j=Txt.loadBy("usr."+tl.h.req.getRequestURI().substring(UrlPrefix.length()));
+	if(j != null ){Object js=j.jt();
+		if( js instanceof Map) {
+			Map m = (Map) js;
+			Object o = m.get("pw");
+			if(pw != null && o instanceof String) {
+				String p = Util.b64d(pw);
+				p = Util.md5(p);
+				if(p.equals(o)) {
+					Map x=new HashMap();x.putAll(m);
+					m.put("Txt",j);//m.put("key",j.key);
+					tl.h.s("usr", tl.usr =m);
+					//addOnEnterRequestListener( tl,Txt.class );
+					return x;}}}}
+	return null;}
 
-	@HttpMethod public static boolean
-	logout(@HttpMethod(prmUrlRemaining = true) String usr, TL tl) {
-		if(tl != null && tl.usr != null ) {//&& ((Txt)tl.usr.get("Txt")).key.equals(usr)
-			tl.h.s("usr", tl.usr = null);
-			tl.h.getSession().setMaxInactiveInterval(1);
-			return true;}
-		return false;}
+@HttpMethod public static boolean
+logout(@HttpMethod(prmUrlRemaining = true) String usr, TL tl) {
+	if(tl != null && tl.usr != null ) {//&& ((Txt)tl.usr.get("Txt")).key.equals(usr)
+		tl.h.s("usr", tl.usr = null);
+		tl.h.getSession().setMaxInactiveInterval(1);
+		return true;}
+	return false;}
 
-	/**
-	 * annotation to designate a java method as an ajax/xhr entry point of execution
-	 */
-	@Retention(RetentionPolicy.RUNTIME)
-	public @interface HttpMethod {
-		boolean useClassName() default true;
-		boolean nestJsonReq() default true;//if false , then only the returned-value from the method call is json-stringified as a response body, if true the returned-value is set in the json-request with prop-name "return"
-		boolean usrLoginNeeded() default true;
-		String prmName() default "";
-		boolean prmUrlPart() default false;
-		boolean prmUrlRemaining() default false;
-		boolean prmLoadByUrl() default false;
-		boolean prmBody() default false;
-	}//HttpMethod
+/**
+ * annotation to designate a java method as an ajax/xhr entry point of execution
+ */
+@Retention(RetentionPolicy.RUNTIME)
+public @interface HttpMethod {
+	boolean useClassName() default true;
+	boolean nestJsonReq() default true;//if false , then only the returned-value from the method call is json-stringified as a response body, if true the returned-value is set in the json-request with prop-name "return"
+	boolean usrLoginNeeded() default true;
+	String prmName() default "";
+	boolean prmUrlPart() default false;
+	boolean prmUrlRemaining() default false;
+	boolean prmLoadByUrl() default false;
+	boolean prmBody() default false;
+}//HttpMethod
 
-	@Override public void service(HttpServletRequest request, HttpServletResponse response) {
-		TL tl = null;
-		Object retVal = null;
-		try {
-			tl = TL.Enter(request, response);
-			tl.h.r("contentType", "text/json");
-			String hm = tl.h.req.getMethod();
-			Method op = mth.get(hm);
-			if(op == null)
-				for(String s : mth.keySet())
-					if(s.equalsIgnoreCase(hm))
-						op = mth.get(s);
-			HttpMethod httpMethodAnno = op == null ? null : op.getAnnotation(HttpMethod.class);
-			tl.log("jsp:version2017.02.09.17.10:op=", op, httpMethodAnno);
-			if(tl.usr == null && (httpMethodAnno == null || httpMethodAnno.usrLoginNeeded()))
-				op = null;
-			if(op != null) {
-				Class[] prmTypes = op.getParameterTypes();
-				Class cl = op.getDeclaringClass();
-				Annotation[][] prmsAnno = op.getParameterAnnotations();
-				int n = prmsAnno == null ? 0 : prmsAnno.length, i = - 1, urlIndx =0;// UrlPrefix.length();
-				Object[] args = new Object[n];
-				String url=tl.h.req.getRequestURI();
-				url=url.substring(UrlPrefix.length());
+@Override public void service(HttpServletRequest request, HttpServletResponse response) {
+	TL tl = null;
+	Object retVal = null;
+	try {
+		tl = TL.Enter(request, response);
+		tl.h.r("contentType", "text/json");
+		String hm = tl.h.req.getMethod();
+		Method op = mth.get(hm);
+		if(op == null)
+			for(String s : mth.keySet())
+				if(s.equalsIgnoreCase(hm))
+					op = mth.get(s);
+		HttpMethod httpMethodAnno = op == null ? null : op.getAnnotation(HttpMethod.class);
+		tl.log("jsp:version2017.02.09.17.10:op=", op, httpMethodAnno);
+		if(tl.usr == null && (httpMethodAnno == null || httpMethodAnno.usrLoginNeeded()))
+			op = null;
+		if(op != null) {
+			Class[] prmTypes = op.getParameterTypes();
+			Class cl = op.getDeclaringClass();
+			Annotation[][] prmsAnno = op.getParameterAnnotations();
+			int n = prmsAnno == null ? 0 : prmsAnno.length, i = - 1, urlIndx =0;// UrlPrefix.length();
+			Object[] args = new Object[n];
+			String url=tl.h.req.getRequestURI();
+			url=url.substring(UrlPrefix.length());
 				/*int[]ja={url.indexOf( '|' ),url.indexOf( '/' )};if(ja[0]!=-1&&ja[0]<ja[1]){
 					tl.h.s( "parent",Util.parseInt( url.substring( 0,ja[0] ) ,0) );
 					url=url.substring( ja[0]+1 );}*/
-				for(Annotation[] t : prmsAnno) try {
-					HttpMethod pp = t.length > 0 && t[0] instanceof HttpMethod ? (HttpMethod) t[0] : null;
-					Class prmClss = prmTypes[++ i];
-					String nm = pp != null ? pp.prmName() : "arg" + i;//t.getName();
-					Object o = null;
-					if(pp != null && pp.prmUrlPart()) {
-						int j = url.indexOf('/', urlIndx);
-						args[i] = url.indexOf(urlIndx, j == - 1 ? url.length() : j);
-						urlIndx = j + 1;
-					} else if(pp != null && pp.prmUrlRemaining()) {
-						args[i] = url.indexOf(urlIndx + 1);
-					} else if(pp != null && pp.prmLoadByUrl()) {
-						Class[] ca = {TL.class , String.class};
-						Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
-							m = prmClss.getMethod("prmLoadByUrl", ca);
-						args[i] = m == null ? null : m.invoke(prmClss, tl, url);
-					} else if(DB.Tbl.class.isAssignableFrom(prmClss)) {
-						DB.Tbl f = (DB.Tbl) prmClss.newInstance();
-						args[i] = f;
-						if(pp != null && pp.prmBody())
-							f.fromMap(tl.json);
-						else {
-							o = tl.json.get(nm);
-							if(o instanceof Map) f.fromMap((Map) o);
-							else if(o instanceof List) f.vals(((List) o).toArray());
-							else if(o instanceof Object[]) f.vals((Object[]) o);
-							else f.readReq("");
-						}
-					} else if(pp != null && pp.prmBody())
-						args[i] = prmClss.isAssignableFrom(String.class)
-							? readString(tl.h.req.getReader())
-							: tl.bodyData;
-					else
-						args[i] = o = TL.class.equals(prmClss) ? tl
-							: tl.h.req(nm, prmClss);
-				} catch(Exception ex) {
-					tl.error(ex, SrvltName, ".service:arg:i=", i);
-				}
-				retVal = n == 0 ? op.invoke(cl)
-					: n == 1 ? op.invoke(cl, args[0])
+			for(Annotation[] t : prmsAnno) try {
+				HttpMethod pp = t.length > 0 && t[0] instanceof HttpMethod ? (HttpMethod) t[0] : null;
+				Class prmClss = prmTypes[++ i];
+				String nm = pp != null ? pp.prmName() : "arg" + i;//t.getName();
+				Object o = null;
+				if(pp != null && pp.prmUrlPart()) {
+					int j = url.indexOf('/', urlIndx);
+					args[i] = url.indexOf(urlIndx, j == - 1 ? url.length() : j);
+					urlIndx = j + 1;
+				} else if(pp != null && pp.prmUrlRemaining()) {
+					args[i] = url.indexOf(urlIndx + 1);
+				} else if(pp != null && pp.prmLoadByUrl()) {
+					Class[] ca = {TL.class , String.class};
+					Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
+						m = prmClss.getMethod("prmLoadByUrl", ca);
+					args[i] = m == null ? null : m.invoke(prmClss, tl, url);
+				} else if(DB.Tbl.class.isAssignableFrom(prmClss)) {
+					DB.Tbl f = (DB.Tbl) prmClss.newInstance();
+					args[i] = f;
+					if(pp != null && pp.prmBody())
+						f.fromMap(tl.json);
+					else {
+						o = tl.json.get(nm);
+						if(o instanceof Map) f.fromMap((Map) o);
+						else if(o instanceof List) f.vals(((List) o).toArray());
+						else if(o instanceof Object[]) f.vals((Object[]) o);
+						else f.readReq("");
+					}
+				} else if(pp != null && pp.prmBody())
+					args[i] = prmClss.isAssignableFrom(String.class)
+						 ? readString(tl.h.req.getReader())
+						 : tl.bodyData;
+				else
+					args[i] = o = TL.class.equals(prmClss) ? tl
+						: tl.h.req(nm, prmClss);
+			} catch(Exception ex) {
+				tl.error(ex, SrvltName, ".service:arg:i=", i);
+			}
+			retVal = n == 0 ? op.invoke(cl)
+				: n == 1 ? op.invoke(cl, args[0])
 					: n == 2 ? op.invoke(cl, args[0], args[1])
-					: n == 3 ? op.invoke(cl, args[0], args[1], args[2])
-					: n == 4 ? op.invoke(cl, args[0], args[1], args[2], args[3])
-					: n == 5 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4])
-					: n == 6 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5])
-					: n == 7 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5], args[6])
-					: op.invoke(cl, args);
-				if(httpMethodAnno != null && httpMethodAnno.nestJsonReq() && tl.json != null) {
-					tl.json.put("return", retVal);
-					retVal = tl.json;
-				}
+						 : n == 3 ? op.invoke(cl, args[0], args[1], args[2])
+							: n == 4 ? op.invoke(cl, args[0], args[1], args[2], args[3])
+								: n == 5 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4])
+									 : n == 6 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5])
+										: n == 7 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5], args[6])
+											: op.invoke(cl, args);
+			if(httpMethodAnno != null && httpMethodAnno.nestJsonReq() && tl.json != null) {
+				tl.json.put("return", retVal);
+				retVal = tl.json;
 			}
-			// else TL.Util.mapSet(tl.response,"msg","Operation not authorized ,or not applicable","return",false);
-			if(tl.h.r("responseDone") == null) {
-				if(tl.h.r("responseContentTypeDone") == null)
-					response.setContentType(String.valueOf(tl.h.r("contentType")));
-				Json.Output o = tl.getOut();
-				o.o(retVal);
-				tl.log(SrvltName, ".run:xhr-response:", tl.jo().o(retVal).toString());
-			}
-			tl.getOut().flush();
-		} catch(Exception x) {
-			if(tl != null) {
-				tl.error(x, SrvltName, ":");
-				try {
-					tl.getOut().o(x);
-				} catch(IOException iox) {
-				}
-			} else
-				x.printStackTrace();
-		} finally {
-			TL.Exit();
 		}
-	}//run op servlet.service
+		// else TL.Util.mapSet(tl.response,"msg","Operation not authorized ,or not applicable","return",false);
+		if(tl.h.r("responseDone") == null) {
+			if(tl.h.r("responseContentTypeDone") == null)
+				response.setContentType(String.valueOf(tl.h.r("contentType")));
+			Json.Output o = tl.getOut();
+			o.o(retVal);
+			tl.log(SrvltName, ".run:xhr-response:", tl.jo().o(retVal).toString());
+		}
+		tl.getOut().flush();
+	} catch(Exception x) {
+		if(tl != null) {
+			tl.error(x, SrvltName, ":");
+			try {
+				tl.getOut().o(x);
+			} catch(IOException iox) {
+			}
+		} else
+			x.printStackTrace();
+	} finally {
+		TL.Exit();
+	}
+}//run op servlet.service
 
-	static String readString(BufferedReader r) throws IOException {
-			StringBuilder b = new StringBuilder();
-			int c = 0;
-			String line = r.readLine();
-			while(line != null) {
-				if(c++ > 0) b.append('\n');
-				b.append(line);
-				line = r.readLine();
-			}
-			return b.toString();
-		}
+static String readString(BufferedReader r) throws IOException {
+	StringBuilder b = new StringBuilder();
+	int c = 0;
+	String line = r.readLine();
+	while(line != null) {
+		if(c++ > 0) b.append('\n');
+		b.append(line);
+		line = r.readLine();
+	}
+	return b.toString();
+}
 
 /** * Created by mbohamad on 19/07/2017.*/
 static class TL{
@@ -519,10 +531,10 @@ static class TL{
 			usr=(Map)h.s("usr");//Txt
 			Class[] ca = {TL.class };Method m =null;
 			List<Class> l=(List)h.s( "OnEnterRequestListeners" );
-				for(Class c:l)
-				{m=c.getMethod("OnEnterRequest", ca);
-					if(m!=null)
-						m.invoke(c, tl);}
+			for(Class c:l)
+			{m=c.getMethod("OnEnterRequest", ca);
+				if(m!=null)
+					m.invoke(c, tl);}
 		}catch(Exception ex){
 			error(ex,TlName,".onEnter");
 		}
@@ -691,11 +703,11 @@ static class TL{
 
 		public <T>T req(String n,T defVal) {
 			Object o=reqo(n);if(o instanceof String)
-			defVal=Util.parse((String)o,defVal);
-		else if( defVal.getClass( ).isInstance( o )) {//o instanceof T
-			T o1 = ( T ) o;
-			defVal=o1;
-		}else if(o!=null)defVal=Util.parse( o.toString(),defVal );
+				defVal=Util.parse((String)o,defVal);
+			else if( defVal.getClass( ).isInstance( o )) {//o instanceof T
+				T o1 = ( T ) o;
+				defVal=o1;
+			}else if(o!=null)defVal=Util.parse( o.toString(),defVal );
 			return defVal;}
 
 		public Object req(String n,Class c) {
@@ -885,7 +897,7 @@ static class Util{//utility methods
 		return defval;}
 	public static Object parse(String s,Class c){
 		if(s!=null)try
-		{   if(String.class.equals(c))return s;
+		{	if(String.class.equals(c))return s;
 		else if(Number.class.isAssignableFrom(c)||c.isPrimitive()) {
 			if (Integer.class.equals(c)|| "int"   .equals(c.getName())) return new Integer(s);
 			else if (Double .class.equals(c)|| "double".equals(c.getName())) return new Double(s);
@@ -1179,7 +1191,7 @@ static class DB {
 		while(s.next())r.add(s.getObject(1));return r;}
 	finally{TL t=TL.tl();close(s,t);if(t.h.logOut)
 		try{t.log(t.jo().w(SrvltName).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+			 .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 			t.error(x,SrvltName,".DB.q1colList:",sql);
 		}}}
 
@@ -1202,10 +1214,10 @@ static class DB {
 	public static Object[] q1row(String sql,Object...p)throws SQLException{return q1Row(sql,p);}
 	public static Object[] q1Row(String sql,Object[]p)throws SQLException
 	{ResultSet s=null;try{s=R(sql,p);Object[]a=null;int cc=cc(s);if(s.next())
-		{a=new Object[cc];for(int i=0;i<cc;i++)try{a[i]=s.getObject(i+1);}
-		catch(Exception ex){
-			TL.tl().error(ex,SrvltName,".DB.q1Row:",sql);a[i]=s.getString(i+1);
-		}}
+	{a=new Object[cc];for(int i=0;i<cc;i++)try{a[i]=s.getObject(i+1);}
+	catch(Exception ex){
+		TL.tl().error(ex,SrvltName,".DB.q1Row:",sql);a[i]=s.getString(i+1);
+	}}
 		return a;}finally{close(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
 	/**returns the result of (e.g. insert/update/delete) sql-statement
 	 ,calls dbP() setting the variable-length-arguments values parameters-p
@@ -1234,7 +1246,7 @@ static class DB {
 		{close(s,tl);
 			if(tl.h.logOut)try{
 				tl.log(tl.jo().w(SrvltName).w(".DB.L:q2json=")
-					.o(sql).w(",prms=").o(p).toStrin_());
+					 .o(sql).w(",prms=").o(p).toStrin_());
 			}catch(IOException x){
 				tl.error(x,SrvltName,".DB.q1json:",sql);
 			}
@@ -1311,106 +1323,106 @@ static class DB {
 		}//ItRow
 	}//ItTbl
 	/**represents one entity , one row from a table in a relational database*/
- public abstract static class Tbl implements Json.Output.JsonOutput {//<PK>
-// /**encapsulating Html-form fields, use annotation Form.F for defining/mapping member-variables to html-form-fields*/ public abstract static class Form{
-	@Override public String toString(){return toJson();}
+	public abstract static class Tbl implements Json.Output.JsonOutput {//<PK>
+		// /**encapsulating Html-form fields, use annotation Form.F for defining/mapping member-variables to html-form-fields*/ public abstract static class Form{
+		@Override public String toString(){return toJson();}
 
-	/**get table name*/public abstract String getName();
+		/**get table name*/public abstract String getName();
 
-	public Json.Output jsonOutput(Json.Output o,String ind,String path)throws java.io.IOException{return jsonOutput( o,ind,path,true );}
-	public Json.Output jsonOutput(Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException{
-		//if(o.comment)o.w("{//TL.Form:").w('\n').p(ind);else//.w(p.getClass().toString())
-		o.w('{');
-		CI[]a=columns();//Field[]a=fields();
-		String i2=ind+'\t';
-		o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
-		for(CI f:a)try
-		{	o.w(',').oStr(f.getName(),i2).w(':')
-				.o(v(f),ind,o.comment?path+'.'+f.getName():path);
-			if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
-		}catch(Exception ex){
-			ex.printStackTrace();
-		}
-		if(closeBrace){
-			if(o.comment)
-				o.w("}//DB.Tbl&cachePath=\"").p(path).w("\"\n").p(ind);
-			else o.w('}');}
-		return o; }
+		public Json.Output jsonOutput(Json.Output o,String ind,String path)throws java.io.IOException{return jsonOutput( o,ind,path,true );}
+		public Json.Output jsonOutput(Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException{
+			//if(o.comment)o.w("{//TL.Form:").w('\n').p(ind);else//.w(p.getClass().toString())
+			o.w('{');
+			CI[]a=columns();//Field[]a=fields();
+			String i2=ind+'\t';
+			o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
+			for(CI f:a)try
+			{	o.w(',').oStr(f.getName(),i2).w(':')
+					 .o(v(f),ind,o.comment?path+'.'+f.getName():path);
+				if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
+			}catch(Exception ex){
+				ex.printStackTrace();
+			}
+			if(closeBrace){
+				if(o.comment)
+					o.w("}//DB.Tbl&cachePath=\"").p(path).w("\"\n").p(ind);
+				else o.w('}');}
+			return o; }
 
-	public String toJson(){Json.Output o= TL.tl().jo().clrSW();try {jsonOutput(o, "", "");}catch (IOException ex) {}return o.toString();}
+		public String toJson(){Json.Output o= TL.tl().jo().clrSW();try {jsonOutput(o, "", "");}catch (IOException ex) {}return o.toString();}
 
-	public Tbl readReq(String prefix){
-		TL t=TL.tl();CI[]a=columns();for(CI f:a){
-			String s=t.h.req(prefix==null||prefix.length()<1?prefix+f:f.toString());
-			Class <?>c=s==null?null:f.getType();
-			Object v=null;try {
-				if(s!=null)v=Util.parse(s,c);
-				v(f,v);//f.set(this, v);
-			}catch (Exception ex) {// IllegalArgumentException,IllegalAccessException
-				t.error(ex,SrvltName,".DB.Tbl.readReq:t=",this," ,field="
-					,f+" ,c=",c," ,s=",s," ,v=",v);
+		public Tbl readReq(String prefix){
+			TL t=TL.tl();CI[]a=columns();for(CI f:a){
+				String s=t.h.req(prefix==null||prefix.length()<1?prefix+f:f.toString());
+				Class <?>c=s==null?null:f.getType();
+				Object v=null;try {
+					if(s!=null)v=Util.parse(s,c);
+					v(f,v);//f.set(this, v);
+				}catch (Exception ex) {// IllegalArgumentException,IllegalAccessException
+					t.error(ex,SrvltName,".DB.Tbl.readReq:t=",this," ,field="
+						,f+" ,c=",c," ,s=",s," ,v=",v);
+				}}
+			return this;}
+
+		public abstract CI[]columns();//public abstract FI[]flds();
+
+		public Object[]vals(){
+			CI[]a=columns();//Field[]a=fields();
+			Object[]r=new Object[a.length];
+			int i=-1;
+			for(CI f:a){i++;
+				r[i]=v(a[i]);
+			}return r;}
+
+		public Tbl vals (Object[]p){
+			int i=-1;CI[]a=columns();//Field[]a=fields();
+			for(CI f:a)
+				v(f,p[++i]);
+			return this;}
+
+		public Map asMap(){ return asMap(null);}
+
+		public Map asMap(Map r){
+			CI[]a=columns();//Field[]a=fields();
+			if(r==null)r=new HashMap();
+			int i=-1;
+			for(CI f:a){i++;
+				r.put(f.getName(),v(a[i]));
+			}return r;}
+
+		public Tbl fromMap (Map p){
+			CI[]a=columns();//Field[]a=fields();
+			for(CI f:a)
+				v(f,p.get(f.getName()));
+			return this;}
+
+		public Tbl v(CI p,Object v){return v(p.f(),v);}//this is beautiful(tear running down cheek)
+
+		public Object v(CI p){return v(p.f());}//this is beautiful(tear running down cheek)
+
+		Tbl v(Field p,Object v){//this is beautiful(tear running down cheek)
+			try{Class <?>t=p.getType();
+				if(v!=null && !t.isAssignableFrom( v.getClass() ))//t.isEnum()||t.isAssignableFrom(URL.class))
+					v=Util.parse(v instanceof String?(String)v:String.valueOf(v),t);
+				p.set(this,v);
+			}catch (Exception ex) {
+				TL.tl().error(ex,SrvltName,".DB.Tbl.v(",this,",",p,",",v,")");
+			}
+			return this;}
+
+		Object v(Field p){//this is beautiful(tear running down cheek)
+			try{return p.get(this);}
+			catch (Exception ex) {//IllegalArgumentException,IllegalAccessException
+				TL.tl().error(ex,SrvltName,".DB.Tbl.v(",this,",",p,")");return null;
 			}}
-		return this;}
 
-	public abstract CI[]columns();//public abstract FI[]flds();
+		/**Field annotation to designate a java member for use in a dbTbl-column/field*/
+		@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+		public @interface F{}
 
-	public Object[]vals(){
-		CI[]a=columns();//Field[]a=fields();
-		Object[]r=new Object[a.length];
-		int i=-1;
-		for(CI f:a){i++;
-			r[i]=v(a[i]);
-		}return r;}
-
-	public Tbl vals (Object[]p){
-		int i=-1;CI[]a=columns();//Field[]a=fields();
-		for(CI f:a)
-			v(f,p[++i]);
-		return this;}
-
-	public Map asMap(){ return asMap(null);}
-
-	public Map asMap(Map r){
-		CI[]a=columns();//Field[]a=fields();
-		if(r==null)r=new HashMap();
-		int i=-1;
-		for(CI f:a){i++;
-			r.put(f.getName(),v(a[i]));
-		}return r;}
-
-	public Tbl fromMap (Map p){
-		CI[]a=columns();//Field[]a=fields();
-		for(CI f:a)
-			v(f,p.get(f.getName()));
-		return this;}
-
-	public Tbl v(CI p,Object v){return v(p.f(),v);}//this is beautiful(tear running down cheek)
-
-	public Object v(CI p){return v(p.f());}//this is beautiful(tear running down cheek)
-
-	Tbl v(Field p,Object v){//this is beautiful(tear running down cheek)
-		try{Class <?>t=p.getType();
-			if(v!=null && !t.isAssignableFrom( v.getClass() ))//t.isEnum()||t.isAssignableFrom(URL.class))
-				v=Util.parse(v instanceof String?(String)v:String.valueOf(v),t);
-			p.set(this,v);
-		}catch (Exception ex) {
-			TL.tl().error(ex,SrvltName,".DB.Tbl.v(",this,",",p,",",v,")");
-		}
-		return this;}
-
-	Object v(Field p){//this is beautiful(tear running down cheek)
-		try{return p.get(this);}
-		catch (Exception ex) {//IllegalArgumentException,IllegalAccessException
-			TL.tl().error(ex,SrvltName,".DB.Tbl.v(",this,",",p,")");return null;
-		}}
-
-	/**Field annotation to designate a java member for use in a dbTbl-column/field*/
-	@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
-	public @interface F{}
-
-	/**Interface for enum-items from different forms and sql-tables ,
-	 * the enum items represent a reference Column Fields for identifing the column and selection.*/
-	public interface CI{public Field f();public String getName();public Class getType();}//interface I
+		/**Interface for enum-items from different forms and sql-tables ,
+		 * the enum items represent a reference Column Fields for identifing the column and selection.*/
+		public interface CI{public Field f();public String getName();public Class getType();}//interface I
 
 //}//public abstract static class Form
 
@@ -1644,14 +1656,28 @@ static class DB {
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
 		public Tbl update(CI...c) throws Exception{
 			StringBuilder sql = new StringBuilder( "update`" )
-			.append( getName() ).append( "` set `" )
-			.append( c[0]).append( "`=?" );
-			if(c.length>1)for(CI x:c)
-				if(x!=c[0])sql.append( " , `" ).append( x ).append( "`=?" );
+				.append( getName() ).append( "` set `" )
+				.append( c[0]).append( "`=?" );
 			Object[]p=wherePK(),a=new Object[c.length+p.length/2];
-			
+			for(CI x:c)
+				if(x==c[0])sql.append( " , `" ).append( x ).append( "`=?" );
+			//for()
+
 			DB.X( sql.toString(), vals() );
 			TL.tl().log( "update", this );//log(nw?DB.Tbl.Log.Act.New:DB.Tbl.Log.Act.Update);
+			return this;}//save
+
+		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
+		public Tbl save() throws Exception{
+			CI[] cols = columns();
+			StringBuilder sql = new StringBuilder( "replace into`" ).append( getName() ).append( "`( " );
+			Co.generate( sql, cols );//.toString();
+			sql.append( ")values(" ).append( Co.prm.txt );//Co.m(cols[0]).txt
+			for ( int i = 1; i < cols.length; i++ )
+				sql.append( "," ).append( Co.prm.txt );//Co.m(cols[i]).txt
+			sql.append( ")" );//int x=
+			DB.X( sql.toString(), vals() );
+			TL.tl().log( "save", this );//log(nw?DB.Tbl.Log.Act.New:DB.Tbl.Log.Act.Update);
 			return this;}//save
 
 		//void log(DB.Tbl.Log.Act act){	Map val=asMap();Integer k=(Integer)pkv();DB.Tbl.Log.log( DB.Tbl.Log.Entity.valueOf(getName()), k, act, val);}
@@ -1664,9 +1690,9 @@ static class DB {
 			return x;}
 
 		/**retrieve from the db table all the rows that match
-		 * the conditions in < where > , create an iterator
-		 * , e.g.<code>for(Tbl row:query(
-		 * 		Tbl.where( CI , < val > ) ))</code>*/
+		* the conditions in < where > , create an iterator
+		* , e.g.<code>for(Tbl row:query(
+		* 		Tbl.where( CI , < val > ) ))</code>*/
 		public Itrtr query(Object[]where){
 			Itrtr r=new Itrtr(where);
 			return r;}
@@ -1773,9 +1799,9 @@ static class DB {
 				return b;}
 
 			/**
-			 * in the case of Co.and and Co.or
-			 * the even-prm is Co.or or Co.and , and the odd-prm is a list
-			 * */
+			* in the case of Co.and and Co.or
+			* the even-prm is Co.or or Co.and , and the odd-prm is a list
+			* */
 			static StringBuilder where(StringBuilder b,Object o,Object o1){
 				if(o==null )return b;
 				if((o==Co.and || o==Co.or )&& o1 instanceof List){
@@ -1910,8 +1936,8 @@ static class Json{
 			else if(a instanceof Cookie )oCookie((Cookie)a,ind,path);
 			else if(a instanceof java.util.UUID)w("\"").p(a.toString()).w(c?"\"/*uuid*/":"\"");
 			else{w("{\"class\":").oStr(a.getClass().getName(),ind)
-				     .w(",\"str\":").oStr(String.valueOf(a),ind)
-				     .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
+				 .w(",\"str\":").oStr(String.valueOf(a),ind)
+				 .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
 				if(c)w("}//Object&cachePath=\"").p(path).w("\"\n").p(ind);
 				else w("}");}return this;}
 
@@ -2080,15 +2106,15 @@ static class Json{
 			return this;}
 		public Output oCookie(Cookie y,String ind,String path)throws IOException
 		{final boolean c=comment;try{(c?w("{//")
-			.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-			.w("\"Comment\":").o(y.getComment())
-			.w(",\"Domain\":").o(y.getDomain())
-			.w(",\"MaxAge\":").p(y.getMaxAge())
-			.w(",\"Name\":").o(y.getName())
-			.w(",\"Path\":").o(y.getPath())
-			.w(",\"Secure\":").p(y.getSecure())
-			.w(",\"Version\":").p(y.getVersion())
-			.w(",\"Value\":").o(y.getValue());
+			 .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+			 .w("\"Comment\":").o(y.getComment())
+			 .w(",\"Domain\":").o(y.getDomain())
+			 .w(",\"MaxAge\":").p(y.getMaxAge())
+			 .w(",\"Name\":").o(y.getName())
+			 .w(",\"Path\":").o(y.getPath())
+			 .w(",\"Secure\":").p(y.getSecure())
+			 .w(",\"Version\":").p(y.getVersion())
+			 .w(",\"Value\":").o(y.getValue());
 		}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
@@ -2162,11 +2188,11 @@ static class Json{
 			else w("[");
 			for(int i=1;i<=cc;i++){
 				if(i>1){if(c)w("\n").p(i2).w(",");else w(",");}
-				 w("{\"name\":").oStr(o.getColumnName( i ),i2)
-				.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
-				.w(",\"width\":").p(o.getColumnDisplaySize( i ))
-				.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
-				.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
+				w("{\"name\":").oStr(o.getColumnName( i ),i2)
+					.w(",\"label\":").oStr(o.getColumnLabel( i ),i2)
+					.w(",\"width\":").p(o.getColumnDisplaySize( i ))
+					.w(",\"className\":").oStr(o.getColumnClassName( i ),i2)
+					.w(",\"type\":").oStr(o.getColumnTypeName( i ),i2).w("}");
 			}//for i<=cc
 			if(c)w("]//").p(o.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("]");}catch(Exception ex){TL.tl().error(ex,"Json.Output.ResultSetMetaData:");}return this;}
@@ -2254,7 +2280,7 @@ static class Json{
 				default:r=extractIdentifier();
 			}skipRWS();//skipWhiteSpace();
 			if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-				                    ||(cache!=null&&comments.startsWith("cacheReference"))))
+				 ||(cache!=null&&comments.startsWith("cacheReference"))))
 			{	if(i!=-1)
 			{	if(cache==null)
 				cache=new HashMap<String,Object>();
@@ -2274,14 +2300,14 @@ static class Json{
 				case 'r':buff('\r');break;case '0':buff('\0');break;
 				case 'x':case 'X':buff( (char)
 					java.lang.Integer.parseInt(
-					next(2)//p.substring(offset,offset+2)
-					,16));nxt();//next();
+						next(2)//p.substring(offset,offset+2)
+						,16));nxt();//next();
 				break;
 				case 'u':
 				case 'U':buff( (char)
 					java.lang.Integer.parseInt(
-					next(4)//p.substring(offset,offset+4)
-					,16));//next();next();next();//next();
+						next(4)//p.substring(offset,offset+4)
+						,16));//next();next();next();//next();
 					break;default:if(c!='\0')buff(c);}}
 			else buff(c);
 				nxt();b=c!=first&&c!='\0';
@@ -2295,9 +2321,9 @@ static class Json{
 			String r=consume();
 			return "true".equals(r)?new Boolean(true)
 				:"false".equals(r)?new Boolean(false)
-				:"null".equals(r)?Literal.Null
-				:"undefined".equals(r)?Literal.Undefined
-				:r;}
+					 :"null".equals(r)?Literal.Null
+						:"undefined".equals(r)?Literal.Undefined
+							:r;}
 
 		public Object extractDigits(){
 			if(c=='0')//&&offset+1<len)
@@ -2457,7 +2483,7 @@ static class Json{
 					}
 				}while( (b=(c==h ||
 					Character.toUpperCase(c)==
-					Character.toUpperCase(h))
+						Character.toUpperCase(h))
 				)&& (++i)<pn );
 			return b;}
 
