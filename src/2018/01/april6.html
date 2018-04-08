@@ -1,0 +1,80 @@
+<!DOCTYPE><html>
+<head>
+	<link href="favic32.ico" rel="shortcut icon" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<script src="/angular-1.6.4/angular.min.js"></script>
+	<script src="/angular-1.6.4/angular-sanitize.min.js"></script>
+	<script src="/angular-1.6.4/angular-md5.js"></script>
+	<script src="/angular-1.6.4/angular-ui-router.js"></script>
+	<script src="april6.js"></script>
+
+	<title>by mohamadjb@gmail.com</title>
+	<link rel="stylesheet" href="main.css"/>
+
+</head>
+
+<body class="grad">
+
+<img class="onLoggedOut" src="logo.png">
+<span class="onLoggedIn"><div width="100%" style="display:inline-flex ;
+    grid-gap: 3px;
+    grid-auto-rows: minmax(100px,auto);
+    grid-template-columns: repeat({{main.usr.f?6:2}},1fr);
+    background: rgba(240,240,255,.1);
+    border-radius: 5px;
+    padding: 3px;">
+	<div class="menuItem" style="min-width:300px"><img src="logo.png"></div>
+	<h1>Server-side</h1>
+	<div class="menuItem bvl"><a href="#!/main">Apps</a></div>
+</div>
+</span>
+<div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="main">
+	<main ui-view></main><sub>, by mohamadjb@gmail.com</sub>
+</div>
+
+<templates>
+
+	<template id="template.main" >
+
+		<h1>TxtEd</h1><pre>
+current path:parent
+new child
+list children
+
+delete
+edit key
+edit val
+edit parent
+edit owner
+edit group
+edit perm flags(world+group+owner x level)
+
+showHistory
+</pre>
+
+
+		<h1>WebApp Fragments Editor</h1><pre>
+    path(link each entry)
+    edit fields of current
+    list children
+newEntry
+
+type:string , obj
+	ref , refcall , ref-eval
+	refEd
+
+eds:text , tinymce , blockly , svgEd , leaflet(wishful,futuristic)
+	, jsonTree , fsm(wishful,futuristic) , dia(wishful,futuristic)
+	, angular( directive,controller,state
+		,template,filter,service,resource)
+	,entityEd(mysqlTbls/DB.Tbl)
+	,uiGenerator(embed EntityEd and TinyMCE)
+	,toolbarEd(tinyMCE,blockly,ang,dia(wishful,futuristic) )
+	,dependencyEd(wishful,futuristic)
+</pre>
+
+
+	</template>
+
+</templates><div ng-if="loading"><!--Loading...--></div>
+</body></html>
