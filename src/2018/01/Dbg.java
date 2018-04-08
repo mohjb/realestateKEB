@@ -1035,6 +1035,7 @@ public static void main(String[]args)throws Exception{
 		,{"Srvlt.logout"	,"app/moh"	,"{}"	    }//json params*/
 		{"TxtSrvlt.login","/txtSrvlt/moh","{pw:'"+ TxtSrvlt.Util.md5("m")+"'}"},
 		{"Txt.put","/txtSrvlt/moh/moh/47/xx","{abc:123}"},
+		{"Txt.load","/txtSrvlt/xx","{}"},
 		{"Txt.listKeys","/txtSrvlt/",""},
 		{"Txt.getKeys","/txtSrvlt/moh","['xx']"},
 		{"get","/txtSrvlt/moh",""},
