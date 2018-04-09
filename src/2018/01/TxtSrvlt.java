@@ -24,14 +24,13 @@ public static class Txt extends DB.Tbl {//<Integer>
 	public static final String dbtName = "Txt";
 	@F public int id,parent,/*code from enum P*/ perm;
 	@F public String key, txt,owner,group;
-	@F public Map meta;
 	@F public Date logTime;
 
 	public enum C implements DB.Tbl.CI {
-		id,parent,perm,key, txt, owner,group,meta,logTime;
+		id,parent,perm,key, txt, owner,group,logTime;
 		@Override public Field f() {return Co.f(name(), Txt.class);}
 		@Override public String getName() {return name();}
-		@Override public Class getType() {return f().getType();}
+		@Override public Class getType() {return String.class;}
 	}//enum C
 
 	public enum P {non(0),read(1),call(3),permRead(7)
@@ -46,36 +45,14 @@ public static class Txt extends DB.Tbl {//<Integer>
 	@Override public String getName() { return dbtName; }
 	@Override public C[] columns() { return C.values(); }
 	@Override public Object[]wherePK(){
-		Object[]a={C.id,id};return a;}//,C.key,key
+		Object[]a={C.id,id,C.key,key};return a;}
 
-	public Txt() {this(null);}
-	public Txt(String key) {this(0,0,key);}
-	public Txt(String key, String txt) {this(0,0,key);this.txt = txt;}
+	public Txt() {this(null,null);}
+	public Txt(String key) {this(key,null);}
+	public Txt(String key, String txt) {this.key=key;this.txt = txt; }//addOnEnterRequestListener( TL.tl(),Txt.class );
 
-	public Txt(String key, String txt,String ownr, String grp,Map m,Date lt,int prm) {
-		this(0,0,key,lt);this.txt = txt;owner=ownr;group=grp;perm=prm;meta=m;}
-
-	public Txt(int id,int parent,String key) {
-		this(id,parent,key,null);}
-
-	public Txt(int id,int parent,String key,Date lt) {
-		this.id=id;this.parent=parent;this.key=key;logTime=lt==null?new Date():lt;}
-
-	public static Txt create(int parent,String key,TL tl){
-		return create(parent,key,tl,null,null,0);}
-
-	public static synchronized Txt create(int parent,String key,TL tl,String txt,Map m,int perm){
-		String usr=tl.usrUn();int pk=-1;
-		try {pk=maxPlus1( C.id,dbtName );
-		Txt x=new Txt(pk,parent,key,tl.now);
-		x.owner=usr;x.group=tl.usrGroup();
-		x.txt=txt;x.meta=m;
-		x.perm=perm;
-		x.create();
-		return x;
-		} catch ( Exception e ) {
-			e.printStackTrace();
-		}return null;}
+	public Txt(String key, String txt,String ownr, String grp,Date lt,int prm) {
+		this(key,txt);owner=ownr;group=grp;perm=prm;logTime=lt;}
 
 	Object jt(){try {
 		Object j = Json.Prsr.parse(txt);
@@ -85,9 +62,7 @@ public static class Txt extends DB.Tbl {//<Integer>
 	}return null;}
 
 	static final String TblPk[]={"int(10)"," Primary Key"," NOT NULL"," auto_increment"};
-	static final List TblColDefinition;
-
-	static {TblColDefinition= Util.lst(
+	static final List TblColDefinition= Util.lst(
 		TblPk[0]+ TblPk[1]+ TblPk[2]+ TblPk[3]//id
 		, "int(10) NOT NULL DEFAULT 0 "//parent
 		, "int(10) NOT NULL DEFAULT 47 "//perm
@@ -95,10 +70,8 @@ public static class Txt extends DB.Tbl {//<Integer>
 		, "text NOT NULL "//txt
 		, "varchar(127) NOT NULL DEFAULT 'home' "//owner
 		, "varchar(127)NOT NULL DEFAULT 'home' "//group
-		,"text"//meta
 		, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
-	);if(! registered.contains(Txt.class))
-		registered.add(Txt.class);}
+	);
 	@Override public List creationDBTIndices(TL tl) {
 		return Util.lst(TblColDefinition
 			, Util.lst("unique(`"+C.id+"`,`"+C.key+"`)"
@@ -113,11 +86,13 @@ public static class Txt extends DB.Tbl {//<Integer>
 			,L.class
 		);}
 
+	static {if(! registered.contains(Txt.class))
+		registered.add(Txt.class);}
+
 	public static class L extends DB.Tbl{//<Integer>
 		public static final String dbtName="TxtLog";
 		@F public int id,parent, perm;//bit pattern:world+group+owner * dsxwr
 		@F public String key, txt,owner,group;
-		@F public Map meta;
 		@F public Date logTime;
 
 		@Override public String getName(){return dbtName;}
@@ -126,12 +101,12 @@ public static class Txt extends DB.Tbl {//<Integer>
 
 		public L(){logTime=new Date() ;}
 		public L(String key){this.key=key;logTime=new Date() ;}
-		public L(String key,String txt, String ownr,String grp,Map m,Date lt,int prm) {
-			this.key = key;this.txt = txt;owner=ownr;group=grp;perm=prm;logTime=lt;meta=m;}
+		public L(String key,String txt, String ownr,String grp,Date lt,int prm) {
+			this.key = key;this.txt = txt;owner=ownr;group=grp;perm=prm;logTime=lt;}
 
-		public static void l(String key,String v,String owner,String group,Map m,int perm){
-			L l=new L(key,v,owner,group,m,new Date(),perm);try{l.save();}catch(Exception x){}}
-		public static void l(Txt x){l(x.key,x.txt,x.owner,x.group,x.meta,x.perm);}
+		public static void l(String key,String v,String owner,String group,int perm){
+			L l=new L(key,v,owner,group,new Date(),perm);try{l.save();}catch(Exception x){}}
+		public static void l(Txt x){l(x.key,x.txt,x.owner,x.group,x.perm);}
 
 		@Override public List creationDBTIndices(TL tl){
 			List l=new LinkedList();l.addAll(TblColDefinition);
@@ -143,45 +118,17 @@ public static class Txt extends DB.Tbl {//<Integer>
 					,Util.lst(C.logTime,C.id,C.key)) );}
 	}//class Log
 
-	/**works in 3 approaches based on the param-key string-FORMAT
-	 * 1- if param-key is a integer-format then load the int pk
-	 * 2- if param-key has a bar-char
-	 *      , then before the bar would be parent int-id
-	 *          and saved in the session as attrib Txt.parent
-	 *      , and after the bar is the member-key
-	 * 3- otherwise, parent is read from the session
-	 *      , and member-key is set from param-key
-	 *
-	 * Caution&Warning: parent is IMPLICIT
-	 * */
 	public static Txt loadBy(String key) {
-		if(Util.isNum( key ))
-			return loadBy( Util.parseInt( key,0 ) );
-		int j=key==null?-1:key.indexOf( '|' )
-			,j1=j==-1?j:key.indexOf( '/' ),p=0;
-		if(j!=-1&&(j<j1||j1==-1))
-		{	TL.tl().h.s("Txt.parent",p=Util.parseInt( key.substring( 0,j ),0 ) );
-			key=key.substring( j+1,j1==-1?key.length():j1 ); }
-		else p=( Integer ) TL.tl().h.var("Txt.parent",0 );
-		return loadBy( key, p );/*
-		Txt parseKey(String key){
-			if(Util.isNum( key )){id=Util.parseInt( key,0 );return this;}
-			int j=key==null?-1:key.indexOf( '|' ),j1=j==-1?j:key.indexOf( '/' );
-			if(j!=-1&&(j<j1||j1==-1)) {
-				TL.tl().h.s("Txt.parent",parent=Util.parseInt( key.substring( 0,j ),0 ) );
-				this.key=key.substring( j+1,j1==-1?key.length():j1 );}
-			else {
-				parent=( Integer ) TL.tl().h.var("Txt.parent",0 );
-				this.key=key;}
-			return this;}
-		*/}
-
+		return loadBy( key, ( Integer ) TL.tl().h.var("parent",0 ) );}
 	public static Txt loadBy(String key,int parent) {
 		Txt j = (Txt) loadWhere(Txt.class, where(C.key, key,C.parent,parent));
 		return j;}
 	public static Txt loadBy(int id) {
 		Txt j = (Txt) loadWhere(Txt.class, where(C.id, id));
 		return j;}
+
+	public Txt child(String key){
+		return loadBy( key,id );}
 
 	public static Txt prmLoadByUrl(TL tl, String url) {
 		Txt j = loadBy(url);
@@ -272,7 +219,6 @@ public static class Txt extends DB.Tbl {//<Integer>
 			j.id=j.parent;j.load();//j=loadBy(j.parent);
 			l.add(Util.lst(j.id,j.key));}
 		m.put("children",l=new LinkedList());
-	//public Txt child(String key){ return loadBy( key,id );}
 		for(DB.Tbl t:p.query(where(C.parent,p.id)))
 			l.add(Util.lst(p.id,p.key));
 		return m;}
@@ -287,18 +233,6 @@ public static class Txt extends DB.Tbl {//<Integer>
 		L.l(this);return super.delete();}
 
 	@HttpMethod public static Txt
-	update( @HttpMethod(prmLoadByUrl = true) Txt p
-		,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
-		boolean b=false;if(tl.usr!=null)//TODO: check permission
-		{   for ( Object o:m.keySet() ){
-				Object v=m.get( o );
-				C c=C.valueOf( o.toString() );
-				if(v!=null&&c!=null)
-				{	p.v(c,v);b=true;}
-		}if(b)
-			p.save();}
-		return p;
-	/*@HttpMethod public static Txt
 	put( @HttpMethod(prmUrlPart= true) String owner
 		,@HttpMethod(prmUrlPart= true) String group
 		,@HttpMethod(prmUrlPart= true) int perm
@@ -306,28 +240,8 @@ public static class Txt extends DB.Tbl {//<Integer>
 		,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
 		Txt x =null;// loadBy(key);
 		if(tl.usr!=null)//TODO: check permission
-		{x=new Txt(key, v,owner,group,null,tl.now,perm);//tl.now,Util.parseInt(perm,47)//5*8+7:group+x+r owner+x+w+r
+		{x=new Txt(key, v,owner,group,tl.now,perm);//tl.now,Util.parseInt(perm,47)//5*8+7:group+x+r owner+x+w+r
 			x.save();}
-		return x;}*/}
-
-	@HttpMethod public static Txt
-	create( @HttpMethod(prmBody = true) Txt x, TL tl) throws Exception {
-		if(tl.usr!=null)//TODO: check permission
-			x.create();
-		return x;}
-
-	@HttpMethod public static Txt
-	txt( @HttpMethod(prmLoadByUrl= true) Txt x
-		,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
-		if(tl.usr!=null)//TODO: check permission
-		{x.txt=v;x.save();}
-		return x;}
-
-	@HttpMethod public static Txt
-	meta( @HttpMethod(prmLoadByUrl= true) Txt x
-		,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
-		if(tl.usr!=null)//TODO: check permission
-		{x.meta=m;x.save();}
 		return x;}
 
 	@HttpMethod public static Txt
@@ -385,14 +299,13 @@ static final String packageName = "dev201801"
 	, UrlPrefix = "/txtSrvlt/";
 
 static Map<String, Method> mth = new HashMap<String, Method>();
-
+static List<Class>OnEnterRequestListeners=new LinkedList<Class> ();
 
 static void staticInit() {
 	registerMethods(TxtSrvlt.class);
 	registerMethods(Txt.class);
-	if(! DB.Tbl.registered.contains(Txt.class))
-		 DB.Tbl.registered.add(Txt.class);
-	}
+	if(! DB.Tbl.registered.contains(Txt.class)) DB.Tbl.registered.add(Txt.class);
+	addOnEnterRequestListener( Txt.class ); }
 
 static {staticInit();}
 
@@ -408,10 +321,19 @@ public static void registerMethods(Class p) {
 	}
 }//registerOp
 
+public static void addOnEnterRequestListener(Class c){
+	if(!OnEnterRequestListeners.contains( c ))
+	{Class[] ca = {TL.class };Method m =null;
+		try{m=c.getMethod("OnEnterRequest", ca);}catch(Exception ex){}
+		// m.invoke(prmClss, tl, url);
+		if(m!=null)
+			OnEnterRequestListeners.add( c );
+	}}
+
 //need to do a forgot password recovery method
 @HttpMethod(usrLoginNeeded = false) public static Map
 login(@HttpMethod(prmLoadByUrl = true) Txt j
-	, @HttpMethod(prmName = "pw") String pw, TL tl)throws Exception {
+		, @HttpMethod(prmName = "pw") String pw, TL tl)throws Exception {
 	if(j==null)
 		j=Txt.loadBy("usr."+tl.h.req.getRequestURI().substring(UrlPrefix.length()));
 	if(j != null ){Object js=j.jt();
@@ -477,7 +399,7 @@ public @interface HttpMethod {
 			String url=tl.h.req.getRequestURI();
 			url=url.substring(UrlPrefix.length());
 				/*int[]ja={url.indexOf( '|' ),url.indexOf( '/' )};if(ja[0]!=-1&&ja[0]<ja[1]){
-					tl.h.s( "Txt.parent",Util.parseInt( url.substring( 0,ja[0] ) ,0) );
+					tl.h.s( "parent",Util.parseInt( url.substring( 0,ja[0] ) ,0) );
 					url=url.substring( ja[0]+1 );}*/
 			for(Annotation[] t : prmsAnno) try {
 				HttpMethod pp = t.length > 0 && t[0] instanceof HttpMethod ? (HttpMethod) t[0] : null;
@@ -509,7 +431,7 @@ public @interface HttpMethod {
 					}
 				} else if(pp != null && pp.prmBody())
 					args[i] = prmClss.isAssignableFrom(String.class)
-						 ? Util.readString(tl.h.req.getReader())
+						 ? readString(tl.h.req.getReader())
 						 : tl.bodyData;
 				else
 					args[i] = o = TL.class.equals(prmClss) ? tl
@@ -554,6 +476,18 @@ public @interface HttpMethod {
 	}
 }//run op servlet.service
 
+static String readString(BufferedReader r) throws IOException {
+	StringBuilder b = new StringBuilder();
+	int c = 0;
+	String line = r.readLine();
+	while(line != null) {
+		if(c++ > 0) b.append('\n');
+		b.append(line);
+		line = r.readLine();
+	}
+	return b.toString();
+}
+
 /** * Created by mbohamad on 19/07/2017.*/
 static class TL{
 	public static final String TlName=Srvlt.packageName+".TL";
@@ -595,6 +529,12 @@ static class TL{
 			if(h.getSession().isNew())
 				DB.Tbl.check(this);//Srvlt.Domain.loadDomain0();
 			usr=(Map)h.s("usr");//Txt
+			Class[] ca = {TL.class };Method m =null;
+			List<Class> l=(List)h.s( "OnEnterRequestListeners" );
+			for(Class c:l)
+			{m=c.getMethod("OnEnterRequest", ca);
+				if(m!=null)
+					m.invoke(c, tl);}
 		}catch(Exception ex){
 			error(ex,TlName,".onEnter");
 		}
@@ -827,18 +767,6 @@ static class TL{
 		if(a[0]==null)//o==null||!(o instanceof Connection))
 			a[0]=DB.c();
 		return (Connection)a[0];}
-
-	public String usrUn(){String s=null;if(usr!=null) {
-		Txt x = ( Txt ) usr.get( "Txt" );
-		if(x!=null)s=x.key;
-	}return s;} //usrUn()
-
-	public String usrGroup(){String s=null;if(usr!=null) {
-		Txt x = ( Txt ) usr.get( "Txt" );
-		if(x!=null){Map m=(Map)x.jt();
-			s=(String)m.get( "group" );
-		}
-	}return s;} //usr/group()
 }//class TL
 
 enum context{ROOT(
@@ -1031,17 +959,6 @@ static class Util{//utility methods
 		}
 		return "";}
 
-	static String readString(BufferedReader r) throws IOException {
-		StringBuilder b = new StringBuilder();
-		int c = 0;
-		String line = r.readLine();
-		while(line != null) {
-			if(c++ > 0) b.append('\n');
-			b.append(line);
-			line = r.readLine();
-		}
-		return b.toString();
-	}//readString
 }//class Util
 
 static class DB {
@@ -1269,8 +1186,8 @@ static class DB {
 		}
 	}
 
-	public static List<Object> q1colList(String sql,Object...p)throws SQLException {
-		ResultSet s=null;List<Object> r=null;try{s=R(sql,p);r=new LinkedList<Object>();
+	public static List<Object> q1colList(String sql,Object...p)throws SQLException
+	{ResultSet s=null;List<Object> r=null;try{s=R(sql,p);r=new LinkedList<Object>();
 		while(s.next())r.add(s.getObject(1));return r;}
 	finally{TL t=TL.tl();close(s,t);if(t.h.logOut)
 		try{t.log(t.jo().w(SrvltName).w(".DB.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
@@ -1278,8 +1195,8 @@ static class DB {
 			t.error(x,SrvltName,".DB.q1colList:",sql);
 		}}}
 
-	public static <T>List<T> q1colTList(String sql,Class<T>t,Object...p)throws SQLException {
-		ResultSet s=null;List<T> r=null;try{s=R(sql,p);r=new LinkedList<T>();//Class<T>t=null;
+	public static <T>List<T> q1colTList(String sql,Class<T>t,Object...p)throws SQLException
+	{ResultSet s=null;List<T> r=null;try{s=R(sql,p);r=new LinkedList<T>();//Class<T>t=null;
 		while(s.next())r.add(
 			s.getObject(1,t));return r;}
 	finally{TL tl=TL.tl();close(s,tl);if(tl.h.logOut)
@@ -1295,8 +1212,8 @@ static class DB {
 	/**returns a row of columns of the result of sql
 	 ,calls dbR(),dbcc(),and dbclose(ResultSet,TL.dbc())*/
 	public static Object[] q1row(String sql,Object...p)throws SQLException{return q1Row(sql,p);}
-	public static Object[] q1Row(String sql,Object[]p)throws SQLException {
-		ResultSet s=null;try{s=R(sql,p);Object[]a=null;int cc=cc(s);if(s.next())
+	public static Object[] q1Row(String sql,Object[]p)throws SQLException
+	{ResultSet s=null;try{s=R(sql,p);Object[]a=null;int cc=cc(s);if(s.next())
 	{a=new Object[cc];for(int i=0;i<cc;i++)try{a[i]=s.getObject(i+1);}
 	catch(Exception ex){
 		TL.tl().error(ex,SrvltName,".DB.q1Row:",sql);a[i]=s.getString(i+1);
@@ -1449,26 +1366,13 @@ static class DB {
 
 		public abstract CI[]columns();//public abstract FI[]flds();
 
-		public Object[]valsForSql(){
-			CI[]a=columns();
-			Object[]r=new Object[a.length];
-			int i=-1;
-			for(CI f:a){i++;
-				r[i]=valForSql(a[i]);
-			}return r;/*
-		public Object[]_vals(){
+		public Object[]vals(){
 			CI[]a=columns();//Field[]a=fields();
 			Object[]r=new Object[a.length];
 			int i=-1;
 			for(CI f:a){i++;
 				r[i]=v(a[i]);
-			}return r;}*/}
-
-		public Object valForSql(CI f){
-			Object o=v(f);
-			if(o instanceof Map)
-				o=Json.Output.out( o );
-			return o;}
+			}return r;}
 
 		public Tbl vals (Object[]p){
 			int i=-1;CI[]a=columns();//Field[]a=fields();
@@ -1684,9 +1588,7 @@ static class DB {
 		Tbl load(ResultSet rs)throws Exception{return load(rs,columns());}
 		/**loads one row from the table*/
 		Tbl load(ResultSet rs,CI[]a)throws Exception{
-			int c=0;for(CI f:a)if(f.getType().isAssignableFrom( Map.class ))
-					v(f,Json.Prsr.parse( rs.getCharacterStream(++c)));
-				else v(f,rs.getObject(++c));
+			int c=0;for(CI f:a)v(f,rs.getObject(++c));
 			return this;}
 
 		/**loads one row from the table*/
@@ -1747,8 +1649,8 @@ static class DB {
 			for ( int i = 1; i < cols.length; i++ )
 				sql.append( "," ).append( Co.prm.txt );//Co.m(cols[i]).txt
 			sql.append( ")" );//int x=
-			DB.X( sql.toString(), valsForSql() );
-			TL.tl().log( "create", this );//log(nw?DB.Tbl.Log.Act.New:DB.Tbl.Log.Act.Update);
+			DB.X( sql.toString(), vals() );
+			TL.tl().log( "save", this );//log(nw?DB.Tbl.Log.Act.New:DB.Tbl.Log.Act.Update);
 			return this;}//save
 
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
@@ -1761,7 +1663,7 @@ static class DB {
 				if(x==c[0])sql.append( " , `" ).append( x ).append( "`=?" );
 			//for()
 
-			DB.X( sql.toString(), valsForSql() );
+			DB.X( sql.toString(), vals() );
 			TL.tl().log( "update", this );//log(nw?DB.Tbl.Log.Act.New:DB.Tbl.Log.Act.Update);
 			return this;}//save
 
@@ -1774,7 +1676,7 @@ static class DB {
 			for ( int i = 1; i < cols.length; i++ )
 				sql.append( "," ).append( Co.prm.txt );//Co.m(cols[i]).txt
 			sql.append( ")" );//int x=
-			DB.X( sql.toString(), valsForSql() );
+			DB.X( sql.toString(), vals() );
 			TL.tl().log( "save", this );//log(nw?DB.Tbl.Log.Act.New:DB.Tbl.Log.Act.Update);
 			return this;}//save
 
