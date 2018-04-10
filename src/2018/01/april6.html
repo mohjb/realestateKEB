@@ -34,8 +34,30 @@
 
 <templates>
 
-	<template id="template.main" >
+<template id="template.main" >
+<div style="border:3px double black;margin:2px">
 
+<div style="border:3px double black;margin:2px">
+<h2>Path</h2><span ng-repeat="x in txtNode.path.reverse()"> / <button>{{x.id}}|{{x.key}}</button--></span>
+</div>
+
+<div style="border:3px double black;margin:2px">
+<h2>Txt</h2>Id:<input ng-model="txtNode.txt.id"/>
+	, Key:<input ng-model="txtNode.txt.key"/>
+	, owner:<input ng-model="txtNode.txt.owner"/>
+	, group:<input ng-model="txtNode.txt.group"/>
+	, perm:<input ng-model="txtNode.txt.perm"/>
+	, meta:<input ng-model="txtNode.txt.meta"/>
+	, txt:<input ng-model="txtNode.txt.txt"/>
+</div>
+
+<div style="border:3px double black;margin:2px">
+<h2>Children</h2><span ng-repeat="x in txtNode.children"><br/><button>{{x.id}}|{{x.key}}</button></span>	
+</div>
+versioin 2018.04.09.22.51
+</div>
+
+<div style="border:3px double black;bgcolor:#eee;display:none">
 		<h1>TxtEd</h1><pre>
 current path:parent
 new child
@@ -72,7 +94,7 @@ eds:text , tinymce , blockly , svgEd , leaflet(wishful,futuristic)
 	,toolbarEd(tinyMCE,blockly,ang,dia(wishful,futuristic) )
 	,dependencyEd(wishful,futuristic)
 </pre>
-<txtnode />
+</div>
 
 <!--tmplt myAtr="path" content="myContent">path tmplt</tmplt-->
 	</template>
