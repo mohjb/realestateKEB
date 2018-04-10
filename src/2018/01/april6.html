@@ -14,20 +14,6 @@
 </head>
 
 <body class="grad">
-
-<img class="onLoggedOut" src="logo.png">
-<span class="onLoggedIn"><div width="100%" style="display:inline-flex ;
-    grid-gap: 3px;
-    grid-auto-rows: minmax(100px,auto);
-    grid-template-columns: repeat({{main.usr.f?6:2}},1fr);
-    background: rgba(240,240,255,.1);
-    border-radius: 5px;
-    padding: 3px;">
-	<div class="menuItem" style="min-width:300px"><img src="logo.png"></div>
-	<h1>Server-side</h1>
-	<div class="menuItem bvl"><a href="#!/main">Apps</a></div>
-</div>
-</span>
 <div id="leftDiv" style="z-index:0; min-height: 847px;overflow:visible" ng-app="main">
 	<main ui-view></main><sub>, by mohamadjb@gmail.com</sub>
 </div>
@@ -35,27 +21,32 @@
 <templates>
 
 <template id="template.main" >
-<div style="border:3px double black;margin:2px">
+
+<fieldset style="border:3px double black;margin:2px"><legend>Path</legend>
+	<span ng-repeat="i in txt.meta.path"> / <button ng-init="x=main.load(i)" ng-click="clk(x.id)"
+	>{{x.id}}:{{x.key}}</button></span>
+</fieldset>
+
 
 <div style="border:3px double black;margin:2px">
-<h2>Path</h2><span ng-repeat="x in txtNode.path.reverse()"> / <button>{{x.id}}|{{x.key}}</button--></span>
+	<fieldset style="float: left;"><legend>Id</legend>{{txt.id}}</fieldset>
+	<fieldset style="float: left;"><legend>Key</legend>{{txt.key}}</fieldset>
+	<fieldset style="float: left;"><legend>owner</legend><input ng-model="txt.owner"/></fieldset>
+	<fieldset style="float: left;"><legend>group</legend><input ng-model="txt.group"/></fieldset>
+	<fieldset style="float: left;"><legend>perm</legend><input ng-model="txt.perm"/></fieldset>
+	<fieldset><legend>meta</legend><textarea ng-model="txt.meta"></textarea></fieldset>
+	<fieldset><legend>txt</legend><textarea ng-model="txt.txt"></textarea></fieldset>
+	<button ng-click="clk(txt.id)">Save</button>
+	,<button ng-click="clk(txt.id)">Delete</button>
+	,<button ng-click="onNewChild(txt.id)">New Child</button>
 </div>
 
-<div style="border:3px double black;margin:2px">
-<h2>Txt</h2>Id:<input ng-model="txtNode.txt.id"/>
-	, Key:<input ng-model="txtNode.txt.key"/>
-	, owner:<input ng-model="txtNode.txt.owner"/>
-	, group:<input ng-model="txtNode.txt.group"/>
-	, perm:<input ng-model="txtNode.txt.perm"/>
-	, meta:<input ng-model="txtNode.txt.meta"/>
-	, txt:<input ng-model="txtNode.txt.txt"/>
-</div>
+	<fieldset><legend>Children</legend><span ng-repeat="i in txt.meta.children"
+	> <button ng-init="x=main.load(i)" ng-click="clk(x.id)"
+	>{{x.id}}:{{x.key}}</button></span>
+	</fieldset>
+	<sub>version 2018.04.10.10.27</sub>
 
-<div style="border:3px double black;margin:2px">
-<h2>Children</h2><span ng-repeat="x in txtNode.children"><br/><button>{{x.id}}|{{x.key}}</button></span>	
-</div>
-versioin 2018.04.09.22.51
-</div>
 
 <div style="border:3px double black;bgcolor:#eee;display:none">
 		<h1>TxtEd</h1><pre>
@@ -96,7 +87,4 @@ eds:text , tinymce , blockly , svgEd , leaflet(wishful,futuristic)
 </pre>
 </div>
 
-<!--tmplt myAtr="path" content="myContent">path tmplt</tmplt-->
-	</template>
-</templates><div ng-if="loading"><!--Loading...--></div>
-</body></html>
+</template></templates></body></html>
