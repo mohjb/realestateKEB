@@ -32,7 +32,7 @@ function cs(p){
 xUrl='/txtSrvlt/';//2017.11.jsp
 
 (window.xa=(angular||{})
-.module('main', ['ngSanitize','angular-md5','ui.router'] ))
+.module('main', ['ngSanitize','angular-md5','ui.router','ng.jsoneditor'] ))
 .factory('main', ['$http','md5', function mainFactory($http,md5) {
 	var p=main={//window.xa||{}
 
@@ -87,6 +87,7 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 	if(main){
 		$scope.main=main
 		$scope.dt=dt
+		$scope.jsoneditorOptions={mode:'tree'}
 		$scope.selected=main.selected
 		$scope.txt=main.load(main.selected.id)
 		$scope.clk=function(id,prnt,ky){
