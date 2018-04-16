@@ -271,10 +271,9 @@ public static class Txt extends DB.Tbl {//<Integer>
 		while(j!=null&& j.id!=0){
 			j.id=j.parent;j.load();//j=loadBy(j.parent);
 			l.add(Util.lst(j.id,j.key));}
-		m.put("children",l=new LinkedList());
-	//public Txt child(String key){ return loadBy( key,id );}
-		for(DB.Tbl t:p.query(where(C.parent,p.id)))
-			l.add(Util.lst(p.id,p.key));
+	//public Txt child(String key){ return loadBy( key,id );}//m.put("children",l=new LinkedList());for(DB.Tbl t:p.query(where(C.parent,p.id)))l.add(Util.lst(p.id,p.key));
+		Object[]where=where( C.parent,p.id );
+		m.put("children",DB.L(sql( cols(C.id,C.key ),where,dbtName) ,where));
 		return m;}
 
 	@Override public DB.Tbl create() throws Exception {
@@ -295,9 +294,9 @@ public static class Txt extends DB.Tbl {//<Integer>
 				C c=C.valueOf( o.toString() );
 				if(v!=null&&c!=null)
 				{	p.v(c,v);b=true;}
-		}if(b)
-			p.save();}
-		return p;
+			}if(b)
+				p.save();
+		}return p;
 	/*@HttpMethod public static Txt
 	put( @HttpMethod(prmUrlPart= true) String owner
 		,@HttpMethod(prmUrlPart= true) String group
