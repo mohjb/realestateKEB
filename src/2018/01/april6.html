@@ -6,10 +6,13 @@
 	<script src="/angular-1.6.4/angular-sanitize.min.js"></script>
 	<script src="/angular-1.6.4/angular-md5.js"></script>
 	<script src="/angular-1.6.4/angular-ui-router.js"></script>
+<script src="/jsoneditor/dist/jsoneditor.min.js"></script>
+<script src="/ng-jsoneditor/ng-jsoneditor.min.js"></script>
 	<script src="april6.js"></script>
 
 	<title>by mohamadjb@gmail.com</title>
 	<link rel="stylesheet" href="main.css"/>
+	<link href="/jsoneditor/dist/jsoneditor.css" rel="stylesheet" type="text/css">
 
 </head>
 
@@ -23,8 +26,8 @@
 <template id="template.main" >
 
 <fieldset style="border:3px double black;margin:2px"><legend>Path</legend>
-	<span ng-repeat="x in txt.meta.path"> / <button ng-click="clk(x[0])"
-	>{{x[0]}}:{{x[1]}}</button></span>
+	<span ng-repeat="i in txt.meta.path"> / <button ng-init="x=main.load(i)" ng-click="clk(x.id)"
+	>{{x.id}}:{{x.key}}</button></span>
 </fieldset>
 
 
@@ -34,15 +37,52 @@
 	<fieldset style="float: left;"><legend>owner</legend><input ng-model="txt.owner"/></fieldset>
 	<fieldset style="float: left;"><legend>group</legend><input ng-model="txt.group"/></fieldset>
 	<fieldset style="float: left;"><legend>perm</legend><input ng-model="txt.perm"/></fieldset>
-	<fieldset><legend>meta</legend><textarea ng-model="txt.meta"></textarea></fieldset>
-	<fieldset><legend>txt</legend><textarea ng-model="txt.txt"></textarea></fieldset>
+	<fieldset><legend>meta</legend><div
+			ng-jsoneditor
+			ng-model="txt.meta"
+			options="jsoneditorOptions"
+			style="xwidth: 400px; height: 25%;"></div></fieldset>
+	<fieldset><legend>txt</legend>
+		<select ng-model="editorClass" ng-options="i for i in jsoneditorOptions.editorClass" ng-change="editorClassChanged()"></select>
+		<textarea ng-if="!editorClass || editorClass==jsoneditorOptions.editorClass[0]" ng-model="txt.txt"></textarea>
+		<div ng-if="editorClass=='JsonEditor'" ng-jsoneditor ng-model="txt.txt"
+			options="jsoneditorOptions"
+			style="xwidth: 400px; height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[1]" ng-grapesjs ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[2]" ng-blockly ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[3]" ng-svgedit ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[4]" ng-htmlimg ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[5]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[6]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[7]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[8]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[9]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[10]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[11]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[12]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[13]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[14]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[15]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[16]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[17]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[18]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[19]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[20]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[21]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[22]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[23]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[24]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+		<div ng-if="editorClass==jsoneditorOptions.editorClass[25]" ng-x ng-model="txt.txt" style="height: 25%;"></div>
+
+	</fieldset>
 	<button ng-click="clk(txt.id)">Save</button>
 	,<button ng-click="clk(txt.id)">Delete</button>
 	,<button ng-click="onNewChild(txt.id)">New Child</button>
 </div>
 
-	<fieldset><legend>Children</legend><span ng-repeat="x in txt.meta.children"
-	> <button ng-click="clk(x[0])">{{x[0]}}:{{x[1]}}</button></span>
+	<fieldset><legend>Children</legend><span ng-repeat="i in txt.meta.children"
+	> <button ng-init="x=main.load(i)" ng-click="clk(x.id)"
+	>{{x.id}}:{{x.key}}</button></span>
 	</fieldset>
 	<sub>version 2018.04.10.10.27</sub>
 
@@ -66,9 +106,9 @@ showHistory
 
 
 		<h1>WebApp Fragments Editor</h1><pre>
-	path(link each entry)
-	edit fields of current
-	list children
+    path(link each entry)
+    edit fields of current
+    list children
 newEntry
 
 type:string , obj
