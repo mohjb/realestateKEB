@@ -23,8 +23,8 @@
 <template id="template.main" >
 
 <fieldset style="border:3px double black;margin:2px"><legend>Path</legend>
-	<span ng-repeat="i in txt.meta.path"> / <button ng-init="x=main.load(i)" ng-click="clk(x.id)"
-	>{{x.id}}:{{x.key}}</button></span>
+	<span ng-repeat="x in txt.meta.path"> / <button ng-click="clk(x[0])"
+	>{{x[0]}}:{{x[1]}}</button></span>
 </fieldset>
 
 
@@ -41,9 +41,8 @@
 	,<button ng-click="onNewChild(txt.id)">New Child</button>
 </div>
 
-	<fieldset><legend>Children</legend><span ng-repeat="i in txt.meta.children"
-	> <button ng-init="x=main.load(i)" ng-click="clk(x.id)"
-	>{{x.id}}:{{x.key}}</button></span>
+	<fieldset><legend>Children</legend><span ng-repeat="x in txt.meta.children"
+	> <button ng-click="clk(x[0])">{{x[0]}}:{{x[1]}}</button></span>
 	</fieldset>
 	<sub>version 2018.04.10.10.27</sub>
 
@@ -67,9 +66,9 @@ showHistory
 
 
 		<h1>WebApp Fragments Editor</h1><pre>
-    path(link each entry)
-    edit fields of current
-    list children
+	path(link each entry)
+	edit fields of current
+	list children
 newEntry
 
 type:string , obj
