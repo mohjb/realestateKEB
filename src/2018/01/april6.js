@@ -35,52 +35,87 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 .module('main', ['ngSanitize','angular-md5','ui.router','ng.jsoneditor'] ))
 .factory('main', ['$http','md5', function mainFactory($http,md5) {
 	var p=main={//window.xa||{}
-
-	chng:function(x){if(x ){
-			var d=new Date(),n=d.getTime();
-			x.lastModified=n;p.selected.key=x;
-			console.log('main.chng',x,arguments)//if entityId.startsWith('') ) p.compute( )
-	}}
-	,blur:function(x){if(x ){
-			console.log('main.blur',x,arguments)
-			if( p.lsSaved<x.lastModified)
-				x.serverStore()
-	}}//else console.log('main.blur:no unique id found:',x)
-	/*,txtNode:{path:[{id:1,key:'key2'},{id:1,key:'key1'}]//path
-		,txt:{id:3,key:'key3',owner:'moh',group:'moh',parent:2,perm:47
-			,txt:'hi',meta:{protoId:3,typ:'node',yes:true}}//txt
-		,children:[{id:4,key:'key4'},{id:5,key:'key5'}]//children
-		}//txtNode*/
-	,txt:{0:{id:0,parent:0,key:'root',owner:'moh',group:'moh',perm:0
-			,txt:'',meta:{path:[0],children:[1,2]}}
+	 txt:{0:{id:0,parent:0,key:'root',owner:'moh',group:'moh',perm:0
+			,txt:'',meta:{path:[[0,'root']],children:[[1,'users'],[2,'apps']]}}
 		,1:{id:1,parent:0,key:'users',owner:'moh',group:'moh',perm:47
-			,txt:'',meta:{path:[0],children:[3]}}
+			,txt:'',meta:{path:[[0,'root']],children:[[3,'moh']]}}
 		,2:{id:2,parent:0,key:'apps',owner:'moh',group:'moh',perm:47
-			,txt:'',meta:{path:[0],children:[4]}}
+			,txt:'',meta:{path:[[0,'root']],children:[[4,'app1']]}}
 		,3:{id:3,parent:1,key:'moh',owner:'moh',group:'moh',perm:47
-			,txt:'',meta:{path:[1,0],children:[]}}
+			,txt:'',meta:{path:[[1,'users'],[0,'root']],children:[]}}
 		,4:{id:4,parent:2,key:'app1',owner:'moh',group:'moh',perm:47
-			,txt:'',meta:{path:[2,0],children:[5,6]}}
+			,txt:'',meta:{path:[[2,'apps'],[0,'root']],children:[[5,'key1'],[6,'key2']]}}
 		,5:{id:5,parent:4,key:'key1',owner:'moh',group:'moh',perm:47
-			,txt:'',meta:{path:[4,2,0],children:[]}}
+			,txt:'',meta:{path:[[4,'app1'],[2,'apps'],[0,'root']],children:[]}}
 		,6:{id:6,parent:4,key:'key2',owner:'moh',group:'moh',perm:47
-			,txt:'',meta:{path:[4,2,0],children:[]}}
+			,txt:'',meta:{path:[[4,'app1'],[2,'apps'],[0,'root']],children:[]}}
 	}//Txt
 	,selected:{id:4}
-	,load:function load(id,onload,ref){
-		var x=main.txt[id];if(onload){
-			if(onload instanceof Function)
-				onload(x,ref);
-			else 
-				onload.onload(x,ref)}
+	,load:function load(id,clb){
+		var x=main.txt[id];if(!x)x=main.ls.load(id);
+		if(!x){var q=main.ls.load.q;
+			if(q.m[id]){return;}
+			q.q.push({id:id,clb:clb});
+			if(!q.intrvl){
+				q.intrvl=setInterval(function(){
+					var i=q.q.shift();$http
+					.send({method:'Txt.load',url:xUrl+i.id})
+					.then(function(respond){
+						console.log('main.load.http.then:',i,arguments)
+						var y=respond['return'];
+						main.txt[y.id]=y
+						main.ls.save(y)
+						if(clb)
+							clb(y);}
+					 ,function(respond){
+						console.log('main.load.http.then:err:',y,arguments)})
+				},2)
+		}}else clb(x);
+		/*if(onload){
+		if(onload instanceof Function)
+			onload(x,ref);
+		else 
+			onload.onload(x,ref)}else{}*/
 		return x;}
-	/*//,children:{0:[1,2],1:[3],2:[4],3:[],4:[5,6],5:[],6:[]}
-	,loadNode:function loadNode(id,onload,ref){
-		var x=main.load(id)
-		return x;}*/
+	,save:function save(x,clb){
+		var q=p.ls.save.q,i=q.m[x.id];
+		p.ls.save(x);
+		if(i!=undefined)return;
+		q.m[x.id]=q.q.length;q.q.push({x:x,clb:clb});
+		if(!q.intrvl){
+			q.intrvl=setInterval(function(){
+				var x=q.q.shift();delete q.q.m[x.id];$http
+				.send({method:'Txt.update',url:xUrl+x.id,data:JSON.stringify(x.x)})
+				.then(function(respond){
+						x.clb(x.x,respond['return']);},
+					function(respond){
+						x.clb(x.x,respond,'error')});
+				if(q.q.length<1)clearInterval(q.intrvl);
+			},2);}
+		return x;}
+	,ls:{offline:true,prefix:'TxtSrvlt',q:
+			{load:{m:{},q:[]}
+			,save:{m:{},q:[]}
+			,intvl:0,trgt:new Date()}
+		,load:function(id,clb){var x=JSON.parse(LocalStorage[p.ls.prefix+id]);if(x && clb)clb(x);return x;}
+		,save:function(x){x.meta.lastModified=new Date();LocalStorage[p.ls.prefix+x.id]=JSON.stringify(x);}
+	}//ls
 	}//main
-	return p;//function mainFactoryCallback(message) {return p;}
-}])
+
+	var b={q:[1,2,3,4],clb:function(x)
+	{if(x){
+		if(x.id==0)
+		{	p.txt={};
+			b.q=[];for(var i in x.meta.children)
+				b.q.push(x.meta.children[i])
+		}
+		p.txt[x.id]=x;
+		var c=b.q.shift();
+		if(c)
+			p.ls.load(c,b.clb);}},x}//b
+	b.x=p.ls.load(0,b.clb);
+	return p;}])
+
 .controller('mainCtrl',function mainCtrlController($scope,main ) {
 	if(!main )//|| !main.usr
 		return location.hash='#!/login'
@@ -90,8 +125,8 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 		$scope.jsoneditorOptions={mode:'tree'}
 		$scope.selected=main.selected
 		$scope.txt=main.load(main.selected.id)
-		$scope.clk=function(id,prnt,ky){
-			main.load(id,function(x,ref){main.selected.id=id;$scope.txt=x;});}
+		$scope.clk=function(id){
+			main.load(id,function(x){main.selected.id=id;$scope.txt=x;});}
 		$scope.onNewChild=function onNewChild(prnt){
 			var y='',p=$scope.txt,path=[p.id]
 			,x={id:id,parent:id,key:ky,owner:'moh',group:'moh',perm:47
@@ -112,6 +147,9 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 				return x
 			}return null
 		}//onNewChild
+		$scope.clkSave=function clkSave(x){
+			main.save(x,function(){console.log('mainCtrl.clkSave:',x,arguments);})
+		}//clkSave
 	}else{
 		$scope.usr=null;
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , no app')
