@@ -35,7 +35,7 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 .module('main', ['ngSanitize','angular-md5','ui.router','ng.jsoneditor'] ))
 .factory('main', ['$http','md5', function mainFactory($http,md5) {
 	var p=main={//window.xa||{}
-	 txt:{0:{id:0,parent:0,key:'root',owner:'moh',group:'moh',perm:0
+	txt:{0:{id:0,parent:0,key:'root',owner:'moh',group:'moh',perm:0
 			,txt:'',meta:{path:[[0,'root']],children:[[1,'users'],[2,'apps']]}}
 		,1:{id:1,parent:0,key:'users',owner:'moh',group:'moh',perm:47
 			,txt:'',meta:{path:[[0,'root']],children:[[3,'moh']]}}
@@ -51,27 +51,24 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 			,txt:'',meta:{path:[[4,'app1'],[2,'apps'],[0,'root']],children:[]}}
 	}//Txt
 	,selected:{id:4}
-	,editorClass:[{lbl:'Text',code:'text'},{lbl:'JsonEditor',code:'json'},{lbl:'TinyMCE',code:'html'}
-		,{lbl:'Blockly',code:'blockly'},{lbl:'Svg edit',code:'svg'},{lbl:'Html Img',code:'hImg'}
-		,{lbl:'TincyMCE Pallette editor',code:'htmlPalete'},{lbl:'Svg editor pallette editor',code:'svgPalete'}
-		,{lbl:'Blockly pallette editor',code:'blocklyPalete'},{lbl:'TincyMCE/AngularJS Pallette editor',code:'angPalete'}
-		,{lbl:'Tinymce media file manager',code:'htmlMediaFM'},{lbl:'Svg editor media file manager',code:'svgMediaFM'}
-		,{lbl:'Fragments list',code:'fragList'},{lbl:'API(Java/JS/NativeScript) components pallette',code:'apiPalette'}
-		,{lbl:'Dia',code:'dia'},{lbl:'Visio templates',code:'diaPalette'},{lbl:'DB explorer',code:'dbExplorer'}
-		,{lbl:'Uml' ,code:'uml'},{lbl:'use cases',code:'umlUC'},{lbl:'ER',code:'umlER'},{lbl:'flowchart',code:'umlFC'}
-		,{lbl:'FSM',code:'fsm'},{lbl:'Mindmap',code:'mm'},{lbl:'dewaar',code:'dewaar'}
-		,{lbl:'conversation structure',code:'conversationStruct'},{lbl:'SheetJS components pallette',code:'sheetJS'}
-		,{lbl:'D3 charts',code:'d3'},{lbl:'Leaflet',code:'leaflet'},{lbl:'Html5 js Canvas',code:'canvas'}
-		,{lbl:'WebGL',code:'webGL'},{lbl:'Maths/statistics/R formulas component pallette',code:'formulas'}
-		,{lbl:'PivotTable.js',code:'pivot'}]
+	,q:{ load:{m:{},q:[]}//,q:function(x,clb){var t=main.ls.q.load,n=t.m[x.id];if(!n){n={};}}
+		,save:{m:{},q:[]}
+		,intvl:0,trgt:new Date()
+	}//q
 	,load:function load(id,clb){
-		var x=main.txt[id];if(!x)x=main.ls.load(id);
-		if(!x){var q=main.ls.load.q;
-			if(q.m[id]){return;}
-			q.q.push({id:id,clb:clb});
+		var x=main.txt[id];
+		if(!x)
+			x=main.ls.load(id);
+		if(!x){var q=main.q.load,n=q.m[id];
+			if(n)
+			{	n.clb.push(clb)
+				return;}
+			n={id:id,clb:[clb]}
+			q.q.push(q.m[id]=n);
+			q=main.q;
 			if(!q.intrvl){
 				q.intrvl=setInterval(function(){
-					var i=q.q.shift();$http
+					var i=q.qu.shift();$http
 					.send({method:'Txt.load',url:xUrl+i.id})
 					.then(function(respond){
 						console.log('main.load.http.then:',i,arguments)
@@ -84,14 +81,10 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 						console.log('main.load.http.then:err:',y,arguments)})
 				},2)
 		}}else clb(x);
-		/*if(onload){
-		if(onload instanceof Function)
-			onload(x,ref);
-		else 
-			onload.onload(x,ref)}else{}*/
 		return x;}
+	
 	,save:function save(x,clb){
-		var q=p.ls.save.q,i=q.m[x.id];
+		var q=p.q.save,i=q.m[x.id];
 		p.ls.save(x);
 		if(i!=undefined)return;
 		q.m[x.id]=q.q.length;q.q.push({x:x,clb:clb});
@@ -103,30 +96,41 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 						x.clb(x.x,respond['return']);},
 					function(respond){
 						x.clb(x.x,respond,'error')});
-				if(q.q.length<1)
-					clearInterval(q.intrvl);
+				if(q.q.length<1)clearInterval(q.intrvl);
 			},2);}
 		return x;}
-	,ls:{offline:true,prefix:'TxtSrvlt',q:
-			{load:{m:{},q:[]}
-			,save:{m:{},q:[]}
-			,intvl:0,trgt:new Date()}
-		,load:function(id,clb){var x=JSON.parse(LocalStorage[p.ls.prefix+id]);if(x && clb)clb(x);return x;}
-		,save:function(x){x.meta.lastModified=new Date();LocalStorage[p.ls.prefix+x.id]=JSON.stringify(x);}
+
+	,ls:{offline:true,prefix:'TxtSrvlt'
+		,load:function(id,clb){
+			var x=JSON.parse(LocalStorage[p.ls.prefix+id]);
+			if(x && clb)
+				clb(x);
+			return x;}
+
+		,save:function(x){
+			x.meta.lastModified=new Date();
+			LocalStorage[p.ls.prefix+x.id]=JSON.stringify(x);}
 	}//ls
-	}//main','	var b={q:[1,2,3,4],clb:function(x)
-	{if(x){
-		if(x.id==0)
-		{	p.txt={};
-			b.q=[];for(var i in x.meta.children)
-				b.q.push(x.meta.children[i])
-		}
-		p.txt[x.id]=x;
-		var c=b.q.shift();
-		if(c)
-			p.ls.load(c,b.clb);}}//}//b
+	}//main
+	var b={q:[1,2,3,4],clb:function(x)
+		{   if(x){
+				if(x.id==0)
+				{	p.txt={};
+					b.q=[];for(var i in x.meta.children)
+						b.q.push(x.meta.children[i])
+				}
+				p.txt[x.id]=x;
+				var c=b.q.shift();
+				if(c)
+					p.ls.load(c,b.clb);
+			}//if x
+		}//function clb
+	}//b,x
 	b.x=p.ls.load(0,b.clb);
-	return p;}])
+	return p;
+	}//function mainFactory
+	]
+	)//factory
 
 .controller('mainCtrl',function mainCtrlController($scope,main ) {
 	if(!main )//|| !main.usr
@@ -134,12 +138,23 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 	if(main){
 		$scope.main=main
 		$scope.dt=dt
-		$scope.jsoneditorOptions={mode:'tree'}
-		$scope.editorClass=main.editorClass
+		$scope.jsoneditorOptions={editorClass:["text",
+			,"JsonEditor","HTML","Blockly","SvgEdit","Html Img","TincyMCE Pallette editor"
+			,"Svg editor pallette editor","Blockly pallette editor","TincyMCE/AngularJS Pallette editor"
+			,"Tinymce media file manager","Svg editor media file manager","Fragments list"
+			,"API(Java/JS/NativeScript) components pallette","Dia, Visio templates","DB explorer"
+			,"Uml , use cases, ER , flowchart, FSM","Mindmap, dewaar, conversation structure"
+			,"SheetJS components pallette","D3 charts","Leaflet","Html5 js Canvas","WebGL"
+			,"Maths/statistics/R formulas component pallette"]
+			,mode:'tree'}
+		$scope.jsoneditorOptions.schema= {"properties": {"editorClass": {"enum":
+			$scope.jsoneditorOptions. editorClass}}}
 		$scope.selected=main.selected
 		$scope.txt=main.load(main.selected.id)
-		$scope.clk=function(id){
-			main.load(id,function(x){main.selected.id=id;$scope.txt=x;});}
+		$scope.clk=function(id,prnt,ky){
+			main.load(id,function(x,ref){main.selected.id=id;$scope.txt=x;
+				$scope.editorClass=x.meta.editorClass||'text'
+			});}
 		$scope.onNewChild=function onNewChild(prnt){
 			var y='',p=$scope.txt,path=[p.id]
 			,x={id:id,parent:id,key:ky,owner:'moh',group:'moh',perm:47
@@ -160,9 +175,19 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 				return x
 			}return null
 		}//onNewChild
+
 		$scope.clkSave=function clkSave(x){
 			main.save(x,function(){console.log('mainCtrl.clkSave:',x,arguments);})
+
 		}//clkSave
+		
+		$scope.editorClass='text'
+		$scope.editorClassChanged=function editorClassChanged(){
+
+			console.log('editorClassChanged:',arguments)
+			$scope.txt.meta.editorClass=$scope.editorClass;
+		}
+
 	}else{
 		$scope.usr=null;
 		console.log('mainCntrl:version=',$scope.version='mainCntrl , no app')
