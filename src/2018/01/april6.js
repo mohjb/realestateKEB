@@ -51,6 +51,19 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 			,txt:'',meta:{path:[[4,'app1'],[2,'apps'],[0,'root']],children:[]}}
 	}//Txt
 	,selected:{id:4}
+	,editorClass:[{lbl:'Text',code:'text'},{lbl:'JsonEditor',code:'json'},{lbl:'TinyMCE',code:'html'}
+		,{lbl:'Blockly',code:'blockly'},{lbl:'Svg edit',code:'svg'},{lbl:'Html Img',code:'hImg'}
+		,{lbl:'TincyMCE Pallette editor',code:'htmlPalete'},{lbl:'Svg editor pallette editor',code:'svgPalete'}
+		,{lbl:'Blockly pallette editor',code:'blocklyPalete'},{lbl:'TincyMCE/AngularJS Pallette editor',code:'angPalete'}
+		,{lbl:'Tinymce media file manager',code:'htmlMediaFM'},{lbl:'Svg editor media file manager',code:'svgMediaFM'}
+		,{lbl:'Fragments list',code:'fragList'},{lbl:'API(Java/JS/NativeScript) components pallette',code:'apiPalette'}
+		,{lbl:'Dia',code:'dia'},{lbl:'Visio templates',code:'diaPalette'},{lbl:'DB explorer',code:'dbExplorer'}
+		,{lbl:'Uml' ,code:'uml'},{lbl:'use cases',code:'umlUC'},{lbl:'ER',code:'umlER'},{lbl:'flowchart',code:'umlFC'}
+		,{lbl:'FSM',code:'fsm'},{lbl:'Mindmap',code:'mm'},{lbl:'dewaar',code:'dewaar'}
+		,{lbl:'conversation structure',code:'conversationStruct'},{lbl:'SheetJS components pallette',code:'sheetJS'}
+		,{lbl:'D3 charts',code:'d3'},{lbl:'Leaflet',code:'leaflet'},{lbl:'Html5 js Canvas',code:'canvas'}
+		,{lbl:'WebGL',code:'webGL'},{lbl:'Maths/statistics/R formulas component pallette',code:'formulas'}
+		,{lbl:'PivotTable.js',code:'pivot'}]
 	,load:function load(id,clb){
 		var x=main.txt[id];if(!x)x=main.ls.load(id);
 		if(!x){var q=main.ls.load.q;
@@ -90,7 +103,8 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 						x.clb(x.x,respond['return']);},
 					function(respond){
 						x.clb(x.x,respond,'error')});
-				if(q.q.length<1)clearInterval(q.intrvl);
+				if(q.q.length<1)
+					clearInterval(q.intrvl);
 			},2);}
 		return x;}
 	,ls:{offline:true,prefix:'TxtSrvlt',q:
@@ -100,9 +114,7 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 		,load:function(id,clb){var x=JSON.parse(LocalStorage[p.ls.prefix+id]);if(x && clb)clb(x);return x;}
 		,save:function(x){x.meta.lastModified=new Date();LocalStorage[p.ls.prefix+x.id]=JSON.stringify(x);}
 	}//ls
-	}//main
-
-	var b={q:[1,2,3,4],clb:function(x)
+	}//main','	var b={q:[1,2,3,4],clb:function(x)
 	{if(x){
 		if(x.id==0)
 		{	p.txt={};
@@ -112,7 +124,7 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 		p.txt[x.id]=x;
 		var c=b.q.shift();
 		if(c)
-			p.ls.load(c,b.clb);}},x}//b
+			p.ls.load(c,b.clb);}}//}//b
 	b.x=p.ls.load(0,b.clb);
 	return p;}])
 
@@ -123,6 +135,7 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 		$scope.main=main
 		$scope.dt=dt
 		$scope.jsoneditorOptions={mode:'tree'}
+		$scope.editorClass=main.editorClass
 		$scope.selected=main.selected
 		$scope.txt=main.load(main.selected.id)
 		$scope.clk=function(id){
