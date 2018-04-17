@@ -26,8 +26,8 @@
 <template id="template.main" >
 
 <fieldset style="border:3px double black;margin:2px"><legend>Path</legend>
-	<span ng-repeat="x in txt.meta.path"> / <button ng-click="clk(x[0])"
-	>{{x[0]}}</button></span>
+	<span ng-repeat="i in txt.meta.path"> / <button ng-init="x=main.load(i)" ng-click="clk(x.id)"
+	>{{x.id}}:{{x.key}}</button></span>
 </fieldset>
 
 
@@ -43,9 +43,9 @@
 			options="jsoneditorOptions"
 			style="xwidth: 400px; height: 25%;"></div></fieldset>
 	<fieldset><legend>txt</legend>
-		<select ng-model="editorClass" ng-options="i.lbl for i in jsoneditorOptions.editorClass" ng-change="editorClassChanged()"></select>
-		<textarea ng-if="!editorClass || editorClass.code==jsoneditorOptions.editorClass[0].code" ng-model="txt.txt"></textarea>
-		<div ng-if="editorClass.code=='JsonEditor'" ng-jsoneditor ng-model="txt.txt"
+		<select ng-model="editorClass" ng-options="i for i in jsoneditorOptions.editorClass" ng-change="editorClassChanged()"></select>
+		<textarea ng-if="!editorClass || editorClass==jsoneditorOptions.editorClass[0]" ng-model="txt.txt"></textarea>
+		<div ng-if="editorClass=='JsonEditor'" ng-jsoneditor ng-model="txt.txt"
 			options="jsoneditorOptions"
 			style="xwidth: 400px; height: 25%;"></div>
 		<div ng-if="editorClass==jsoneditorOptions.editorClass[1]" ng-grapesjs ng-model="txt.txt" style="height: 25%;"></div>
@@ -80,9 +80,9 @@
 	,<button ng-click="onNewChild(txt.id)">New Child</button>
 </div>
 
-	<fieldset><legend>Children</legend><span ng-repeat="x in txt.meta.children"
-	> <button ng-click="clk(x[0])"
-	>{{x[1]}}</button></span>
+	<fieldset><legend>Children</legend><span ng-repeat="i in txt.meta.children"
+	> <button ng-init="x=main.load(i)" ng-click="clk(x.id)"
+	>{{x.id}}:{{x.key}}</button></span>
 	</fieldset>
 	<sub>version 2018.04.10.10.27</sub>
 
