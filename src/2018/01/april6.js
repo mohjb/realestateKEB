@@ -138,14 +138,22 @@ xUrl='/txtSrvlt/';//2017.11.jsp
 	if(main){
 		$scope.main=main
 		$scope.dt=dt
-		$scope.jsoneditorOptions={editorClass:["text",
-			,"JsonEditor","HTML","Blockly","SvgEdit","Html Img","TincyMCE Pallette editor"
-			,"Svg editor pallette editor","Blockly pallette editor","TincyMCE/AngularJS Pallette editor"
-			,"Tinymce media file manager","Svg editor media file manager","Fragments list"
-			,"API(Java/JS/NativeScript) components pallette","Dia, Visio templates","DB explorer"
-			,"Uml , use cases, ER , flowchart, FSM","Mindmap, dewaar, conversation structure"
-			,"SheetJS components pallette","D3 charts","Leaflet","Html5 js Canvas","WebGL"
-			,"Maths/statistics/R formulas component pallette"]
+		$scope.jsoneditorOptions={
+			
+			editorClass:[{lbl:'Text',code:'text'},{lbl:'JsonEditor',code:'json'},{lbl:'TinyMCE',code:'html'}
+		,{lbl:'Blockly',code:'blockly'},{lbl:'Svg edit',code:'svg'},{lbl:'Html Img',code:'hImg'}
+		,{lbl:'TincyMCE Pallette editor',code:'htmlPalete'},{lbl:'Svg editor pallette editor',code:'svgPalete'}
+		,{lbl:'Blockly pallette editor',code:'blocklyPalete'},{lbl:'TincyMCE/AngularJS Pallette editor',code:'angPalete'}
+		,{lbl:'Tinymce media file manager',code:'htmlMediaFM'},{lbl:'Svg editor media file manager',code:'svgMediaFM'}
+		,{lbl:'Fragments list',code:'fragList'},{lbl:'API(Java/JS/NativeScript) components pallette',code:'apiPalette'}
+		,{lbl:'Dia',code:'dia'},{lbl:'Visio templates',code:'diaPalette'},{lbl:'DB explorer',code:'dbExplorer'}
+		,{lbl:'Uml' ,code:'uml'},{lbl:'use cases',code:'umlUC'},{lbl:'ER',code:'umlER'},{lbl:'flowchart',code:'umlFC'}
+		,{lbl:'FSM',code:'fsm'},{lbl:'Mindmap',code:'mm'},{lbl:'dewaar',code:'dewaar'}
+		,{lbl:'conversation structure',code:'conversationStruct'},{lbl:'SheetJS components pallette',code:'sheetJS'}
+		,{lbl:'D3 charts',code:'d3'},{lbl:'Leaflet',code:'leaflet'},{lbl:'Html5 js Canvas',code:'canvas'}
+		,{lbl:'WebGL',code:'webGL'},{lbl:'Maths/statistics/R formulas component pallette',code:'formulas'}
+		,{lbl:'PivotTable.js',code:'pivot'}]
+						
 			,mode:'tree'}
 		$scope.jsoneditorOptions.schema= {"properties": {"editorClass": {"enum":
 			$scope.jsoneditorOptions. editorClass}}}
