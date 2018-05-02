@@ -364,12 +364,35 @@ public static class Txt extends Sql.Tbl {//<Integer>
 
 	@HttpMethod	public static Object
 	eval(@HttpMethod(prmUrlRemaining = true) String key,
-		@HttpMethod(prmBody = true) String src,
-		TL tl) throws Exception {// javax.script.ScriptException //TODO: check permission
+	     @HttpMethod(prmBody = true) String src,
+	     TL tl) throws Exception {// javax.script.ScriptException //TODO: check permission
 		Txt j = loadBy(key);
 		javax.script.ScriptEngine e = eng(key, true, tl);
 		e.put("src", src);
 		return e.eval(src);
+	}//eval
+
+	@HttpMethod	public static Object
+	prop(@HttpMethod(prmLoadByUrl= true) Txt x,
+	     @HttpMethod(prmName= "prop") String prop,
+		 @HttpMethod(prmName= "val") Object val,
+	     TL tl) throws Exception {// javax.script.ScriptException //TODO: check permission
+		if(x==null||prop==null||prop.length()==0)return false;
+		if(x.meta==null)x.meta=new HashMap();
+		String[]a=prop.split(".");
+		String mmbr=a[0];
+		Object o=x.meta;
+		for(int i=0;i<a.length-1;i++){
+			if(o instanceof Map)
+				o=((Map)o).get(mmbr);
+			else if(o instanceof List )
+			{   int j=Util.parseInt(mmbr)
+				o=((Map)o).get(mmbr);
+			}
+			mmbr=a[i];
+		}
+		x.meta.put("",val);
+		return false;
 	}//eval
 
 }//Txt
@@ -575,8 +598,10 @@ public static class MTbl extends Sql.Tbl {
 		Typ(int t, Class c){it=t;this.c=c;}
 		Typ(int t, Class c, String...options){it=t;this.c=c;this.options=options;}
 
-		public static Typ t(String p){
-			return p==null?null:ms.get(p.toUpperCase());//String u=p.toUpperCase();if("INT".equals(u)) return INTEGER;for(Typ x:values()){String s=x.name();boolean b=s.equals(u);//equalsIgnoreCase if(b)return x;}return null;
+		public static Typ t(String p){p=p==null?null:p.toUpperCase();
+			if(ms==null)initMaps();
+			Typ t=ms==null?null:ms.get(p);
+			return t;//p==null?null:ms.get(p.toUpperCase());//String u=p.toUpperCase();if("INT".equals(u)) return INTEGER;for(Typ x:values()){String s=x.name();boolean b=s.equals(u);//equalsIgnoreCase if(b)return x;}return null;
 			}
 		public static Typ t(int p){
 			return mi.get(p);//for(Typ x:values())if(x.it==p)return x;return null;
@@ -586,7 +611,9 @@ public static class MTbl extends Sql.Tbl {
 			if(ms==null){ms=new HashMap<String,Typ>(n);//if(mi==null)
 				mi=new HashMap<Integer,Typ>(n);//if(cs==null)
 				cs=new HashMap<String,Class>(n);//if(ci==null)
-				ci=new HashMap<Integer,Class>(n);ms.put("INT",INTEGER);
+				ci=new HashMap<Integer,Class>(n);
+				ms.put("INT",INTEGER);
+				ms.put("TEXT",LONGVARCHAR);
 				for(Typ x:a){
 					ms.put( x.name(),x  );mi.put( x.it,x  );
 					cs.put( x.name(),x.c);ci.put( x.it,x.c);}}}
