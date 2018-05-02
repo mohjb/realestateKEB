@@ -1033,8 +1033,8 @@ public static void main(String[]args)throws Exception{
 		,{"Perm.erase"		,"/app/usr/key","{}"    }//body Perm
 
 		,{"Srvlt.logout"	,"app/moh"	,"{}"	    }//json params*/
-		{"TxtSrvlt.login","/txtSrvlt/moh","{pw:'"+ TxtSrvlt.Util.md5("m")+"'}"},
-		{"Txt.put","/txtSrvlt/moh/moh/47/xx","{abc:123}"},
+		{"TxtSrvlt.login","/txtSrvlt/moh","{pw:'"+ TxtSrvlt.Util.b64e("m")+"'}"},
+		/*{"Txt.put","/txtSrvlt/moh/moh/47/xx","{abc:123}"},
 		{"Txt.load","/txtSrvlt/xx","{}"},
 		{"Txt.listKeys","/txtSrvlt/",""},
 		{"Txt.getKeys","/txtSrvlt/moh","['xx']"},
@@ -1042,7 +1042,44 @@ public static void main(String[]args)throws Exception{
 		{"Txt.call","/txtSrvlt//xx","[1,2]"},
 		{"Txt.eval","/txtSrvlt/xx","d=33"},
 		{"Txt.delete","/txtSrvlt/xx",""},
-		{"TxtSrvlt.logout","/txtSrvlt/xx","{abc:123}"}
+		{"TxtSrvlt.logout","/txtSrvlt/xx","{abc:123}"}*/
+
+		{"MTbl.DB_names",       "/txtSrvlt/",""},
+		{"MTbl.DB_get",         "/txtSrvlt/aswan",""},
+		{"MTbl.colTypes",       "/txtSrvlt",""},
+		{"MTbl.DB_create",      "/txtSrvlt/dbmTbl",""},
+		{"MTbl.DB_rename",      "/txtSrvlt/dbmTbl","{newName:'MtblTest'}"},
+		{"MTbl.DB_drop",        "/txtSrvlt/MtblTest",""},
+		{"MTbl.DBTbl_create",   "/txtSrvlt/test/testMTbl","{cols:[{name:'c',clss:'int',type:'int'}]}"},
+		{"MTbl.DBTbl_rename",   "/txtSrvlt/test/testMTbl/","{newName:'tst2'}"},
+		{"MTbl.DBTblCol_alter", "/txtSrvlt/test/tst2/add",""},
+		{"MTbl.DBTblCol_alter", "/txtSrvlt/test/tst2/change",""},
+		{"MTbl.DBTblCol_alter", "/txtSrvlt/test/tst2/drop",""},
+		{"MTbl.DBTbl_drop",     "/txtSrvlt/test/tst2",""},
+		{"MTbl.get",            "/txtSrvlt/aswan/txt/1",""},
+		{"MTbl.insert",         "/txtSrvlt/test/4","{key:'ok',txt:'ok',parent:3}"},
+		{"MTbl.update",         "/txtSrvlt/test/4","{meta:{s:1}}"},
+		{"MTbl.delete",         "/txtSrvlt/test/4",""},
+		{"MTbl.query",          "/txtSrvlt/test/txt","{cols:['*'],where:[['id','>'],2]}"},
+		{"MTbl.qry",            "/txtSrvlt/test","{query:'select count(*) from test.test',where:[]"},
+		{"MTbl.cmnds",          "/txtSrvlt/test","[{method:'DB_names'}"
+		+ ",{method:'DB_get'        ,url:'/txtSrvlt/test',body:''}"
+		+ ",{method:'DB_create'     ,url:'/txtSrvlt/dbmTbl',body:''}"
+		+ ",{method:'DB_rename'     ,url:'/txtSrvlt/test/dbmTbl',newName:'MtblTest'}"
+		+ ",{method:'DB_drop'       ,url:'/txtSrvlt/test/MtblTest'}"
+		+ ",{method:'DBTbl_create'  ,url:'/txtSrvlt/test/testMTbl,cols:[{name:'c',clss:'int',type:'int'} ] }"
+		+ ",{method:'DBTbl_rename'  ,url:'/txtSrvlt/test/testMTbl',newName:'tstx'}"
+		+ ",{method:'DBTblCol_alter',url:'/txtSrvlt/test/testMTbl/add'}"
+		+ ",{method:'DBTblCol_alter',url:'/txtSrvlt/test/testMTbl/change'}"
+		+ ",{method:'DBTblCol_alter',url:'/txtSrvlt/test/testMTbl/drop'}"
+		+ ",{method:'DBTbl_drop'    ,url:'/txtSrvlt/test/testMTbl'}"
+		+ ",{method:'get'           ,url:'/txtSrvlt/aswan/stor'}"
+		+ ",{method:'insert'        ,url:'/txtSrvlt/test/4'}"
+		+ ",{method:'update'        ,url:'/txtSrvlt/test/4'}"
+		+ ",{method:'delete'        ,url:'/txtSrvlt/test/4'}"
+		+ ",{method:'query'         ,url:'/txtSrvlt/test'}"
+		+ ",{method:'qry'         ,url:'/txtSrvlt/test',query:'',where:[]}"
+		+"]"}
 	};
 
 	TxtSrvlt x=new TxtSrvlt();
