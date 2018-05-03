@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">@charset "UTF-8";[ng\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>    <!--<base href="/">--><base href=".">
+    <title>Kuwait Direct Investment Promotion Authority</title>
+    <link rel="stylesheet" type="text/css" href="./templt/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="./templt/tree-control.css">
+    <link rel="stylesheet" type="text/css" href="./templt/tree-control-attribute.css">
+    
+    <link rel="stylesheet" type="text/css" href="./templt/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="./templt/style.css">
+	<script src="/angular-1.6.4/angular-sanitize.min.js"></script>
+	<script src="/angular-1.6.4/angular.min.js"></script>
+	<script src="/angular-1.6.4/angular-sanitize.min.js"></script>
+	<script src="/angular-1.6.4/angular-md5.js"></script>
+	<script src="/angular-1.6.4/angular-ui-router.js"></script>
+    <script src="./templt/index.js.download"></script>
+    <script src="./templt/angular-animate.js.download"></script>
+    <script src="./templt/ui-bootstrap.js.download"></script>
+    <script src="./templt/ui-bootstrap-tpls.js.download"></script>
+<link href="c3.css" rel="stylesheet" type="text/css"/>
+<script src="d3.min.js" charset="utf-8"></script>
+<script src="c3.min.js"></script>
+<script src="c3-angular.js"></script>
+
+    <script src="index.js"></script>
+<style class="datamaps-style-block">
+.datamap path.datamaps-graticule { fill: none; stroke: #777; stroke-width: 0.5px; stroke-opacity: .5; pointer-events: none; } 
+.datamap .labels {pointer-events: none;} 
+.datamap path {stroke: #FFFFFF; stroke-width: 1px;} 
+.datamaps-legend dt, .datamaps-legend dd { float: left; margin: 0 3px 0 0;} 
+.datamaps-legend dd {width: 20px; margin-right: 6px; border-radius: 3px;} 
+.datamaps-legend {padding-bottom: 20px; z-index: 1001; position: absolute; left: 4px; font-size: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;} 
+.datamaps-hoverover {display: none; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; } 
+.hoverinfo {padding: 4px; border-radius: 1px; background-color: #FFF; box-shadow: 1px 1px 5px #CCC; font-size: 12px; border: 1px solid #CCC; } 
+.hoverinfo hr {border:1px dotted #CCC; }</style></head>
+<body  class="ng-scope"  ng-app="main"><span ng-controller="mainCtrl">
+    <navbar class="ng-isolate-scope">
+	<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" ng-click="isNavCollapsed = !isNavCollapsed">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<div class="navbar-brand pull-left">
+					<span>KISR-KDIPA</span>
+				</div>
+			</div>
+			<div class="navbar-collapse collapse" uib-collapse="isNavCollapsed" aria-expanded="false" aria-hidden="true" style="height: 0px;">
+				<ul class="nav navbar-nav">
+					<!-- ngRepeat: item in items --><li  class="ng-scope">
+						<a ui-sref-active="active" ui-sref="home" class="ng-binding" href="http://localhost:1337/">Home</a>
+					</li><!-- end ngRepeat: item in items --><li  class="ng-scope">
+						<a ui-sref-active="active" ui-sref="analysis.overview" class="ng-binding" href="http://localhost:1337/analysis">Analysis</a>
+					</li><!-- end ngRepeat: item in items --><li  class="ng-scope">
+						<a ui-sref-active="active" ui-sref="downloads" class="ng-binding">Downloads</a>
+					</li><!-- end ngRepeat: item in items --><li  class="ng-scope">
+						<a ui-sref-active="active" ui-sref="investment" class="ng-binding" href="http://localhost:1337/js/investment/index.html">Kuwait Investment Map</a>
+					</li><!-- end ngRepeat: item in items -->
+				</ul>
+			</div>
+		</div>
+	</nav>
+	</navbar>
+    <!-- uiView: -->
+<div id="main" ui-view="" class="ng-scope" style="">
+<section id="analysis" class="ng-scope">
+    <div class="jumbotron">
+        <sector-selector sectors="sectors" on-select="handleSelection" class="ng-isolate-scope"><div class="container" id="sector-selector">
+    <div class="btn-group btn-group-justified">
+	
+	<label ng-repeat="sctr in main.tsv.sectors.a" ng-click="clkSector(sctr)"
+			class="btn btn-lg btn-default ng-pristine ng-untouched ng-valid ng-binding ng-scope active ng-not-empty" 
+			 uib-btn-radio="sector" title="{{sctr.name}}" style="">{{sctr[2]}}</label>
+<!-- <label ng-click="console.log(sector=sctr)" 
+			class="btn btn-lg btn-default ng-pristine ng-untouched ng-valid ng-binding ng-scope active ng-not-empty" 
+			 uib-btn-radio="sector" title="{{sctr.name}}" style="">{{sctr[2]}}</label> -->
+    </div>
+
+
+
+</div>
+</sector-selector>
+        <br>
+        <div class="container">
+            <h1 class="ng-binding">{{sector.name}}</h1>
+            <br>
+        </div>
+        <!-- uiView: -->
+<ui-view class="ng-scope" style="">
+	<div id="time-series" class="container ng-scope">
+		<div class="text-center">
+			<div class="btn-group">
+				<label class="btn btn-lg btn-default ng-pristine ng-untouched ng-valid ng-not-empty active" uib-btn-radio="&#39;rank&#39;" ng-click="setMode('tabular')" style="">Tabular</label>
+				<label class="btn btn-lg btn-default ng-pristine ng-untouched ng-valid ng-not-empty" uib-btn-radio="&#39;value&#39;" ng-click="setMode('graph')" style="">Graph</label>
+			</div>
+		</div>
+		<br>
+		<div ng-if="mode=='graph'" class="chart c3" style="min-height: 320px; position: relative;">
+			<c3chart bindto-id="chart1" ng-model="main.list" axis=" {x: {tick: {format: function (x) { return x.getFullYear(); }}}}">
+				<chart-column ng-repeat="indi in main.list" column-id="{{indi.name}}"
+					column-values="{{indi.series.join(',')}}"	column-type="line"/>
+			</c3chart>
+		</div>
+		<div ng-if="mode!='graph'" style="max-height: 320px; position: relative;">
+			<table>
+			<tr><th ></th><th ng-repeat="yr in yrs" style="margin:2px;border:1px solid #bfbdbd">{{yr}}</th></tr>
+			<tr ng-repeat="indi in main.list"><th style="margin:2px;border:1px solid #bfbdbd;padding:4px" title="{{indi.series.join(',')}}">{{indi.name}}</th>
+				<td ng-repeat="yr in yrs" style="margin:2px;border:1px solid #bfbdbd;padding:4px">{{indi.cntry.KWT[yr].rank}}</td>
+			</tr>
+			</table>
+		</div>
+		<br>
+		<br>
+		<div class="row">
+
+			<treecontrol class="tree-light col-lg-6 ng-isolate-scope" tree-model="indices" options="treeOptions" on-selection="handleIndexSelect(node)">
+
+<!--script type="text/ng-template" id="myTree">
+<ul class="ng-scope">
+	<li ng- r epeat="node in node.c" 
+		ng-class="headClass(node)" 
+		class="ng-scope tree-expanded" style=""
+	>
+		<i class="tree-branch-head" ng-class="iBranchClass()" ng-click="selectNodeHead(node)"></i>
+		<i class="tree-leaf-head "></i>
+<input type="checkbox" ng- model="node.checked" ng- change="chk(node)"/>
+		<div class="tree-label " 
+			ng- class="[selectedClass(), unselectableClass()]" 
+			ng- click="selectNodeLabel(node)" 
+			tree-transclude=""
+		><span class="ng-binding ng-scope">{{node.name}}</span>
+		</div>
+		<treeitem ng- if="node.c" class="ng-scope" style="" ng- include="'myTree'"></treeitem>
+	</li>
+</ul>
+</script-->
+
+
+<script type="text/ng-template" id="myTree">
+	<li ng-class="headClass(node)" 
+		class="ng-scope tree-expanded" style=""
+	>
+		<i class="tree-branch-head" ng-class="iBranchClass()" style="padding: 1px 10px;{{node.c?'background: url(node-closed-2.png) no-repeat;':''}}"
+		onclick="console.log('this=',this,'nextSibling=',x=nxtSibling(this,'UL'),d=x.style.display);
+			e=this.style.background;this.style.background=e.indexOf('op')!=-1
+			?'url(node-closed-2.png) no-repeat':'url(node-opened-2.png) no-repeat';
+			x.style.display=d?'':'none'"
+		></i>
+		<i class="tree-leaf-head "></i>
+<input type="checkbox" ng-model="node.checked" ng-change="chk(node)"/>
+		<div class="tree-label " 
+			ng-class="[selectedClass(), unselectableClass()]" 
+			ng-click="selectNodeLabel(node)" 
+			tree-transclude=""
+		><span class="ng-binding ng-scope">{{node.name}}</span>
+		</div>
+		<ul class="ng-scope" ng-if="node.c" style="display:none">
+		<treeitem 
+			ng-repeat="node in node.c" 
+			class="ng-scope" style="" ng-include="'myTree'"
+		></treeitem></ul>
+	</li>
+</script>
+			<ul class="ng-scope"><li ng-repeat="node in sector.c" ng-include="'myTree'"></li></ul>
+			<!--<ul class="ng-scope">
+			<!-- ngRepeat: node in node.children | filter:filterExpression:filterComparator -- >
+				<li ng-repeat="node in node.children | filter:filterExpression:filterComparator " 
+					ng-class="headClass(node)" set-node-to-data="" 
+					class="ng-scope tree-expanded" style="">
+					<i class="tree-branch-head" ng-class="iBranchClass()" ng-click="selectNodeHead(node)"></i>
+					<i class="tree-leaf-head "></i>
+					<div class="tree-label " ng-class="[selectedClass(), unselectableClass()]" ng-click="selectNodeLabel(node)" tree-transclude="">
+					<span class="ng-binding ng-scope">Global Competitiveness Index</span></div>
+					<!-- ngIf: nodeExpanded() -- ><treeitem ng-if="nodeExpanded()" class="ng-scope" style="">
+					</treeitem><!-- end ngIf: nodeExpanded() -- ></li><!-- end ngRepeat: node in node.children | filter:filterExpression:filterComparator -- ></ul>-->
+			</treecontrol>
+			<div id="index-description" class="col-lg-6">
+<div ng-repeat="indi in main.list" class="s1"><br/>
+	<span ng-click="main.selected.indi=indi" 
+	style="border-color: {{main.selected.indi==indi?'red':'#bfbf10'}};font-size:{{main.selected.indi==indi?'larger':'initial'}}">
+	<input type="checkbox" ng-model="indi.checked" ng-change="chk(indi)"/>{{indi.name}}</span>
+	<fieldset ng-if="main.selected.indi==indi" ><legend>Description</legend>{{main.selected.indi.description}}</fieldset>
+</div>
+			</div>
+		</div>
+	</div>
+</ui-view>
+        <div id="chart-selector" class="container">
+			<ul class="row list-inline text-center">
+                <!--li class="btn btn-default" ui-sref="analysis.overview" href="/analysis">
+                    <div class="text-center">
+                        <h4><i class="fa fa-search fa-lg" aria-hidden="true"></i>&nbsp; Overview</h4>
+                    </div>
+                    <br>
+                </li>
+                <li class="btn btn-default" ui-sref="analysis.timeSeries" href="/analysis/time-series">
+                    <div class="text-center">
+                        <h4><i class="fa fa-line-chart fa-lg" aria-hidden="true"></i>&nbsp; Time Series</h4>
+                    </div>
+                    <br>
+                </li>
+                <li class="btn btn-default " ui-sref="analysis.spiderChart" href="/analysis/spider-chart">
+                    <div class="text-center">
+                        <h4><i class="fa fa-pie-chart fa-lg" aria-hidden="true"></i>&nbsp; Spider Chart</h4>
+                    </div>
+                    <br>
+                </li-->
+            </ul>
+        </div>
+</div>
+</section>
+</div>
+
+<div id="div10" style="border:3px double black;bgcolor:#eee;display:none">
+<pre id="preTsv" ng-include="'gci-tsv.txt'" onload="onLoadTsv();sector=main.tsv.sectors.c[0]"></pre>
+</div></span>
+</body></html>
