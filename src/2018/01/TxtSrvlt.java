@@ -22,7 +22,7 @@ public class TxtSrvlt extends HttpServlet {
 
 public static class Txt extends Sql.Tbl {//<Integer>
 	public static final String dbtName = "Txt";
-	@F public int id,parent,/*code from enum P*/ perm;
+	@F public int id=-1,parent,/*code from enum P*/ perm;
 	@F public String key, txt,owner,group;
 	@F public Map meta;
 	@F public Date logTime;
@@ -61,7 +61,13 @@ public static class Txt extends Sql.Tbl {//<Integer>
 	public Txt(int id,int parent,String key,Date lt) {
 		this.id=id;this.parent=parent;this.key=key;logTime=lt==null?new Date():lt;}
 
-	public static Txt create(int parent,String key,TL tl){
+	/**store this entity in the dbt, gets max id +1 if id is less than 1 , and then logs to table `L` */
+	@Override public Sql.Tbl create() throws Exception{
+		if(id<1)try {id=maxPlus1( C.id,dbtName );} catch ( Exception e ) {
+			e.printStackTrace();
+		}L.l(this);
+		return super.create();
+		/*public static Txt create(int parent,String key,TL tl){
 		return create(parent,key,tl,null,null,0);}
 
 	public static synchronized Txt create(int parent,String key,TL tl,String txt,Map m,int perm){
@@ -75,7 +81,8 @@ public static class Txt extends Sql.Tbl {//<Integer>
 		return x;
 		} catch ( Exception e ) {
 			e.printStackTrace();
-		}return null;}
+		}return null;}*/
+	}//save
 
 	Object jt(){try {
 		Object j = Json.Prsr.parse(txt);
@@ -120,6 +127,13 @@ public static class Txt extends Sql.Tbl {//<Integer>
 		@F public Map meta;
 		@F public Date logTime;
 
+		public enum C implements Sql.Tbl.CI {
+			id,parent,perm,key, txt, owner,group,meta,logTime;
+			@Override public Field f() {return Co.f(name(), L.class);}
+			@Override public String getName() {return name();}
+			@Override public Class getType() {return f().getType();}
+		}//enum C
+
 		@Override public String getName(){return dbtName;}
 		@Override public C[]columns(){return C.values();}
 		@Override public Object[]wherePK(){Object[]a={C.id,id,C.logTime,logTime};return a;}
@@ -141,6 +155,27 @@ public static class Txt extends Sql.Tbl {//<Integer>
 					,Util.lst(C.group,C.owner,C.logTime)
 					,Util.lst(C.parent,C.id,C.logTime)
 					,Util.lst(C.logTime,C.id,C.key)) );}
+
+		@Override public Json.Output jsonOutput(Json.Output o
+			,String ind,String path,boolean closeBrace)throws java.io.IOException{
+			String i2=ind+'\t';//id parent perm key txt meta owner group
+			try
+			{o.w("{id:").p(id).w(",parent:").p(parent)
+				 .w(",perm:").p(perm)
+				 .w(",key:").p(key)
+				 .w(",owner:").p(owner)
+				 .w(",group:").p(group)
+				 .w(",logTime:").oDt(logTime,i2)
+				 .w(",txt:").p(txt)
+				 .w(",meta:").oMap(meta,i2,o.comment?path+'.'+"meta":path);
+			}catch(Exception ex){
+				ex.printStackTrace();
+			}
+			if(closeBrace){
+				if(o.comment)
+					o.w("}//Txt.L&cachePath=\"").p(path).w("\"\n").p(ind);
+				else o.w('}');}
+			return o; }
 	}//class Log
 
 	/**works in 3 approaches based on the param-key string-FORMAT
@@ -155,26 +190,51 @@ public static class Txt extends Sql.Tbl {//<Integer>
 	 * Caution&Warning: parent is IMPLICIT
 	 * */
 	public static Txt loadBy(String key) {
-		if(Util.isNum( key ))
-			return loadBy( Util.parseInt( key,0 ) );
-		int j=key==null?-1:key.indexOf( '|' )
-			,j1=j==-1?j:key.indexOf( '/' ),p=0;
-		if(j!=-1&&(j<j1||j1==-1))
-		{	TL.tl().h.s("Txt.parent",p=Util.parseInt( key.substring( 0,j ),0 ) );
-			key=key.substring( j+1,j1==-1?key.length():j1 ); }
+		if(key!=null&&key.startsWith(UrlPrefix))
+			key=key.substring(UrlPrefix.length());
+		if(key!=null && key.contains("/")){
+			TL tl=TL.tl();
+			Map m=(Map)tl.h.r("urlParts");
+			Object o=m==null?null:m.get("url");
+			String ux=o==null?null:o instanceof String?(String)o:null;
+			o=m==null?null:m.get("x");
+			Txt x=o instanceof Txt?(Txt)o:null;
+			if(m==null||x==null||!key.equals(ux)){
+				tl.h.r("urlParts",m=parseCreate(key));
+				x=(Txt)m.get("x");
+				return x;
+			}else if(x!=null)
+				return x;//else
+		}
+		return Util.isNum( key )
+			       ? loadBy( Util.parseInt( key,0 ) )
+			       : loadBy( key, 0 );
+		/*int j=key==null?-1:key.indexOf( '/' ),j1=j==-1?j:key.indexOf( '/' ),p=0;
+		if(j!=-1&&(j<j1||j1==-1)){
+		TL.tl().h.s("Txt.parent",p=Util.parseInt( key.substring( 0,j ),0 ) );
+		key=key.substring( j+1,j1==-1?key.length():j1 ); }
 		else p=( Integer ) TL.tl().h.var("Txt.parent",0 );
-		return loadBy( key, p );/*
-		Txt parseKey(String key){
-			if(Util.isNum( key )){id=Util.parseInt( key,0 );return this;}
-			int j=key==null?-1:key.indexOf( '|' ),j1=j==-1?j:key.indexOf( '/' );
-			if(j!=-1&&(j<j1||j1==-1)) {
-				TL.tl().h.s("Txt.parent",parent=Util.parseInt( key.substring( 0,j ),0 ) );
-				this.key=key.substring( j+1,j1==-1?key.length():j1 );}
-			else {
-				parent=( Integer ) TL.tl().h.var("Txt.parent",0 );
-				this.key=key;}
-			return this;}
-		*/}
+		return loadBy( key, p );
+
+		if(key!=null && key.indexOf('/')!=-1) {
+			String[] a = key.split("/");
+			Txt x = null;
+			int n = a == null ? 0 : a.length, i = 0;
+			tl.h.r("urlParts",m=Util.mapCreate("a",a,"n",n,"i",i));
+			if(n > 0 )
+			{if( Util.isNum(a[0]))
+				x = loadBy(Util.parseInt(a[i++], 0));
+			 else
+				x=loadBy(a[i++],0);}
+			for( ; x!=null&&i < n ; i++){
+				Txt t=loadBy(a[i],x.id);
+				if(t!=null)
+					x=t;else
+				{Util.mapSet(m,"x",x,"i",i);
+					return x;}
+			}Util.mapSet(m,"x",x,"i",i);
+			return x;}*/
+	}
 
 	public static Txt loadBy(String key,int parent) {
 		Txt j = (Txt) loadWhere(Txt.class, where(C.key, key,C.parent,parent));
@@ -187,10 +247,7 @@ public static class Txt extends Sql.Tbl {//<Integer>
 		Txt j = loadBy(url);
 		return j;}
 
-	@HttpMethod public static List
-	listKeys() throws Exception {//TODO: check permission
-		List l = Sql.L(sql(cols(C.id,C.key,C.logTime,C.owner,C.group,C.perm),null,dbtName),null);
-		return l;}
+	//@HttpMethod public static List listKeys() throws Exception {List l = Sql.L(sql(cols(C.id,C.key,C.logTime,C.owner,C.group,C.perm),null,dbtName),null);return l;}//TODO: check permission
 
 	@HttpMethod public static List
 	poll(@HttpMethod(prmBody = true) long logTime, TL tl) throws Exception {//TODO: check permission
@@ -276,9 +333,6 @@ public static class Txt extends Sql.Tbl {//<Integer>
 		m.put("children", Sql.L(sql( cols(C.id,C.key ),where,dbtName) ,where));
 		return m;}
 
-	@Override public Sql.Tbl create() throws Exception {
-		L.l(this);return super.create();}
-
 	//@Override public Sql.Tbl update(CI...p) throws Exception {return update(p);}
 
 	@Override public Sql.Tbl update(CI[]p) throws Exception {
@@ -291,30 +345,78 @@ public static class Txt extends Sql.Tbl {//<Integer>
 	update( @HttpMethod(prmLoadByUrl = true) Txt p
 		,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
 		boolean b=false;if(tl.usr!=null)//TODO: check permission
-		{   for ( Object o:m.keySet() ){
+		{	for ( Object o:m.keySet() ){
 				Object v=m.get( o );
 				C c=C.valueOf( o.toString() );
 				if(v!=null&&c!=null)
-				{	p.v(c,v);b=true;}
+				{p.v(c,v);b=true;}
 			}if(b)
 				p.save();
-		}return p;
-	/*@HttpMethod public static Txt
-	put( @HttpMethod(prmUrlPart= true) String owner
-		,@HttpMethod(prmUrlPart= true) String group
-		,@HttpMethod(prmUrlPart= true) int perm
-		,@HttpMethod(prmUrlRemaining = true) String key
-		,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
-		Txt x =null;// loadBy(key);
-		if(tl.usr!=null)//TODO: check permission
-		{x=new Txt(key, v,owner,group,null,tl.now,perm);//tl.now,Util.parseInt(perm,47)//5*8+7:group+x+r owner+x+w+r
-			x.save();}
-		return x;}*/}
+		}return p;}
+
+	static Map parseCreate(String url){
+		Map m=null;
+		if(url!=null && url.indexOf('/')!=-1) {
+			String[] a = url.split("/");
+			Txt x = null;
+			int n = a == null ? 0 : a.length, i = 0;//always element at i is not processed
+			m = Util.mapCreate("a", a, "n", n, "i", i,"url",url);
+			if(n > 0) {
+				if(Util.isNum(a[0]))
+					x = loadBy(Util.parseInt(a[i++], 0));
+				else
+					x = loadBy(a[i++], 0);}
+			for( ; x != null && i < n ; i++) {
+				Txt t = loadBy(a[i], x.id);
+				if(t != null)
+					x = t;
+				else {
+					Util.mapSet(m, "x", x, "i", i);
+					return m;}}
+			Util.mapSet(m, "x", x, "i", i);
+		}return m!=null?m:Util.mapCreate("url",url);}
+
+	static Map parseCreate(Map m){
+		Object o=m==null?null:m.get("url");
+		String url=o instanceof String?(String)o:null;
+		o=m==null?null:m.get("a");
+		//if(o==null)m.put("a",);
+		String[]a=o instanceof String[]?(String[])o:null;
+		o=m==null?null:m.get("x");
+		Txt x=o instanceof Txt?(Txt)o:null;
+		o=m.get("i");
+		int n = a == null ? 0 : a.length
+			, i = o instanceof Integer?(Integer)o:0;//always element at i is not processed
+		if(x==null && n>0) {
+			if(Util.isNum(a[0]))
+				x = loadBy(Util.parseInt(a[i++], 0));
+			else
+				x = loadBy(a[i++], 0);
+			for( ; x != null && i < n ; i++) {
+				Txt t = loadBy(a[i], x.id);
+				if(t != null)
+					x = t;
+				else {
+					Util.mapSet(m, "x", x, "i", i);
+					return m;}}
+			Util.mapSet(m, "x", x, "i", i);
+		}return m;}
 
 	@HttpMethod public static Txt
-	create( @HttpMethod(prmBody = true) Txt x, TL tl) throws Exception {
+	create(@HttpMethod(prmLoadByUrl = true) Txt prnt
+		,  @HttpMethod(prmUrlPart = true) String key
+		,  @HttpMethod(prmBody = true) Txt x
+		, TL tl) throws Exception {
 		if(tl.usr!=null)//TODO: check permission
-			x.create();
+		{	String k=tl.h.req.getRequestURI().substring(UrlPrefix.length()).trim();
+			if((k==null||k.trim().length()<1)&&x.key!=null&&x.key.length()>0)
+				k=x.key.trim();
+			if(k!=null&&k.length()>0)
+			{Txt y=loadBy(k,x.parent);
+				if(y!=null)
+					return null;
+				x.key=k;}
+			x.create();}
 		return x;}
 
 	@HttpMethod public static Txt
@@ -381,19 +483,85 @@ public static class Txt extends Sql.Tbl {//<Integer>
 		if(x.meta==null)x.meta=new HashMap();
 		String[]a=prop.split(".");
 		String mmbr=a[0];
-		Object o=x.meta;
+		Object o=x.meta,u=null;
 		for(int i=0;i<a.length-1;i++){
 			if(o instanceof Map)
-				o=((Map)o).get(mmbr);
+				u=((Map)o).get(mmbr);
+				if(u==null)
+					((Map)o).put(mmbr,u=new HashMap<>());
 			else if(o instanceof List )
-			{   int j=Util.parseInt(mmbr)
-				o=((Map)o).get(mmbr);
-			}
+			{   int j=Util.parseInt(mmbr,-1);
+				u=((List)o).get(j);
+				if(u==null)
+					((List)o).set(j,u=new HashMap<>());
+			}o=u;
 			mmbr=a[i];
 		}
-		x.meta.put("",val);
-		return false;
+		if(o!=null) {
+			if(o instanceof Map)
+				((Map)o).put(mmbr,val);
+			else if(o instanceof List )
+			{   int j=Util.parseInt(mmbr,-1);
+				((List)o).set(j,val);
+			}
+			return x.update(cols(C.meta));
+		}return false;
 	}//eval
+
+	//each command is a method call where the list-item is a map which should have
+//	method:<str> , url:<str> , body:<map or str or list>
+	@HttpMethod static public List
+	cmnds(@HttpMethod(prmBody = true) List p,TL tl){
+		List l=new LinkedList();Object r=null;
+		for(Object o:p)try{r=o;
+			if(o instanceof Map){
+				Map m=(Map)o;
+				String mt=(String)m.get("method")
+					,url=(String)m.get("url");
+				String[]au=url.substring(UrlPrefix.length()).split("/");//b=m.get("body");
+				//if("listKeys".equals(mt)) r=listKeys();else
+				if("poll".equals(mt))
+					r=poll(Util.parseDate(tl.bodyData.toString()).getTime(),tl);
+				else if("get".equals(mt))
+					r=get(loadBy(url),tl);
+				else if("getKeys".equals(mt))
+					r=getKeys(loadBy(url),(List)m.get("body"));
+				else if("load".equals(mt))
+					r=load(loadBy(url),tl);
+				else if("update".equals(mt))
+					r=update(loadBy(url),(Map)m.get("body"),tl);
+				else if("create".equals(mt))
+				{Map m2=parseCreate(url);
+					Txt x=(Txt)m.get("x");
+					Object o2=m.get("i");
+					int i=o2 instanceof Integer?(Integer)o2:-1,n=-1;
+					o2=m.get("n");if(o2 instanceof Integer)
+						n= (Integer)o2;
+					o2=m.get("a");
+					String[]a=o2 instanceof String[]?(String[])o2:null;
+					String nm=a!=null&&++i<n?a[i]:null;
+					r=nm==null?null:create(x,nm,(Txt)new Txt().fromMap((Map)m.get("body")),tl);
+				}
+				else if("txt".equals(mt))
+					r=txt(loadBy(url),(String)m.get("body"),tl);
+				else if("meta".equals(mt))
+					r=meta(loadBy(url),(Map)m.get("body"),tl);
+				else if("delete".equals(mt))
+					r=delete(loadBy(url),tl);
+				else if("call".equals(mt))
+					r=call(au[0],au[1],(List)m.get("body"),tl);
+				else if("eval".equals(mt))
+					r=eval(url,(String)m.get("body"),tl);
+				else if("prop".equals(mt))
+					r=prop(loadBy(url),(String)m.get("prop"),m.get("val"),tl);
+				m.put("return",r);
+				r=m;
+			}
+		}catch(Exception ex){r=ex;}
+		finally {
+			l.add(r);
+		}
+		return l;}
 
 }//Txt
 
@@ -1140,6 +1308,81 @@ List<Object[]>query(@HttpMethod(prmLoadByUrl = true) MTbl t
 	,@HttpMethod(prmName = "groupBy") List groupBy
 	,@HttpMethod(prmName = "orderBy") List orderBy) throws SQLException
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	@HttpMethod public static List
+	listKeys() throws Exception
+
+	@HttpMethod public static List
+	poll(@HttpMethod(prmBody = true) long logTime, TL tl) throws Exception
+
+	/**
+	 * output to the client , Txt-Prm is loaded based on a key from the value of the url
+	 * if the Txt-Prm is null then null is returned
+	 * if the Txt-Prm txt-field is not a json-array/list
+	 * , then the Txt-Prm txt-field is outputted, and return execution.
+	 * if the Txt-Prm txt-field is a json-array/list L , then:
+	 * the output is in the same order as the list-elements
+	 * the list elements can be one of two
+	 * 1- element is not a map, outputted as is
+	 * 2- json-object m, and the object m can have three cases
+	 * 2.2-having property ref and call
+	 * 2.1-having property ref
+	 * 2.3-having property eval , and optionally having ref
+	 * 2.4-not having ref nor eval, in such a case the json-object m / list-element will be outputted
+	 * /
+				@HttpMethod(useClassName = false,usrLoginNeeded = false)public static Txt
+				get(@HttpMethod(prmLoadByUrl = true) Txt prm, TL tl) throws Exception
+
+				@HttpMethod public static List<Txt>
+				getKeys(@HttpMethod(prmLoadByUrl= true) Txt j,
+					@HttpMethod(prmBody = true) List<String> keys)
+
+				@HttpMethod public static Map
+				load(@HttpMethod(prmLoadByUrl= true) Txt p,TL tl) throws SQLException
+
+
+				@HttpMethod public static Txt
+				update( @HttpMethod(prmLoadByUrl = true) Txt p
+					,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception
+
+				@HttpMethod public static Txt
+				create( @HttpMethod(prmBody = true) Txt x, TL tl) throws Exception
+
+				@HttpMethod public static Txt
+				txt( @HttpMethod(prmLoadByUrl= true) Txt x
+					,@HttpMethod(prmBody = true) String v, TL tl) throws Exception
+
+				@HttpMethod public static Txt
+				meta( @HttpMethod(prmLoadByUrl= true) Txt x
+					,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception
+
+				@HttpMethod public static Txt
+				delete(@HttpMethod(prmLoadByUrl = true) Txt x, TL tl) throws Exception
+
+
+				@HttpMethod public static Object
+				call(@HttpMethod(prmUrlPart = true) String m,
+					@HttpMethod(prmUrlRemaining = true) String key,
+					@HttpMethod(prmBody = true) List args,
+					TL tl) throws Exception
+				@HttpMethod	public static Object
+				eval(@HttpMethod(prmUrlRemaining = true) String key,
+					@HttpMethod(prmBody = true) String src,
+					TL tl) throws Exception
+
+				@HttpMethod	public static Object
+				prop(@HttpMethod(prmLoadByUrl= true) Txt x,
+					@HttpMethod(prmName= "prop") String prop,
+					@HttpMethod(prmName= "val") Object val,
+					TL tl) throws Exception
+
+				//each command is a method call where the list-item is a map which should have
+//	method:<str> , url:<str> , body:<map or str or list>
+				@HttpMethod static public List
+				cmnds(@HttpMethod(prmBody = true) List p,TL tl)
 */			}
 		}catch(Exception ex){r=ex;}
 		finally {
@@ -1249,24 +1492,34 @@ public @interface HttpMethod {
 			Class[] prmTypes = op.getParameterTypes();
 			Class cl = op.getDeclaringClass();
 			Annotation[][] prmsAnno = op.getParameterAnnotations();
-			int n = prmsAnno == null ? 0 : prmsAnno.length, i = - 1, urlIndx =0;// UrlPrefix.length();
+			int n = prmsAnno == null ? 0 : prmsAnno.length, i = - 1,urli=-1,urln=0;
 			Object[] args = new Object[n];
 			String url=tl.h.req.getRequestURI();
 			url=url.substring(UrlPrefix.length());
-				/*int[]ja={url.indexOf( '|' ),url.indexOf( '/' )};if(ja[0]!=-1&&ja[0]<ja[1]){
-					tl.h.s( "Txt.parent",Util.parseInt( url.substring( 0,ja[0] ) ,0) );
-					url=url.substring( ja[0]+1 );}*/
+			String[] urla = null;Map urlm=null;
+
+			if(url!=null && url.indexOf('/')!=-1) {
+				urla = url.split("/");
+				urln = urla == null ? 0 : urla.length;
+				tl.h.r("urlParts",urlm=Util.mapCreate("a",urla,"n",urln,"i",urli=0,"url",url));
+				}
+
 			for(Annotation[] t : prmsAnno) try {
 				HttpMethod pp = t.length > 0 && t[0] instanceof HttpMethod ? (HttpMethod) t[0] : null;
 				Class prmClss = prmTypes[++ i];
 				String nm = pp != null ? pp.prmName() : "arg" + i;//t.getName();
 				Object o = null;
 				if(pp != null && pp.prmUrlPart()) {
-					int un=url.length(),j =urlIndx>=un?un: url.indexOf('/', urlIndx);
-					args[i] =urlIndx>=un?"": url.substring(urlIndx, j == - 1 ? un : j);
-					urlIndx = j==-1?un:j + 1;
+					args[i]=urla==null?url:urla[urli++];
+					if(urlm!=null)
+						urlm.put("i",urli);
 				} else if(pp != null && pp.prmUrlRemaining()) {
-					args[i] = url.indexOf(urlIndx + 1);
+					if(urla!=null&&urli<urln) {
+						StringBuilder b = new StringBuilder(urla[urli++]);
+						while(urli<urln){b.append('/').append(urla[urli++]);}
+						args[i] = b.toString();//url.indexOf(urlIndx + 1);
+						urlm.put("i",urli);
+					}
 				} else if(pp != null && pp.prmLoadByUrl()) {
 					Class[] ca = {TL.class , String.class};
 					Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
@@ -1282,9 +1535,9 @@ public @interface HttpMethod {
 						if(o instanceof Map) f.fromMap((Map) o);
 						else if(o instanceof List) f.vals(((List) o).toArray());
 						else if(o instanceof Object[]) f.vals((Object[]) o);
-						else f.readReq("");
-					}
-				} else if(pp != null && pp.prmBody())
+						else f.readReq("");}
+				}
+				else if(pp != null && pp.prmBody())
 					args[i] = prmClss.isAssignableFrom(String.class)
 						 ? Util.readString(tl.h.req.getReader())
 						 : tl.bodyData;
@@ -1300,8 +1553,6 @@ public @interface HttpMethod {
 				: n == 3 ? op.invoke(cl, args[0], args[1], args[2])
 				: n == 4 ? op.invoke(cl, args[0], args[1], args[2], args[3])
 				: n == 5 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4])
-				: n == 6 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5])
-				: n == 7 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5], args[6])
 				: op.invoke(cl, args);
 			if(httpMethodAnno != null && httpMethodAnno.nestJsonReq() && tl.json != null) {
 				tl.json.put("return", retVal);
@@ -1713,8 +1964,15 @@ static class Util{//utility methods
 	public static List<Object>lst(Object...p){List<Object>r=new LinkedList<Object>();for(Object o:p)r.add(o);return r;}
 	public static boolean isNum(String v){
 		int i=-1,n=v!=null?v.length():0;
-		char c='\0';
+		char c=n>0?v.charAt(0):'\0';
 		boolean b=n>0;
+		if(n>2&&c=='0'){c=v.charAt(1);
+		if(c=='X'||c=='x'){i=1;
+			while(b && (++i)<n){
+				c=v.charAt(i);
+				b=(c>='0'&&c<='9') || (c>='A'&&c<='F')  || (c>='a'&&c<='f') ;
+			}
+			return b;}}
 		while(b&& c!='.'&& i+1<n)
 		{c=++i<n?v.charAt(i):'\0';
 			b= Character.isDigit(c)||c=='.';
@@ -2198,7 +2456,7 @@ static class Sql {
 			o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
 			for(CI f:a)try
 			{	o.w(',').oStr(f.getName(),i2).w(':')
-					 .o(v(f),ind,o.comment?path+'.'+f.getName():path);
+				.o(v(f),ind,o.comment?path+'.'+f.getName():path);
 				if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
 			}catch(Exception ex){
 				ex.printStackTrace();
@@ -2265,8 +2523,9 @@ static class Sql {
 
 		public Tbl fromMap (Map p){
 			CI[]a=columns();//Field[]a=fields();
-			for(CI f:a)
-				v(f,p.get(f.getName()));
+			for(CI f:a){String n=f.getName();
+				if(p.containsKey(n))
+					v(f,p.get(n));}
 			return this;}
 
 		public Tbl v(CI p,Object v){return v(p.f(),v);}//this is beautiful(tear running down cheek)
@@ -2520,7 +2779,7 @@ static class Sql {
 			}
 			return t;}//loadBy
 
-		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
+		/**store this entity in the dbt */
 		public Tbl create() throws Exception{
 			CI[] cols = columns();
 			StringBuilder sql = new StringBuilder( "insert into`" ).append( getName() ).append( "`( " );
