@@ -109,8 +109,6 @@ function resetAreasList(){
 	a.hash[h.hash]=h;h.area=a[i]
   }return a;}
 
-area=resetAreasList()
-
 function f(){
  var x={weeks:document.getElementById('x').value.split('\n'),wkIx:-1,a:0
  ,row:0,c:0,i:0,x:0
@@ -127,7 +125,8 @@ function f(){
  function findNextPatt(i){
   var 	num=f.regexNum,
 	txt=f.regexTxt,
-	patt=[num,txt,txt,num,num],
+	//patt:mw83,863h,msa7a,w9f,nw3el38ar,thmn,m7ftha,mla7that
+	patt=[any,any,num,txt,txt,num,num],
 	q=patt.length,j=0,b= j >=q,n=x.a.length;i--
 	while(!b && (b?i:++i)+x.i<n )
 		for( j=0;j<q && j+i+x.i<n 
@@ -196,7 +195,7 @@ f.govStr='محافظة',
 
 f.regexNum=/\d{1,2}(,\d{3})*(\.\d+)?/;
 f.regexTxt=/[^\d]+/;
-
+trace=false;
 function getArea(s){//2nd version of the func
 	function mtch(x,y)
 	{var c=0,epsilon=0.99
@@ -216,7 +215,7 @@ function getArea(s){//2nd version of the func
 		if(mtch(x,p[2]))
 			return p;//a second return-statement and not merged (i.e. or) two cases, just for breakpoints for debugging 
 	}//for
-  console.log('getArea:not found:',s,',row=',f.x.row,',weekIx=',f.x.weekIx);
+  if(trace)console.log('getArea:not found:',s,',row=',f.x.row,',weekIx=',f.x.weekIx);
 }//getArea2
 
 function fixY(){
@@ -289,3 +288,111 @@ function getArea_backlog(){
 	}//for
  document.getElementById('x').value=b.join('')
 }//function getArea_backlog
+
+onload=function(){
+	area=resetAreasList();}
+
+
+function test(){a=x.value.split('\n').
+map(function(b,bi){
+	return b.split('الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	').
+	map(function(c,ci){
+		return c.split('الموقع	القطعه	المساحة	الوصف	نوع العقار	الثمن	محافظة	ملاحظات	').
+		map(function(d,di){	return d.split('محافظة').
+			map(function(e,ei){return e.split('\t')
+			})
+		})
+	})
+})
+}
+
+function test(){a=x.value.split('\n').
+map(function(b,bi){
+	return b.split('الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	').
+	map(function(c,ci){
+		return c.split('الموقع	القطعه	المساحة	الوصف	نوع العقار	الثمن	محافظة	ملاحظات	').
+		map(function(d,di){	return e.split('\t')
+		})
+	})
+})
+}
+	
+function test(){
+hd=0
+weeks={}
+fsm={//bi:{
+	c0:{before:function(p){
+			hd={year:null,month:null,weekNo:null,date:null//,a:null
+				,type:1
+				,govNm:null,govNo:null,gov:{}
+				,mw83:null,tr:[],trans:[]//,tri:-1
+			}//hd
+		}//,before:function
+		,d0:{
+			e0:{def:['year','month','weekNo','date']
+				,f0:{
+					i:function(p,i){var col=fsm.c0.d0.e0.def[i];
+						hd[col||i]=p}
+				}//f0
+				//,after:function(p){}
+			}//e0
+			,e1:{def:['govNm']
+				,f0:{i:function(p){}
+				}//f0
+				,after:function(p){
+					
+				}
+			}//e1
+		}//d0
+		,di:{
+			ei:{
+				fi:{
+					i:function chk(p){}
+				}
+			}//ei
+		}//di
+	}//c0
+	,c1:{
+		before:function(p){hd.type=2}
+		//di: fsm.bi.c0.di
+	}//c1	}//bi
+}//fsm
+fsm.c1.di=fsm.c0.di
+
+//a: level0
+a=x.value.split('\n').
+map(function(b,bi){
+	var r=b.split('الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	').
+	map(function(c,ci){var xc=fsm['c'+ci]||fsm.ci
+		if(xc.before)
+			xc.before(c,ci,xc)
+
+		var r= c.split('الموقع	القطعه	المساحة	الوصف	نوع العقار	الثمن	محافظة	ملاحظات	').
+			map(function(d,di){													//level 3
+				if(i==0);
+				var r= d.split('محافظة').
+				map(function(e,ei){return e.split('\t').							//level 4
+					map(function(f,fi){											//level 5
+						function chkArea(e,i,a){
+							var r=getArea(e);if(r){
+							var x=[i,r];for(var j=1;j<=7;j++)x.push(a[i+j])
+							//ax.push(x);
+							return x;}}
+						var r=chkArea(f)
+						if(!hd.a){
+							
+						}
+						return r
+					})
+				})
+				return r;
+			})
+		return r;
+	})
+	hd.trans.push(r);
+	weeks[hd.weekNo]=hd;
+	return r;
+})
+}
+
+
