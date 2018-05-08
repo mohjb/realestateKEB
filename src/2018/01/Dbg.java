@@ -993,56 +993,39 @@ public static void main(String[]args)throws Exception{
 				where typ is optional depending on method
 			, 3rdString is body ,and most methods
 				take the body as JsonStorage.val*/
-		/*{"Srvlt.login"		,"app/moh" 		,"{pw:'"+dev201801.Srvlt.Util.b64e("m")+"',recovery:true}"}//json params
-		,{"Stor.listApps"	,"app" ,""		}//no params
-		,{"Stor.create"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
-		,{"Stor.set"		,"app/k1"		,"{app:'app',key:'app',val:'v1'}"}//prmBody Stor
-		,{"Stor.put"		,"app/k1"		,"{app:'app',key:'app',val:'v1'}"}//prmBody Stor
-		,{"Stor.listKeys"	,"app/keysList"	,"{}"	}//prmUrlPart appName
-		,{"Stor.getKeys"	,"app"      	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
-		//,{"Stor.get"		,"app/apps"		,"{}"	}//prmLoadByUrl Stor
-		,{"get"     		,"app/app"		,"{}"	}//prmLoadByUrl Stor
-		,{"Stor.call"		,"app/app"		,""		}//prmUrlPart app, prmUrlPart func, prmBody List args
-		,{"Stor.eval"		,"app"			,"{src:'5+7'}"	}//prmUrlPart app , prmBody String src
-		,{"Stor.poll"		,"app"  		,"5"	}//prmUrlPart appName, prmBody long
-		,{"Stor.erase"		,"app/app"		,""	}//prmUrlPart appName, prmBody long
 
-		,{"Perm.byUsr"	 	,"/app/usr","{}"    }//body Perm
-		,{"Perm.usrsOfKey"	,"/app/key","{}"    }//body Perm
-		,{"Perm.create"	    ,"/app/usr/key","{}"    }//body Perm
-		,{"Perm.addAct"		,"/app/usr/key","{}"    }//body Perm
-		,{"Perm.remAct"		,"/app/usr/key","{}"    }//body Perm
-		,{"Perm.erase"		,"/app/usr/key","{}"    }//body Perm
-
-		//the following are intentional errors
-		,{"Stor.create"		,"app/k1"		,"{app:'app',key:'app',val:'app'}"}//prmBody Stor
-		,{"Stor.set"		,"app/k1"		,"{app:'xpp',key:'app',val:'v1'}"}//prmBody Stor
-		,{"Stor.listKeys"	,"app"	,"{}"	}//prmUrlPart appName
-		,{"Stor.getKeys"	,"apx"	,"{keys:['app']}"	}//prmUrlPart appName, prmBody List<String>keys
-		,{"get"     		,"app/app"		,"{}"	}//prmLoadByUrl Stor
-		,{"Stor.call"		,"x/t"	    	,""		}//prmUrlPart app, prmUrlPart func, prmBody List args
-		,{"Stor.eval"		,"v"			,"{src:'5+7'}"	}//prmUrlPart app , prmBody String src
-		,{"Stor.poll"		,"x"		    ,"5"	}//prmUrlPart appName, prmBody long
-		,{"Stor.erase"		,"app"		,""	}//prmUrlPart appName, prmBody long
-
-		,{"Perm.byUsr"	 	,"/app/usr/key","{}"    }//body Perm
-		,{"Perm.usrsOfKey"	,"/app/usr/key","{}"    }//body Perm
-		,{"Perm.create"	    ,"/app/usr/key","{}"    }//body Perm
-		,{"Perm.addAct"		,"/app/usr/key","{}"    }//body Perm
-		,{"Perm.remAct"		,"/app/usr/key","{}"    }//body Perm
-		,{"Perm.erase"		,"/app/usr/key","{}"    }//body Perm
-
-		,{"Srvlt.logout"	,"app/moh"	,"{}"	    }//json params*/
 		{"TxtSrvlt.login","/txtSrvlt/moh","{pw:'"+ TxtSrvlt.Util.b64e("m")+"'}"},
-		/*{"Txt.put","/txtSrvlt/moh/moh/47/xx","{abc:123}"},
-		{"Txt.load","/txtSrvlt/xx","{}"},
-		{"Txt.listKeys","/txtSrvlt/",""},
-		{"Txt.getKeys","/txtSrvlt/moh","['xx']"},
-		{"get","/txtSrvlt/moh",""},
-		{"Txt.call","/txtSrvlt//xx","[1,2]"},
-		{"Txt.eval","/txtSrvlt/xx","d=33"},
-		{"Txt.delete","/txtSrvlt/xx",""},
-		{"TxtSrvlt.logout","/txtSrvlt/xx","{abc:123}"}*/
+		//{"Txt.listKeys","/txtSrvlt/",""},
+		{"Txt.create","/txtSrvlt/apps/page","{group:'moh',owner:'moh',key:'page',meta:{},txt:'[4,5]',parent:4,perm:0xfff}"},
+		{"Txt.create","/txtSrvlt/apps/page/xx","{group:'moh',owner:'moh',id:-1,key:'xx',meta:{},txt:'',parent:4,perm:0xfff}"},
+		{"Txt.create","/txtSrvlt/apps/page/x1","{group:'moh',owner:'moh',id:-1,meta:{},txt:'',parent:4,perm:0xfff}"},
+		{"Txt.create","/txtSrvlt/apps/page/x2","{group:'moh',owner:'moh',id:-1,meta:{},txt:'',parent:4,perm:0xfff}"},
+		{"Txt.update","/txtSrvlt/apps/page/xx","{group:'root',txt:'ok'}"},
+		{"Txt.txt","/txtSrvlt/apps/page/xx","function jo(x){this.h=x;return x+2;}"},
+		{"Txt.meta","/txtSrvlt/apps/page/xx","{ok:'yes'}"},
+		{"Txt.prop","/txtSrvlt/apps/page/xx/you.know","{prop:'you.know',val:'it'}"},
+		{"Txt.getKeys","/txtSrvlt/4","['xx']"},
+		{"Txt.call","/txtSrvlt/apps/page/xx/jo","[1,2]"},
+		{"Txt.eval","/txtSrvlt/apps/page/xx","d=33"},
+		{"Txt.load","/txtSrvlt/4","{}"},
+		{"Txt.delete","/txtSrvlt/apps/page/x2",""},
+		{"get","/txtSrvlt/apps/page",""},
+		{"Txt.poll","/txtSrvlt/","0"},
+		{"Txt.cmnds","/txtSrvlt/"
+			,"["//{method:'Txt.listKeys'   ,url:'/txtSrvlt/'},"
+			+"{method:'Txt.create'  ,url:'/txtSrvlt/apps/page/x2',body:'{group:'moh',owner:'moh',id:-1,key:'x2',meta:{},txt:'',parent:4,perm:0xfff}'}"
+			+",{method:'Txt.update' ,url:'/txtSrvlt/apps/page/xx',body:'{group:'root',txt:'ok'}'}"
+			+",{method:'Txt.load'   ,url:'/txtSrvlt/apps/page/xx'}"
+			+",{method:'Txt.txt'    ,url:'/txtSrvlt/apps/page/xx',body:'cmnds'}"
+			+",{method:'Txt.meta'   ,url:'/txtSrvlt/apps/page/xx',body:'{cmnds:1}'}"
+			+",{method:'Txt.prop'   ,url:'/txtSrvlt/apps/page/xx',body:'{prop:'ok.to',val:'you'}'}"
+			+",{method:'Txt.getKeys',url:'/txtSrvlt/apps/page/xx',body:'['jo','ko']'}"
+			+",{method:'Txt.call'   ,url:'/txtSrvlt/apps/page/xx/jo',body:'[5,60]'}"
+			+",{method:'Txt.eval'   ,url:'/txtSrvlt/apps/page/xx',body:'z=17'}"
+			+",{method:'Txt.delete' ,url:'/txtSrvlt/apps/page/x2'}"
+			+",{method:'Txt.get'    ,url:'/txtSrvlt/apps/page'}"
+			+",{method:'Txt.poll'   ,url:'/txtSrvlt/',body:'0'}"
+			+"]"},
 
 		{"MTbl.DB_names",       "/txtSrvlt/",""},
 		{"MTbl.DB_get",         "/txtSrvlt/aswan",""},
@@ -1079,7 +1062,8 @@ public static void main(String[]args)throws Exception{
 		+ ",{method:'delete'        ,url:'/txtSrvlt/test/4'}"
 		+ ",{method:'query'         ,url:'/txtSrvlt/test'}"
 		+ ",{method:'qry'         ,url:'/txtSrvlt/test',query:'',where:[]}"
-		+"]"}
+		+"]"},
+		{"TxtSrvlt.logout","/txtSrvlt/xx","{abc:123}"}
 	};
 
 	TxtSrvlt x=new TxtSrvlt();
