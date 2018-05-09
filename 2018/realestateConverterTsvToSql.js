@@ -248,7 +248,7 @@ function getType(s){
 	}//for
   }// if( ! window.pType)
  var w=acw(s),
- x=pType[w];if(!x)
+ x=pType[w];if(!x && trace)
 	console.log('getType:not found:',w,',row=',f.x.row,',weekIx',f.x.wkIx);
  return x;
 }//function getType
@@ -293,7 +293,7 @@ onload=function(){
 	area=resetAreasList();}
 
 
-function test(){a=x.value.split('\n').
+function test1(){a=x.value.split('\n').
 map(function(b,bi){
 	return b.split('الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	').
 	map(function(c,ci){
@@ -306,7 +306,7 @@ map(function(b,bi){
 })
 }
 
-function test(){a=x.value.split('\n').
+function test2(){a=x.value.split('\n').
 map(function(b,bi){
 	return b.split('الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	').
 	map(function(c,ci){
@@ -316,89 +316,157 @@ map(function(b,bi){
 	})
 })
 }
-	
-function test(){var hd,weeks,fsm,a
+
+function test3(){var hd,weeks,fsm,a
 hd=0
 weeks={}
-fsm={aDelimiter:'\n'//bi:{
-	,bDelimiter:'الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	'
-	,cDelimiter:'الموقع	القطعه	المساحة	الوصف	نوع العقار	الثمن	محافظة	ملاحظات	'
-	,dDelimiter:'محافظة'
-	,eDelimiter:'\t'
-	,c0:{before:function(p){
-			hd={year:null,month:null,weekNo:null,date:null//,a:null
-				,type:1
-				,govNm:null,govNo:null,gov:{}
-				,mw83:null,tr:[],trans:[]//,tri:-1
+fsm={delimiter:{a:'\n'//bi:{
+		,b:'الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	'
+		,c:'الموقع	القطعه	المساحة	الوصف	نوع العقار	الثمن	محافظة	ملاحظات	'
+		,d:'محافظة'
+		,e:'\t'}
+	,/*ci=*/0:
+	{before:function(p){
+			hd={year:null,month:null,week:null,date:null//,a:null
+				,type:1,tr:[],trans:[]//,tri:-1
 			}//hd
 		}//,before:function
-		,d0:{
-			e0:{def:['year','month','weekNo','date']
-				,f0:{
-					i:function(p,i){var col=fsm.c0.d0.e0.def[i];
+		,/*di=*/0:
+		{	/*ei=0*/0:
+			{def:['year','month','week','date']
+				,/*f*/i:function(p,i){var col=fsm.c0.d0.e0.def[i];
 						hd[col||i]=p}
-				}//f0
 				//,after:function(p){}
 			}//e0
-			,e1:{def:['govNm']
-				,f0:{i:function(p){}
-				}//f0
-				,after:function(p){
-					
-				}
+			,/*ei=1*/1:
+			{/*f*/i:function(p,i){if(i==0)hd.govNm=p}//def:['govNm'],
+				//,after:function(p){}
 			}//e1
 		}//d0
-		,di:{
-			ei:{
-				fi:{
-					i:function chk(p){}
-				}
+		,/*d*/i:{
+			/*e*/i:{
+				/*f*/i:function chk(p){}
 			}//ei
 		}//di
 	}//c0
-	,c1:{
-		before:function(p){hd.type=2}
+	,/*ci=*/1:
+	{	before:function(p){
+			hd.type=2}
 		//di: fsm.bi.c0.di
 	}//c1	}//bi
 }//fsm
-fsm.c1.di=fsm.c0.di
+fsm[/*ci=*/1]./*d*/i=fsm[/*ci=*/0]./*d*/i
 
 
-a=x.value.split(fsm.aDelimiter).														//a
-map(function(b,bi){																		//b
-	var r=b.split(fsm.bDelimiter).
-	map(function(c,ci){var xc=fsm['c'+ci] || fsm.ci										//c
-		if(xc.before)
-			xc.before(c,ci,xc)
-		var r= c.split(fsm.cDelimiter).
-			map(function(d,di){															//d
-				var dx=xc['d'+di] || xc.di
+a=x.value.split(fsm.delimiter.a).						//a
+map(function(b,bi){										//b
+	var br=b.split(fsm.delimiter.b).
+	map(function(c,ci){var cx=fsm[ci]					//c
+		if(cx&&cx.before)
+			cx.before(c,ci,cx)
+		var cr= c.split(fsm.delimiter.c).
+			map(function(d,di){							//d
+				var dx=cx[di] || cx.i
 				if(dx.before)
 					dx.before(d)
-				var r= d.split(fsm.dDelimiter).
-				map(function(e,ei){return e.split(fsm.eDelimiter).						//e
-					map(function(f,fi){													//f
+				var dr= d.split(fsm.delimiter.d).
+				map(function(e,ei){
+					var ex=dx[ei] || dx.i
+					if(ex.before)
+						ex.before(e)
+					var er= e.split(fsm.delimiter.e).	//e
+					map(function(f,fi){					//f
 						
-						var r=getArea(f)
-						if(r){var z=hd.tr
+						var fr=getArea(f)
+						if(fr){var z=hd.tr
 							hd.trans.push(z)
-							td.tr=[r,hd.type]
+							hd.tr=[fr] // hd.tr=[hd.sn, hd.year, hd.month, hd.week, hd.date, fr]
 							return z
 						}
 						hd.tr.push(f)
 						return f;
 					})
+					return er
 				})
-				return r;
+				return dr;
 			})
-		return r;
+		return cr;
 	})
-	hd.trans.push(r);
+	hd.trans.push(br);
 	weeks[hd.weekNo]=hd;
-	return r;
+	return br;
 })
 }//function test
 
 
-
-
+function test(x,no){var hd=0,weeks=[],sn=no.value
+	,delimiter={a:'\n'//bi:{
+		,b:'الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	'
+		,c:'الموقع	القطعه	المساحة	الوصف	نوع العقار	الثمن	محافظة	ملاحظات	'
+		,d:'محافظ.'//'محافظة'
+		,e:'\t'}
+	,def=['year','month','week','date']
+weeks.a=x.value.split(delimiter.a).							//a
+map(function(b,bi){											//b
+	var br=b.split(delimiter.b).
+	map(function(c,ci){										//c
+		if(ci==0)
+		{	hd={type:1,gov:{},tr:[]};hd.trans=[hd.tr];}
+		else 
+		{	hd.type=ci+1;hd.govNm=null;}
+		var cr= c.split(delimiter.c).
+			map(function(d,di){								//d
+				//if(di==0);
+				var dr= d.split(delimiter.d).
+				map(function(e,ei){
+					//if(ex.before);
+					var er= e.split(delimiter.e).			//e
+					map(function(f,fi){var count=0;			//f
+						if(ci==0&&di==0)
+						{	if(ei==0)
+							{var col=def[fi] || fi
+								hd[col]=f
+								if(col=='week')
+									weeks[hd.week]=hd;		//database
+							}
+							else if(fi==0)
+							 hd.gov[	hd.govNm=f]=[]//hd.tr
+						}else if ( ei==0)//ci==1 ||
+						{var fr=f&&f.length?getArea(f):null
+							if(fr){if(hd.trans.length==1&&hd.trans[0].length==1)hd.trans.shift()
+								hd.trans.push(hd.tr=[++sn, hd.year, hd.month, hd.week, hd.date,hd.type,fr])
+								if(hd.type==2)
+									hd.tr.push('')
+								if( hd.gov[hd.govNm])
+									hd.gov[hd.govNm].push(hd.tr)
+								return hd.tr
+							}
+							hd.tr.push(f)
+						}else if(ei==1 && fi==0)
+						{hd.govNm=f
+							if(!hd.gov[hd.govNm])
+								hd.gov[hd.govNm]=[hd.tr]
+						}if(hd.tr.length==11){var z=hd.tr
+							,z9=z&&z[ 9]?getType(z[9]+z[10]):null;
+							if(z9)
+							{	z[9]=z9;z.pop()}
+							else{z[9]=z[9]+z[10];z.pop();}
+						}if(hd.tr.length>13){
+							if(!f){if(++count%400==1)
+								console.log(hd.tr,count)
+								if(f=='')
+									hd.tr.pop()
+							}if(hd.tr.length==15||hd.tr.length==20)
+								console.log(hd.tr[14],hd.tr)}
+						return f;
+					})
+					return er
+				})
+				return dr;
+			})
+		return cr;
+	})
+	return br;
+})//a
+return weeks;
+}//function test
