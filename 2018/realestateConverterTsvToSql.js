@@ -317,11 +317,15 @@ map(function(b,bi){
 })
 }
 	
-function test(){
+function test(){var hd,weeks,fsm,a
 hd=0
 weeks={}
-fsm={//bi:{
-	c0:{before:function(p){
+fsm={aDelimiter:'\n'//bi:{
+	,bDelimiter:'الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	'
+	,cDelimiter:'الموقع	القطعه	المساحة	الوصف	نوع العقار	الثمن	محافظة	ملاحظات	'
+	,dDelimiter:'محافظة'
+	,eDelimiter:'\t'
+	,c0:{before:function(p){
 			hd={year:null,month:null,weekNo:null,date:null//,a:null
 				,type:1
 				,govNm:null,govNo:null,gov:{}
@@ -359,30 +363,30 @@ fsm={//bi:{
 }//fsm
 fsm.c1.di=fsm.c0.di
 
-//a: level0
-a=x.value.split('\n').
-map(function(b,bi){
-	var r=b.split('الموقع	المساحة	الوصف	نوع العقار	الثمن	المحافظة	ملاحظه	').
-	map(function(c,ci){var xc=fsm['c'+ci]||fsm.ci
+
+a=x.value.split(fsm.aDelimiter).														//a
+map(function(b,bi){																		//b
+	var r=b.split(fsm.bDelimiter).
+	map(function(c,ci){var xc=fsm['c'+ci] || fsm.ci										//c
 		if(xc.before)
 			xc.before(c,ci,xc)
-
-		var r= c.split('الموقع	القطعه	المساحة	الوصف	نوع العقار	الثمن	محافظة	ملاحظات	').
-			map(function(d,di){													//level 3
-				if(i==0);
-				var r= d.split('محافظة').
-				map(function(e,ei){return e.split('\t').							//level 4
-					map(function(f,fi){											//level 5
-						function chkArea(e,i,a){
-							var r=getArea(e);if(r){
-							var x=[i,r];for(var j=1;j<=7;j++)x.push(a[i+j])
-							//ax.push(x);
-							return x;}}
-						var r=chkArea(f)
-						if(!hd.a){
-							
+		var r= c.split(fsm.cDelimiter).
+			map(function(d,di){															//d
+				var dx=xc['d'+di] || xc.di
+				if(dx.before)
+					dx.before(d)
+				var r= d.split(fsm.dDelimiter).
+				map(function(e,ei){return e.split(fsm.eDelimiter).						//e
+					map(function(f,fi){													//f
+						
+						var r=getArea(f)
+						if(r){var z=hd.tr
+							hd.trans.push(z)
+							td.tr=[r,hd.type]
+							return z
 						}
-						return r
+						hd.tr.push(f)
+						return f;
 					})
 				})
 				return r;
@@ -393,6 +397,8 @@ map(function(b,bi){
 	weeks[hd.weekNo]=hd;
 	return r;
 })
-}
+}//function test
+
+
 
 
