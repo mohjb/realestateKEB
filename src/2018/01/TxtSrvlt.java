@@ -66,23 +66,7 @@ public static class Txt extends Sql.Tbl {//<Integer>
 		if(id<1)try {id=maxPlus1( C.id,dbtName );} catch ( Exception e ) {
 			e.printStackTrace();
 		}L.l(this);
-		return super.create();
-		/*public static Txt create(int parent,String key,TL tl){
-		return create(parent,key,tl,null,null,0);}
-
-	public static synchronized Txt create(int parent,String key,TL tl,String txt,Map m,int perm){
-		String usr=tl.usrUn();int pk=-1;
-		try {pk=maxPlus1( C.id,dbtName );
-		Txt x=new Txt(pk,parent,key,tl.now);
-		x.owner=usr;x.group=tl.usrGroup();
-		x.txt=txt;x.meta=m;
-		x.perm=perm;
-		x.create();
-		return x;
-		} catch ( Exception e ) {
-			e.printStackTrace();
-		}return null;}*/
-	}//save
+		return super.create();}//save
 
 	Object jt(){try {
 		Object j = Json.Prsr.parse(txt);
@@ -178,72 +162,62 @@ public static class Txt extends Sql.Tbl {//<Integer>
 			return o; }
 	}//class Log
 
-	/**works in 3 approaches based on the param-key string-FORMAT
-	 * 1- if param-key is a integer-format then load the int pk
-	 * 2- if param-key has a bar-char
-	 *	  , then before the bar would be parent int-id
-	 *		  and saved in the session as attrib Txt.parent
-	 *	  , and after the bar is the member-key
-	 * 3- otherwise, parent is read from the session
-	 *	  , and member-key is set from param-key
-	 *
-	 * Caution&Warning: parent is IMPLICIT
-	 * */
-	public static Txt loadBy(String key) {
-		if(key!=null&&key.startsWith(UrlPrefix))
-			key=key.substring(UrlPrefix.length());
-		if(key!=null && key.contains("/")){
-			TL tl=TL.tl();
-			Map m=(Map)tl.h.r("urlParts");
-			Object o=m==null?null:m.get("url");
-			String ux=o==null?null:o instanceof String?(String)o:null;
-			o=m==null?null:m.get("x");
-			Txt x=o instanceof Txt?(Txt)o:null;
-			if(m==null||x==null||!key.equals(ux)){
-				tl.h.r("urlParts",m=parseCreate(key));
-				x=(Txt)m.get("x");
-				return x;
-			}else if(x!=null)
-				return x;//else
-		}
-		return Util.isNum( key )
-			       ? loadBy( Util.parseInt( key,0 ) )
-			       : loadBy( key, 0 );
-		/*int j=key==null?-1:key.indexOf( '/' ),j1=j==-1?j:key.indexOf( '/' ),p=0;
-		if(j!=-1&&(j<j1||j1==-1)){
-		TL.tl().h.s("Txt.parent",p=Util.parseInt( key.substring( 0,j ),0 ) );
-		key=key.substring( j+1,j1==-1?key.length():j1 ); }
-		else p=( Integer ) TL.tl().h.var("Txt.parent",0 );
-		return loadBy( key, p );
+	//public static Txt loadBy(String key) {return key==null?null:loadBy(key.split("/"));}
 
-		if(key!=null && key.indexOf('/')!=-1) {
-			String[] a = key.split("/");
-			Txt x = null;
-			int n = a == null ? 0 : a.length, i = 0;
-			tl.h.r("urlParts",m=Util.mapCreate("a",a,"n",n,"i",i));
-			if(n > 0 )
-			{if( Util.isNum(a[0]))
-				x = loadBy(Util.parseInt(a[i++], 0));
-			 else
-				x=loadBy(a[i++],0);}
-			for( ; x!=null&&i < n ; i++){
-				Txt t=loadBy(a[i],x.id);
-				if(t!=null)
-					x=t;else
-				{Util.mapSet(m,"x",x,"i",i);
-					return x;}
-			}Util.mapSet(m,"x",x,"i",i);
-			return x;}*/
-	}
+
+	/**works in 2 approaches based on the param-key string-FORMAT
+	 * 1- if param-key is a integer-format then load the int pk
+	 * 2- 
+	 * */
+	static Txt loadUrl(TL tl){
+		TL.H h=tl.h;
+		h.urli=1;
+		String[]url=h.url;
+		Txt x = null;
+		int n = url == null ? 0 : url.length;//always element at i is not processed
+		if(n > 0) {
+			if(Util.isNum(url[0]))
+				x = loadBy(Util.parseInt(url[h.urli++], 0));
+			else
+				x = loadBy(url[h.urli++], 0);}
+		for( ; x != null && h.urli < n ; h.urli++) {
+			Txt t = loadBy(url[h.urli], x.id);
+			if(t != null)
+				x = t;
+		}return x;}
+
+	static Txt loadBy(String url){
+		return url==null?null:loadBy(url.split("/"));}
+
+	static Txt loadBy(String[]url){
+		int i=1;
+		Txt x = null;
+		int n = url == null ? 0 : url.length;//always element at i is not processed
+		if(n > 0) {
+			if(Util.isNum(url[0]))
+				x = loadBy(Util.parseInt(url[i++], 0));
+			else
+				x = loadBy(url[i++], 0);}
+		for( ; x != null && i < n ; i++) {
+			Txt t = loadBy(url[i], x.id);
+			if(t != null)
+				x = t;
+		}return x;}
+
 
 	public static Txt loadBy(String key,int parent) {
-		Txt j = (Txt) loadWhere(Txt.class, where(C.key, key,C.parent,parent));
+		int i=key==null?-1:key.lastIndexOf('/');
+		if(i!=-1)
+			key=key.substring(i+1);
+		Txt j = key==null?null:(Txt)loadWhere(Txt.
+			class, where(C.key, key,C.parent,parent));
 		return j;}
+
 	public static Txt loadBy(int id) {
 		Txt j = (Txt) loadWhere(Txt.class, where(C.id, id));
 		return j;}
 
-	public static Txt prmLoadByUrl(TL tl, String url) {
+	public static Txt prmLoadByUrl(TL tl,String[]url) {
 		Txt j = loadBy(url);
 		return j;}
 
@@ -354,69 +328,25 @@ public static class Txt extends Sql.Tbl {//<Integer>
 				p.save();
 		}return p;}
 
-	static Map parseCreate(String url){
-		Map m=null;
-		if(url!=null && url.indexOf('/')!=-1) {
-			String[] a = url.split("/");
-			Txt x = null;
-			int n = a == null ? 0 : a.length, i = 0;//always element at i is not processed
-			m = Util.mapCreate("a", a, "n", n, "i", i,"url",url);
-			if(n > 0) {
-				if(Util.isNum(a[0]))
-					x = loadBy(Util.parseInt(a[i++], 0));
-				else
-					x = loadBy(a[i++], 0);}
-			for( ; x != null && i < n ; i++) {
-				Txt t = loadBy(a[i], x.id);
-				if(t != null)
-					x = t;
-				else {
-					Util.mapSet(m, "x", x, "i", i);
-					return m;}}
-			Util.mapSet(m, "x", x, "i", i);
-		}return m!=null?m:Util.mapCreate("url",url);}
-
-	static Map parseCreate(Map m){
-		Object o=m==null?null:m.get("url");
-		String url=o instanceof String?(String)o:null;
-		o=m==null?null:m.get("a");
-		//if(o==null)m.put("a",);
-		String[]a=o instanceof String[]?(String[])o:null;
-		o=m==null?null:m.get("x");
-		Txt x=o instanceof Txt?(Txt)o:null;
-		o=m.get("i");
-		int n = a == null ? 0 : a.length
-			, i = o instanceof Integer?(Integer)o:0;//always element at i is not processed
-		if(x==null && n>0) {
-			if(Util.isNum(a[0]))
-				x = loadBy(Util.parseInt(a[i++], 0));
-			else
-				x = loadBy(a[i++], 0);
-			for( ; x != null && i < n ; i++) {
-				Txt t = loadBy(a[i], x.id);
-				if(t != null)
-					x = t;
-				else {
-					Util.mapSet(m, "x", x, "i", i);
-					return m;}}
-			Util.mapSet(m, "x", x, "i", i);
-		}return m;}
 
 	@HttpMethod public static Txt
 	create(@HttpMethod(prmLoadByUrl = true) Txt prnt
-		,  @HttpMethod(prmUrlPart = true) String key
 		,  @HttpMethod(prmBody = true) Txt x
 		, TL tl) throws Exception {
-		if(tl.usr!=null)//TODO: check permission
-		{	String k=tl.h.req.getRequestURI().substring(UrlPrefix.length()).trim();
-			if((k==null||k.trim().length()<1)&&x.key!=null&&x.key.length()>0)
-				k=x.key.trim();
-			if(k!=null&&k.length()>0)
-			{Txt y=loadBy(k,x.parent);
-				if(y!=null)
-					return null;
-				x.key=k;}
-			x.create();}
+		if(x==null)return x;//if(tl.usr==null)//TODO: check permission
+		if(x.key==null) {
+			String k = tl.h.req.getRequestURI().substring(UrlPrefix.length()).trim();
+			int i=k.lastIndexOf('/');
+			x.key=i<0?k:k.substring(i+1);}
+		if(x.key!=null&&x.key.length()>0)
+		{Txt y=loadBy(x.key,prnt.id);//x.parent);
+			if(y==null) {
+				x.parent=prnt.id;
+				x.create();}
+			else
+				x=null;
+		}else 
+			x=null;
 		return x;}
 
 	@HttpMethod public static Txt
@@ -530,18 +460,8 @@ public static class Txt extends Sql.Tbl {//<Integer>
 					r=load(loadBy(url),tl);
 				else if("update".equals(mt))
 					r=update(loadBy(url),(Map)m.get("body"),tl);
-				else if("create".equals(mt))
-				{Map m2=parseCreate(url);
-					Txt x=(Txt)m.get("x");
-					Object o2=m.get("i");
-					int i=o2 instanceof Integer?(Integer)o2:-1,n=-1;
-					o2=m.get("n");if(o2 instanceof Integer)
-						n= (Integer)o2;
-					o2=m.get("a");
-					String[]a=o2 instanceof String[]?(String[])o2:null;
-					String nm=a!=null&&++i<n?a[i]:null;
-					r=nm==null?null:create(x,nm,(Txt)new Txt().fromMap((Map)m.get("body")),tl);
-				}
+				else if("create".equals(mt))//key must be in body
+					r=create(loadBy(url),(Txt)new Txt().fromMap((Map)m.get("body")),tl);
 				else if("txt".equals(mt))
 					r=txt(loadBy(url),(String)m.get("body"),tl);
 				else if("meta".equals(mt))
@@ -569,11 +489,10 @@ public static class Txt extends Sql.Tbl {//<Integer>
 public static class MTbl extends Sql.Tbl {
 	public static Map</**database-name*/String,Map</**table-name*/String,MTbl>>dbs=new HashMap<String,Map<String,MTbl>>();
 
-	public static Object prmLoadByUrl(TL tl,String url){
-		if(url!=null&&url.startsWith(UrlPrefix))
-			url=url.substring(UrlPrefix.length());
-		String[]a=url.split("/");
-		Object o= initWithUrl(a);
+	public static Object prmLoadByUrl(TL tl,String[]url){
+		//if(url!=null&&url.startsWith(UrlPrefix)) url=url.substring(UrlPrefix.length());
+		//String[]a=url.split("/");
+		Object o= initWithUrl(url);
 		if(o instanceof Sql.Tbl)
 			((Sql.Tbl)o).load();
 		return o;}
@@ -950,12 +869,12 @@ public static class MTbl extends Sql.Tbl {
 	}
 
 	static Object initWithUrl(String[]a){
-		int n=a.length;
-		Map<String,MTbl> d=n>0?dbs.get(a[0]):null;
-		if(d==null||n<2)
+		int n=a.length,i=1;
+		Map<String,MTbl> d=n>0?dbs.get(a[i++]):null;
+		if(d==null||n<i)
 			return d;
-		MTbl m=d.get(a[1]);
-		if(m==null||n<3)
+		MTbl m=d.get(a[i++]);
+		if(m==null||n<i)
 			return m;
 		Row r=m.new Row(a);
 		return r;}
@@ -979,9 +898,9 @@ public static class MTbl extends Sql.Tbl {
 		public Row(){}
 		public Row(String[]url){setPk(url);}
 
-		/**set the primay keys*/
+		/**set the primay keys */
 		public Row setPk(String[]url){
-			int i=2;
+			int i=1;//2 2018/5/13
 			for(C c:pkc)
 				v(c,url[i++]);
 			return this;}
@@ -1492,17 +1411,8 @@ public @interface HttpMethod {
 			Class[] prmTypes = op.getParameterTypes();
 			Class cl = op.getDeclaringClass();
 			Annotation[][] prmsAnno = op.getParameterAnnotations();
-			int n = prmsAnno == null ? 0 : prmsAnno.length, i = - 1,urli=-1,urln=0;
+			int n = prmsAnno == null ? 0 : prmsAnno.length, i = - 1;tl.h.urli=-1;
 			Object[] args = new Object[n];
-			String url=tl.h.req.getRequestURI();
-			url=url.substring(UrlPrefix.length());
-			String[] urla = null;Map urlm=null;
-
-			if(url!=null && url.indexOf('/')!=-1) {
-				urla = url.split("/");
-				urln = urla == null ? 0 : urla.length;
-				tl.h.r("urlParts",urlm=Util.mapCreate("a",urla,"n",urln,"i",urli=0,"url",url));
-				}
 
 			for(Annotation[] t : prmsAnno) try {
 				HttpMethod pp = t.length > 0 && t[0] instanceof HttpMethod ? (HttpMethod) t[0] : null;
@@ -1510,21 +1420,18 @@ public @interface HttpMethod {
 				String nm = pp != null ? pp.prmName() : "arg" + i;//t.getName();
 				Object o = null;
 				if(pp != null && pp.prmUrlPart()) {
-					args[i]=urla==null?url:urla[urli++];
-					if(urlm!=null)
-						urlm.put("i",urli);
+					args[i]=tl.h.url[tl.h.urli++];
 				} else if(pp != null && pp.prmUrlRemaining()) {
-					if(urla!=null&&urli<urln) {
-						StringBuilder b = new StringBuilder(urla[urli++]);
-						while(urli<urln){b.append('/').append(urla[urli++]);}
+					if(tl.h.url!=null&&tl.h.urli<tl.h.url.length) {
+						StringBuilder b = new StringBuilder(tl.h.url[tl.h.urli++]);
+						while(tl.h.urli<tl.h.url.length){b.append('/').append(tl.h.url[tl.h.urli++]);}
 						args[i] = b.toString();//url.indexOf(urlIndx + 1);
-						urlm.put("i",urli);
 					}
 				} else if(pp != null && pp.prmLoadByUrl()) {
 					Class[] ca = {TL.class , String.class};
 					Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
 						m = prmClss.getMethod("prmLoadByUrl", ca);
-					args[i] = m == null ? null : m.invoke(prmClss, tl, url);
+					args[i] = m == null ? null : m.invoke(prmClss, tl,tl.h.url);
 				} else if(Sql.Tbl.class.isAssignableFrom(prmClss)) {
 					Sql.Tbl f = (Sql.Tbl) prmClss.newInstance();
 					args[i] = f;
@@ -1623,6 +1530,7 @@ static class TL{
 			if(h.getSession().isNew())
 				Sql.Tbl.check(this);//Srvlt.Domain.loadDomain0();
 			usr=(Map)h.s("usr");//Txt
+			h.url=h.req.getRequestURI().split("/");
 		}catch(Exception ex){
 			error(ex,TlName,".onEnter");
 		}
@@ -1637,10 +1545,8 @@ static class TL{
 		p.onExit();tl.set(null);}
 
 	public class H{
-		public boolean logOut=false;
-		public String ip;
-
-		public String comments[]=CommentJson;
+		public boolean logOut=false;public int urli;
+		public String ip,comments[]=CommentJson,url[];
 		public HttpServletRequest req;//Srvlt a;
 		public HttpServletResponse rspns;
 		public HttpServletRequest getRequest(){return req;}
@@ -3361,7 +3267,9 @@ static class Json{
 			return parse(p.getReader());}
 
 		public static Object parse(Reader p)throws Exception{
-			Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());return j.parse();}//public static Object parseItem(Reader p)throws Exception{ Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());return j.parseItem();}
+			if(p==null)return null;
+			Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());
+			return j.parse();}//public static Object parseItem(Reader p)throws Exception{ Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());return j.parseItem();}
 
 		/**skip Redundent WhiteSpace*/void skipRWS(){
 			boolean b=Character.isWhitespace(c);
