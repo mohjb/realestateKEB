@@ -22,12 +22,12 @@ public class MSrvlt extends HttpServlet {
  */
 
 public static class M extends Sql.Tbl {//<Integer>
-	public static final String dbtName = "mba";
+	public static final String dbtName = "m";
 	@F public int id=-1,parent;
 	@F public String key;
 	@F public Map m;
 	@F public BaType bat;
-	@F public byte[]ba;
+	@F public byte[]ba;Object obj;
 	@F public Date logTime;
 
 	public enum C implements Sql.Tbl.CI {
@@ -60,43 +60,48 @@ public static class M extends Sql.Tbl {//<Integer>
 		return super.create();}//save
 
 	Object jba(){
-		try {Object j = ba==null?null:
+		if(obj!=null)
+			return obj;
+		try {obj = ba==null?null:
 			Json.Prsr.parse(
 			new java.io.InputStreamReader(
 			new java.io.ByteArrayInputStream( ba ) ));
-		return j;}catch(Exception ex){
-		ex.printStackTrace();
-	}return null;}
+			return obj;}catch(Exception ex){
+			ex.printStackTrace();
+		}return null;}
 
-	Object bat(){try {BaType t=bat==null?BaType.str:bat;Object o=null;
+	Object bat(){
+		if(obj!=null)
+			return obj;
+		try {BaType t=bat==null?BaType.str:bat;Object o=null;
 		switch(t){
-		case jos:
-			o=new java.io.ObjectInputStream( new java.io.ByteArrayInputStream( ba ) );
-			break;
-		case date:long l=(long)ba[0],base=8;
-			for(int i=1;i<8;i++){
-				l+=(((long)ba[i])&0xff)<<base;
-				base+=8;}
-			Date d=new Date(l);o=d;break;
-		case byteArray:o=ba;break;
-		default:String s=new String(ba);o=s;
+			case jos:
+				o=new java.io.ObjectInputStream( new java.io.ByteArrayInputStream( ba ) );
+				break;
+			case date:long l=(long)ba[0],base=8;
+				for(int i=1;i<8;i++){
+					l+=(((long)ba[i])&0xff)<<base;
+					base+=8;}
+				Date d=new Date(l);o=d;break;
+			case byteArray:o=ba;break;
+			default:String s=new String(ba);o=s;
 		}
 		return o;
 	}catch(Exception ex){
 		ex.printStackTrace();
 	}return null;}
 
-	Object bat(byte[]v){bat=BaType.byteArray;ba=v;return v;}
+	Object bat(byte[]v){bat=BaType.byteArray;ba=v;return obj=v;}
 	Object bat(Date v){bat=BaType.date;long l=v.getTime();
 		ba=new byte[8];
 		for(int i=0;i<8;i++){
 			ba[i]=(byte)l;
 			l>>>=8;}
-		return v;}
+		return obj=v;}
 
 	Object bat(String v){bat=BaType.str;
 		ba=v.getBytes();
-		return v;}
+		return obj=v;}
 
 	Object bat(Object v){bat=BaType.jos;
 		java.io.ByteArrayOutputStream bos=new java.io.ByteArrayOutputStream();
@@ -107,7 +112,29 @@ public static class M extends Sql.Tbl {//<Integer>
 			oos.close();
 		}catch ( Exception ex ){}
 		ba=bos.toByteArray();
-		return v;}
+		return obj=v;}
+
+	/**loads one row from the table*/
+	@Override Sql.Tbl load(ResultSet rs,CI[]a)throws Exception{
+		int c=0;for(CI f:a)if(f!=C.ba )v(f,rs.getObject(++c));else
+			switch ( bat ){
+				case byteArray:
+					obj=ba =rs.getBytes( ++c );break;
+				case date:
+					bat(rs.getDate( ++c ));break;
+				case jos:ObjectInputStream p=
+					new ObjectInputStream( rs.getBinaryStream( ++c ) );
+					bat(p.readObject());
+					break;
+				case str:default:
+					bat (rs.getString( ++c ));break;
+			}
+		return this;}
+
+	@Override public Object valForSql(CI f){
+		return f==C.m?super.valForSql(f)
+			:f==C.bat?(bat==null?null
+			:bat.toString()) :v(f);}
 
 	static final String TblPk[]={"int(10)"," Primary Key"," NOT NULL"," auto_increment"};
 	static final List TblColDefinition;
@@ -117,15 +144,15 @@ public static class M extends Sql.Tbl {//<Integer>
 			b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );
 		b.append( ')' );
 		TblColDefinition= Util.lst(
-		TblPk[0]+ TblPk[1]+ TblPk[2]+ TblPk[3]//id
-		, "int(10) NOT NULL DEFAULT 0 "//parent
-		,"varchar(255) NOT NULL "//key
-		, "text"//m NOT NULL
+			TblPk[0]+ TblPk[1]+ TblPk[2]+ TblPk[3]//id
+			, "int(10) NOT NULL DEFAULT 0 "//parent
+			,"varchar(255) NOT NULL "//key
+			, "text"//m NOT NULL
 			,b.toString() //bat
-		,"blob"//ba
-		, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
-	);if(! registered.contains(M.class))
-		registered.add(M.class);}
+			,"blob"//ba
+			, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
+		);if(! registered.contains(M.class))
+			registered.add(M.class);}
 	@Override public List creationDBTIndices(TL tl) {
 		return Util.lst(TblColDefinition
 			, Util.lst("unique(`"+C.parent+"`,`"+C.key+"`)"
@@ -222,7 +249,7 @@ public static class M extends Sql.Tbl {//<Integer>
 		if(i!=-1)
 			key=key.substring(i+1);
 		M j = key==null?null:(M)loadWhere(M.
-			class, where(C.key, key,C.parent,parent));
+			                                  class, where(C.key, key,C.parent,parent));
 		return j;}
 
 	public static M loadBy(int id) {
@@ -300,7 +327,7 @@ public static class M extends Sql.Tbl {//<Integer>
 
 	@HttpMethod public static List<M>
 	getKeys(@HttpMethod(prmLoadByUrl= true) M j,
-			@HttpMethod(prmBody = true) List<String> keys) {//TODO: check permission
+	        @HttpMethod(prmBody = true) List<String> keys) {//TODO: check permission
 		List<M> l = new LinkedList<>();
 		if(j!=null)l.add(j);
 		if(keys!=null)for(String k:keys)l.add(loadBy(k));
@@ -331,19 +358,39 @@ public static class M extends Sql.Tbl {//<Integer>
 		,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
 		boolean b=false;if(tl.usr!=null)//TODO: check permission
 		{	for ( Object o:m.keySet() ){
-				Object v=m.get( o );
-				C c=C.valueOf( o.toString() );
-				if(v!=null&&c!=null)
-				{p.v(c,v);b=true;}
-			}if(b)
-				p.save();
+			Object v=m.get( o );
+			C c=C.valueOf( o.toString() );
+			if(v!=null&&c!=null)
+			{p.v(c,v);b=true;}
+		}if(b)
+			p.save();
 		}return p;}
 
+	@HttpMethod public static M
+	txt( @HttpMethod(prmLoadByUrl= true) M x
+		,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
+		if(tl.usr!=null)//TODO: check permission
+		{x.bat(v);x.update(cols(C.bat,C.ba));}
+		return x;}
+
+	@HttpMethod public static M
+	dt(  @HttpMethod(prmLoadByUrl= true) M x
+		  ,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
+		if(tl.usr!=null)//TODO: check permission
+		{x.bat(Util.parseDate(v));x.update(cols(C.bat,C.ba));}
+		return x;}
+
+	@HttpMethod public static M
+	meta(@HttpMethod(prmLoadByUrl= true) M x
+		,@HttpMethod(prmBody = true) Map v, TL tl) throws Exception {
+		if(tl.usr!=null)//TODO: check permission
+		{x.m=v;x.update(cols(C.m));}
+		return x;}
 
 	@HttpMethod public static M
 	create(@HttpMethod(prmLoadByUrl = true) M prnt
-		,  @HttpMethod(prmBody = true) M x
-		, TL tl) throws Exception {
+		      ,  @HttpMethod(prmBody = true) M x
+		      , TL tl) throws Exception {
 		if(x==null)return x;//if(tl.usr==null)//TODO: check permission
 		if(x.key==null)
 			x.key=tl.h.url[tl.h.urli++];
@@ -358,20 +405,6 @@ public static class M extends Sql.Tbl {//<Integer>
 		}else
 			x=null;
 		return x;}
-
-/*	@HttpMethod public static M
-	ba( @HttpMethod(prmLoadByUrl= true) M x
-		,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
-		if(tl.usr!=null)//TODO: check permission
-		{x.ba=v.to;x.update(cols(C.txt));}
-		return x;}
-
-	@HttpMethod public static M
-	m( @HttpMethod(prmLoadByUrl= true) M x
-		,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
-		if(tl.usr!=null)//TODO: check permission
-		{x.m=m;x.update(cols(C.m));}
-		return x;}*/
 
 	@HttpMethod public static M
 	delete(@HttpMethod(prmLoadByUrl = true) M x, TL tl) throws Exception {
@@ -396,9 +429,9 @@ public static class M extends Sql.Tbl {//<Integer>
 
 	@HttpMethod public static Object
 	call(@HttpMethod(prmUrlPart= true) String key,
-		@HttpMethod(prmUrlPart = true) String m,
-		@HttpMethod(prmBody = true) List args,
-		TL tl) throws Exception {//TODO: check permission
+	     @HttpMethod(prmUrlPart = true) String m,
+	     @HttpMethod(prmBody = true) List args,
+	     TL tl) throws Exception {//TODO: check permission
 		javax.script.ScriptEngine e = eng(key, true, tl);
 		e.put("m", m);
 		if(args != null) e.put("args", args);
@@ -417,7 +450,7 @@ public static class M extends Sql.Tbl {//<Integer>
 	@HttpMethod	public static Object
 	prop(@HttpMethod(prmLoadByUrl= true) M x,
 	     @HttpMethod(prmName= "prop") String prop,
-		 @HttpMethod(prmName= "val") Object val,
+	     @HttpMethod(prmName= "val") Object val,
 	     TL tl) throws Exception {// javax.script.ScriptException //TODO: check permission
 		if(x==null||prop==null||prop.length()==0)return false;
 		if(x.m==null)x.m=new HashMap();
@@ -427,8 +460,8 @@ public static class M extends Sql.Tbl {//<Integer>
 		for(int i=0;i<a.length-1;i++){
 			if(o instanceof Map)
 				u=((Map)o).get(mmbr);
-				if(u==null)
-					((Map)o).put(mmbr,u=new HashMap<>());
+			if(u==null)
+				((Map)o).put(mmbr,u=new HashMap<>());
 			else if(o instanceof List )
 			{   int j=Util.parseInt(mmbr,-1);
 				u=((List)o).get(j);
@@ -472,8 +505,8 @@ public static class M extends Sql.Tbl {//<Integer>
 					r=update(loadBy(url),(Map)m.get("body"),tl);
 				else if("create".equals(mt))//key must be in body
 					r=create(loadBy(url),(M)new M().fromMap((Map)m.get("body")),tl);
-				//else if("txt".equals(mt)) r=txt(loadBy(url),(String)m.get("body"),tl);
-				//else if("m".equals(mt)) r=m(loadBy(url),(Map)m.get("body"),tl);
+					//else if("txt".equals(mt)) r=txt(loadBy(url),(String)m.get("body"),tl);
+					//else if("m".equals(mt)) r=m(loadBy(url),(Map)m.get("body"),tl);
 				else if("delete".equals(mt))
 					r=delete(loadBy(url),tl);
 				else if("call".equals(mt))
@@ -493,7 +526,6 @@ public static class M extends Sql.Tbl {//<Integer>
 
 }//M
 
-
 /**
  * Created by Vaio-PC on 2/23/2018.
  * Created by Vaio-PC on 1/26/2018.
@@ -512,8 +544,8 @@ static void staticInit() {
 	registerMethods( MSrvlt.class);
 	registerMethods(M.class);
 	if(! Sql.Tbl.registered.contains(M.class))
-		 Sql.Tbl.registered.add(M.class);
-	}
+		Sql.Tbl.registered.add(M.class);
+}
 
 static {staticInit();}
 
@@ -626,11 +658,11 @@ public @interface HttpMethod {
 				}
 				else if(pp != null && pp.prmBody())
 					args[i] = prmClss.isAssignableFrom(String.class)
-						 ? Util.readString(tl.h.req.getReader())
-						 : tl.bodyData;
+						          ? Util.readString(tl.h.req.getReader())
+						          : tl.bodyData;
 				else
 					args[i] = o = TL.class.equals(prmClss) ? tl
-						: tl.h.req(nm, prmClss);
+						              : tl.h.req(nm, prmClss);
 			} catch(Exception ex) {
 				tl.error(ex, SrvltName, ".service:arg:i=", i);
 			}
@@ -703,8 +735,8 @@ static class TL{
 		now=new Date();//seqObj=seqProp=now.getTime();
 		try{Object o=h.req.getContentType();
 			o=bodyData=o==null?null
-				:o.toString().contains("json")?Json.Prsr.parse(h.req)
-				:o.toString().contains("part")?h.getMultiParts():null;
+				           :o.toString().contains("json")?Json.Prsr.parse(h.req)
+					            :o.toString().contains("part")?h.getMultiParts():null;
 			json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 			h.logOut=h.var("logOut",h.logOut);
 			if(h.getSession().isNew())
@@ -905,8 +937,8 @@ static class TL{
 				s=o.toStrin_();
 				h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
 				if(h.logOut){out.flush().
-					w(h.comments[0]//"\n/*"
-					).w(s).w(h.comments[1]//"*/\n"
+					                        w(h.comments[0]//"\n/*"
+					                        ).w(s).w(h.comments[1]//"*/\n"
 				);}}catch(Exception ex){
 				ex.printStackTrace();
 			}return s;}
@@ -927,7 +959,7 @@ static class TL{
 		h.getServletContext().log(s);
 		if(h.logOut)out.w(h.comments[0]//"\n/*
 		).w("error:").w(s.replaceAll("<", "&lt;"))
-			.w("\n---\n").o(x).w(h.comments[1] );
+			            .w("\n---\n").o(x).w(h.comments[1] );
 		if(x!=null)x.printStackTrace();}
 	catch(Exception ex){
 		ex.printStackTrace();
@@ -956,10 +988,10 @@ static class TL{
 }//class TL
 
 enum context{ROOT(
-	"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-	,"/public_html/i1io/"
-	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	                 ,"/public_html/i1io/"
+	                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -1053,12 +1085,12 @@ static class Util{//utility methods
 		char c=n>0?v.charAt(0):'\0';
 		boolean b=n>0;
 		if(n>2&&c=='0'){c=v.charAt(1);
-		if(c=='X'||c=='x'){i=1;
-			while(b && (++i)<n){
-				c=v.charAt(i);
-				b=(c>='0'&&c<='9') || (c>='A'&&c<='F')  || (c>='a'&&c<='f') ;
-			}
-			return b;}}
+			if(c=='X'||c=='x'){i=1;
+				while(b && (++i)<n){
+					c=v.charAt(i);
+					b=(c>='0'&&c<='9') || (c>='A'&&c<='F')  || (c>='a'&&c<='f') ;
+				}
+				return b;}}
 		while(b&& c!='.'&& i+1<n)
 		{c=++i<n?v.charAt(i):'\0';
 			b= Character.isDigit(c)||c=='.';
@@ -1123,7 +1155,7 @@ static class Util{//utility methods
 
 	public static String md5(String s){
 		if(s!=null)try{java.security.MessageDigest m=
-			java.security.MessageDigest.getInstance("MD5");
+			               java.security.MessageDigest.getInstance("MD5");
 			//m.update(s.getBytes());
 			String r=java.util.Base64.getEncoder().encodeToString(m.digest(s.getBytes()));
 			return r;
@@ -1209,10 +1241,10 @@ static class Sql {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			("jdbc:mysql://"+context.DB.server.str
-				+"/"+context.DB.dbName.str
-				,context.DB.un.str,context.DB.pw.str
-			);Object[]b={r,null};
+			                          ("jdbc:mysql://"+context.DB.server.str
+				                           +"/"+context.DB.dbName.str
+				                          ,context.DB.un.str,context.DB.pw.str
+			                          );Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){
 			t.error(e,SrvltName,".Sql.DriverManager:");
@@ -1383,7 +1415,7 @@ static class Sql {
 		}finally
 		{close(s,tl);
 			if(tl.h.logOut)try{tl.log(tl.jo().w(SrvltName).w(".Sql.Lt:sql=")
-				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+				                          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 			catch(IOException x){
 				tl.error(x,SrvltName,".Sql.Lt:",sql);
 			}
@@ -1392,22 +1424,22 @@ static class Sql {
 
 	public static List<Object> q1colList(String sql,Object...p)throws SQLException {
 		ResultSet s=null;List<Object> r=null;try{s=R(sql,p);r=new LinkedList<Object>();
-		while(s.next())r.add(s.getObject(1));return r;}
-	finally{TL t=TL.tl();close(s,t);if(t.h.logOut)
-		try{t.log(t.jo().w(SrvltName).w(".Sql.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-			 .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
-			t.error(x,SrvltName,".Sql.q1colList:",sql);
-		}}}
+			while(s.next())r.add(s.getObject(1));return r;}
+		finally{TL t=TL.tl();close(s,t);if(t.h.logOut)
+			try{t.log(t.jo().w(SrvltName).w(".Sql.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
+				          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+				t.error(x,SrvltName,".Sql.q1colList:",sql);
+			}}}
 
 	public static <T>List<T> q1colTList(String sql,Class<T>t,Object...p)throws SQLException {
 		ResultSet s=null;List<T> r=null;try{s=R(sql,p);r=new LinkedList<T>();//Class<T>t=null;
-		while(s.next())r.add(
-			s.getObject(1,t));return r;}
-	finally{TL tl=TL.tl();close(s,tl);if(tl.h.logOut)
-		try{tl.log(tl.jo().w(SrvltName).w(".Sql.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
-			tl.error(x,SrvltName,".Sql.q1colList:",sql);
-		}}}
+			while(s.next())r.add(
+				s.getObject(1,t));return r;}
+		finally{TL tl=TL.tl();close(s,tl);if(tl.h.logOut)
+			try{tl.log(tl.jo().w(SrvltName).w(".Sql.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
+				           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+				tl.error(x,SrvltName,".Sql.q1colList:",sql);
+			}}}
 
 	public static Object[] q1col(String sql,Object...p)throws SQLException
 	{List<Object> l=q1colList(sql,p);Object r[]=new Object[l.size()];l.toArray(r);l.clear();return r;}
@@ -1418,11 +1450,11 @@ static class Sql {
 	public static Object[] q1row(String sql,Object...p)throws SQLException{return q1Row(sql,p);}
 	public static Object[] q1Row(String sql,Object[]p)throws SQLException {
 		ResultSet s=null;try{s=R(sql,p);Object[]a=null;int cc=cc(s);if(s.next())
-	{a=new Object[cc];for(int i=0;i<cc;i++)try{a[i]=s.getObject(i+1);}
-	catch(Exception ex){
-		TL.tl().error(ex,SrvltName,".Sql.q1Row:",sql);a[i]=s.getString(i+1);
-	}}
-		return a;}finally{close(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
+		{a=new Object[cc];for(int i=0;i<cc;i++)try{a[i]=s.getObject(i+1);}
+		catch(Exception ex){
+			TL.tl().error(ex,SrvltName,".Sql.q1Row:",sql);a[i]=s.getString(i+1);
+		}}
+			return a;}finally{close(s);}}//CHANGED:2015.10.23.16.06:closeRS ;
 	/**returns the result of (e.g. insert/update/delete) sql-statement
 	 ,calls dbP() setting the variable-length-arguments values parameters-p
 	 ,closes the preparedStatement*/
@@ -1450,7 +1482,7 @@ static class Sql {
 		{close(s,tl);
 			if(tl.h.logOut)try{
 				tl.log(tl.jo().w(SrvltName).w(".Sql.L:q2json=")
-					 .o(sql).w(",prms=").o(p).toStrin_());
+					       .o(sql).w(",prms=").o(p).toStrin_());
 			}catch(IOException x){
 				tl.error(x,SrvltName,".Sql.q1json:",sql);
 			}
@@ -1542,7 +1574,7 @@ static class Sql {
 			o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
 			for(CI f:a)try
 			{	o.w(',').oStr(f.getName(),i2).w(':')
-				.o(v(f),ind,o.comment?path+'.'+f.getName():path);
+					 .o(v(f),ind,o.comment?path+'.'+f.getName():path);
 				if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
 			}catch(Exception ex){
 				ex.printStackTrace();
@@ -1812,8 +1844,8 @@ static class Sql {
 		/**loads one row from the table*/
 		Tbl load(ResultSet rs,CI[]a)throws Exception{
 			int c=0;for(CI f:a)if(f.getType().isAssignableFrom( Map.class ))
-					v(f,Json.Prsr.parse( rs.getCharacterStream(++c)));
-				else v(f,rs.getObject(++c));
+				v(f,Json.Prsr.parse( rs.getCharacterStream(++c)));
+			else v(f,rs.getObject(++c));
 			return this;}
 
 		/**loads one row from the table*/
@@ -1884,8 +1916,8 @@ static class Sql {
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
 		public Tbl update(CI[]c) throws Exception{
 			StringBuilder sql = new StringBuilder( "update`" )
-				.append( getName() ).append( "` set `" )
-				.append( c[0]).append( "`=?" );
+				                    .append( getName() ).append( "` set `" )
+				                    .append( c[0]).append( "`=?" );
 			Object[]p=wherePK(),a=new Object[c.length+p.length/2];
 			for(CI x:c)
 				if(x==c[0])sql.append( " , `" ).append( x ).append( "`=?" );
@@ -1912,15 +1944,15 @@ static class Sql {
 		public int delete() throws SQLException{
 			int x=-1;Object[]where=wherePK();
 			StringBuilder b=new StringBuilder( "delete from `" )
-				.append( getName() ).append("`" );
+				                .append( getName() ).append("`" );
 			Co.where( b,where );
 			x= Sql.X( b.toString(),where );
 			return x;}
 
 		/**retrieve from the db table all the rows that match
-		* the conditions in < where > , create an iterator
-		* , e.g.<code>for(Tbl row:query(
-		* 		Tbl.where( CI , < val > ) ))</code>*/
+		 * the conditions in < where > , create an iterator
+		 * , e.g.<code>for(Tbl row:query(
+		 * 		Tbl.where( CI , < val > ) ))</code>*/
 		public Itrtr query(Object[]where){
 			Itrtr r=new Itrtr(where);
 			return r;}
@@ -2028,9 +2060,9 @@ static class Sql {
 				return b;}
 
 			/**
-			* in the case of Co.and and Co.or
-			* the even-prm is Co.or or Co.and , and the odd-prm is a list
-			* */
+			 * in the case of Co.and and Co.or
+			 * the even-prm is Co.or or Co.and , and the odd-prm is a list
+			 * */
 			static StringBuilder where(StringBuilder b,Object o,Object o1){
 				if(o==null )return b;
 				if((o==Co.and || o==Co.or )&& o1 instanceof List){
@@ -2165,8 +2197,8 @@ static class Json{
 			else if(a instanceof Cookie )oCookie((Cookie)a,ind,path);
 			else if(a instanceof java.util.UUID)w("\"").p(a.toString()).w(c?"\"/*uuid*/":"\"");
 			else{w("{\"class\":").oStr(a.getClass().getName(),ind)
-				 .w(",\"str\":").oStr(String.valueOf(a),ind)
-				 .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
+				     .w(",\"str\":").oStr(String.valueOf(a),ind)
+				     .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
 				if(c)w("}//Object&cachePath=\"").p(path).w("\"\n").p(ind);
 				else w("}");}return this;}
 
@@ -2247,11 +2279,11 @@ static class Json{
 			while(e.hasNext()){k=e.next();v=o.get(k);w(",");
 				o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 			if(c) w("}//")
-				.p(o.getClass().getName())
-				.w("&cachePath=\"")
-				.p(path)
-				.w("\"\n")
-				.p(ind);else w("}");
+				      .p(o.getClass().getName())
+				      .w("&cachePath=\"")
+				      .p(path)
+				      .w("\"\n")
+				      .p(ind);else w("}");
 			return this;}
 		public Output oReq(HttpServletRequest r,String ind,String path)throws IOException
 		{final boolean c=comment;try{boolean comma=false,c2;//,d[]
@@ -2335,15 +2367,15 @@ static class Json{
 			return this;}
 		public Output oCookie(Cookie y,String ind,String path)throws IOException
 		{final boolean c=comment;try{(c?w("{//")
-			 .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-			 .w("\"Comment\":").o(y.getComment())
-			 .w(",\"Domain\":").o(y.getDomain())
-			 .w(",\"MaxAge\":").p(y.getMaxAge())
-			 .w(",\"Name\":").o(y.getName())
-			 .w(",\"Path\":").o(y.getPath())
-			 .w(",\"Secure\":").p(y.getSecure())
-			 .w(",\"Version\":").p(y.getVersion())
-			 .w(",\"Value\":").o(y.getValue());
+			                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+			                             .w("\"Comment\":").o(y.getComment())
+			                             .w(",\"Domain\":").o(y.getDomain())
+			                             .w(",\"MaxAge\":").p(y.getMaxAge())
+			                             .w(",\"Name\":").o(y.getName())
+			                             .w(",\"Path\":").o(y.getPath())
+			                             .w(",\"Secure\":").p(y.getSecure())
+			                             .w(",\"Version\":").p(y.getVersion())
+			                             .w(",\"Value\":").o(y.getValue());
 		}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
@@ -2373,9 +2405,9 @@ static class Json{
 
 		Output oSC(ServletContext y,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-			.w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-			.w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-			.w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+			                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+			                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+			                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 			if(c)
 				w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("}");
@@ -2511,7 +2543,7 @@ static class Json{
 				default:r=extractIdentifier();
 			}skipRWS();//skipWhiteSpace();
 			if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-				 ||(cache!=null&&comments.startsWith("cacheReference"))))
+				                    ||(cache!=null&&comments.startsWith("cacheReference"))))
 			{	if(i!=-1)
 			{	if(cache==null)
 				cache=new HashMap<String,Object>();
@@ -2530,15 +2562,15 @@ static class Json{
 			{case 'n':buff('\n');break;case 't':buff('\t');break;
 				case 'r':buff('\r');break;case '0':buff('\0');break;
 				case 'x':case 'X':buff( (char)
-					java.lang.Integer.parseInt(
-						next(2)//p.substring(offset,offset+2)
-						,16));nxt();//next();
+					                        java.lang.Integer.parseInt(
+						                        next(2)//p.substring(offset,offset+2)
+						                        ,16));nxt();//next();
 				break;
 				case 'u':
 				case 'U':buff( (char)
-					java.lang.Integer.parseInt(
-						next(4)//p.substring(offset,offset+4)
-						,16));//next();next();next();//next();
+					               java.lang.Integer.parseInt(
+						               next(4)//p.substring(offset,offset+4)
+						               ,16));//next();next();next();//next();
 					break;default:if(c!='\0')buff(c);}}
 			else buff(c);
 				nxt();b=c!=first&&c!='\0';
@@ -2551,18 +2583,18 @@ static class Json{
 			while(c!='\0'&&Character.isUnicodeIdentifierPart(c))bNxt();
 			String r=consume();
 			return "true".equals(r)?new Boolean(true)
-				:"false".equals(r)?new Boolean(false)
-					 :"null".equals(r)?Literal.Null
-						:"undefined".equals(r)?Literal.Undefined
-							:r;}
+				       :"false".equals(r)?new Boolean(false)
+					        :"null".equals(r)?Literal.Null
+						         :"undefined".equals(r)?Literal.Undefined
+							          :r;}
 
 		public Object extractDigits(){
 			if(c=='0')//&&offset+1<len)
 			{char c2=peek();if(c2=='x'||c2=='X')
 			{nxt();nxt();
 				while((c>='A'&&c<='F')
-					||(c>='a'&&c<='f')
-					||Character.isDigit(c))bNxt();
+					      ||(c>='a'&&c<='f')
+					      ||Character.isDigit(c))bNxt();
 				String s=consume();
 				try{return Long.parseLong(s,16);}
 				catch(Exception ex){}return s;}
@@ -2713,8 +2745,8 @@ static class Json{
 						lookahead.append(c);
 					}
 				}while( (b=(c==h ||
-					Character.toUpperCase(c)==
-						Character.toUpperCase(h))
+					            Character.toUpperCase(c)==
+						            Character.toUpperCase(h))
 				)&& (++i)<pn );
 			return b;}
 
@@ -2722,11 +2754,12 @@ static class Json{
 
 	}//Prsr
 }//class Json
+
 public static void main(String[]args)throws Exception{
-	Srvlt s=Srvlt.sttc;
-	s.pc=new PC();
-	s.pc.a=SrvltContxt.sttc();
-	s.pc.q.ssn=new Ssn();
+	Dbg.Srvlt s=Dbg.Srvlt.sttc;
+	s.pc=new Dbg.PC();
+	s.pc.a=Dbg.SrvltContxt.sttc();
+	s.pc.q.ssn=new Dbg.Ssn();
 
 	String[][]prms= {/*1stString is method
 			, 2ndString is url(class/app/typ/key)
@@ -2736,11 +2769,11 @@ public static void main(String[]args)throws Exception{
 
 		{"MSrvlt.login","/mSrvlt/moh","{pw:'"+ MSrvlt.Util.b64e("m")+"'}"},
 		//{"M.listKeys","/mSrvlt/",""},
-		{"M.create","/mSrvlt/apps/page","{group:'moh',owner:'moh',key:'page',meta:{},txt:'[4,5]',parent:4,perm:0xfff}"},
-		{"M.create","/mSrvlt/apps/page/xx","{group:'moh',owner:'moh',id:-1,key:'xx',meta:{},txt:'',parent:4,perm:0xfff}"},
-		{"M.create","/mSrvlt/apps/page/x1","{group:'moh',owner:'moh',id:-1,meta:{},txt:'',parent:4,perm:0xfff}"},
-		{"M.create","/mSrvlt/apps/page/x2","{group:'moh',owner:'moh',id:-1,meta:{},txt:'',parent:4,perm:0xfff}"},
-		{"M.update","/mSrvlt/apps/page/xx","{group:'root',txt:'ok'}"},
+		{"M.create","/mSrvlt/apps/page","{key:'page',m:{clientOutput:[]},bat:'str',ba:'[4,5]',parent:4}"},
+		{"M.create","/mSrvlt/apps/page/xx","{}"},
+		{"M.create","/mSrvlt/apps/page/x1","{id:-1,parent:4}"},
+		{"M.create","/mSrvlt/apps/page/x2","{m:{name:'moh'}}"},
+		{"M.update","/mSrvlt/apps/page/xx","{bat:'str',ba:'textual content'}"},
 		{"M.txt","/mSrvlt/apps/page/xx","function jo(x){this.h=x;return x+2;}"},
 		{"M.meta","/mSrvlt/apps/page/xx","{ok:'yes'}"},
 		{"M.prop","/mSrvlt/apps/page/xx/you.know","{prop:'you.know',val:'it'}"},
@@ -2764,43 +2797,7 @@ public static void main(String[]args)throws Exception{
 			+",{method:'M.delete' ,url:'/mSrvlt/apps/page/x2'}"
 			+",{method:'M.get'    ,url:'/mSrvlt/apps/page'}"
 			+",{method:'M.poll'   ,url:'/mSrvlt/',body:\"0\"}"
-			+"]"},/*
-		{"MTbl.DB_names",       "/mSrvlt/",""},
-		{"MTbl.DB_get",         "/mSrvlt/aswan",""},
-		{"MTbl.colTypes",       "/mSrvlt",""},
-		{"MTbl.DB_create",      "/mSrvlt/dbmTbl",""},
-		{"MTbl.DB_rename",      "/mSrvlt/dbmTbl","{newName:'MtblTest'}"},
-		{"MTbl.DB_drop",        "/mSrvlt/MtblTest",""},
-		{"MTbl.DBTbl_create",   "/mSrvlt/test/testMTbl","{cols:[{name:'c',clss:'int',type:'int'}]}"},
-		{"MTbl.DBTbl_rename",   "/mSrvlt/test/testMTbl/","{newName:'tst2'}"},
-		{"MTbl.DBTblCol_alter", "/mSrvlt/test/tst2/add",""},
-		{"MTbl.DBTblCol_alter", "/mSrvlt/test/tst2/change",""},
-		{"MTbl.DBTblCol_alter", "/mSrvlt/test/tst2/drop",""},
-		{"MTbl.DBTbl_drop",     "/mSrvlt/test/tst2",""},
-		{"MTbl.get",            "/mSrvlt/aswan/txt/1",""},
-		{"MTbl.insert",         "/mSrvlt/test/4","{key:'ok',txt:'ok',parent:3}"},
-		{"MTbl.update",         "/mSrvlt/test/4","{meta:{s:1}}"},
-		{"MTbl.delete",         "/mSrvlt/test/4",""},
-		{"MTbl.query",          "/mSrvlt/test/txt","{cols:['*'],where:[['id','>'],2]}"},
-		{"MTbl.qry",            "/mSrvlt/test","{query:'select count(*) from test.test',where:[]"},
-		{"MTbl.cmnds",          "/mSrvlt/test","[{method:'DB_names'}"
-		+ ",{method:'DB_get'        ,url:'/mSrvlt/test',body:''}"
-		+ ",{method:'DB_create'     ,url:'/mSrvlt/dbmTbl',body:''}"
-		+ ",{method:'DB_rename'     ,url:'/mSrvlt/test/dbmTbl',newName:'MtblTest'}"
-		+ ",{method:'DB_drop'       ,url:'/mSrvlt/test/MtblTest'}"
-		+ ",{method:'DBTbl_create'  ,url:'/mSrvlt/test/testMTbl',cols:[{name:'c',clss:'int',type:'int'} ] }"
-		+ ",{method:'DBTbl_rename'  ,url:'/mSrvlt/test/testMTbl',newName:'tstx'}"
-		+ ",{method:'DBTblCol_alter',url:'/mSrvlt/test/testMTbl/add'}"
-		+ ",{method:'DBTblCol_alter',url:'/mSrvlt/test/testMTbl/change'}"
-		+ ",{method:'DBTblCol_alter',url:'/mSrvlt/test/testMTbl/drop'}"
-		+ ",{method:'DBTbl_drop'    ,url:'/mSrvlt/test/testMTbl'}"
-		+ ",{method:'get'           ,url:'/mSrvlt/aswan/stor'}"
-		+ ",{method:'insert'        ,url:'/mSrvlt/test/4'}"
-		+ ",{method:'update'        ,url:'/mSrvlt/test/4'}"
-		+ ",{method:'delete'        ,url:'/mSrvlt/test/4'}"
-		+ ",{method:'query'         ,url:'/mSrvlt/test'}"
-		+ ",{method:'qry'         ,url:'/mSrvlt/test',query:'',where:[]}"
-		+"]"},*/
+			+"]"},
 		{"MSrvlt.logout","/mSrvlt/xx","{abc:123}"}
 	};
 
@@ -2810,7 +2807,5 @@ public static void main(String[]args)throws Exception{
 		s.pc.q.init(p);
 		x.service( s.pc.q,s.pc.p );s.pc.q.ssn.newlySsn=false;
 	}}
-}//MSrvlt
-/*
 
-*/
+}//MSrvlt
