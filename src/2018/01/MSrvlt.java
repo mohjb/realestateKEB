@@ -27,17 +27,17 @@ public static class M extends Sql.Tbl {//<Integer>
 	@F public int id=-1,parent;
 	@F public String key;
 	@F public Map m;
-	@F public OType ot;
-	@F public Object obj;//byte[]ba;
+	@F public DType dtyp;
+	@F public Object data;//byte[]ba;
 	@F public Date logTime;
 
 	public enum C implements Sql.Tbl.CI {
-		id,parent,key, m, ot,obj,logTime;
+		id,parent,key, m, dtyp,data,logTime;
 		@Override public Field f() {return Co.f(name(), M.class);}
 		@Override public String getName() {return name();}
 		@Override public Class getType() {return f().getType();}
 	}//enum C
-	public enum OType{str,byteArray,date,jos}
+	public enum DType{str,byteArray,date,jos}
 
 	@Override public String getName() { return dbtName; }
 	@Override public CI[] columns() { return C.values(); }
@@ -50,8 +50,8 @@ public static class M extends Sql.Tbl {//<Integer>
 	public M(int id,int parent,String key) {
 		this(id,parent,key,null,null,null);}
 
-	public M(int id,int parent,String key,Map meta,OType t,Date lt) {
-		this.id=id;this.parent=parent;this.key=key;m=meta;ot=t;logTime=lt==null?new Date():lt;}
+	public M(int id,int parent,String key,Map meta,DType t,Date lt) {
+		this.id=id;this.parent=parent;this.key=key;m=meta;dtyp=t;logTime=lt==null?new Date():lt;}
 
 	/**store this entity in the dbt, gets max id +1 if id is less than 1 , and then logs to table `L` */
 	@Override public Sql.Tbl create() throws Exception{
@@ -61,80 +61,81 @@ public static class M extends Sql.Tbl {//<Integer>
 		return super.create();}//save
 
 	Object ba(){
-		if(obj==null)
-			return obj;
+		if(data ==null)
+			return data;
 		try {
-		ByteArrayOutputStream bos=new
-		ByteArrayOutputStream();
-		try {
-			ObjectOutputStream oos = new
-			ObjectOutputStream( bos );
-			oos.writeObject( obj );
-			oos.flush();
-			oos.close();
-		}catch ( Exception ex ){TL.tl().error(ex);}
-		byte[]ba=bos.toByteArray();
-		return ba;
+			ByteArrayOutputStream bos=new
+				                          ByteArrayOutputStream();
+			try {
+				ObjectOutputStream oos = new
+					                         ObjectOutputStream( bos );
+				oos.writeObject(data);
+				oos.flush();
+				oos.close();
+			}catch ( Exception ex ){TL.tl().error(ex);}
+			byte[]ba=bos.toByteArray();
+			return ba;
 		}catch(Exception ex){
-		TL.tl().error(ex);
-	}return null;
+			TL.tl().error(ex);
+		}return null;
 /*	Object jba(){
-		if(obj!=null)
-			return obj;
-		try {obj = ba==null?null:
+		if(data!=null)
+			return data;
+		try {data = ba==null?null:
 			Json.Prsr.parse(
 			new InputStreamReader(
 			new ByteArrayInputStream( ba ) ));
-			return obj;}catch(Exception ex){
+			return data;}catch(Exception ex){
 			TL.tl().error(ex);
 		}return null;}*/}
 
-	Object obj(Object v){
-		if(v instanceof String)ot=OType.str;
-		else if(v instanceof Date)ot=OType.date;
-		else if(v instanceof byte[])ot=OType.byteArray;
-		else if(v==null)ot=null;
-		else ot=OType.jos;
-		return obj=v;}
+	Object data(Object v){
+		if(v instanceof String)dtyp=DType.str;
+		else if(v instanceof Date)dtyp=DType.date;
+		else if(v instanceof byte[])dtyp=DType.byteArray;
+		else if(v==null)dtyp=null;
+		else dtyp=DType.jos;
+		return data =v;}
 
 	/**loads one row from the table*/
 	@Override Sql.Tbl load(ResultSet rs,CI[]a)throws Exception{
-		int c=0;for(CI f:a)if(f!=C.obj )v(f,rs.getObject(++c));else
-		{OType t=ot!=null?ot:OType.str;obj=null;
-		 switch ( t ){
-			case byteArray:
-				obj=rs.getBytes( ++c );break;
-			case date:
-				obj=rs.getDate( ++c );break;
-			case jos:ObjectInputStream p=
-				new ObjectInputStream( rs.getBinaryStream( ++c ) );
-				obj=p.readObject();
-				p.close();
-				break;
-			case str:default:
-				obj=rs.getString( ++c );break;
-		}}
+		int c=0;for(CI f:a)if(f!=C.data )v(f,rs.getObject(++c));else
+		{DType t=dtyp!=null?dtyp:DType.str;
+			data =null;
+			switch ( t ){
+				case byteArray:
+					data =rs.getBytes( ++c );break;
+				case date:
+					data =rs.getDate( ++c );break;
+				case jos:ObjectInputStream p=
+					         new ObjectInputStream( rs.getBinaryStream( ++c ) );
+					data =p.readObject();
+					p.close();
+					break;
+				case str:default:
+					data =rs.getString( ++c );break;
+			}}
 		return this;}
 
 
 	@Override public Sql.Tbl v(CI p,Object v){
-		if(p==C.obj){
-			obj(v);
+		if(p==C.data){
+			data(v);
 			return this;
 		}else
-		return v(p.f(),v);}
+			return v(p.f(),v);}
 
 	@Override public Object valForSql(CI f){
-		return f==C.obj?(ot==OType.jos?ba():obj)
+		return f==C.data?(dtyp==DType.jos?ba(): data)
 			:f==C.m?super.valForSql(f)
-			:f==C.ot?(ot==null?null
-			:ot.toString()) :v(f);}
+			:f==C.dtyp?(dtyp==null?null
+			:dtyp.toString()) :v(f);}
 
 	static final String TblPk[]={"int(10)"," Primary Key"," NOT NULL"," auto_increment"};
 	static final List TblColDefinition;
 
 	static {StringBuilder b=new StringBuilder( "enum(" );
-		for ( OType t:OType.values() )
+		for ( DType t:DType.values() )
 			b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );
 		b.append( ')' );
 		TblColDefinition= Util.lst(
@@ -142,8 +143,8 @@ public static class M extends Sql.Tbl {//<Integer>
 			, "int(10) NOT NULL DEFAULT 0 "//parent
 			,"varchar(255) NOT NULL "//key
 			, "text"//m NOT NULL
-			,b.toString() //ot
-			,"blob"//obj
+			,b.toString() //dtyp
+			,"blob"//data
 			, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
 		);if(! registered.contains(M.class))
 			registered.add(M.class);}
@@ -151,7 +152,7 @@ public static class M extends Sql.Tbl {//<Integer>
 		return Util.lst(TblColDefinition
 			, Util.lst("unique(`"+C.parent+"`,`"+C.key+"`)"
 				,Util.lst(C.parent,C.id)
-				,Util.lst(Util.lst(C.obj,10))
+				,Util.lst(Util.lst(C.data,10))
 				,Util.lst(C.logTime))
 			,Util.lst(
 				Util.lst(1,0,"users",null,null,null,tl.now),
@@ -167,7 +168,7 @@ public static class M extends Sql.Tbl {//<Integer>
 
 
 		public enum C implements Sql.Tbl.CI {
-			id,parent,key, m,ot, obj,logTime;
+			id,parent,key, m,dtyp, data,logTime;
 			@Override public Field f() {return Co.f(name(), L.class);}
 			@Override public String getName() {return name();}
 			@Override public Class getType() {return f().getType();}
@@ -179,12 +180,13 @@ public static class M extends Sql.Tbl {//<Integer>
 
 		public L(){logTime=new Date() ;}
 		public L(String key){this.key=key;logTime=new Date() ;}
-		public L(int id,int prnt,String key,Map m,OType t,Object o,Date lt) {
-			this.id=id;parent=prnt;this.key = key;this.m=m;ot=t;obj=o;logTime=lt;}
+		public L(int id,int prnt,String key,Map m,DType t,Object o,Date lt) {
+			this.id=id;parent=prnt;this.key = key;this.m=m;dtyp=t;
+			data =o;logTime=lt;}
 
-		public static void l(int id,int prnt,String key,Map m,OType t,Object o){
+		public static void l(int id,int prnt,String key,Map m,DType t,Object o){
 			L l=new L(id,prnt,key,m,t,o,new Date());try{l.save();}catch(Exception x){}}
-		public static void l(M x){l(x.id,x.parent,x.key,x.m,x.ot,x.obj);}
+		public static void l(M x){l(x.id,x.parent,x.key,x.m,x.dtyp,x.data);}
 
 		@Override public List creationDBTIndices(TL tl){
 			List l=new LinkedList();l.addAll(TblColDefinition);
@@ -192,7 +194,7 @@ public static class M extends Sql.Tbl {//<Integer>
 			return Util.lst(l
 				,Util.lst("unique(`"+C.id+"`,`"+C.logTime+"`)"
 					,Util.lst(C.parent,C.id,C.logTime)
-					,Util.lst(Util.lst(C.obj,10))
+					,Util.lst(Util.lst(C.data,10))
 					,Util.lst(C.logTime,C.id,C.key)) );}
 
 	}//class Log
@@ -308,14 +310,14 @@ public static class M extends Sql.Tbl {//<Integer>
 					if(! b) {
 						M x = loadBy((String) ref);
 						if(b = x != null)
-							tl.o(x.obj);
+							tl.o(x.data);
 					}
 				}
 				if(! b)
 					tl.o(element);
 			}
 		}else
-			tl.o(prm.obj);
+			tl.o(prm.data);
 		tl.h.r("responseDone", true);
 		return prm;}
 
@@ -349,7 +351,7 @@ public static class M extends Sql.Tbl {//<Integer>
 
 	@HttpMethod public static M
 	update( @HttpMethod(prmLoadByUrl = true) M p
-		,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
+		      ,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
 		boolean b=false;if(tl.usr!=null)//TODO: check permission
 		{	for ( Object o:m.keySet() ){
 			Object v=m.get( o );
@@ -362,21 +364,21 @@ public static class M extends Sql.Tbl {//<Integer>
 
 	@HttpMethod public static M
 	txt( @HttpMethod(prmLoadByUrl= true) M x
-		,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
+		   ,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
 		if(tl.usr!=null)//TODO: check permission
-		{x.obj(v);x.update(cols(C.ot,C.obj));}
+		{x.data(v);x.update(cols(C.dtyp,C.data));}
 		return x;}
 
 	@HttpMethod public static M
 	dt(  @HttpMethod(prmLoadByUrl= true) M x
 		  ,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
 		if(tl.usr!=null)//TODO: check permission
-		{x.obj(Util.parseDate(v));x.update(cols(C.ot,C.obj));}
+		{x.data(Util.parseDate(v));x.update(cols(C.dtyp,C.data));}
 		return x;}
 
 	@HttpMethod public static M
 	meta(@HttpMethod(prmLoadByUrl= true) M x
-		,@HttpMethod(prmBody = true) Map v, TL tl) throws Exception {
+		    ,@HttpMethod(prmBody = true) Map v, TL tl) throws Exception {
 		if(tl.usr!=null)//TODO: check permission
 		{x.m=v;x.update(cols(C.m));}
 		return x;}
@@ -416,7 +418,7 @@ public static class M extends Sql.Tbl {//<Integer>
 			M j = loadBy(key);
 			Map jm = Util.mapCreate();
 			e.put("key", key);
-			e.put("txt", j.obj);
+			e.put("data", j.data);
 		}
 		e.put("tl", tl);
 		return e;}
@@ -478,13 +480,13 @@ public static class M extends Sql.Tbl {//<Integer>
 
 	@HttpMethod	public static List
 	dates(@HttpMethod(prmName= "from") Date f,
-	     @HttpMethod(prmName = "to") Date t,
-	     TL tl) throws Exception {
+	      @HttpMethod(prmName = "to") Date t,
+	      TL tl) throws Exception {
 		M m=new M();
 		List l=new LinkedList(  );
-		Object[]w=where( where(C.obj,Co.ge),f
-			,where(C.obj,Co.le),t
-			,C.ot,OType.date.toString() );
+		Object[]w=where( where(C.data,Co.ge),f
+			,where(C.data,Co.le),t
+			,C.dtyp,DType.date.toString() );
 		for(Sql.Tbl x:m.query( m.sql(m.columns(),w),w,true ))
 			l.add( x );
 		return l;
@@ -579,7 +581,7 @@ public static void registerMethods(Class p) {
 //need to do a forgot password recovery method
 @HttpMethod(usrLoginNeeded = false) public static Map
 login(@HttpMethod(prmLoadByUrl = true) M j
-	, @HttpMethod(prmName = "pw") String pw, TL tl)throws Exception {
+	     , @HttpMethod(prmName = "pw") String pw, TL tl)throws Exception {
 	if(j==null)
 		j=M.loadBy(tl.h.req.getRequestURI().substring(UrlPrefix.length()),1);
 	if(j != null ){
@@ -668,8 +670,8 @@ public @interface HttpMethod {
 				}
 				else if(pp != null && pp.prmBody())
 					args[i] = prmClss.isAssignableFrom(String.class)
-						          ? Util.readString(tl.h.req.getReader())
-						          : tl.bodyData;
+						? Util.readString(tl.h.req.getReader())
+						: tl.bodyData;
 				else
 					args[i] = o = TL.class.equals(prmClss) ? tl
 						              : tl.h.req(nm, prmClss);
@@ -745,8 +747,8 @@ static class TL{
 		now=new Date();//seqObj=seqProp=now.getTime();
 		try{Object o=h.req.getContentType();
 			o=bodyData=o==null?null
-				:o.toString().contains("json")?Json.Prsr.parse(h.req)
-				:o.toString().contains("part")?h.getMultiParts():null;
+				           :o.toString().contains("json")?Json.Prsr.parse(h.req)
+					            :o.toString().contains("part")?h.getMultiParts():null;
 			json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 			h.logOut=h.var("logOut",h.logOut);
 			if(h.getSession().isNew())
@@ -947,8 +949,8 @@ static class TL{
 				s=o.toStrin_();
 				h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
 				if(h.logOut){out.flush().
-					w(h.comments[0]//"\n/*"
-					).w(s).w(h.comments[1]//"*/\n"
+					                        w(h.comments[0]//"\n/*"
+					                        ).w(s).w(h.comments[1]//"*/\n"
 				);}}catch(Exception ex){
 				ex.printStackTrace();
 			}return s;}
@@ -969,7 +971,7 @@ static class TL{
 		h.getServletContext().log(s);
 		if(h.logOut)out.w(h.comments[0]//"\n/*
 		).w("error:").w(s.replaceAll("<", "&lt;"))
-			.w("\n---\n").o(x).w(h.comments[1] );
+			            .w("\n---\n").o(x).w(h.comments[1] );
 		if(x!=null)x.printStackTrace();}
 	catch(Exception ex){
 		ex.printStackTrace();
@@ -998,10 +1000,10 @@ static class TL{
 }//class TL
 
 enum context{ROOT(
-	"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-	,"/public_html/i1io/"
-	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	                 ,"/public_html/i1io/"
+	                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -1251,10 +1253,10 @@ static class Sql {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			("jdbc:mysql://"+context.DB.server.str
-			     +"/"+context.DB.dbName.str
-			    ,context.DB.un.str,context.DB.pw.str
-			);Object[]b={r,null};
+			                          ("jdbc:mysql://"+context.DB.server.str
+				                           +"/"+context.DB.dbName.str
+				                          ,context.DB.un.str,context.DB.pw.str
+			                          );Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){
 			t.error(e,SrvltName,".Sql.DriverManager:");
@@ -1447,7 +1449,7 @@ static class Sql {
 				s.getObject(1,t));return r;}
 		finally{TL tl=TL.tl();close(s,tl);if(tl.h.logOut)
 			try{tl.log(tl.jo().w(SrvltName).w(".Sql.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+				           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 				tl.error(x,SrvltName,".Sql.q1colList:",sql);
 			}}}
 
@@ -1492,7 +1494,7 @@ static class Sql {
 		{close(s,tl);
 			if(tl.h.logOut)try{
 				tl.log(tl.jo().w(SrvltName).w(".Sql.L:q2json=")
-					.o(sql).w(",prms=").o(p).toStrin_());
+					       .o(sql).w(",prms=").o(p).toStrin_());
 			}catch(IOException x){
 				tl.error(x,SrvltName,".Sql.q1json:",sql);
 			}
@@ -1908,8 +1910,8 @@ static class Sql {
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
 		public Tbl update(CI[]c) throws Exception{
 			StringBuilder sql = new StringBuilder( "update`" )
-				.append( getName() ).append( "` set `" )
-				.append( c[0]).append( "`=?" );
+				                    .append( getName() ).append( "` set `" )
+				                    .append( c[0]).append( "`=?" );
 			Object[]p=wherePK(),a=new Object[c.length+p.length/2];
 			for(CI x:c)
 				if(x==c[0])sql.append( " , `" ).append( x ).append( "`=?" );
@@ -2193,8 +2195,8 @@ static class Json{
 			else if(a instanceof Cookie )oCookie((Cookie)a,ind,path);
 			else if(a instanceof java.util.UUID)w("\"").p(a.toString()).w(c?"\"/*uuid*/":"\"");
 			else{w("{\"class\":").oStr(a.getClass().getName(),ind)
-				.w(",\"str\":").oStr(String.valueOf(a),ind)
-				.w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
+				     .w(",\"str\":").oStr(String.valueOf(a),ind)
+				     .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
 				if(c)w("}//Object&cachePath=\"").p(path).w("\"\n").p(ind);
 				else w("}");}return this;}
 
@@ -2275,11 +2277,11 @@ static class Json{
 			while(e.hasNext()){k=e.next();v=o.get(k);w(",");
 				o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 			if(c) w("}//")
-				.p(o.getClass().getName())
-				.w("&cachePath=\"")
-				.p(path)
-				.w("\"\n")
-				.p(ind);else w("}");
+				      .p(o.getClass().getName())
+				      .w("&cachePath=\"")
+				      .p(path)
+				      .w("\"\n")
+				      .p(ind);else w("}");
 			return this;}
 		public Output oReq(HttpServletRequest r,String ind,String path)throws IOException
 		{final boolean c=comment;try{boolean comma=false,c2;//,d[]
@@ -2314,7 +2316,7 @@ static class Json{
 				try{k=e.nextElement().toString();if(comma)w(",");else comma=true;
 					o(k).w(":").o(r.getAttribute(k),i2,c?path+"."+k:path);
 				}catch(Throwable ex){
-				TL.tl().error(ex,"HttpRequestToJsonStr:attrib");}
+					TL.tl().error(ex,"HttpRequestToJsonStr:attrib");}
 			w("}, \"Headers\":{");comma=false;e=r.getHeaderNames();
 			while(e.hasMoreElements())try
 			{k=e.nextElement().toString();
@@ -2367,20 +2369,20 @@ static class Json{
 			return this;}
 		public Output oCookie(Cookie y,String ind,String path)throws IOException
 		{final boolean c=comment;try{(c?w("{//")
-			.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-			.w("\"Comment\":").o(y.getComment())
-			.w(",\"Domain\":").o(y.getDomain())
-			.w(",\"MaxAge\":").p(y.getMaxAge())
-			.w(",\"Name\":").o(y.getName())
-			.w(",\"Path\":").o(y.getPath())
-			.w(",\"Secure\":").p(y.getSecure())
-			.w(",\"Version\":").p(y.getVersion())
-			.w(",\"Value\":").o(y.getValue());
+			                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+			                             .w("\"Comment\":").o(y.getComment())
+			                             .w(",\"Domain\":").o(y.getDomain())
+			                             .w(",\"MaxAge\":").p(y.getMaxAge())
+			                             .w(",\"Name\":").o(y.getName())
+			                             .w(",\"Path\":").o(y.getPath())
+			                             .w(",\"Secure\":").p(y.getSecure())
+			                             .w(",\"Version\":").p(y.getVersion())
+			                             .w(",\"Value\":").o(y.getValue());
 		}catch(Exception ex){
 			TL.tl().error(ex,"Json.Output.Cookie:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			}catch(Exception ex){
-			TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
+				TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
 			return this;}
 
 		Output oTL(TL y,String ind,String path)throws IOException
@@ -2403,15 +2405,15 @@ static class Json{
 			TL.tl().error(ex,"Json.Output.oTL:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);}
 			catch(Exception ex){
-			TL.tl().error(ex,"Json.Output.oTL:closing:");}
+				TL.tl().error(ex,"Json.Output.oTL:closing:");}
 			else w("}");
 			return this;}
 
 		Output oSC(ServletContext y,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-			.w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-			.w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-			.w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+			                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+			                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+			                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 			if(c)
 				w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("}");
@@ -2532,8 +2534,8 @@ static class Json{
 					r=m==null?null:m.get("class");
 					if("date".equals(r)){r=m.get("time");
 						if(r instanceof Number)
-						r=new Date(((Number)r).longValue());else{
-						r=m.get("str");r=Util.parseDate( (String)r );}//2018/05/15
+							r=new Date(((Number)r).longValue());else{
+							r=m.get("str");r=Util.parseDate( (String)r );}//2018/05/15
 					}
 					else r=m;break;
 				case '(':nxt();
@@ -2574,15 +2576,15 @@ static class Json{
 			{case 'n':buff('\n');break;case 't':buff('\t');break;
 				case 'r':buff('\r');break;case '0':buff('\0');break;
 				case 'x':case 'X':buff( (char)
-					java.lang.Integer.parseInt(
-					next(2)//p.substring(offset,offset+2)
-					,16));nxt();//next();
+					                        java.lang.Integer.parseInt(
+						                        next(2)//p.substring(offset,offset+2)
+						                        ,16));nxt();//next();
 				break;
 				case 'u':
 				case 'U':buff( (char)
-					java.lang.Integer.parseInt(
-					next(4)//p.substring(offset,offset+4)
-					,16));//next();next();next();//next();
+					               java.lang.Integer.parseInt(
+						               next(4)//p.substring(offset,offset+4)
+						               ,16));//next();next();next();//next();
 					break;default:if(c!='\0')buff(c);}}
 			else buff(c);
 				nxt();b=c!=first&&c!='\0';
@@ -2595,18 +2597,18 @@ static class Json{
 			while(c!='\0'&&Character.isUnicodeIdentifierPart(c))bNxt();
 			String r=consume();
 			return "true".equals(r)?new Boolean(true)
-				:"false".equals(r)?new Boolean(false)
-				:"null".equals(r)?Literal.Null
-				:"undefined".equals(r)?Literal.Undefined
-				:r;}
+				       :"false".equals(r)?new Boolean(false)
+					        :"null".equals(r)?Literal.Null
+						         :"undefined".equals(r)?Literal.Undefined
+							          :r;}
 
 		public Object extractDigits(){
 			if(c=='0')//&&offset+1<len)
 			{char c2=peek();if(c2=='x'||c2=='X')
 			{nxt();nxt();
 				while((c>='A'&&c<='F')
-					||(c>='a'&&c<='f')
-					||Character.isDigit(c))bNxt();
+					      ||(c>='a'&&c<='f')
+					      ||Character.isDigit(c))bNxt();
 				String s=consume();
 				try{return Long.parseLong(s,16);}
 				catch(Exception ex){}return s;}
@@ -2757,8 +2759,8 @@ static class Json{
 						lookahead.append(c);
 					}
 				}while( (b=(c==h ||
-					Character.toUpperCase(c)==
-					Character.toUpperCase(h))
+					            Character.toUpperCase(c)==
+						            Character.toUpperCase(h))
 				)&& (++i)<pn );
 			return b;}
 
@@ -2780,11 +2782,11 @@ public static void main(String[]args)throws Exception{
 				take the body as JsonStorage.val*/
 
 		{"MSrvlt.login","/mSrvlt/moh","{pw:'"+ MSrvlt.Util.b64e("m")+"'}"},
-		{"M.create","/mSrvlt/apps/page","{key:'page',m:{clientOutput:[]},ot:'str',obj:'[4,5]',parent:4}"},
+		{"M.create","/mSrvlt/apps/page","{key:'page',m:{clientOutput:[]},dtyp:'str',data:'[4,5]',parent:4}"},
 		{"M.create","/mSrvlt/apps/page/xx","{}"},
 		{"M.create","/mSrvlt/apps/page/x1","{id:-1,parent:4}"},
 		{"M.create","/mSrvlt/apps/page/x2","{m:{name:'moh'}}"},
-		{"M.update","/mSrvlt/apps/page/xx","{ot:'str',obj:'textual content'}"},
+		{"M.update","/mSrvlt/apps/page/xx","{dtyp:'str',data:'textual content'}"},
 		{"M.txt","/mSrvlt/apps/page/xx","function jo(x){this.h=x;return x+2;}"},
 		{"M.meta","/mSrvlt/apps/page/xx","{ok:'yes'}"},
 		{"M.dt","/mSrvlt/apps/page/xx","{class:'date',str:'2018/02/14'}"},
@@ -2798,21 +2800,21 @@ public static void main(String[]args)throws Exception{
 		{"get","/mSrvlt/apps/page",""},
 		{"M.poll","/mSrvlt/","0"},
 		{"M.cmnds","/mSrvlt/","["
-			+"{method:'M.create'  ,url:'/mSrvlt/apps/page/x2',body:\"{key:'x2',m:{},obj:'',parent:4}\"}"
-			+",{method:'M.update' ,url:'/mSrvlt/apps/page/xx',body:\"{obj:'ok'}\"}"
-			+",{method:'M.load'   ,url:'/mSrvlt/apps/page/xx'}"
-			+",{method:'M.txt'    ,url:'/mSrvlt/apps/page/xx',body:\"cmnds\"}"
-			+",{method:'M.meta'   ,url:'/mSrvlt/apps/page/xx',body:\"{cmnds:1}\"}"
-			+",{method:'M.dt'   ,url:'/mSrvlt/apps/page/xx',body:\"{class:'date',str:'2017/05/31'}\"}"
-			+",{method:'M.dates'   ,url:'/mSrvlt/',body:\"{from:{class:'date',str:'2017/01/31'},to:{class:'date',str:'2019/2/28 23:59:59'}}\"}"
-			+",{method:'M.prop'   ,url:'/mSrvlt/apps/page/xx/ok.to',body:\"you\"}"
-			+",{method:'M.getKeys',url:'/mSrvlt/apps/page/xx',body:\"['jo','ko']\"}"
-			+",{method:'M.call'   ,url:'/mSrvlt/apps/page/xx/jo',body:\"[5,60]\"}"
-			+",{method:'M.eval'   ,url:'/mSrvlt/apps/page/xx',body:\"z=17\"}"
-			+",{method:'M.delete' ,url:'/mSrvlt/apps/page/x2'}"
-			+",{method:'M.get'    ,url:'/mSrvlt/apps/page'}"
-			+",{method:'M.poll'   ,url:'/mSrvlt/',body:\"0\"}"
-			+"]"},
+			                      +"{method:'M.create'  ,url:'/mSrvlt/apps/page/x2',body:\"{key:'x2',m:{},data:'',parent:4}\"}"
+			                      +",{method:'M.update' ,url:'/mSrvlt/apps/page/xx',body:\"{data:'ok'}\"}"
+			                      +",{method:'M.load'   ,url:'/mSrvlt/apps/page/xx'}"
+			                      +",{method:'M.txt'    ,url:'/mSrvlt/apps/page/xx',body:\"cmnds\"}"
+			                      +",{method:'M.meta'   ,url:'/mSrvlt/apps/page/xx',body:\"{cmnds:1}\"}"
+			                      +",{method:'M.dt'   ,url:'/mSrvlt/apps/page/xx',body:\"{class:'date',str:'2017/05/31'}\"}"
+			                      +",{method:'M.dates'   ,url:'/mSrvlt/',body:\"{from:{class:'date',str:'2017/01/31'},to:{class:'date',str:'2019/2/28 23:59:59'}}\"}"
+			                      +",{method:'M.prop'   ,url:'/mSrvlt/apps/page/xx/ok.to',body:\"you\"}"
+			                      +",{method:'M.getKeys',url:'/mSrvlt/apps/page/xx',body:\"['jo','ko']\"}"
+			                      +",{method:'M.call'   ,url:'/mSrvlt/apps/page/xx/jo',body:\"[5,60]\"}"
+			                      +",{method:'M.eval'   ,url:'/mSrvlt/apps/page/xx',body:\"z=17\"}"
+			                      +",{method:'M.delete' ,url:'/mSrvlt/apps/page/x2'}"
+			                      +",{method:'M.get'    ,url:'/mSrvlt/apps/page'}"
+			                      +",{method:'M.poll'   ,url:'/mSrvlt/',body:\"0\"}"
+			                      +"]"},
 		{"MSrvlt.logout","/mSrvlt/xx","{abc:123}"}
 	};
 
