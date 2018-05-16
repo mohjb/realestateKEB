@@ -57,7 +57,7 @@ public static class M extends Sql.Tbl {//<Integer>
 	@Override public Sql.Tbl create() throws Exception{
 		if(id<1)try {id=maxPlus1( C.id,dbtName );} catch ( Exception e ) {
 			e.printStackTrace();
-		}L.l(this);
+		}L.l(id,"","",L.A.create,toJson());
 		return super.create();}//save
 
 	Object ba(){
@@ -65,10 +65,10 @@ public static class M extends Sql.Tbl {//<Integer>
 			return data;
 		try {
 			ByteArrayOutputStream bos=new
-				                          ByteArrayOutputStream();
+			ByteArrayOutputStream();
 			try {
 				ObjectOutputStream oos = new
-					                         ObjectOutputStream( bos );
+				ObjectOutputStream( bos );
 				oos.writeObject(data);
 				oos.flush();
 				oos.close();
@@ -108,7 +108,7 @@ public static class M extends Sql.Tbl {//<Integer>
 				case date:
 					data =rs.getDate( ++c );break;
 				case jos:ObjectInputStream p=
-					         new ObjectInputStream( rs.getBinaryStream( ++c ) );
+					 new ObjectInputStream( rs.getBinaryStream( ++c ) );
 					data =p.readObject();
 					p.close();
 					break;
@@ -131,44 +131,46 @@ public static class M extends Sql.Tbl {//<Integer>
 			:f==C.dtyp?(dtyp==null?null
 			:dtyp.toString()) :v(f);}
 
-	static final String TblPk[]={"int(10)"," Primary Key"," NOT NULL"," auto_increment"};
-	static final List TblColDefinition;
+	static {if(! registered.contains(M.class))
+			registered.add(M.class);}
 
-	static {StringBuilder b=new StringBuilder( "enum(" );
+	@Override public List creationDBTIndices(TL tl) {
+		StringBuilder b=new StringBuilder( "enum(" );
 		for ( DType t:DType.values() )
 			b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );
 		b.append( ')' );
-		TblColDefinition= Util.lst(
-			TblPk[0]+ TblPk[1]+ TblPk[2]+ TblPk[3]//id
+		List ColsDefinition= Util.lst(
+			"int(10) Primary Key NOT NULL auto_increment"//id
 			, "int(10) NOT NULL DEFAULT 0 "//parent
 			,"varchar(255) NOT NULL "//key
 			, "text"//m NOT NULL
 			,b.toString() //dtyp
 			,"blob"//data
-			, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
-		);if(! registered.contains(M.class))
-			registered.add(M.class);}
-	@Override public List creationDBTIndices(TL tl) {
-		return Util.lst(TblColDefinition
-			, Util.lst("unique(`"+C.parent+"`,`"+C.key+"`)"
-				,Util.lst(C.parent,C.id)
-				,Util.lst(Util.lst(C.data,10))
-				,Util.lst(C.logTime))
-			,Util.lst(
-				Util.lst(1,0,"users",null,null,null,tl.now),
-				Util.lst(2,0,"apps",null,null,null,tl.now),
-				Util.lst(3,1,"moh"
-					,"{pw:'"+Util.md5("m")+"'}",null,null,tl.now)
-			)
-			,L.class
-		);}
+			, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")//logTime
+		,indices=Util.lst("unique(`"+C.parent+"`,`"+C.key+"`)"
+			,Util.lst(C.parent,C.id)
+			,Util.lst(Util.lst(C.data,10))
+			,Util.lst(C.logTime))
+		,rows=Util.lst(
+			Util.lst(1,0,"users",null,null,null,tl.now),
+			Util.lst(2,0,"apps",null,null,null,tl.now),
+			Util.lst(3,1,"moh"
+				,"{pw:'"+Util.md5("m")+"'}",null,null,tl.now) );
+		return Util.lst(ColsDefinition,indices,rows,L.class );
+	}
 
-	public static class L extends M{//<Integer>
+	public static class L extends Sql.Tbl{
 		public static final String dbtNmL ="MLog";
+	@F public int id=-1;
+	@F public String col,aux;
+	@F public A act;
+	@F public Object data;//byte[]ba;
+	@F public Date logTime;
 
+	public enum A{create,update,delete}
 
-		public enum C implements Sql.Tbl.CI {
-			id,parent,key, m,dtyp, data,logTime;
+	public enum C implements Sql.Tbl.CI {
+			id, col,aux,act, data,logTime;
 			@Override public Field f() {return Co.f(name(), L.class);}
 			@Override public String getName() {return name();}
 			@Override public Class getType() {return f().getType();}
@@ -179,24 +181,27 @@ public static class M extends Sql.Tbl {//<Integer>
 		@Override public Object[]wherePK(){Object[]a={C.id,id,C.logTime,logTime};return a;}
 
 		public L(){logTime=new Date() ;}
-		public L(String key){this.key=key;logTime=new Date() ;}
-		public L(int id,int prnt,String key,Map m,DType t,Object o,Date lt) {
-			this.id=id;parent=prnt;this.key = key;this.m=m;dtyp=t;
-			data =o;logTime=lt;}
+		public L(int i,String c,String x,A a,Object o,Date lt) {
+			id=i;col=c;aux=x;act= a;data =o;logTime=lt;}
 
-		public static void l(int id,int prnt,String key,Map m,DType t,Object o){
-			L l=new L(id,prnt,key,m,t,o,new Date());try{l.save();}catch(Exception x){}}
-		public static void l(M x){l(x.id,x.parent,x.key,x.m,x.dtyp,x.data);}
+		public static void l(int id,String col,String aux,A a,Object o){
+			L l=new L(id,col,aux,a,o,new Date());try{l.save();}catch(Exception x){}}
 
 		@Override public List creationDBTIndices(TL tl){
-			List l=new LinkedList();l.addAll(TblColDefinition);
-			l.set(0, TblPk[0]+ TblPk[2]);
-			return Util.lst(l
+			StringBuilder b=new StringBuilder( "enum(" );
+		for ( A t:A.values() )
+			b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );
+			return Util.lst(Util.lst(
+			"int(10) NOT NULL"//id
+			,"varchar(255) NOT NULL "//col
+			,"varchar(255) "//aux
+			,b.toString() //act
+			,"blob"//data
+			, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
+			)
 				,Util.lst("unique(`"+C.id+"`,`"+C.logTime+"`)"
-					,Util.lst(C.parent,C.id,C.logTime)
-					,Util.lst(Util.lst(C.data,10))
-					,Util.lst(C.logTime,C.id,C.key)) );}
-
+					,Util.lst(C.id,C.col,Util.lst(C.data,10))
+					,Util.lst(C.logTime,C.id,C.col)) );}
 	}//class Log
 
 	/**works in 2 approaches based on the param-key string-FORMAT
@@ -207,15 +212,15 @@ public static class M extends Sql.Tbl {//<Integer>
 		TL.H h=tl.h;
 		h.urli=0;
 		String[]url=h.url;
-		M x = null;
+		M x = null,t;
 		int n = url == null ? 0 : url.length;//always element at i is not processed
 		if(n > 0) {
 			if(Util.isNum(url[0]))
 				x = loadBy(Util.parseInt(url[h.urli++], 0));
 			else
-				x = loadBy(url[h.urli++], 0);}
-		for( ; x != null && h.urli < n ; h.urli++) {
-			M t = loadBy(url[h.urli], x.id);
+				x = loadBy(url[h.urli++], 0);}t=x;
+		for( ; t!= null && h.urli < n ; h.urli++) {
+			t = loadBy(url[h.urli], x.id);
 			if(t != null)
 				x = t;
 		}return x;}
@@ -227,19 +232,19 @@ public static class M extends Sql.Tbl {//<Integer>
 
 	static M loadBy(String[]url){
 		int i=0;
-		M x = null;
+		M x = null,t;
 		int n = url == null ? 0 : url.length;//always element at i is not processed
 		if(n > 0) {
 			if(Util.isNum(url[0]))
 				x = loadBy(Util.parseInt(url[i++], 0));
 			else
-				x = loadBy(url[i++], 0);}
-		for( ; x != null && i < n ; i++) {
-			M t = loadBy(url[i], x.id);
+				x = loadBy(url[i++], 0);}t=x;
+		for( ; t != null && i < n ; i++) {
+			t = loadBy(url[i], x.id);
 			if(t != null)
 				x = t;
 		}return x;}
-
+/**returns the child with key of parent, if the key has slashs then the key is the substring after last slash*/
 	public static M loadBy(String key,int parent) {
 		int i=key==null?-1:key.lastIndexOf('/');
 		if(i!=-1)
@@ -344,12 +349,29 @@ public static class M extends Sql.Tbl {//<Integer>
 		return m;}
 
 	@Override public Sql.Tbl update(CI[]p) throws Exception {
-		L.l(this);return super.update(p);}
+		for(CI c:p)try {
+			L.l( id, c.getName(), "", L.A.update, v(c) );
+		}catch ( Exception ex ){}
+		return super.update(p);}
 
 	@Override public int delete() throws SQLException {
-		L.l(this);return super.delete();}
+		L.l(id,"",null,L.A.delete,toJson());return super.delete();}
+
 
 	@HttpMethod public static M
+	update( @HttpMethod(prmLoadByUrl = true) M p
+		      ,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
+		if(tl.usr!=null)//TODO: check permission
+		{LinkedList<CI>l=new LinkedList<>(  );
+			for ( Object o:m.keySet() ){
+				Object v=m.get( o );
+				C c=C.valueOf( o.toString() );
+				if(v!=null&&c!=null)
+				{p.v(c,v);l.add( c );}
+			}if(!l.isEmpty())
+			{CI[]a=new CI[l.size()];l.toArray(a);
+				p.update(a);}
+		}return p;/*	@HttpMethod public static M
 	update( @HttpMethod(prmLoadByUrl = true) M p
 		      ,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
 		boolean b=false;if(tl.usr!=null)//TODO: check permission
@@ -360,7 +382,7 @@ public static class M extends Sql.Tbl {//<Integer>
 			{p.v(c,v);b=true;}
 		}if(b)
 			p.save();
-		}return p;}
+		}return p;}*/}
 
 	@HttpMethod public static M
 	txt( @HttpMethod(prmLoadByUrl= true) M x
@@ -384,12 +406,12 @@ public static class M extends Sql.Tbl {//<Integer>
 		return x;}
 
 	@HttpMethod public static M
-	create(@HttpMethod(prmLoadByUrl = true) M prnt
+	newChild(@HttpMethod(prmLoadByUrl = true) M prnt
 		      ,  @HttpMethod(prmBody = true) M x
 		      , TL tl) throws Exception {
 		if(x==null)return x;//if(tl.usr==null)//TODO: check permission
 		if(x.key==null)
-			x.key=tl.h.url[tl.h.urli++];
+			x.key=tl.h.url[tl.h.urli<tl.h.url.length?tl.h.urli++:tl.h.url.length-1];
 		//{String k = tl.h.req.getRequestURI().substring(UrlPrefix.length()).trim();int i=k.lastIndexOf('/');i<0?k:k.substring(i+1);}
 		if(x.key!=null&&x.key.length()>0)
 		{M y=loadBy(x.key,prnt.id);//x.parent);
@@ -419,7 +441,7 @@ public static class M extends Sql.Tbl {//<Integer>
 			Map jm = Util.mapCreate();
 			e.put("key", key);
 			e.put("data", j.data);
-		}
+		}if(e!=null)
 		e.put("tl", tl);
 		return e;}
 
@@ -473,6 +495,7 @@ public static class M extends Sql.Tbl {//<Integer>
 			{   int j=Util.parseInt(mmbr,-1);
 				((List)o).set(j,val);
 			}
+			L.l(x.id,C.m.toString(),prop,L.A.update,val);
 			return x.update(cols(C.m));
 		}return false;
 	}//prop
@@ -481,11 +504,13 @@ public static class M extends Sql.Tbl {//<Integer>
 	@HttpMethod	public static List
 	dates(@HttpMethod(prmName= "from") Date f,
 	      @HttpMethod(prmName = "to") Date t,
+	      @HttpMethod(prmName = "parents") List parents,
 	      TL tl) throws Exception {
 		M m=new M();
 		List l=new LinkedList(  );
 		Object[]w=where( where(C.data,Co.ge),f
 			,where(C.data,Co.le),t
+			,where(C.parent,Co.in),parents
 			,C.dtyp,DType.date.toString() );
 		for(Sql.Tbl x:m.query( m.sql(m.columns(),w),w,true ))
 			l.add( x );
@@ -511,13 +536,13 @@ public static class M extends Sql.Tbl {//<Integer>
 				else if("getKeys".equals(mt))
 					r=getKeys(loadBy(url),(List)m.get("body"));
 				else if("dates".equals(mt))
-					r=dates((Date)m.get("from"),(Date)m.get("to"),tl);
+					r=dates((Date)m.get("from"),(Date)m.get("to"),(List)m.get("parents"),tl);
 				else if("load".equals(mt))
 					r=load(loadBy(url),tl);
 				else if("update".equals(mt))
 					r=update(loadBy(url),(Map)m.get("body"),tl);
-				else if("create".equals(mt))//key must be in body
-					r=create(loadBy(url),(M)new M().fromMap((Map)m.get("body")),tl);
+				else if("newChild".equals(mt))//key must be in body
+					r=newChild(loadBy(url),(M)new M().fromMap((Map)m.get("body")),tl);
 				else if("txt".equals(mt))
 					r=txt(loadBy(url),(String)m.get("body"),tl);
 				else if("m".equals(mt))
@@ -581,7 +606,7 @@ public static void registerMethods(Class p) {
 //need to do a forgot password recovery method
 @HttpMethod(usrLoginNeeded = false) public static Map
 login(@HttpMethod(prmLoadByUrl = true) M j
-	     , @HttpMethod(prmName = "pw") String pw, TL tl)throws Exception {
+	, @HttpMethod(prmName = "pw") String pw, TL tl)throws Exception {
 	if(j==null)
 		j=M.loadBy(tl.h.req.getRequestURI().substring(UrlPrefix.length()),1);
 	if(j != null ){
@@ -670,11 +695,11 @@ public @interface HttpMethod {
 				}
 				else if(pp != null && pp.prmBody())
 					args[i] = prmClss.isAssignableFrom(String.class)
-						? Util.readString(tl.h.req.getReader())
+						? String.valueOf(tl.bodyTxt!=null?tl.bodyTxt:tl.bodyData)//Util.readString(tl.h.req.getReader())
 						: tl.bodyData;
 				else
 					args[i] = o = TL.class.equals(prmClss) ? tl
-						              : tl.h.req(nm, prmClss);
+					: tl.h.req(nm, prmClss);
 			} catch(Exception ex) {
 				tl.error(ex, SrvltName, ".service:arg:i=", i);
 			}
@@ -720,7 +745,7 @@ static class TL{
 
 	public H h=new H();
 	public Map<String,Object> /**accessing request in json-format*/json;
-	public Object bodyData;
+	public Object bodyData;public StringBuilder bodyTxt;
 	public Date now;
 	Map usr;//M
 	/**wrapping JspWriter or any other servlet writer in "out" */
@@ -747,8 +772,8 @@ static class TL{
 		now=new Date();//seqObj=seqProp=now.getTime();
 		try{Object o=h.req.getContentType();
 			o=bodyData=o==null?null
-				           :o.toString().contains("json")?Json.Prsr.parse(h.req)
-					            :o.toString().contains("part")?h.getMultiParts():null;
+				:o.toString().contains("json")?Json.Prsr.parse(h.req,bodyTxt=new StringBuilder())
+				:o.toString().contains("part")?h.getMultiParts():null;
 			json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 			h.logOut=h.var("logOut",h.logOut);
 			if(h.getSession().isNew())
@@ -949,8 +974,8 @@ static class TL{
 				s=o.toStrin_();
 				h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
 				if(h.logOut){out.flush().
-					                        w(h.comments[0]//"\n/*"
-					                        ).w(s).w(h.comments[1]//"*/\n"
+					w(h.comments[0]//"\n/*"
+					).w(s).w(h.comments[1]//"*/\n"
 				);}}catch(Exception ex){
 				ex.printStackTrace();
 			}return s;}
@@ -1000,10 +1025,10 @@ static class TL{
 }//class TL
 
 enum context{ROOT(
-	                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-	                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-	                 ,"/public_html/i1io/"
-	                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+	,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+	,"/public_html/i1io/"
+	,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 );
 	String str,a[];context(String...p){str=p[0];a=p;}
 	enum DB{
@@ -1194,9 +1219,8 @@ static class Util{//utility methods
 		}catch(Exception x){//changed 2016.06.27 18:28
 			TL.tl().error(x, SrvltName,".Util.b64e(String s):",s);
 		}
-		return "";}
-
-	static String readString(BufferedReader r) throws IOException {
+		return "";
+	/*static String readString(BufferedReader r) throws IOException {
 		StringBuilder b = new StringBuilder();
 		int c = 0;
 		String line = r.readLine();
@@ -1206,7 +1230,8 @@ static class Util{//utility methods
 			line = r.readLine();
 		}
 		return b.toString();
-	}//readString
+	}//readString*/}
+
 }//class Util
 
 static class Sql {
@@ -1253,10 +1278,10 @@ static class Sql {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			                          ("jdbc:mysql://"+context.DB.server.str
-				                           +"/"+context.DB.dbName.str
-				                          ,context.DB.un.str,context.DB.pw.str
-			                          );Object[]b={r,null};
+			 ("jdbc:mysql://"+context.DB.server.str
+				+"/"+context.DB.dbName.str
+				,context.DB.un.str,context.DB.pw.str
+			 );Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){
 			t.error(e,SrvltName,".Sql.DriverManager:");
@@ -1449,7 +1474,7 @@ static class Sql {
 				s.getObject(1,t));return r;}
 		finally{TL tl=TL.tl();close(s,tl);if(tl.h.logOut)
 			try{tl.log(tl.jo().w(SrvltName).w(".Sql.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-				           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 				tl.error(x,SrvltName,".Sql.q1colList:",sql);
 			}}}
 
@@ -1494,7 +1519,7 @@ static class Sql {
 		{close(s,tl);
 			if(tl.h.logOut)try{
 				tl.log(tl.jo().w(SrvltName).w(".Sql.L:q2json=")
-					       .o(sql).w(",prms=").o(p).toStrin_());
+					.o(sql).w(",prms=").o(p).toStrin_());
 			}catch(IOException x){
 				tl.error(x,SrvltName,".Sql.q1json:",sql);
 			}
@@ -1585,8 +1610,8 @@ static class Sql {
 			String i2=ind+'\t';
 			o.w("\"class\":").oStr(getClass().getSimpleName(),ind);//w("\"name\":").oStr(p.getName(),ind);
 			for(CI f:a)try
-			{	o.w(',').oStr(f.getName(),i2).w(':')
-					 .o(v(f),ind,o.comment?path+'.'+f.getName():path);
+			{	o.w(',').oStr(f.getName(),i2).w(':').
+				o(v(f),ind,o.comment?path+'.'+f.getName():path);
 				if(o.comment)o.w("//").w(f.toString()).w("\n").p(i2);
 			}catch(Exception ex){
 				TL.tl().error(ex);
@@ -1910,13 +1935,11 @@ static class Sql {
 		/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
 		public Tbl update(CI[]c) throws Exception{
 			StringBuilder sql = new StringBuilder( "update`" )
-				                    .append( getName() ).append( "` set `" )
-				                    .append( c[0]).append( "`=?" );
+				.append( getName() ).append( "` set `" )
+				.append( c[0]).append( "`=?" );
 			Object[]p=wherePK(),a=new Object[c.length+p.length/2];
 			for(CI x:c)
-				if(x==c[0])sql.append( " , `" ).append( x ).append( "`=?" );
-			//for()
-
+				if(x!=c[0])sql.append( " , `" ).append( x ).append( "`=?" );
 			Sql.X( sql.toString(), valsForSql() );
 			TL.tl().log( "update", this );//log(nw?Sql.Tbl.Log.Act.New:Sql.Tbl.Log.Act.Update);
 			return this;}//save
@@ -1938,7 +1961,7 @@ static class Sql {
 		public int delete() throws SQLException{
 			int x=-1;Object[]where=wherePK();
 			StringBuilder b=new StringBuilder( "delete from `" )
-				                .append( getName() ).append("`" );
+				.append( getName() ).append("`" );
 			Co.where( b,where );
 			x= Sql.X( b.toString(),where );
 			return x;}
@@ -2277,11 +2300,11 @@ static class Json{
 			while(e.hasNext()){k=e.next();v=o.get(k);w(",");
 				o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 			if(c) w("}//")
-				      .p(o.getClass().getName())
-				      .w("&cachePath=\"")
-				      .p(path)
-				      .w("\"\n")
-				      .p(ind);else w("}");
+				.p(o.getClass().getName())
+				.w("&cachePath=\"")
+				.p(path)
+				.w("\"\n")
+				.p(ind);else w("}");
 			return this;}
 		public Output oReq(HttpServletRequest r,String ind,String path)throws IOException
 		{final boolean c=comment;try{boolean comma=false,c2;//,d[]
@@ -2369,15 +2392,15 @@ static class Json{
 			return this;}
 		public Output oCookie(Cookie y,String ind,String path)throws IOException
 		{final boolean c=comment;try{(c?w("{//")
-			                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-			                             .w("\"Comment\":").o(y.getComment())
-			                             .w(",\"Domain\":").o(y.getDomain())
-			                             .w(",\"MaxAge\":").p(y.getMaxAge())
-			                             .w(",\"Name\":").o(y.getName())
-			                             .w(",\"Path\":").o(y.getPath())
-			                             .w(",\"Secure\":").p(y.getSecure())
-			                             .w(",\"Version\":").p(y.getVersion())
-			                             .w(",\"Value\":").o(y.getValue());
+			.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+			.w("\"Comment\":").o(y.getComment())
+			.w(",\"Domain\":").o(y.getDomain())
+			.w(",\"MaxAge\":").p(y.getMaxAge())
+			.w(",\"Name\":").o(y.getName())
+			.w(",\"Path\":").o(y.getPath())
+			.w(",\"Secure\":").p(y.getSecure())
+			.w(",\"Version\":").p(y.getVersion())
+			.w(",\"Value\":").o(y.getValue());
 		}catch(Exception ex){
 			TL.tl().error(ex,"Json.Output.Cookie:");}
 			if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
@@ -2411,9 +2434,9 @@ static class Json{
 
 		Output oSC(ServletContext y,String ind,String path)
 		{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-			                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-			                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-			                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+			.w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+			.w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+			.w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 			if(c)
 				w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 			else w("}");
@@ -2475,7 +2498,7 @@ static class Json{
 
 	public static class Prsr {
 
-		public StringBuilder buff=new StringBuilder() ,lookahead=new StringBuilder();
+		public StringBuilder body,buff=new StringBuilder() ,lookahead=new StringBuilder();
 		public Reader rdr;
 
 		public String comments=null;
@@ -2486,12 +2509,13 @@ static class Json{
 		public static Object parse(String p)throws Exception{
 			return parse(new StringReader(p));}
 
-		public static Object parse(HttpServletRequest p)throws Exception{
-			return parse(p.getReader());}
+		public static Object parse(HttpServletRequest p,StringBuilder bodyTxt)throws Exception{
+			return parse(p.getReader(),bodyTxt);}
 
-		public static Object parse(Reader p)throws Exception{
+		public static Object parse(Reader p)throws Exception{return parse(p,null);}
+		public static Object parse(Reader p,StringBuilder bodyTxt)throws Exception{
 			if(p==null)return null;
-			Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());
+			Prsr j=new Prsr();j.body=bodyTxt;j.rdr=p;j.nxt(j.c=j.read());
 			return j.parse();}//public static Object parseItem(Reader p)throws Exception{ Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());return j.parseItem();}
 
 		/**skip Redundent WhiteSpace*/void skipRWS(){
@@ -2557,7 +2581,7 @@ static class Json{
 				default:r=extractIdentifier();
 			}skipRWS();//skipWhiteSpace();
 			if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-				                    ||(cache!=null&&comments.startsWith("cacheReference"))))
+				||(cache!=null&&comments.startsWith("cacheReference"))))
 			{	if(i!=-1)
 			{	if(cache==null)
 				cache=new HashMap<String,Object>();
@@ -2576,15 +2600,15 @@ static class Json{
 			{case 'n':buff('\n');break;case 't':buff('\t');break;
 				case 'r':buff('\r');break;case '0':buff('\0');break;
 				case 'x':case 'X':buff( (char)
-					                        java.lang.Integer.parseInt(
-						                        next(2)//p.substring(offset,offset+2)
-						                        ,16));nxt();//next();
+					java.lang.Integer.parseInt(
+					next(2)//p.substring(offset,offset+2)
+					,16));nxt();//next();
 				break;
 				case 'u':
 				case 'U':buff( (char)
-					               java.lang.Integer.parseInt(
-						               next(4)//p.substring(offset,offset+4)
-						               ,16));//next();next();next();//next();
+					java.lang.Integer.parseInt(
+						next(4)//p.substring(offset,offset+4)
+						,16));//next();next();next();//next();
 					break;default:if(c!='\0')buff(c);}}
 			else buff(c);
 				nxt();b=c!=first&&c!='\0';
@@ -2597,18 +2621,18 @@ static class Json{
 			while(c!='\0'&&Character.isUnicodeIdentifierPart(c))bNxt();
 			String r=consume();
 			return "true".equals(r)?new Boolean(true)
-				       :"false".equals(r)?new Boolean(false)
-					        :"null".equals(r)?Literal.Null
-						         :"undefined".equals(r)?Literal.Undefined
-							          :r;}
+				:"false".equals(r)?new Boolean(false)
+				:"null".equals(r)?Literal.Null
+				:"undefined".equals(r)?Literal.Undefined
+				:r;}
 
 		public Object extractDigits(){
 			if(c=='0')//&&offset+1<len)
 			{char c2=peek();if(c2=='x'||c2=='X')
 			{nxt();nxt();
 				while((c>='A'&&c<='F')
-					      ||(c>='a'&&c<='f')
-					      ||Character.isDigit(c))bNxt();
+					||(c>='a'&&c<='f')
+					||Character.isDigit(c))bNxt();
 				String s=consume();
 				try{return Long.parseLong(s,16);}
 				catch(Exception ex){}return s;}
@@ -2695,7 +2719,7 @@ static class Json{
 
 		/**read a char from the rdr*/
 		char read(){
-			int h=-1;try{h=rdr.read();}
+			int h=-1;try{h=rdr.read();if(body!=null&&h!=-1)body.append((char)h);}
 			catch(Exception ex){TL.tl().error(ex, "TL.Json.Prsr.read");}
 			char c= h==-1?'\0':(char)h;
 			return c;}
@@ -2781,40 +2805,41 @@ public static void main(String[]args)throws Exception{
 			, 3rdString is body ,and most methods
 				take the body as JsonStorage.val*/
 
-		{"MSrvlt.login","/mSrvlt/moh","{pw:'"+ MSrvlt.Util.b64e("m")+"'}"},
-		{"M.create","/mSrvlt/apps/page","{key:'page',m:{clientOutput:[]},dtyp:'str',data:'[4,5]',parent:4}"},
-		{"M.create","/mSrvlt/apps/page/xx","{}"},
-		{"M.create","/mSrvlt/apps/page/x1","{id:-1,parent:4}"},
-		{"M.create","/mSrvlt/apps/page/x2","{m:{name:'moh'}}"},
-		{"M.update","/mSrvlt/apps/page/xx","{dtyp:'str',data:'textual content'}"},
-		{"M.txt","/mSrvlt/apps/page/xx","function jo(x){this.h=x;return x+2;}"},
-		{"M.meta","/mSrvlt/apps/page/xx","{ok:'yes'}"},
-		{"M.dt","/mSrvlt/apps/page/xx","{class:'date',str:'2018/02/14'}"},
-		{"M.prop","/mSrvlt/apps/page/xx/you.know","it"},
-		{"M.getKeys","/mSrvlt/4","['xx']"},
-		{"M.call","/mSrvlt/apps/page/xx/jo","[1,2]"},
-		{"M.eval","/mSrvlt/apps/page/xx","d=33"},
-		{"M.load","/mSrvlt/4","{}"},
-		{"M.dates","/mSrvlt/","{from:{class:'date',str:'2017/05/01'},to:{class:'date',str:'2019/05/01'}}"},
-		{"M.delete","/mSrvlt/apps/page/x2",""},
-		{"get","/mSrvlt/apps/page",""},
-		{"M.poll","/mSrvlt/","0"},
-		{"M.cmnds","/mSrvlt/","["
-			                      +"{method:'M.create'  ,url:'/mSrvlt/apps/page/x2',body:\"{key:'x2',m:{},data:'',parent:4}\"}"
-			                      +",{method:'M.update' ,url:'/mSrvlt/apps/page/xx',body:\"{data:'ok'}\"}"
-			                      +",{method:'M.load'   ,url:'/mSrvlt/apps/page/xx'}"
-			                      +",{method:'M.txt'    ,url:'/mSrvlt/apps/page/xx',body:\"cmnds\"}"
-			                      +",{method:'M.meta'   ,url:'/mSrvlt/apps/page/xx',body:\"{cmnds:1}\"}"
-			                      +",{method:'M.dt'   ,url:'/mSrvlt/apps/page/xx',body:\"{class:'date',str:'2017/05/31'}\"}"
-			                      +",{method:'M.dates'   ,url:'/mSrvlt/',body:\"{from:{class:'date',str:'2017/01/31'},to:{class:'date',str:'2019/2/28 23:59:59'}}\"}"
-			                      +",{method:'M.prop'   ,url:'/mSrvlt/apps/page/xx/ok.to',body:\"you\"}"
-			                      +",{method:'M.getKeys',url:'/mSrvlt/apps/page/xx',body:\"['jo','ko']\"}"
-			                      +",{method:'M.call'   ,url:'/mSrvlt/apps/page/xx/jo',body:\"[5,60]\"}"
-			                      +",{method:'M.eval'   ,url:'/mSrvlt/apps/page/xx',body:\"z=17\"}"
-			                      +",{method:'M.delete' ,url:'/mSrvlt/apps/page/x2'}"
-			                      +",{method:'M.get'    ,url:'/mSrvlt/apps/page'}"
-			                      +",{method:'M.poll'   ,url:'/mSrvlt/',body:\"0\"}"
-			                      +"]"},
+		{"MSrvlt.login"	,"/mSrvlt/moh","{pw:'"+ MSrvlt.Util.b64e("m")+"'}"},
+		{"M.newChild"	,"/mSrvlt/apps/page"
+				,"{key:'page',m:{clientOutput:[]},dtyp:'str',data:'[4,5]'}"},
+		{"M.newChild"	,"/mSrvlt/apps/page/xx","{}"},
+		{"M.newChild"	,"/mSrvlt/apps/page/x1","{id:-1}"},
+		{"M.newChild"	,"/mSrvlt/apps/page/x2","{m:{name:'moh'}}"},
+		{"M.update"		,"/mSrvlt/apps/page/xx","{dtyp:'str',data:'textual content'}"},
+		{"M.txt"		,"/mSrvlt/apps/page/xx","function jo(x){this.h=x;return x+2;}"},
+		{"M.meta"		,"/mSrvlt/apps/page/xx","{ok:'yes'}"},
+		{"M.dt"			,"/mSrvlt/apps/page/xx","{class:'date',str:'2018/02/14'}"},
+		{"M.prop"		,"/mSrvlt/apps/page/xx/you.know","it"},
+		{"M.getKeys"	,"/mSrvlt/4","['xx']"},
+		{"M.call"		,"/mSrvlt/apps/page/xx/jo","[1,2]"},
+		{"M.eval"		,"/mSrvlt/apps/page/xx","d=33"},
+		{"M.load"		,"/mSrvlt/4","{}"},
+		{"M.dates"		,"/mSrvlt/","{from:{class:'date',str:'2017/05/01'},to:{class:'date',str:'2019/05/01'}}"},
+		{"M.delete"		,"/mSrvlt/apps/page/x2",""},
+		{"get"			,"/mSrvlt/apps/page",""},
+		{"M.poll"		,"/mSrvlt/","0"},
+		{"M.cmnds"		,"/mSrvlt/","["
+			+"{method:'M.newChild',url:'/mSrvlt/apps/page/x2',body:\"{key:'x2',m:{},data:''}\"}"
+			+",{method:'M.update' ,url:'/mSrvlt/apps/page/xx',body:\"{data:'ok'}\"}"
+			+",{method:'M.load'   ,url:'/mSrvlt/apps/page/xx'}"
+			+",{method:'M.txt'    ,url:'/mSrvlt/apps/page/xx',body:\"cmnds\"}"
+			+",{method:'M.meta'   ,url:'/mSrvlt/apps/page/xx',body:\"{cmnds:1}\"}"
+			+",{method:'M.dt'   ,url:'/mSrvlt/apps/page/xx',body:\"{class:'date',str:'2017/05/31'}\"}"
+			+",{method:'M.dates'   ,url:'/mSrvlt/',body:\"{from:{class:'date',str:'2017/01/31'},to:{class:'date',str:'2019/2/28 23:59:59'}}\"}"
+			+",{method:'M.prop'   ,url:'/mSrvlt/apps/page/xx/ok.to',body:\"you\"}"
+			+",{method:'M.getKeys',url:'/mSrvlt/apps/page/xx',body:\"['jo','ko']\"}"
+			+",{method:'M.call'   ,url:'/mSrvlt/apps/page/xx/jo',body:\"[5,60]\"}"
+			+",{method:'M.eval'   ,url:'/mSrvlt/apps/page/xx',body:\"z=17\"}"
+			+",{method:'M.delete' ,url:'/mSrvlt/apps/page/x2'}"
+			+",{method:'M.get'    ,url:'/mSrvlt/apps/page'}"
+			+",{method:'M.poll'   ,url:'/mSrvlt/',body:\"0\"}"
+			+"]"},
 		{"MSrvlt.logout","/mSrvlt/xx","{abc:123}"}
 	};
 
