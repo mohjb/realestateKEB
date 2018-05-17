@@ -57,7 +57,7 @@ public static class M extends Sql.Tbl {//<Integer>
 	@Override public Sql.Tbl create() throws Exception{
 		if(id<1)try {id=maxPlus1( C.id,dbtName );} catch ( Exception e ) {
 			e.printStackTrace();
-		}L.l(id,"","",L.A.create,toJson());
+		}L.l(id,"",null,L.A.create,toJson());
 		return super.create();}//save
 
 	Object ba(){
@@ -187,11 +187,14 @@ public static class M extends Sql.Tbl {//<Integer>
 		public static void l(int id,String col,String aux,A a,Object o){
 			L l=new L(id,col,aux,a,o,new Date());try{l.save();}catch(Exception x){}}
 
+		@Override public Object valForSql(CI f){
+			return f==C.act?(act==null?null:act.name()):super.valForSql( f );}
+
 		@Override public List creationDBTIndices(TL tl){
 			StringBuilder b=new StringBuilder( "enum(" );
 		for ( A t:A.values() )
-			b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );
-			return Util.lst(Util.lst(
+			b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );b.append( ")" );
+		return Util.lst(Util.lst(
 			"int(10) NOT NULL"//id
 			,"varchar(255) NOT NULL "//col
 			,"varchar(255) "//aux
@@ -350,7 +353,7 @@ public static class M extends Sql.Tbl {//<Integer>
 
 	@Override public Sql.Tbl update(CI[]p) throws Exception {
 		for(CI c:p)try {
-			L.l( id, c.getName(), "", L.A.update, v(c) );
+			L.l( id, c.getName(), null, L.A.update, v(c) );
 		}catch ( Exception ex ){}
 		return super.update(p);}
 
@@ -410,18 +413,13 @@ public static class M extends Sql.Tbl {//<Integer>
 		      ,  @HttpMethod(prmBody = true) M x
 		      , TL tl) throws Exception {
 		if(x==null)return x;//if(tl.usr==null)//TODO: check permission
-		if(x.key==null)
-			x.key=tl.h.url[tl.h.urli<tl.h.url.length?tl.h.urli++:tl.h.url.length-1];
-		//{String k = tl.h.req.getRequestURI().substring(UrlPrefix.length()).trim();int i=k.lastIndexOf('/');i<0?k:k.substring(i+1);}
-		if(x.key!=null&&x.key.length()>0)
-		{M y=loadBy(x.key,prnt.id);//x.parent);
-			if(y==null) {
-				x.parent=prnt.id;
-				x.create();}
-			else
-				x=null;
-		}else
-			x=null;
+		if(x.key==null && tl.h.urli<tl.h.url.length)
+			x.key=tl.h.url[tl.h.urli++];//:tl.h.url.length-1
+		if(x.key==null||x.key.length()<1)
+			return null;
+		//{//M y=loadBy(x.key,prnt.id);if(y!=null) x=null;else {
+		x.parent=prnt.id;
+		x.create();//}
 		return x;}
 
 	@HttpMethod public static M
@@ -1938,9 +1936,13 @@ static class Sql {
 				.append( getName() ).append( "` set `" )
 				.append( c[0]).append( "`=?" );
 			Object[]p=wherePK(),a=new Object[c.length+p.length/2];
-			for(CI x:c)
-				if(x!=c[0])sql.append( " , `" ).append( x ).append( "`=?" );
-			Sql.X( sql.toString(), valsForSql() );
+			for(int i=0;i<c.length;i++){CI x=c[i];
+				if(i>0)sql.append( " , `" ).append( x ).append( "`=?" );
+				a[i]=v(x);}
+			for(int i=1;i<p.length;i+=2)
+				a[c.length+i-1]=p[i];
+			Co.where(sql,p);
+			Sql.X( sql.toString(), a );
 			TL.tl().log( "update", this );//log(nw?Sql.Tbl.Log.Act.New:Sql.Tbl.Log.Act.Update);
 			return this;}//save
 
@@ -2800,17 +2802,14 @@ public static void main(String[]args)throws Exception{
 	s.pc.q.ssn=new Dbg.Ssn();
 
 	String[][]prms= {/*1stString is method
-			, 2ndString is url(class/app/typ/key)
-				where typ is optional depending on method
-			, 3rdString is body ,and most methods
-				take the body as JsonStorage.val*/
-
+			, 2ndString is url(/urlPrefix/key/...(opt) )
+			, 3rdString is body */
 		{"MSrvlt.login"	,"/mSrvlt/moh","{pw:'"+ MSrvlt.Util.b64e("m")+"'}"},
-		{"M.newChild"	,"/mSrvlt/apps/page"
-				,"{key:'page',m:{clientOutput:[]},dtyp:'str',data:'[4,5]'}"},
-		{"M.newChild"	,"/mSrvlt/apps/page/xx","{}"},
-		{"M.newChild"	,"/mSrvlt/apps/page/x1","{id:-1}"},
-		{"M.newChild"	,"/mSrvlt/apps/page/x2","{m:{name:'moh'}}"},
+		//{"M.newChild"	,"/mSrvlt/apps/page"
+		//		,"{m:{clientOutput:[]},dtyp:'str',data:'[4,5]'}"},//key:'pageX',
+		//{"M.newChild"	,"/mSrvlt/apps/page/xx","{}"},
+		//{"M.newChild"	,"/mSrvlt/apps/page/x1","{id:-1}"},
+		//{"M.newChild"	,"/mSrvlt/apps/page/x2","{m:{name:'moh'}}"},
 		{"M.update"		,"/mSrvlt/apps/page/xx","{dtyp:'str',data:'textual content'}"},
 		{"M.txt"		,"/mSrvlt/apps/page/xx","function jo(x){this.h=x;return x+2;}"},
 		{"M.meta"		,"/mSrvlt/apps/page/xx","{ok:'yes'}"},
