@@ -18,21 +18,41 @@ import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 public class MSrvlt extends HttpServlet {
 
 /**
+ **Created by moh on 14/7/17.
+ * Created by Vaio-PC on 18/01/2018.
+ * Created by Vaio-PC on 1/26/2018.
+ * Created by Vaio-PC on 2/23/2018.
  * Created by Vaio-PC on 3/29/2018.
  * 14/5/2018
+ *
+ * the M class is for server-side-storage and scripting-server-side-Javascript
+ * , M stands for Map , which is the Java equivalent to a Javascript Object
  */
-
-public static class M extends Sql.Tbl {//<Integer>
+public static class M extends Sql.Tbl {
 	public static final String dbtName = "m";
 	@F public int id=-1,parent;
+	@F public Date logTime;
 	@F public String key;
 	@F public Map m;
 	@F public DType dtyp;
 	@F public Object data;//byte[]ba;
-	@F public Date logTime;
 
 	public enum C implements Sql.Tbl.CI {
-		id,parent,key, m, dtyp,data,logTime;
+		id("int(10) Primary Key NOT NULL auto_increment")
+		,parent("int(10) NOT NULL DEFAULT 0")
+		,logTime("timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+		,key("varchar(255) NOT NULL")
+		,m("text")
+		,dtyp((DType)null)
+		,data("blob");
+		public String def;
+		C(String p){def=p;}
+	 	C(DType a){//String s=name();//Field f=f();
+			StringBuilder b=new StringBuilder( "enum(" );
+			for ( DType t:DType.values() )
+				b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );b.append( ")" );
+			def=b.toString();}
+
 		@Override public Field f() {return Co.f(name(), M.class);}
 		@Override public String getName() {return name();}
 		@Override public Class getType() {return f().getType();}
@@ -72,7 +92,9 @@ public static class M extends Sql.Tbl {//<Integer>
 				oos.writeObject(data);
 				oos.flush();
 				oos.close();
-			}catch ( Exception ex ){TL.tl().error(ex);}
+			}catch ( Exception ex ){
+				TL.tl().error(ex);
+			}
 			byte[]ba=bos.toByteArray();
 			return ba;
 		}catch(Exception ex){
@@ -90,7 +112,18 @@ public static class M extends Sql.Tbl {//<Integer>
 		}return null;}*/}
 
 	Object data(Object v){
-		if(v instanceof String)dtyp=DType.str;
+		if(v instanceof String){dtyp=DType.str;
+			Object o=m==null?m:m.get("MSrvlt$M$data$js");
+			if(o instanceof Boolean&&((Boolean)o).booleanValue()){TL tl=TL.tl();try{
+				data=v;
+				javax.script.ScriptEngine e=eng(this,false,tl);
+				if(e!=null)
+				e.eval((String) v);
+				else
+					e=eng(this,true,tl);
+			}catch(Exception ex){
+				tl.error(ex);
+		}}}
 		else if(v instanceof Date)dtyp=DType.date;
 		else if(v instanceof byte[])dtyp=DType.byteArray;
 		else if(v==null)dtyp=null;
@@ -108,7 +141,7 @@ public static class M extends Sql.Tbl {//<Integer>
 				case date:
 					data =rs.getDate( ++c );break;
 				case jos:ObjectInputStream p=
-					 new ObjectInputStream( rs.getBinaryStream( ++c ) );
+					new ObjectInputStream( rs.getBinaryStream( ++c ) );
 					data =p.readObject();
 					p.close();
 					break;
@@ -126,51 +159,48 @@ public static class M extends Sql.Tbl {//<Integer>
 			return v(p.f(),v);}
 
 	@Override public Object valForSql(CI f){
-		return f==C.data?(dtyp==DType.jos?ba(): data)
-			:f==C.m?super.valForSql(f)
-			:f==C.dtyp?(dtyp==null?null
-			:dtyp.toString()) :v(f);}
+		return f==C.data&&dtyp==DType.jos?ba(): //:f==C.m?super.valForSql(f)//:f==C.dtyp?(dtyp==null?null :dtyp.toString()) //v(f)
+			super.valForSql(f);}
 
 	static {if(! registered.contains(M.class))
-			registered.add(M.class);}
+		registered.add(M.class);}
 
 	@Override public List creationDBTIndices(TL tl) {
-		StringBuilder b=new StringBuilder( "enum(" );
-		for ( DType t:DType.values() )
-			b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );
-		b.append( ')' );
-		List ColsDefinition= Util.lst(
-			"int(10) Primary Key NOT NULL auto_increment"//id
-			, "int(10) NOT NULL DEFAULT 0 "//parent
-			,"varchar(255) NOT NULL "//key
-			, "text"//m NOT NULL
-			,b.toString() //dtyp
-			,"blob"//data
-			, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")//logTime
-		,indices=Util.lst("unique(`"+C.parent+"`,`"+C.key+"`)"
+		List ColsDefinition=new LinkedList();
+		for(C c:C.values())ColsDefinition.add(c.def);
+		List indices=Util.lst("unique(`"+C.parent+"`,`"+C.key+"`)"
 			,Util.lst(C.parent,C.id)
 			,Util.lst(Util.lst(C.data,10))
 			,Util.lst(C.logTime))
 		,rows=Util.lst(
-			Util.lst(1,0,"users",null,null,null,tl.now),
-			Util.lst(2,0,"apps",null,null,null,tl.now),
-			Util.lst(3,1,"moh"
-				,"{pw:'"+Util.md5("m")+"'}",null,null,tl.now) );
-		return Util.lst(ColsDefinition,indices,rows,L.class );
-	}
+			Util.lst(1,0,tl.now,"users",null,null,null),
+			Util.lst(2,0,tl.now,"apps",null,null,null),
+			Util.lst(3,1,tl.now,"moh"
+				,"{pw:'"+Util.md5("m")+"'}",null,null) );
+		return Util.lst(ColsDefinition,indices,rows,L.class );}
 
 	public static class L extends Sql.Tbl{
 		public static final String dbtNmL ="MLog";
-	@F public int id=-1;
-	@F public String col,aux;
-	@F public A act;
-	@F public Object data;//byte[]ba;
-	@F public Date logTime;
+		@F public int id=-1,usr;
+		@F public String col,aux;
+		@F public A act;
+		@F public Date logTime;
+		@F public Object data;//byte[]ba;
 
-	public enum A{create,update,delete}
+		public enum A{create,update,delete}
 
-	public enum C implements Sql.Tbl.CI {
-			id, col,aux,act, data,logTime;
+		public enum C implements Sql.Tbl.CI {
+			id("int(10) NOT NULL"),usr("int(10) NOT NULL")
+			, col("varchar(255) NOT NULL"),aux("varchar(255)")
+			,act((A)null)
+			,logTime("timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+			, data("blob");public String def;
+			C(String p){def=p;}
+			C(A a){
+				StringBuilder b=new StringBuilder( "enum(" );
+				for ( A t:A.values() )
+					b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );b.append( ")" );
+				def=b.toString();}
 			@Override public Field f() {return Co.f(name(), L.class);}
 			@Override public String getName() {return name();}
 			@Override public Class getType() {return f().getType();}
@@ -182,29 +212,57 @@ public static class M extends Sql.Tbl {//<Integer>
 
 		public L(){logTime=new Date() ;}
 		public L(int i,String c,String x,A a,Object o,Date lt) {
-			id=i;col=c;aux=x;act= a;data =o;logTime=lt;}
+			id=i;col=c;aux=x;act= a;data =o;logTime=lt;usr=TL.tl().usrId();}
 
 		public static void l(int id,String col,String aux,A a,Object o){
-			L l=new L(id,col,aux,a,o,new Date());try{l.save();}catch(Exception x){}}
-
-		@Override public Object valForSql(CI f){
-			return f==C.act?(act==null?null:act.name()):super.valForSql( f );}
+			L l=new L(id,col,aux,a,o,new Date());try{l.save();}catch(Exception x){
+				x.printStackTrace();
+			}}
 
 		@Override public List creationDBTIndices(TL tl){
-			StringBuilder b=new StringBuilder( "enum(" );
-		for ( A t:A.values() )
-			b.append( t.ordinal()==0?"'":",'" ).append( t.name() ).append( "'" );b.append( ")" );
-		return Util.lst(Util.lst(
-			"int(10) NOT NULL"//id
-			,"varchar(255) NOT NULL "//col
-			,"varchar(255) "//aux
-			,b.toString() //act
-			,"blob"//data
-			, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
-			)
-				,Util.lst("unique(`"+C.id+"`,`"+C.logTime+"`)"
-					,Util.lst(C.id,C.col,Util.lst(C.data,10))
-					,Util.lst(C.logTime,C.id,C.col)) );}
+			List def=new LinkedList();
+			for(C c:C.values())def.add(c.def);
+			List indices=Util.lst("unique(`"+C.id+"`,`"+C.logTime+"`)"
+				,Util.lst(C.id,C.col,Util.lst(C.data,10))
+				,Util.lst(C.logTime,C.id,C.col)
+				//,Util.lst(C.usr,C.act,C.id,C.col,C.logTime)
+				,Util.lst(C.act,C.usr,C.id,C.col,C.logTime)	);
+			return Util.lst(def,indices);
+			//@Override public Object valForSql(CI f){return f==C.act?(act==null?null:act.name()):super.valForSql( f );}
+			/*	public static class P extends Sql.Tbl{
+		public static final String dbtNmP ="PLog";
+		@F public int group=-1,usr;
+		@F public Date logTime;
+		@F public Map m;
+
+		public enum C implements Sql.Tbl.CI {
+			group,usr,logTime, m;
+			@Override public Field f() {return Co.f(name(), P.class);}
+			@Override public String getName() {return name();}
+			@Override public Class getType() {return f().getType();}
+		}//enum C
+
+		@Override public String getName(){return dbtNmP;}
+		@Override public CI[]columns(){return C.values();}
+		@Override public Object[]wherePK(){Object[]a={C.group,group,C.usr,usr};return a;}
+
+		public P(){logTime=new Date() ;}
+		public P(int g,int u,Map o,Date lt) {
+			usr=u;logTime=lt;m=o;group=g;}
+
+		@Override public List creationDBTIndices(TL tl){
+			return Util.lst(Util.lst(
+				"int(10) NOT NULL"//group
+				,"int(10) NOT NULL"//usr
+				, "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"//logTime
+				,"text"//m
+			),Util.lst("unique(`"+C.group+"`,`"+C.usr+"`)"
+				,Util.lst(C.logTime)
+				,Util.lst(C.usr,C.logTime)	) );}
+	}//class P */
+
+		}
+
 	}//class Log
 
 	/**works in 2 approaches based on the param-key string-FORMAT
@@ -222,10 +280,10 @@ public static class M extends Sql.Tbl {//<Integer>
 				x = loadBy(Util.parseInt(url[h.urli++], 0));
 			else
 				x = loadBy(url[h.urli++], 0);}t=x;
-		for( ; t!= null && h.urli < n ; h.urli++) {
+		while(  t!= null && h.urli < n ) {
 			t = loadBy(url[h.urli], x.id);
 			if(t != null)
-				x = t;
+			{	x = t; h.urli++;}
 		}return x;}
 
 	static M loadBy(String url){
@@ -247,13 +305,13 @@ public static class M extends Sql.Tbl {//<Integer>
 			if(t != null)
 				x = t;
 		}return x;}
-/**returns the child with key of parent, if the key has slashs then the key is the substring after last slash*/
+	/**returns the child with key of parent, if the key has slashs then the key is the substring after last slash*/
 	public static M loadBy(String key,int parent) {
 		int i=key==null?-1:key.lastIndexOf('/');
 		if(i!=-1)
 			key=key.substring(i+1);
-		M j = key==null?null:(M)loadWhere(M.
-			class, where(C.key, key,C.parent,parent));
+		M j = key==null?null:(M)loadWhere(M.class
+			,where(C.key, key,C.parent,parent));
 		return j;}
 
 	public static M loadBy(int id) {
@@ -290,52 +348,69 @@ public static class M extends Sql.Tbl {//<Integer>
 	get(@HttpMethod(prmLoadByUrl = true) M prm, TL tl) throws Exception {
 		if(prm == null)
 			return prm;
-		Object js = prm.m == null?null:prm.m.get("clientOutput");
-		if(js instanceof Map){
-			Map m=(Map)js;
-			Map h=m==null?null:(Map)m.get( "headers" );
-			if(h!=null){
-				//TODO: write headers
-			}
+		Object o = prm.m == null?null:prm.m.get("clientOutput");
+		if(o instanceof Map){
+			Map m=(Map)o;
+			o=m==null?null:m.get( "headers" );;
+			Map h=o instanceof Map?(Map)o:null;
+			if(h!=null)for(Object k:h.keySet())try{
+				o=h.get(k);
+				String n=k.toString(),v=String.valueOf(o);
+				if(o instanceof Map){Map x=(Map)o;o=x.get("call");
+					if(o!=null){
+						String call=o.toString();
+						o=x.get("ref");
+						M z=o==null?prm:loadBy(o.toString());
+						o=call(z,call,(List)x.get("args"),tl);
+						if(o!=null)
+							v=o.toString();
+					}else{
+						o=x.get("eval");
+						if(o!=null){
+							String src=o.toString();
+							o=x.get("ref");
+							M z=o==null?prm:loadBy(o.toString());
+							o=eval(z,src,tl);
+							if(o!=null)
+								v=o.toString();
+						}
+					}
+				}
+				tl.h.rspns.setHeader(n,v);
+				}catch(Exception ex){
+					tl.error(ex,k);
+				}
+			o=m.get("clientOutput");
 		}
-		if(js instanceof List) {
-			List l = (List) js;
+		if(o instanceof List){List l=(List)o;
 			for(Object element : l) {
 				boolean b = false;
 				if(element instanceof Map) {
 					Map m = (Map) element;
-					Object ref = m.get("ref");
+					o= m.get("ref");
+					M ref = o==null?prm:loadBy((String) o);
 					if(ref != null) {
-						js = m.get("call");
-						if(b = js != null)
-							tl.o(call((String) js, (String) ref, (List) m.get("args"), tl));
-					}
-					if(! b) {
-						js = m.get("eval");
-						if(b = js != null)
-							tl.o(eval((String) ref, (String) js, tl));
-					}
-					if(! b) {
-						M x = loadBy((String) ref);
-						if(b = x != null)
-							tl.o(x.data);
+						o = m.get("call");
+						if(b = o != null)
+							tl.o(call(ref, (String) o, (List) m.get("args"), tl));
+						else {
+							o = m.get("eval");
+							if(b = o != null)
+								tl.o(eval(ref, (String) o, tl));
+						}
+						if(! b) {
+							if(b = ref != null)
+								tl.o(ref.data);
+						}
 					}
 				}
 				if(! b)
 					tl.o(element);
-			}
-		}else
+			}}
+		else
 			tl.o(prm.data);
 		tl.h.r("responseDone", true);
 		return prm;}
-
-	@HttpMethod public static List<M>
-	getKeys(@HttpMethod(prmLoadByUrl= true) M j,
-	        @HttpMethod(prmBody = true) List<String> keys) {//TODO: check permission
-		List<M> l = new LinkedList<>();
-		if(j!=null)l.add(j);
-		if(keys!=null)for(String k:keys)l.add(loadBy(k));
-		return l;}
 
 	@HttpMethod public static Map
 	load(@HttpMethod(prmLoadByUrl= true) M p,TL tl) throws SQLException {//TODO: check permission
@@ -349,21 +424,30 @@ public static class M extends Sql.Tbl {//<Integer>
 			l.add(Util.lst(j.id,j.key));}
 		Object[]where=where( C.parent,p.id );
 		m.put("children", Sql.L(sql( cols(C.id,C.key ),where,dbtName) ,where));
-		return m;}
+		return m;
+		/*@HttpMethod public static List<M>
+		getKeys(@HttpMethod(prmLoadByUrl= true) M j,
+				@HttpMethod(prmBody = true) List<String> keys) {//TODO: check permission
+			List<M> l = new LinkedList<>();
+			if(j!=null)l.add(j);
+			if(keys!=null)for(String k:keys)l.add(loadBy(k));
+			return l;}*/
+	}
 
 	@Override public Sql.Tbl update(CI[]p) throws Exception {
 		for(CI c:p)try {
 			L.l( id, c.getName(), null, L.A.update, v(c) );
-		}catch ( Exception ex ){}
+		}catch ( Exception ex ){
+			ex.printStackTrace();
+		}
 		return super.update(p);}
 
 	@Override public int delete() throws SQLException {
 		L.l(id,"",null,L.A.delete,toJson());return super.delete();}
 
-
 	@HttpMethod public static M
 	update( @HttpMethod(prmLoadByUrl = true) M p
-		      ,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
+			  ,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
 		if(tl.usr!=null)//TODO: check permission
 		{LinkedList<CI>l=new LinkedList<>(  );
 			for ( Object o:m.keySet() ){
@@ -372,11 +456,11 @@ public static class M extends Sql.Tbl {//<Integer>
 				if(v!=null&&c!=null)
 				{p.v(c,v);l.add( c );}
 			}if(!l.isEmpty())
-			{CI[]a=new CI[l.size()];l.toArray(a);
-				p.update(a);}
+		{CI[]a=new CI[l.size()];l.toArray(a);
+			p.update(a);}
 		}return p;/*	@HttpMethod public static M
 	update( @HttpMethod(prmLoadByUrl = true) M p
-		      ,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
+			  ,@HttpMethod(prmBody = true) Map m, TL tl) throws Exception {
 		boolean b=false;if(tl.usr!=null)//TODO: check permission
 		{	for ( Object o:m.keySet() ){
 			Object v=m.get( o );
@@ -394,7 +478,7 @@ public static class M extends Sql.Tbl {//<Integer>
 		{x.data(v);x.update(cols(C.dtyp,C.data));}
 		return x;}
 
-	@HttpMethod public static M
+	/**String v is a date formatted yyyy/mm/dd hh:mm:ss , assumed gmt time-zone*/@HttpMethod public static M
 	dt(  @HttpMethod(prmLoadByUrl= true) M x
 		  ,@HttpMethod(prmBody = true) String v, TL tl) throws Exception {
 		if(tl.usr!=null)//TODO: check permission
@@ -403,21 +487,20 @@ public static class M extends Sql.Tbl {//<Integer>
 
 	@HttpMethod public static M
 	meta(@HttpMethod(prmLoadByUrl= true) M x
-		    ,@HttpMethod(prmBody = true) Map v, TL tl) throws Exception {
+			,@HttpMethod(prmBody = true) Map v, TL tl) throws Exception {
 		if(tl.usr!=null)//TODO: check permission
-		{x.m=v;x.update(cols(C.m));}
+		{x.m=new HashMap();x.m.putAll(v);x.update(cols(C.m));}
 		return x;}
 
 	@HttpMethod public static M
 	newChild(@HttpMethod(prmLoadByUrl = true) M prnt
-		      ,  @HttpMethod(prmBody = true) M x
-		      , TL tl) throws Exception {
+		,  @HttpMethod(prmBody = true) M x
+		, TL tl) throws Exception {
 		if(x==null)return x;//if(tl.usr==null)//TODO: check permission
 		if(x.key==null && tl.h.urli<tl.h.url.length)
 			x.key=tl.h.url[tl.h.urli++];//:tl.h.url.length-1
 		if(x.key==null||x.key.length()<1)
-			return null;
-		//{//M y=loadBy(x.key,prnt.id);if(y!=null) x=null;else {
+			return null;//{//M y=loadBy(x.key,prnt.id);if(y!=null) x=null;else {
 		x.parent=prnt.id;
 		x.create();//}
 		return x;}
@@ -427,50 +510,63 @@ public static class M extends Sql.Tbl {//<Integer>
 		x.delete();//TODO: check permission
 		return x;}
 
-	static javax.script.ScriptEngine eng(String key, boolean createIfNotInit, TL tl) {
-		String en = "ScriptEngine.JavaScript." + key;
+		/**M.m.MSrvlt$M$data$js
+		 * eng.MSrvlt$M$this
+		 * tl.h.s.MSrvlt$M@" + t.id+":ScriptEngine.JavaScript
+		 * eng.tl
+		 * */
+	static javax.script.ScriptEngine eng(M t//String key
+		, boolean createIfNotInit, TL tl) {
+		String en = "MSrvlt$M@" + t.id+":ScriptEngine.JavaScript";
 		javax.script.ScriptEngine e = (javax.script.ScriptEngine) tl.h.s(en);
 		if(e == null && createIfNotInit) {
-			javax.script.ScriptEngineManager man = (javax.script.ScriptEngineManager) tl.h.a("ScriptEngineManager");
+			javax.script.ScriptEngineManager man = (
+			javax.script.ScriptEngineManager)tl.h.a("ScriptEngineManager");
 			if(man == null)
 				tl.h.a("ScriptEngineManager", man = new javax.script.ScriptEngineManager());
-			tl.h.s(en, e = man.getEngineByName("JavaScript"));
-			M j = loadBy(key);
-			Map jm = Util.mapCreate();
-			e.put("key", key);
-			e.put("data", j.data);
+			tl.h.s(en, e = man.getEngineByName("JavaScript"));//M j = loadBy(key);Map jm = Util.mapCreate();//e.put("data", j.data);
+			e.put("MSrvlt$M$this", t);
+			Object o=t.m==null?t.m:t.m.get("MSrvlt$M$data$js");
+			if(o instanceof Boolean&&((Boolean)o).booleanValue())try{
+				e.eval((String) t.data);}catch(Exception ex){
+				tl.error(ex);
+			}
 		}if(e!=null)
-		e.put("tl", tl);
+			e.put("tl", tl);
 		return e;}
 
 	@HttpMethod public static Object
-	call(@HttpMethod(prmUrlPart= true) String key,
-	     @HttpMethod(prmUrlPart = true) String m,
-	     @HttpMethod(prmBody = true) List args,
-	     TL tl) throws Exception {//TODO: check permission
-		javax.script.ScriptEngine e = eng(key, true, tl);
-		e.put("m", m);
-		if(args != null) e.put("args", args);
-		return e.eval(key + "[m]" + (args == null ? "" : ".call(args)"));}
+	call(@HttpMethod(prmLoadByUrl = true) M m,
+		 @HttpMethod(prmUrlPart = true) String mmbr,
+		 @HttpMethod(prmBody = true) List args,
+		 TL tl) throws Exception {//TODO: check permission//String url=tl.h.req.getRequestURI();
+		javax.script.ScriptEngine e = eng(m, true, tl);
+		//if(args != null) e.put("args", args);
+		Object o=e.get( mmbr);
+		//javax.script.Bindings b=e.getBindings(9);
+		//b.containsKey(null);
+		//javax.script.ScriptContext x= e.getContext();
+		return o instanceof java.util.function.Function
+			?//e.eval(mmbr +  ".call(args)")
+			((java.util.function.Function)o).apply(args)
+			:null;}
 
 	@HttpMethod	public static Object
-	eval(@HttpMethod(prmUrlPart= true) String key,
-	     @HttpMethod(prmBody = true) String src,
-	     TL tl) throws Exception {// javax.script.ScriptException //TODO: check permission
-		M j = loadBy(key);
-		javax.script.ScriptEngine e = eng(key, true, tl);
+	eval(@HttpMethod(prmLoadByUrl= true) M m,
+		 @HttpMethod(prmBody = true) String src,
+		TL tl) throws Exception {// javax.script.ScriptException //TODO: check permission
+		javax.script.ScriptEngine e = eng(m, true, tl);
 		e.put("src", src);
-		return e.eval(src);
-	}//eval
+		return e.eval(src);}//eval
 
-	@HttpMethod	public static Object
+	@HttpMethod	public static boolean
 	prop(@HttpMethod(prmLoadByUrl= true) M x,
-	     @HttpMethod(prmName= "prop") String prop,
-	     @HttpMethod(prmName= "val") Object val,
-	     TL tl) throws Exception {// javax.script.ScriptException //TODO: check permission
+		 @HttpMethod(prmUrlPart= true) String prop,
+		 @HttpMethod(prmBody = true) Object val,
+		 TL tl) throws Exception {// javax.script.ScriptException //TODO: check permission
 		if(x==null||prop==null||prop.length()==0)return false;
 		if(x.m==null)x.m=new HashMap();
-		String[]a=prop.split(".");
+		String[]a=prop.split("\\.");
 		String mmbr=a[0];
 		Object o=x.m,u=null;
 		for(int i=0;i<a.length-1;i++){
@@ -494,16 +590,16 @@ public static class M extends Sql.Tbl {//<Integer>
 				((List)o).set(j,val);
 			}
 			L.l(x.id,C.m.toString(),prop,L.A.update,val);
-			return x.update(cols(C.m));
+			return x.update(cols(C.m))!=null;
 		}return false;
 	}//prop
 
 
 	@HttpMethod	public static List
 	dates(@HttpMethod(prmName= "from") Date f,
-	      @HttpMethod(prmName = "to") Date t,
-	      @HttpMethod(prmName = "parents") List parents,
-	      TL tl) throws Exception {
+		  @HttpMethod(prmName = "to") Date t,
+		  @HttpMethod(prmName = "parents") List parents,
+		  TL tl) throws Exception {
 		M m=new M();
 		List l=new LinkedList(  );
 		Object[]w=where( where(C.data,Co.ge),f
@@ -527,58 +623,66 @@ public static class M extends Sql.Tbl {//<Integer>
 					,url=(String)m.get("url");
 				String[]au=url.substring(UrlPrefix.length()).split("/");//b=m.get("body");
 				//if("listKeys".equals(mt)) r=listKeys();else
+				//else if("getKeys".equals(mt)) r=getKeys(loadBy(url),(List)m.get("body"));
 				if("poll".equals(mt))
 					r=poll(Util.parseDate(tl.bodyData.toString()).getTime(),tl);
 				else if("get".equals(mt))
-					r=get(loadBy(url),tl);
-				else if("getKeys".equals(mt))
-					r=getKeys(loadBy(url),(List)m.get("body"));
+					r=get(loadBy(au),tl);
 				else if("dates".equals(mt))
 					r=dates((Date)m.get("from"),(Date)m.get("to"),(List)m.get("parents"),tl);
 				else if("load".equals(mt))
-					r=load(loadBy(url),tl);
+					r=load(loadBy(au),tl);
 				else if("update".equals(mt))
-					r=update(loadBy(url),(Map)m.get("body"),tl);
+					r=update(loadBy(au),(Map)m.get("body"),tl);
 				else if("newChild".equals(mt))//key must be in body
-					r=newChild(loadBy(url),(M)new M().fromMap((Map)m.get("body")),tl);
+					r=newChild(loadBy(au),(M)new M().fromMap((Map)m.get("body")),tl);
 				else if("txt".equals(mt))
-					r=txt(loadBy(url),(String)m.get("body"),tl);
+					r=txt(loadBy(au),(String)m.get("body"),tl);
 				else if("m".equals(mt))
-					r=meta(loadBy(url),(Map)m.get("body"),tl);
+					r=meta(loadBy(au),(Map)m.get("body"),tl);
 				else if("dt".equals(mt))
-					r=dt(loadBy(url),(String)m.get("body"),tl);
+					r=dt(loadBy(au),(String)m.get("body"),tl);
 				else if("delete".equals(mt))
-					r=delete(loadBy(url),tl);
+					r=delete(loadBy(au),tl);
 				else if("call".equals(mt))
-					r=call(au[0],au[1],(List)m.get("body"),tl);
+					r=call(loadBy(au),au[au.length-1],(List)m.get("body"),tl);
 				else if("eval".equals(mt))
-					r=eval(url,(String)m.get("body"),tl);
+					r=eval(loadBy(au),(String)m.get("body"),tl);
 				else if("prop".equals(mt))
-					r=prop(loadBy(url),(String)m.get("prop"),m.get("val"),tl);
+					r=prop(loadBy(au),(String)m.get("prop"),m.get("val"),tl);
 				m.put("return",r);
 				r=m;
 			}
-		}catch(Exception ex){r=ex;}
+		}catch(Exception ex){
+			r=ex;}
 		finally {
 			l.add(r);
 		}
 		return l;}
 
-}//M
+	@Override public Json.Output jsonOutput(
+		Json.Output o,String ind,String path,boolean closeBrace)throws IOException{
+		String i2=ind+'\t';
+		o.w("{\"class\":\"MSrvlt.M\",\"id\":").p(id)
+		.w(",\"parent\":").p(parent).w(",\"key\":").w(key)
+		.w(",\"logTime\":").o(logTime,ind,path+".logTime")
+		.w(",\"m\":").oMap(m,ind,path+".m")
+		.w(",\"dtyp\":").oStr(dtyp==null?null:dtyp.toString(),ind)
+		.w(",\"data\":").o(data,ind,path+".data");
+		if(closeBrace){
+			if(o.comment)
+				o.w("}//MSrvlt.M&cachePath=\"").p(path).w("\"\n").p(ind);
+			else o.w('}');}
+		return o; }
 
-/**
- * Created by Vaio-PC on 2/23/2018.
- * Created by Vaio-PC on 1/26/2018.
- * Created by Vaio-PC on 18/01/2018.
- * Created by moh on 14/7/17.
- */
+
+}//M
 
 static final String packageName = "dev201805"
 	, SrvltName = packageName + ".MSrvlt"
 	, UrlPrefix = "/mSrvlt/";
 
 static Map<String, Method> mth = new HashMap<String, Method>();
-
 
 static void staticInit() {
 	registerMethods( MSrvlt.class);
@@ -663,7 +767,7 @@ public @interface HttpMethod {
 			Class[] prmTypes = op.getParameterTypes();
 			Class cl = op.getDeclaringClass();
 			Annotation[][] prmsAnno = op.getParameterAnnotations();
-			int n = prmsAnno == null ? 0 : prmsAnno.length, i = - 1;tl.h.urli=-1;
+			int n = prmsAnno == null ? 0 : prmsAnno.length, i = - 1;//tl.h.urli=-1;
 			Object[] args = new Object[n];
 
 			for(Annotation[] t : prmsAnno) try {
@@ -671,9 +775,8 @@ public @interface HttpMethod {
 				Class prmClss = prmTypes[++ i];
 				String nm = pp != null ? pp.prmName() : "arg" + i;//t.getName();
 				Object o = null;
-				if(pp != null && pp.prmUrlPart()) {
-					args[i]=tl.h.url[tl.h.urli++];
-				}
+				if(pp != null && pp.prmUrlPart())
+					args[i]=tl.h.urli>=tl.h.url.length?null:tl.h.url[tl.h.urli++];
 				else if(pp != null && pp.prmLoadByUrl()) {
 					Class[] ca = {TL.class , String[].class};
 					Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
@@ -692,12 +795,12 @@ public @interface HttpMethod {
 						else f.readReq("");}
 				}
 				else if(pp != null && pp.prmBody())
-					args[i] = prmClss.isAssignableFrom(String.class)
+					args[i] = prmClss==String.class//prmClss.isAssignableFrom(String.class)
 						? String.valueOf(tl.bodyTxt!=null?tl.bodyTxt:tl.bodyData)//Util.readString(tl.h.req.getReader())
-						: tl.bodyData;
+						: tl.bodyData!=null?tl.bodyData:tl.bodyTxt;
 				else
 					args[i] = o = TL.class.equals(prmClss) ? tl
-					: tl.h.req(nm, prmClss);
+						: tl.h.req(nm, prmClss);
 			} catch(Exception ex) {
 				tl.error(ex, SrvltName, ".service:arg:i=", i);
 			}
@@ -770,8 +873,8 @@ static class TL{
 		now=new Date();//seqObj=seqProp=now.getTime();
 		try{Object o=h.req.getContentType();
 			o=bodyData=o==null?null
-				:o.toString().contains("json")?Json.Prsr.parse(h.req,bodyTxt=new StringBuilder())
-				:o.toString().contains("part")?h.getMultiParts():null;
+			:o.toString().contains("json")?Json.Prsr.parse(h.req,bodyTxt=new StringBuilder())
+			:o.toString().contains("part")?h.getMultiParts():null;
 			json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 			h.logOut=h.var("logOut",h.logOut);
 			if(h.getSession().isNew())
@@ -972,8 +1075,8 @@ static class TL{
 				s=o.toStrin_();
 				h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
 				if(h.logOut){out.flush().
-					w(h.comments[0]//"\n/*"
-					).w(s).w(h.comments[1]//"*/\n"
+											w(h.comments[0]//"\n/*"
+											).w(s).w(h.comments[1]//"*/\n"
 				);}}catch(Exception ex){
 				ex.printStackTrace();
 			}return s;}
@@ -994,7 +1097,7 @@ static class TL{
 		h.getServletContext().log(s);
 		if(h.logOut)out.w(h.comments[0]//"\n/*
 		).w("error:").w(s.replaceAll("<", "&lt;"))
-			            .w("\n---\n").o(x).w(h.comments[1] );
+						.w("\n---\n").o(x).w(h.comments[1] );
 		if(x!=null)x.printStackTrace();}
 	catch(Exception ex){
 		ex.printStackTrace();
@@ -1012,6 +1115,11 @@ static class TL{
 	public String usrUn(){String s=null;if(usr!=null) {
 		M x = ( M ) usr.get( "M" );
 		if(x!=null)s=x.key;
+	}return s;} //usrUn()
+
+	public int usrId(){int s=-1;if(usr!=null) {
+		M x = ( M ) usr.get( "M" );
+		if(x!=null)s=x.id;
 	}return s;} //usrUn()
 
 	public String usrGroup(){String s=null;if(usr!=null) {
@@ -1190,7 +1298,7 @@ static class Util{//utility methods
 
 	public static String md5(String s){
 		if(s!=null)try{java.security.MessageDigest m=
-			               java.security.MessageDigest.getInstance("MD5");
+			java.security.MessageDigest.getInstance("MD5");
 			//m.update(s.getBytes());
 			String r=java.util.Base64.getEncoder().encodeToString(m.digest(s.getBytes()));
 			return r;
@@ -1276,10 +1384,10 @@ static class Sql {
 		if(t.h.logOut)t.log(context.DB.pool.str+":"+(p==null?null:p[0]));
 		if(r==null)try
 		{r=java.sql.DriverManager.getConnection
-			 ("jdbc:mysql://"+context.DB.server.str
-				+"/"+context.DB.dbName.str
-				,context.DB.un.str,context.DB.pw.str
-			 );Object[]b={r,null};
+			("jdbc:mysql://"+context.DB.server.str
+			  +"/"+context.DB.dbName.str
+			 ,context.DB.un.str,context.DB.pw.str
+			);Object[]b={r,null};
 			t.h.s(context.DB.reqCon.str,b);
 		}catch(Throwable e){
 			t.error(e,SrvltName,".Sql.DriverManager:");
@@ -1450,7 +1558,7 @@ static class Sql {
 		}finally
 		{close(s,tl);
 			if(tl.h.logOut)try{tl.log(tl.jo().w(SrvltName).w(".Sql.Lt:sql=")
-				                          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+			.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
 			catch(IOException x){
 				tl.error(x,SrvltName,".Sql.Lt:",sql);
 			}
@@ -1462,7 +1570,7 @@ static class Sql {
 			while(s.next())r.add(s.getObject(1));return r;}
 		finally{TL t=TL.tl();close(s,t);if(t.h.logOut)
 			try{t.log(t.jo().w(SrvltName).w(".Sql.q1colList:sql=")//CHANGED:2015.10.23.16.06:closeRS ;
-				          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
+				.o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 				t.error(x,SrvltName,".Sql.q1colList:",sql);
 			}}}
 
@@ -1495,9 +1603,15 @@ static class Sql {
 	 ,closes the preparedStatement*/
 	public static int x(String sql,Object...p)throws SQLException{return X(sql,p);}
 	public static int X(String sql,Object[]p)throws SQLException {
-		int r=-1;try{PreparedStatement s=P(sql,p,false);r=s.executeUpdate();s.close();return r;}
+		int r=-1;try{
+			PreparedStatement s=P(sql,p,false);
+			r=s.executeUpdate();
+			s.close();
+			return r;
+		}
 		finally{TL t=TL.tl();if(t.h.logOut)try{
-			t.log(t.jo().w(SrvltName).w(".Sql.x:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}
+			t.log(t.jo().w(SrvltName).w(".Sql.x:sql=").o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());
+		}
 		catch(IOException x){
 			t.error(x,SrvltName,".Sql.X:",sql);
 		}}}
@@ -1650,7 +1764,8 @@ static class Sql {
 		public Object valForSql(CI f){
 			Object o=v(f);
 			if(o instanceof Map)
-				o=Json.Output.out( o );
+				o=Json.Output.out( o );else if(o!=null && o.getClass().isEnum())
+				o=o.toString();
 			return o;}
 
 		public Tbl vals (Object[]p){
@@ -1938,9 +2053,9 @@ static class Sql {
 			Object[]p=wherePK(),a=new Object[c.length+p.length/2];
 			for(int i=0;i<c.length;i++){CI x=c[i];
 				if(i>0)sql.append( " , `" ).append( x ).append( "`=?" );
-				a[i]=v(x);}
-			for(int i=1;i<p.length;i+=2)
-				a[c.length+i-1]=p[i];
+				a[i]=valForSql(x);}
+			for(int i=0;i<p.length;i+=2)
+				a[c.length+i]=p[i] instanceof CI?valForSql( (CI)p[i]):p[i+1];
 			Co.where(sql,p);
 			Sql.X( sql.toString(), a );
 			TL.tl().log( "update", this );//log(nw?Sql.Tbl.Log.Act.New:Sql.Tbl.Log.Act.Update);
@@ -1963,7 +2078,7 @@ static class Sql {
 		public int delete() throws SQLException{
 			int x=-1;Object[]where=wherePK();
 			StringBuilder b=new StringBuilder( "delete from `" )
-				.append( getName() ).append("`" );
+			.append( getName() ).append("`" );
 			Co.where( b,where );
 			x= Sql.X( b.toString(),where );
 			return x;}
@@ -2220,8 +2335,8 @@ static class Json{
 			else if(a instanceof Cookie )oCookie((Cookie)a,ind,path);
 			else if(a instanceof java.util.UUID)w("\"").p(a.toString()).w(c?"\"/*uuid*/":"\"");
 			else{w("{\"class\":").oStr(a.getClass().getName(),ind)
-				     .w(",\"str\":").oStr(String.valueOf(a),ind)
-				     .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
+					 .w(",\"str\":").oStr(String.valueOf(a),ind)
+					 .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
 				if(c)w("}//Object&cachePath=\"").p(path).w("\"\n").p(ind);
 				else w("}");}return this;}
 
@@ -2302,11 +2417,11 @@ static class Json{
 			while(e.hasNext()){k=e.next();v=o.get(k);w(",");
 				o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 			if(c) w("}//")
-				.p(o.getClass().getName())
-				.w("&cachePath=\"")
-				.p(path)
-				.w("\"\n")
-				.p(ind);else w("}");
+			.p(o.getClass().getName())
+			.w("&cachePath=\"")
+			.p(path)
+			.w("\"\n")
+			.p(ind);else w("}");
 			return this;}
 		public Output oReq(HttpServletRequest r,String ind,String path)throws IOException
 		{final boolean c=comment;try{boolean comma=false,c2;//,d[]
@@ -2583,7 +2698,7 @@ static class Json{
 				default:r=extractIdentifier();
 			}skipRWS();//skipWhiteSpace();
 			if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-				||(cache!=null&&comments.startsWith("cacheReference"))))
+			||(cache!=null&&comments.startsWith("cacheReference"))))
 			{	if(i!=-1)
 			{	if(cache==null)
 				cache=new HashMap<String,Object>();
@@ -2609,8 +2724,8 @@ static class Json{
 				case 'u':
 				case 'U':buff( (char)
 					java.lang.Integer.parseInt(
-						next(4)//p.substring(offset,offset+4)
-						,16));//next();next();next();//next();
+					next(4)//p.substring(offset,offset+4)
+					,16));//next();next();next();//next();
 					break;default:if(c!='\0')buff(c);}}
 			else buff(c);
 				nxt();b=c!=first&&c!='\0';
@@ -2785,8 +2900,8 @@ static class Json{
 						lookahead.append(c);
 					}
 				}while( (b=(c==h ||
-					            Character.toUpperCase(c)==
-						            Character.toUpperCase(h))
+								Character.toUpperCase(c)==
+									Character.toUpperCase(h))
 				)&& (++i)<pn );
 			return b;}
 
@@ -2805,32 +2920,32 @@ public static void main(String[]args)throws Exception{
 			, 2ndString is url(/urlPrefix/key/...(opt) )
 			, 3rdString is body */
 		{"MSrvlt.login"	,"/mSrvlt/moh","{pw:'"+ MSrvlt.Util.b64e("m")+"'}"},
+		{"M.prop"		,"/mSrvlt/apps/page/x1/MSrvlt$M$data$js","true"},
+		{"M.txt"		,"/mSrvlt/apps/page/x1","function jo(x){this.h=x;return x+2;}"},
+		{"M.call"		,"/mSrvlt/apps/page/x1/jo","[1,2]"},
+		{"M.eval"		,"/mSrvlt/apps/page/x1","d=33"},
+		{"M.load"		,"/mSrvlt/4","{}"},
+		{"M.dates"		,"/mSrvlt/","{from:{class:'date',str:'2017/05/01'},to:{class:'date',str:'2019/05/01'}}"},
+		{"M.delete"		,"/mSrvlt/apps/page/x2",""},
+		{"get"			,"/mSrvlt/apps/page",""},//TODO: write test cases for each control-flow and each feature in "get"
+		{"M.poll"		,"/mSrvlt/","0"},
+		{"M.dt"			,"/mSrvlt/apps/page/xx","2018/02/14"},//{class:'date',str:'2018/02/14'}
+		{"M.prop"		,"/mSrvlt/apps/page/xx/you.know","it"},
 		//{"M.newChild"	,"/mSrvlt/apps/page"
 		//		,"{m:{clientOutput:[]},dtyp:'str',data:'[4,5]'}"},//key:'pageX',
 		//{"M.newChild"	,"/mSrvlt/apps/page/xx","{}"},
 		//{"M.newChild"	,"/mSrvlt/apps/page/x1","{id:-1}"},
-		//{"M.newChild"	,"/mSrvlt/apps/page/x2","{m:{name:'moh'}}"},
+		//{"M.newChild"	,"/mSrvlt/apps/page/x2","{m:{name:'moh'}}"},//{"M.getKeys"	,"/mSrvlt/4","['xx']"},
 		{"M.update"		,"/mSrvlt/apps/page/xx","{dtyp:'str',data:'textual content'}"},
-		{"M.txt"		,"/mSrvlt/apps/page/xx","function jo(x){this.h=x;return x+2;}"},
 		{"M.meta"		,"/mSrvlt/apps/page/xx","{ok:'yes'}"},
-		{"M.dt"			,"/mSrvlt/apps/page/xx","{class:'date',str:'2018/02/14'}"},
-		{"M.prop"		,"/mSrvlt/apps/page/xx/you.know","it"},
-		{"M.getKeys"	,"/mSrvlt/4","['xx']"},
-		{"M.call"		,"/mSrvlt/apps/page/xx/jo","[1,2]"},
-		{"M.eval"		,"/mSrvlt/apps/page/xx","d=33"},
-		{"M.load"		,"/mSrvlt/4","{}"},
-		{"M.dates"		,"/mSrvlt/","{from:{class:'date',str:'2017/05/01'},to:{class:'date',str:'2019/05/01'}}"},
-		{"M.delete"		,"/mSrvlt/apps/page/x2",""},
-		{"get"			,"/mSrvlt/apps/page",""},
-		{"M.poll"		,"/mSrvlt/","0"},
 		{"M.cmnds"		,"/mSrvlt/","["
 			+"{method:'M.newChild',url:'/mSrvlt/apps/page/x2',body:\"{key:'x2',m:{},data:''}\"}"
 			+",{method:'M.update' ,url:'/mSrvlt/apps/page/xx',body:\"{data:'ok'}\"}"
 			+",{method:'M.load'   ,url:'/mSrvlt/apps/page/xx'}"
 			+",{method:'M.txt'    ,url:'/mSrvlt/apps/page/xx',body:\"cmnds\"}"
 			+",{method:'M.meta'   ,url:'/mSrvlt/apps/page/xx',body:\"{cmnds:1}\"}"
-			+",{method:'M.dt'   ,url:'/mSrvlt/apps/page/xx',body:\"{class:'date',str:'2017/05/31'}\"}"
-			+",{method:'M.dates'   ,url:'/mSrvlt/',body:\"{from:{class:'date',str:'2017/01/31'},to:{class:'date',str:'2019/2/28 23:59:59'}}\"}"
+			+",{method:'M.dt'     ,url:'/mSrvlt/apps/page/xx',body:\"{class:'date',str:'2017/05/31'}\"}"
+			+",{method:'M.dates'  ,url:'/mSrvlt/',body:\"{from:{class:'date',str:'2017/01/31'},to:{class:'date',str:'2019/2/28 23:59:59'}}\"}"
 			+",{method:'M.prop'   ,url:'/mSrvlt/apps/page/xx/ok.to',body:\"you\"}"
 			+",{method:'M.getKeys',url:'/mSrvlt/apps/page/xx',body:\"['jo','ko']\"}"
 			+",{method:'M.call'   ,url:'/mSrvlt/apps/page/xx/jo',body:\"[5,60]\"}"
