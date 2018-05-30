@@ -119,7 +119,7 @@ public static class Realestate201805 {
 		@HttpMethod(prmName = "gov") Integer pGov,
 		@HttpMethod(prmName = "contract") Lbl.Contrct contrct,
 		@HttpMethod(prmName = "term") Lbl.Term term,
-		@HttpMethod(prmName = "sttstcs") Object ss,
+		@HttpMethod(prmName = "sttstcs") Lbl.Statistics[] sttstcs,
 		@HttpMethod(prmName = "showDefs")Boolean showDefs,
 		//@HttpMethod(prmName = "op") String op,
 		//@HttpMethod(prmName = "lang") Lang lang,
@@ -127,15 +127,13 @@ public static class Realestate201805 {
 		TL tl)//GenericServlet srvlt
 		throws Exception
 	{Map m=null;
-		Lbl.Statistics[]sttstcs=ss instanceof Lbl.Statistics[]
-			?(Lbl.Statistics[])ss:Lbl.Statistics.parse(ss); 
 		if(sttstcs==null)
 			return m;
 		try
 		{Map<LookupTbl.Col,Map<Integer,Map<Lang,LookupTbl>>>
 				lookup=LookupTbl.lookup();
 			int[]minmaxYear=DataTbl.minmaxYear();
-			if(showDefs==null)showDefs=false;
+			if(showDefs==null)showDefs=true;
 			m=Util.mapCreate("defs",!showDefs?showDefs:Util.mapCreate(
 			"Lang",Lang.values()
 			,"Lbl",Util.mapCreate(
@@ -149,6 +147,8 @@ public static class Realestate201805 {
 			,"LookupTbl",LookupTbl.def()
 			,"lookup","Map<Col,Map<Integer:code,Map<Lang,LookupTbl>>>"
 			,"data","Map<int:place,Map<str:term ,Map<str:sttstc ,Double>>>"
+			,"from","int:year","to","int:year"
+			,"gov","int: 0 for all, or govId","typ","int: 0 for all, or typId"
 		)//defs
 					 ,"namesGovs",namesGovs(tl)
 					 ,"minmaxYear",minmaxYear
@@ -162,12 +162,9 @@ public static class Realestate201805 {
 				//tl.out("application-scope has been reset for entry 'lookup' hashmap, tl.h.a( LookupTbl.class, null ); ");
 			}
 
-		//Map<Integer,Map<Lang,LookupTbl>>govs=lookup.get(LookupTbl.Col.gov);//typs=lookup.get(LookupTbl.Col.type),
-		//if(govs==null)govs=new HashMap<Integer,Map<Lang,LookupTbl>>();
-			//if(typs==null)typs=new HashMap<Integer,Map<Lang,LookupTbl>>();
-			//LookupTbl gov=govs.get(pGov).get(Lang.en);// replace iGov to gov//	, typ=typs.get(Util.parseInt(Prm.typ.v(p),0)).get(Lang.en)
-
-			if(from>to)
+		if(from==null)from=minmaxYear[1];
+			if(to==null)to=minmaxYear[1];
+		if(from>to)
 			{int tmp=from;
 				from=to;
 				to=tmp;
@@ -236,6 +233,7 @@ public static class Realestate201805 {
 						mn.put(yr,ms=new HashMap());
 					for(Lbl.Statistics x:sttstcs)try{
 						ms.put(x,rs.getDouble(c++));
+						tl.log(x,ms);
 					}catch(Exception ex){
 						tl.error(ex,packageName,"get:errI:Statistic=",x,",theBigMap=",m,",nm=",nm,",yr=",yr,",c=",c,",row=",row);
 						}
@@ -243,14 +241,15 @@ public static class Realestate201805 {
 				}
 				tl.log("ResultSet done:no.rows=",row,",theBigMap=",m);
 			}//if(nullCol<0)
+		}
 			catch(Throwable x){
 				String end=tl.logo(jspName+":if(nullCol<0) Throwable:",x);
 				tl.error(x,end);
 			}//catch
 			tl.log(packageName,"get:return:",m);
-		}finally{TL.Exit();}
+
 		return m;
-	}//service
+	}//service get
 
 
 static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.SQLException
