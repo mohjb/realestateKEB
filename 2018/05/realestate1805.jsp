@@ -1,6 +1,4 @@
 <%! //<?
-
-
 /**
  * Created by Vaio-PC on 2/23/2018.
  * Created by Vaio-PC on 1/26/2018.
@@ -76,15 +74,9 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						Class prmClss = prmTypes[++ i];
 						String nm = pp != null ? pp.prmName() : "arg" + i;//t.getName();
 						Object o = null;
-						if(pp != null && pp.prmUrlPart()) {
+						if(pp != null && pp.prmUrlPart()) 
 							args[i]=tl.h.url[tl.h.urli++];
-						}/* else if(pp != null && pp.prmUrlRemaining()) {
-					if(tl.h.url!=null&&tl.h.urli<tl.h.url.length) {
-						StringBuilder b = new StringBuilder(tl.h.url[tl.h.urli++]);
-						while(tl.h.urli<tl.h.url.length){b.append('/').append(tl.h.url[tl.h.urli++]);}
-						args[i] = b.toString();//url.indexOf(urlIndx + 1);
-					}
-				}*/ else if(pp != null && pp.prmLoadByUrl()) {
+						else if(pp != null && pp.prmLoadByUrl()) {
 							Class[] ca = {TL.class , String[].class};
 							Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
 								m = prmClss.getMethod("prmLoadByUrl", ca);
@@ -103,20 +95,27 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						}
 						else if(pp != null && pp.prmBody())
 							args[i] = prmClss.isAssignableFrom(String.class)
-								          ? Util.readString(tl.h.req.getReader())
-								          : tl.bodyData;
+								? Util.readString(tl.h.req.getReader())
+								: tl.bodyData;
 						else
 							args[i] = o = TL.class.equals(prmClss) ? tl
-								              : tl.h.req(nm, prmClss);
+								: tl.h.req(nm, prmClss);
 					} catch(Exception ex) {
 						tl.error(ex, SrvltName, ".service:arg:i=", i);
 					}if(tl.h.logOut)tl.logo(SrvltName, ".service:args:",n,args,op,cl);
 					retVal = n == 0 ? op.invoke(cl)
-						         : n == 1 ? op.invoke(cl, args[0])
-							           : n == 2 ? op.invoke(cl, args[0], args[1])
-								             : n == 3 ? op.invoke(cl, args[0], args[1], args[2])
-									               : n == 4 ? op.invoke(cl, args[0], args[1], args[2], args[3])
-										                 : n == 5 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4])
+						: n == 1 ? op.invoke(cl, args[0])
+						: n == 2 ? op.invoke(cl, args[0], args[1])
+						: n == 3 ? op.invoke(cl, args[0], args[1], args[2])
+						: n == 4 ? op.invoke(cl, args[0], args[1], args[2], args[3])
+						: n == 5 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4])
+						: n == 6 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5])
+						: n == 7 ? op.invoke(cl, args[0], args[1]
+							, args[2], args[3], args[4], args[5], args[6])
+						: n == 8 ? op.invoke(cl, args[0], args[1], args[2]
+							, args[3], args[4], args[5], args[6], args[7])
+						: n == 9 ? op.invoke(cl, args[0], args[1], args[2]
+							, args[3], args[4], args[5], args[6], args[7], args[8])
 											                   : op.invoke(cl, args);
 					if(httpMethodAnno != null && httpMethodAnno.nestJsonReq() && tl.json != null) {
 						tl.json.put("return", retVal);
@@ -365,8 +364,11 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					Object o=reqo(n);
 					if(c.isInstance( o ))return o;
 					else if (o !=null){
+						if(c.isArray()&&c.getComponentType().isEnum())
+							o=Util.toEnumArray( c,o );
+						else{
 						String s=o instanceof String?(String)o:o.toString();
-						o=Util.parse(s,c);}
+						o=Util.parse(s,c);}}
 					return o;}
 
 			}//class H
@@ -570,6 +572,8 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				else if(Date.class.equals(c))return parseDate(s);
 				else if(Character.class.isAssignableFrom(c)||(c.isPrimitive()&&"char".equals(c.getName())))
 					return s.length()<1?'\0':s.charAt(0);
+				else if(c.isArray()&&c.getComponentType().isEnum())
+					return toEnumArray( c,s );
 				else if(URL.class.isAssignableFrom(c))try
 				{return new URL("file:" +TL.tl().h.getServletContext().getContextPath()+'/'+s);}
 				catch (Exception ex) {
@@ -630,6 +634,46 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				}
 				return b.toString();
 			}//readString
+
+			public static Object[]toEnumArray(Class c,Object o){
+				if(o==null)return null;
+				Class ic=c.getComponentType();
+				Object[]a=ic.getEnumConstants();
+				List l=new LinkedList();
+				boolean bl=o instanceof List,ba=o instanceof Object[];
+				if(bl || ba){
+					List pl=bl?(List)o:null;
+					Object[]pa=ba?(Object[])o:null;
+					int n=bl?pl.size():pa.length;
+					for(int i = 0 ; i < n ; i++) {
+						for(Object x:a) {
+							Object z=bl?pl.get(i):pa[i];
+							if(z.toString().indexOf(x.toString())!=-1)
+							{l.add( x );break;}
+					}}
+				}
+				else {
+					String s=o.toString().toLowerCase();
+					List<Integer> i=new LinkedList<>();
+					for(Object x:a) {
+						int j=s.indexOf(x.toString().toLowerCase());
+						if(j!=-1){int n=i.size();
+							if(n<1){l.add(x);i.add(j);}
+							else if(j<i.get(0)){l.add(0,x);i.add(0,j);}
+							else if(j>i.get(n-1)){l.add(n,x);i.add(n,j);}
+							else{
+								while(--n>0)if(i.get(n)<j)
+								{l.add(n,x);i.add(n,j);n=-1;}
+							}
+						}
+					}
+				}
+				if(l.size()==0)
+					return null;
+				Object[]r=(Object[])java.lang.reflect.Array.newInstance(ic,l.size());
+				int d=0;for(Object x:l)r[d++]=x;
+				return r;
+			}
 		}//class Util
 
 		static class Sql {
