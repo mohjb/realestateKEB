@@ -1,4 +1,5 @@
-package dec;
+package dev201803;
+
 import java.io.*;
 import java.sql.*;
 import java.util.*;
@@ -116,7 +117,7 @@ public class Realestate201805 {
 		@HttpMethod(prmName = "gov") Integer pGov,
 		@HttpMethod(prmName = "contract") Lbl.Contrct contrct,
 		@HttpMethod(prmName = "term") Lbl.Term term,
-		@HttpMethod(prmName = "sttstcs") Object ss,
+		@HttpMethod(prmName = "sttstcs") Lbl.Statistics[] sttstcs,
 		@HttpMethod(prmName = "showDefs")Boolean showDefs,
 		//@HttpMethod(prmName = "op") String op,
 		//@HttpMethod(prmName = "lang") Lang lang,
@@ -124,123 +125,123 @@ public class Realestate201805 {
 		TL tl)//GenericServlet srvlt
 		throws Exception
 	{Map m=null;
-		Lbl.Statistics[]sttstcs=ss instanceof Lbl.Statistics[]
-			?(Lbl.Statistics[])ss:Lbl.Statistics.parse(ss);
 		if(sttstcs==null)
 			return m;
-		try
-		{Map<LookupTbl.Col,Map<Integer,Map<Lang,LookupTbl>>>
-				lookup=LookupTbl.lookup();
-			int[]minmaxYear=DataTbl.minmaxYear();
-			if(showDefs==null)showDefs=false;
-			m=Util.mapCreate("defs",!showDefs?showDefs:Util.mapCreate(
-			"Lang",Lang.values()
-			,"Lbl",Util.mapCreate(
-				"Ranks", Lbl.Ranks.def()
-				,"Contrct", Lbl.Contrct.def()
-				,"Term", Lbl.Term.def()
-				,"Statistics", Lbl.Statistics.def()
-			)
-			,"sttstcs","[<str:StatisticsName>,,, order and length as required by client]"
-			,"DataTbl",DataTbl.def()
-			,"LookupTbl",LookupTbl.def()
-			,"lookup","Map<Col,Map<Integer:code,Map<Lang,LookupTbl>>>"
-			,"data","Map<int:place,Map<str:term ,Map<str:sttstc ,Double>>>"
-		)//defs
-					 ,"namesGovs",namesGovs(tl)
-					 ,"minmaxYear",minmaxYear
-					 ,"lookup",lookup
-				,"term",term,"showDefs",showDefs,"contrct",contrct,"sttstcs",sttstcs
+		try {
+			Map< LookupTbl.Col, Map< Integer, Map< Lang, LookupTbl > > >
+					lookup = LookupTbl.lookup();
+			int[] minmaxYear = DataTbl.minmaxYear();
+			if ( showDefs == null ) showDefs = false;
+			m = Util.mapCreate( "defs", !showDefs ? showDefs : Util.mapCreate(
+				"Lang", Lang.values()
+				, "Lbl", Util.mapCreate(
+					"Ranks", Lbl.Ranks.def()
+					, "Contrct", Lbl.Contrct.def()
+					, "Term", Lbl.Term.def()
+					, "Statistics", Lbl.Statistics.def()
+				)
+				, "sttstcs", "[<str:StatisticsName>,,, order and length as required by client]"
+				, "DataTbl", DataTbl.def()
+				, "LookupTbl", LookupTbl.def()
+				, "lookup", "Map<Col,Map<Integer:code,Map<Lang,LookupTbl>>>"
+				, "data", "Map<int:place,Map<str:term ,Map<str:sttstc ,Double>>>"
+				)//defs
+				, "namesGovs", namesGovs( tl )
+				, "minmaxYear", minmaxYear
+				, "lookup", lookup
+				, "term", term, "showDefs", showDefs, "contrct", contrct, "sttstcs", sttstcs
 			);
 			//boolean devuser=tl.h.var("devuser",false);
-			String op=null;
-			if("resetLookup".equals( op )) {
+			String op = null;
+			if ( "resetLookup".equals( op ) ) {
 				tl.h.a( LookupTbl.class, null );
-				//tl.out("application-scope has been reset for entry 'lookup' hashmap, tl.h.a( LookupTbl.class, null ); ");
 			}
 
-		//Map<Integer,Map<Lang,LookupTbl>>govs=lookup.get(LookupTbl.Col.gov);//typs=lookup.get(LookupTbl.Col.type),
-		//if(govs==null)govs=new HashMap<Integer,Map<Lang,LookupTbl>>();
-			//if(typs==null)typs=new HashMap<Integer,Map<Lang,LookupTbl>>();
-			//LookupTbl gov=govs.get(pGov).get(Lang.en);// replace iGov to gov//	, typ=typs.get(Util.parseInt(Prm.typ.v(p),0)).get(Lang.en)
+			if ( from == null ) from = minmaxYear[ 1 ];
+			if ( to == null ) to = minmaxYear[ 1 ];
+			if ( from > to ) {
+				int tmp = from;
+				from = to;
+				to = tmp;
+			}
+			Util.mapSet( m, "from", from, "to", to );
 
-			if(from>to)
-			{int tmp=from;
-				from=to;
-				to=tmp;
-			}Util.mapSet(m,"from",from,"to",to);
+			boolean allGovs = pGov == null || pGov == 0//gov.code==0//"0".equals()
+					//,aggGovs="a".equals(Prm.gov.v(p))
+				, allTyps = pTyp == null || 0 == pTyp;
 
-			boolean allGovs=pGov==null||pGov==0//gov.code==0//"0".equals()
-				//,aggGovs="a".equals(Prm.gov.v(p))
-				,allTyps=pTyp==null||0==pTyp;
+			LookupTbl.Col col_Gov_or_name = allGovs ? LookupTbl.Col.gov : LookupTbl.Col.name;
 
-			LookupTbl.Col col_Gov_or_name=allGovs?LookupTbl.Col.gov:LookupTbl.Col.name;
+			if ( term == null )//Lbl.Term term=Lbl.Term.annual;if(Prm.terms.v(p)!=null) try{term=Lbl.Term.valueOf(Prm.terms.v(p));}catch(Exception ex){tl.error(ex,"parse term");}
+				term = Lbl.Term.annual;
 
-			if(term==null)//Lbl.Term term=Lbl.Term.annual;if(Prm.terms.v(p)!=null) try{term=Lbl.Term.valueOf(Prm.terms.v(p));}catch(Exception ex){tl.error(ex,"parse term");}
-				term= Lbl.Term.annual;
+			if ( contrct == null )//Lbl.Contrct contrct=Prm.contract.v(p)==null?Lbl.Contrct.all:Lbl.Contrct.valueOf(Prm.contract.v(p));
+				contrct = Lbl.Contrct.all;
 
-			if(contrct==null)//Lbl.Contrct contrct=Prm.contract.v(p)==null?Lbl.Contrct.all:Lbl.Contrct.valueOf(Prm.contract.v(p));
-				contrct=Lbl.Contrct.all;
+			Util.mapSet( m, "allGovs", allGovs, "allTyps", allTyps, "col_Gov_or_name", col_Gov_or_name );
 
-			Util.mapSet(m,"allGovs",allGovs,"allTyps",allTyps,"col_Gov_or_name",col_Gov_or_name);
+			if ( sttstcs.length > 0 ) {
+				StringBuilder sql = new StringBuilder( "select " )
+					.append( allGovs ? DataTbl.C.gov : DataTbl.C.name )
+					.append( "," ).append( term.sql ).append( " as t" );//if(term!=Lbl.Term.aggregate)
 
-			if(sttstcs.length>0)
-			try
-			{	StringBuilder sql=new StringBuilder("select ")
-					.append(allGovs?DataTbl.C.gov:DataTbl.C.name)
-					.append( ",").append(term.sql).append(" as t");//if(term!=Lbl.Term.aggregate)
+				for ( Lbl.Statistics x : sttstcs )
+					sql.append( "," ).append( x.sql );
 
-				for(Lbl.Statistics x:sttstcs)
-					sql.append(",").append(x.sql);
-
-				sql.append("from ").append(DataTbl.dbtName)
-					.append(" where `y`>=? and `y`<=? ");
-				if(contrct!=Lbl.Contrct.all)
-					sql.append("and `").append(DataTbl.C.contract).append("`=? ");
-				if(!allGovs)
-					sql.append("and `").append(DataTbl.C.gov).append("`=? ");
-				if(term==Lbl.Term.nineMonths)
-					sql.append("and month(`"+DataTbl.C.d+"`)<=9");
-				sql	.append(" group by ").append(col_Gov_or_name)
-					.append(",t");//if(term!=Lbl.Term.aggregate)
+				sql.append( "from " ).append( DataTbl.dbtName )
+						.append( " where `y`>=? and `y`<=? " );
+				if ( contrct != Lbl.Contrct.all )
+					sql.append( "and `" ).append( DataTbl.C.contract ).append( "`=? " );
+				if ( !allGovs )
+					sql.append( "and `" ).append( DataTbl.C.gov ).append( "`=? " );
+				if ( term == Lbl.Term.nineMonths )
+					sql.append( "and month(`" + DataTbl.C.d + "`)<=9" );
+				sql.append( " group by " ).append( col_Gov_or_name )
+						.append( ",t" );//if(term!=Lbl.Term.aggregate)
 				//sql.append(" order by ").append(col_Gov_or_name);if(term!=Lbl.Term.aggregate)sql.append(",t");
 
-				String s=sql.toString();Util.mapSet(m,"sql",s);
+				String s = sql.toString();
+				Util.mapSet( m, "sql", s );
 
-				PreparedStatement ps=Sql.p(s);// System.out.println(packageName+"/2012/03/05/"+jspName+":ps="+ps);
-				{int i=1;ps.setObject(i++,from);//p[Prm.from	.ordinal()]
-					ps.setObject(i++,to);//p[Prm.to				.ordinal()]
-					if(contrct!=Lbl.Contrct.all)
-						ps.setObject(i++,contrct.v);
-					if(!allGovs)	ps.setObject(i++,pGov);
-					if(!allTyps)	ps.setObject(i++,pTyp);
-				}
+				PreparedStatement ps = Sql.p( s );// System.out.println(packageName+"/2012/03/05/"+jspName+":ps="+ps);
+				int i = 1;
+				ps.setObject( i++, from );//p[Prm.from	.ordinal()]
+				ps.setObject( i++, to );//p[Prm.to				.ordinal()]
+				if ( contrct != Lbl.Contrct.all )
+					ps.setObject( i++, contrct.v );
+				if ( !allGovs ) ps.setObject( i++, pGov );
+				if ( !allTyps ) ps.setObject( i++, pTyp );
 
-				Map mn=null,ms=null,data=new HashMap();
-				Util.mapSet(m,"data",data);//row=0;//reset(tbl);
-				tl.log(packageName,"ps:",ps);
-				ResultSet rs=ps.executeQuery();
-				while(rs.next())
-				{int c=1,nm=rs.getInt(c++);
-					String yr=rs.getString(c++);
-					mn=(Map)data.get(nm);
-					if(mn==null)
-						data.put(nm,mn=new HashMap());
-					ms=(Map)mn.get(yr);
-					if(ms==null)
-						mn.put(yr,ms=new HashMap());
-					for(Lbl.Statistics x:sttstcs)try{
-						ms.put(x,rs.getDouble(c++));
-					}catch(Exception ex){ex.printStackTrace();}
+				int row = 0;
+				Map mn = null, ms = null, data = new HashMap();
+				Util.mapSet( m, "data", data );//row=0;//reset(tbl);
+				tl.log( packageName, "ps:", ps );
+				ResultSet rs = ps.executeQuery();
+				while ( rs.next() ) {
+					int c = 1, nm = rs.getInt( c++ );
+					row++;
+					String yr = rs.getString( c++ );
+					mn = ( Map ) data.get( nm );
+					if ( mn == null )
+						data.put( nm, mn = new HashMap() );
+					ms = ( Map ) mn.get( yr );
+					if ( ms == null )
+						mn.put( yr, ms = new HashMap() );
+					for ( Lbl.Statistics x : sttstcs )
+						try {
+							ms.put( x, rs.getDouble( c++ ) );
+						} catch ( Exception ex ) {
+							tl.error( ex, packageName, "get:errI:Statistic=", x, ",theBigMap=", m, ",nm=", nm, ",yr=", yr, ",c=", c, ",row=", row );
+						}
 				}
-			}//if(nullCol<0)
+			}//if(sttstcs.length > 0)
+		}
 			catch(Throwable x){
 				String end=tl.logo(jspName+":if(nullCol<0) Throwable:",x);
 				tl.error(x,end);
 			}//catch
-		}finally{TL.Exit();}
 		return m;
-	}//service
+	}//service "get" HttpMethod
 
 
 static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.SQLException
@@ -532,15 +533,9 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 						Class prmClss = prmTypes[++ i];
 						String nm = pp != null ? pp.prmName() : "arg" + i;//t.getName();
 						Object o = null;
-						if(pp != null && pp.prmUrlPart()) {
+						if(pp != null && pp.prmUrlPart())
 							args[i]=tl.h.url[tl.h.urli++];
-						}/* else if(pp != null && pp.prmUrlRemaining()) {
-					if(tl.h.url!=null&&tl.h.urli<tl.h.url.length) {
-						StringBuilder b = new StringBuilder(tl.h.url[tl.h.urli++]);
-						while(tl.h.urli<tl.h.url.length){b.append('/').append(tl.h.url[tl.h.urli++]);}
-						args[i] = b.toString();//url.indexOf(urlIndx + 1);
-					}
-				}*/ else if(pp != null && pp.prmLoadByUrl()) {
+						else if(pp != null && pp.prmLoadByUrl()) {
 							Class[] ca = {TL.class , String[].class};
 							Method//m=cl.getMethod( "prmLoadByUrl", ca );if(m==null)
 								m = prmClss.getMethod("prmLoadByUrl", ca);
@@ -558,14 +553,14 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 								else f.readReq("");}
 						}
 						else if(pp != null && pp.prmBody())
-							args[i] = prmClss.isAssignableFrom(String.class)
-								? Util.readString(tl.h.req.getReader())
-								: tl.bodyData;
+							args[i] = prmClss==String.class//prmClss.isAssignableFrom(String.class)
+								? String.valueOf(tl.bodyTxt!=null?tl.bodyTxt:tl.bodyData)
+								:prmClss==List.class?(tl.bodyData instanceof List
+									?tl.bodyData:Util.lst(tl.bodyData))
+								: tl.bodyData!=null?tl.bodyData:tl.bodyTxt;
 						else
 							args[i] = o = TL.class.equals(prmClss) ? tl
-								:prmClss.isArray()&&prmClss.getComponentType().isEnum()
-									?0
-								: tl.h.req(nm, prmClss);
+							: tl.h.req(nm, prmClss);
 					} catch(Exception ex) {
 						tl.error(ex, SrvltName, ".service:arg:i=", i);
 					}if(tl.h.logOut)tl.logo(SrvltName, ".service:args:",n,args,op,cl);
@@ -575,6 +570,13 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 						: n == 3 ? op.invoke(cl, args[0], args[1], args[2])
 						: n == 4 ? op.invoke(cl, args[0], args[1], args[2], args[3])
 						: n == 5 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4])
+						: n == 6 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5])
+						: n == 7 ? op.invoke(cl, args[0], args[1]
+							, args[2], args[3], args[4], args[5], args[6])
+						: n == 8 ? op.invoke(cl, args[0], args[1], args[2]
+							, args[3], args[4], args[5], args[6], args[7])
+						: n == 9 ? op.invoke(cl, args[0], args[1], args[2]
+							, args[3], args[4], args[5], args[6], args[7], args[8])
 						: op.invoke(cl, args);
 					if(httpMethodAnno != null && httpMethodAnno.nestJsonReq() && tl.json != null) {
 						tl.json.put("return", retVal);
@@ -611,7 +613,7 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 
 			public H h=new H();
 			public Map<String,Object> /**accessing request in json-format*/json;
-			public Object bodyData;
+	public Object bodyData;public StringBuilder bodyTxt;
 			public Date now;
 			Map usr;//M
 			/**wrapping JspWriter or any other servlet writer in "out" */
@@ -638,8 +640,8 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 				now=new Date();//seqObj=seqProp=now.getTime();
 				try{Object o=h.req.getContentType();
 					o=bodyData=o==null?null
-						           :o.toString().contains("json")?Json.Prsr.parse(h.req)
-							            :o.toString().contains("part")?h.getMultiParts():null;
+						:o.toString().contains("json")?Json.Prsr.parse(h.req,bodyTxt=new StringBuilder())
+						:o.toString().contains("part")?h.getMultiParts():null;
 					json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 					h.logOut=h.var("logOut",h.logOut);
 					if(h.getSession().isNew())
@@ -823,8 +825,11 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 					Object o=reqo(n);
 					if(c.isInstance( o ))return o;
 					else if (o !=null){
+						if(c.isArray()&&c.getComponentType().isEnum())
+							o=Util.toEnumArray( c,o );
+						else{
 						String s=o instanceof String?(String)o:o.toString();
-						o=Util.parse(s,c);}
+						o=Util.parse(s,c);}}
 					return o;}
 
 			}//class H
@@ -1028,6 +1033,8 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 				else if(Date.class.equals(c))return parseDate(s);
 				else if(Character.class.isAssignableFrom(c)||(c.isPrimitive()&&"char".equals(c.getName())))
 					return s.length()<1?'\0':s.charAt(0);
+				else if(c.isArray()&&c.getComponentType().isEnum())
+					return toEnumArray( c,s );
 				else if(URL.class.isAssignableFrom(c))try
 				{return new URL("file:" +TL.tl().h.getServletContext().getContextPath()+'/'+s);}
 				catch (Exception ex) {
@@ -1077,22 +1084,11 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 				}
 				return "";}
 
-			static String readString(BufferedReader r) throws IOException {
-				StringBuilder b = new StringBuilder();
-				int c = 0;
-				String line = r.readLine();
-				while(line != null) {
-					if(c++ > 0) b.append('\n');
-					b.append(line);
-					line = r.readLine();
-				}
-				return b.toString();
-			}//readString
-
 			public static Object[]toEnumArray(Class c,Object o){
 				if(o==null)return null;
 				Class ic=c.getComponentType();
 				Object[]a=ic.getEnumConstants();
+				List l=new LinkedList();
 				boolean bl=o instanceof List,ba=o instanceof Object[];
 				if(bl || ba){
 					List pl=bl?(List)o:null;
@@ -1101,12 +1097,12 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 					for(int i = 0 ; i < n ; i++) {
 						for(Object x:a) {
 							Object z=bl?pl.get(i):pa[i];
-							if(z.toString().indexOf());
+							if(z.toString().indexOf(x.toString())!=-1)
+							{l.add( x );break;}
 					}}
 				}
 				else {
 					String s=o.toString().toLowerCase();
-					List l=new LinkedList();
 					List<Integer> i=new LinkedList<>();
 					for(Object x:a) {
 						int j=s.indexOf(x.toString().toLowerCase());
@@ -1120,20 +1116,12 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 							}
 						}
 					}
-					Object[]r=(Object[])java.lang.reflect.Array.newInstance(ic,l.size());
-					int d=0;for(Object x:l)r[d++]=x;
-					return r;
 				}
-				List l=new LinkedList();
-
-
-				//static Statistics[]parse(Object p)
-					//if(p==null)return null;String s=p.toString().toLowerCase();
-					//List<Statistics>l=new LinkedList<>();
-
-
-
-				return null;
+				if(l.size()==0)
+					return null;
+				Object[]r=(Object[])java.lang.reflect.Array.newInstance(ic,l.size());
+				int d=0;for(Object x:l)r[d++]=x;
+				return r;
 			}
 		}//class Util
 
@@ -2400,7 +2388,7 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 
 			public static class Prsr {
 
-				public StringBuilder buff=new StringBuilder() ,lookahead=new StringBuilder();
+				public StringBuilder body,buff=new StringBuilder() ,lookahead=new StringBuilder();
 				public Reader rdr;
 
 				public String comments=null;
@@ -2411,13 +2399,14 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 				public static Object parse(String p)throws Exception{
 					return parse(new java.io.StringReader(p));}
 
-				public static Object parse(HttpServletRequest p)throws Exception{
-					return parse(p.getReader());}
+				public static Object parse(HttpServletRequest p,StringBuilder bodyTxt)throws Exception{
+			return parse(p.getReader(),bodyTxt);}
 
-				public static Object parse(Reader p)throws Exception{
-					if(p==null)return null;
-					Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());
-					return j.parse();}//public static Object parseItem(Reader p)throws Exception{ Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());return j.parseItem();}
+		public static Object parse(Reader p)throws Exception{return parse(p,null);}
+		public static Object parse(Reader p,StringBuilder bodyTxt)throws Exception{
+			if(p==null)return null;
+			Prsr j=new Prsr();j.body=bodyTxt;j.rdr=p;j.nxt(j.c=j.read());
+			return j.parse();}
 
 				/**skip Redundent WhiteSpace*/void skipRWS(){
 					boolean b=Character.isWhitespace(c);
@@ -2616,11 +2605,11 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 						}comments=b.toString();return true;}return false;}
 
 				/**read a char from the rdr*/
-				char read(){
-					int h=-1;try{h=rdr.read();}
-					catch(Exception ex){TL.tl().error(ex, "TL.Json.Prsr.read");}
-					char c= h==-1?'\0':(char)h;
-					return c;}
+		char read(){
+			int h=-1;try{h=rdr.read();if(body!=null&&h!=-1)body.append((char)h);}
+			catch(Exception ex){TL.tl().error(ex, "TL.Json.Prsr.read");}
+			char c= h==-1?'\0':(char)h;
+			return c;}
 
 				public char peek(){
 					char c='\0';
@@ -2690,4 +2679,16 @@ static Map<Integer,Integer>namesGovs(TL tl)throws java.io.IOException,java.sql.S
 			}//Prsr
 		}//class Json
 //%>
+
+public static void main(String[]args){
+	dev201801.Dbg.Srvlt s=dev201801.Dbg.Srvlt.sttc;
+	s.pc=new dev201801.Dbg.PC();
+	s.pc.a=dev201801.Dbg.SrvltContxt.sttc();
+	s.pc.q.ssn=new dev201801.Dbg.Ssn();
+	String[]p={"get","?sttstcs=count amount&","{showDefs=true,sttstcs='avg count amount'}"};
+	s.pc.q.init(p);
+
+	Realestate201805.service( s.pc.q,s.pc.p );
+
+}//main
 }//class Realestate201805
