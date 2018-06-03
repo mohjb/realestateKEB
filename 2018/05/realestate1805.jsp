@@ -1,4 +1,6 @@
 <%! //<?
+
+
 /**
  * Created by Vaio-PC on 2/23/2018.
  * Created by Vaio-PC on 1/26/2018.
@@ -59,7 +61,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						if(s.equalsIgnoreCase(hm))
 							op = mth.get(s);
 				HttpMethod httpMethodAnno = op == null ? null : op.getAnnotation(HttpMethod.class);
-				tl.log("jsp:version2-18.05.29.22.15;2017.02.09.17.10:op=", op, httpMethodAnno,mth);
+				tl.log("jsp:version 2018.05.29.22.15;2017.02.09.17.10:op=", op, httpMethodAnno,mth);
 				if(tl.usr == null && (httpMethodAnno == null || httpMethodAnno.usrLoginNeeded()))
 					op = null;
 				if(op != null) {
@@ -74,7 +76,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						Class prmClss = prmTypes[++ i];
 						String nm = pp != null ? pp.prmName() : "arg" + i;//t.getName();
 						Object o = null;
-						if(pp != null && pp.prmUrlPart()) 
+						if(pp != null && pp.prmUrlPart())
 							args[i]=tl.h.url[tl.h.urli++];
 						else if(pp != null && pp.prmLoadByUrl()) {
 							Class[] ca = {TL.class , String[].class};
@@ -94,9 +96,11 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 								else f.readReq("");}
 						}
 						else if(pp != null && pp.prmBody())
-							args[i] = prmClss.isAssignableFrom(String.class)
-								? Util.readString(tl.h.req.getReader())
-								: tl.bodyData;
+							args[i] = prmClss==String.class//prmClss.isAssignableFrom(String.class)
+								? String.valueOf(tl.bodyTxt!=null?tl.bodyTxt:tl.bodyData)
+								:prmClss==List.class?(tl.bodyData instanceof List
+									?tl.bodyData:Util.lst(tl.bodyData))
+								: tl.bodyData!=null?tl.bodyData:tl.bodyTxt;
 						else
 							args[i] = o = TL.class.equals(prmClss) ? tl
 								: tl.h.req(nm, prmClss);
@@ -110,13 +114,12 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						: n == 4 ? op.invoke(cl, args[0], args[1], args[2], args[3])
 						: n == 5 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4])
 						: n == 6 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5])
-						: n == 7 ? op.invoke(cl, args[0], args[1]
-							, args[2], args[3], args[4], args[5], args[6])
-						: n == 8 ? op.invoke(cl, args[0], args[1], args[2]
-							, args[3], args[4], args[5], args[6], args[7])
-						: n == 9 ? op.invoke(cl, args[0], args[1], args[2]
-							, args[3], args[4], args[5], args[6], args[7], args[8])
-											                   : op.invoke(cl, args);
+						: n == 7 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5], args[6])
+						: n == 8 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
+						: n == 9 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+						: n ==10 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
+						: n ==11 ? op.invoke(cl, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10])
+						: op.invoke(cl, args);
 					if(httpMethodAnno != null && httpMethodAnno.nestJsonReq() && tl.json != null) {
 						tl.json.put("return", retVal);
 						retVal = tl.json;
@@ -152,7 +155,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 
 			public H h=new H();
 			public Map<String,Object> /**accessing request in json-format*/json;
-			public Object bodyData;
+			public Object bodyData;public StringBuilder bodyTxt;
 			public Date now;
 			Map usr;//M
 			/**wrapping JspWriter or any other servlet writer in "out" */
@@ -179,8 +182,8 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				now=new Date();//seqObj=seqProp=now.getTime();
 				try{Object o=h.req.getContentType();
 					o=bodyData=o==null?null
-						           :o.toString().contains("json")?Json.Prsr.parse(h.req)
-							            :o.toString().contains("part")?h.getMultiParts():null;
+						:o.toString().contains("json")?Json.Prsr.parse(h.req,bodyTxt=new StringBuilder())
+						:o.toString().contains("part")?h.getMultiParts():null;
 					json=o instanceof Map<?, ?>?(Map<String, Object>)o:null;//req.getParameterMap() ;
 					h.logOut=h.var("logOut",h.logOut);
 					if(h.getSession().isNew())
@@ -384,8 +387,8 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						s=o.toStrin_();
 						h.getServletContext().log(s);//CHANGED 2016.08.17.10.00
 						if(h.logOut){out.flush().
-							                        w(h.comments[0]//"\n/*"
-							                        ).w(s).w(h.comments[1]//"*/\n"
+							w(h.comments[0]//"\n/*"
+							).w(s).w(h.comments[1]//"*/\n"
 						);}}catch(Exception ex){
 						ex.printStackTrace();
 					}return s;}
@@ -425,10 +428,10 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 		}//class TL
 
 		enum context{ROOT(
-			                 "C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
-			                 ,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
-			                 ,"/public_html/i1io/"
-			                 ,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+			"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
+			,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
+			,"/public_html/i1io/"
+			,"D:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 		);
 			String str,a[];context(String...p){str=p[0];a=p;}
 			enum DB{
@@ -594,7 +597,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 
 			public static String md5(String s){
 				if(s!=null)try{java.security.MessageDigest m=
-					               java.security.MessageDigest.getInstance("MD5");
+					java.security.MessageDigest.getInstance("MD5");
 					//m.update(s.getBytes());
 					String r=java.util.Base64.getEncoder().encodeToString(m.digest(s.getBytes()));
 					return r;
@@ -623,17 +626,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				}
 				return "";}
 
-			static String readString(BufferedReader r) throws IOException {
-				StringBuilder b = new StringBuilder();
-				int c = 0;
-				String line = r.readLine();
-				while(line != null) {
-					if(c++ > 0) b.append('\n');
-					b.append(line);
-					line = r.readLine();
-				}
-				return b.toString();
-			}//readString
 
 			public static Object[]toEnumArray(Class c,Object o){
 				if(o==null)return null;
@@ -654,6 +646,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				}
 				else {
 					String s=o.toString().toLowerCase();
+
 					List<Integer> i=new LinkedList<>();
 					for(Object x:a) {
 						int j=s.indexOf(x.toString().toLowerCase());
@@ -667,13 +660,22 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 							}
 						}
 					}
+
+
+
 				}
 				if(l.size()==0)
+
+
+
 					return null;
 				Object[]r=(Object[])java.lang.reflect.Array.newInstance(ic,l.size());
 				int d=0;for(Object x:l)r[d++]=x;
+
+
 				return r;
 			}
+
 		}//class Util
 
 		static class Sql {
@@ -1064,7 +1066,13 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						else o.w('}');}
 					return o; }
 
-				public String toJson(){Json.Output o= TL.tl().jo().clrSW();try {jsonOutput(o, "", "");}catch (IOException ex) {}return o.toString();}
+				public String toJson(){TL tl=TL.tl();
+				Json.Output o= tl.jo().clrSW();
+					try {jsonOutput(o, "", "");
+					return o.toString();}catch (Exception ex) {
+						tl.error(ex,packageName,".Sql.Tbl");
+					}
+					return "null";}
 
 				public Tbl readReq(String prefix){
 					TL t=TL.tl();CI[]a=columns();for(CI f:a){
@@ -1389,8 +1397,8 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
 				public Tbl update(CI[]c) throws Exception{
 					StringBuilder sql = new StringBuilder( "update`" )
-						                    .append( getName() ).append( "` set `" )
-						                    .append( c[0]).append( "`=?" );
+						.append( getName() ).append( "` set `" )
+						.append( c[0]).append( "`=?" );
 					Object[]p=wherePK(),a=new Object[c.length+p.length/2];
 					for(CI x:c)
 						if(x==c[0])sql.append( " , `" ).append( x ).append( "`=?" );
@@ -1417,7 +1425,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				public int delete() throws SQLException{
 					int x=-1;Object[]where=wherePK();
 					StringBuilder b=new StringBuilder( "delete from `" )
-						                .append( getName() ).append("`" );
+						.append( getName() ).append("`" );
 					Co.where( b,where );
 					x= Sql.X( b.toString(),where );
 					return x;}
@@ -1842,15 +1850,15 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					return this;}
 				public Output oCookie(Cookie y,String ind,String path)throws IOException
 				{final boolean c=comment;try{(c?w("{//")
-					                                .p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
-					                             .w("\"Comment\":").o(y.getComment())
-					                             .w(",\"Domain\":").o(y.getDomain())
-					                             .w(",\"MaxAge\":").p(y.getMaxAge())
-					                             .w(",\"Name\":").o(y.getName())
-					                             .w(",\"Path\":").o(y.getPath())
-					                             .w(",\"Secure\":").p(y.getSecure())
-					                             .w(",\"Version\":").p(y.getVersion())
-					                             .w(",\"Value\":").o(y.getValue());
+					.p(y.getClass().getName()).w(":Cookie\n").p(ind):w("{"))
+					.w("\"Comment\":").o(y.getComment())
+					.w(",\"Domain\":").o(y.getDomain())
+					.w(",\"MaxAge\":").p(y.getMaxAge())
+					.w(",\"Name\":").o(y.getName())
+					.w(",\"Path\":").o(y.getPath())
+					.w(",\"Secure\":").p(y.getSecure())
+					.w(",\"Version\":").p(y.getVersion())
+					.w(",\"Value\":").o(y.getValue());
 				}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}
 					if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 					}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
@@ -1880,9 +1888,9 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 
 				Output oSC(ServletContext y,String ind,String path)
 				{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
-					                                                      .w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
-					                                                      .w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
-					                                                      .w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
+					.w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
+					.w(",\"MajorVersion\":").o(y.getMajorVersion(),i2,c?path+".MajorVersion":path)
+					.w(",\"MinorVersion\":").o(y.getMinorVersion(),i2,c?path+".MinorVersion":path);
 					if(c)
 						w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 					else w("}");
@@ -1939,7 +1947,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 
 			public static class Prsr {
 
-				public StringBuilder buff=new StringBuilder() ,lookahead=new StringBuilder();
+				public StringBuilder body,buff=new StringBuilder() ,lookahead=new StringBuilder();
 				public Reader rdr;
 
 				public String comments=null;
@@ -1949,14 +1957,16 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 
 				public static Object parse(String p)throws Exception{
 					return parse(new java.io.StringReader(p));}
+					
+		public static Object parse(HttpServletRequest p,StringBuilder bodyTxt)throws Exception{
+			return parse(p.getReader(),bodyTxt);}
 
-				public static Object parse(HttpServletRequest p)throws Exception{
-					return parse(p.getReader());}
+		public static Object parse(Reader p)throws Exception{return parse(p,null);}
 
-				public static Object parse(Reader p)throws Exception{
-					if(p==null)return null;
-					Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());
-					return j.parse();}//public static Object parseItem(Reader p)throws Exception{ Prsr j=new Prsr();j.rdr=p;j.nxt(j.c=j.read());return j.parseItem();}
+		public static Object parse(Reader p,StringBuilder bodyTxt)throws Exception{
+			if(p==null)return null;
+			Prsr j=new Prsr();j.body=bodyTxt;j.rdr=p;j.nxt(j.c=j.read());
+			return j.parse();}
 
 				/**skip Redundent WhiteSpace*/void skipRWS(){
 					boolean b=Character.isWhitespace(c);
@@ -2018,7 +2028,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						default:r=extractIdentifier();
 					}skipRWS();//skipWhiteSpace();
 					if(comments!=null&&((i=comments.indexOf("cachePath=\""))!=-1
-						                    ||(cache!=null&&comments.startsWith("cacheReference"))))
+						||(cache!=null&&comments.startsWith("cacheReference"))))
 					{	if(i!=-1)
 					{	if(cache==null)
 						cache=new HashMap<String,Object>();
@@ -2037,15 +2047,15 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					{case 'n':buff('\n');break;case 't':buff('\t');break;
 						case 'r':buff('\r');break;case '0':buff('\0');break;
 						case 'x':case 'X':buff( (char)
-							                        java.lang.Integer.parseInt(
-								                        next(2)//p.substring(offset,offset+2)
-								                        ,16));nxt();//next();
+							java.lang.Integer.parseInt(
+							next(2)//p.substring(offset,offset+2)
+							,16));nxt();//next();
 						break;
 						case 'u':
 						case 'U':buff( (char)
-							               java.lang.Integer.parseInt(
-								               next(4)//p.substring(offset,offset+4)
-								               ,16));//next();next();next();//next();
+							java.lang.Integer.parseInt(
+							next(4)//p.substring(offset,offset+4)
+							,16));//next();next();next();//next();
 							break;default:if(c!='\0')buff(c);}}
 					else buff(c);
 						nxt();b=c!=first&&c!='\0';
@@ -2058,18 +2068,18 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					while(c!='\0'&&Character.isUnicodeIdentifierPart(c))bNxt();
 					String r=consume();
 					return "true".equals(r)?new Boolean(true)
-						       :"false".equals(r)?new Boolean(false)
-							        :"null".equals(r)?Literal.Null
-								         :"undefined".equals(r)?Literal.Undefined
-									          :r;}
+						:"false".equals(r)?new Boolean(false)
+						:"null".equals(r)?Literal.Null
+						:"undefined".equals(r)?Literal.Undefined
+						:r;}
 
 				public Object extractDigits(){
 					if(c=='0')//&&offset+1<len)
 					{char c2=peek();if(c2=='x'||c2=='X')
 					{nxt();nxt();
 						while((c>='A'&&c<='F')
-							      ||(c>='a'&&c<='f')
-							      ||Character.isDigit(c))bNxt();
+							||(c>='a'&&c<='f')
+							||Character.isDigit(c))bNxt();
 						String s=consume();
 						try{return Long.parseLong(s,16);}
 						catch(Exception ex){}return s;}
@@ -2155,11 +2165,11 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						}comments=b.toString();return true;}return false;}
 
 				/**read a char from the rdr*/
-				char read(){
-					int h=-1;try{h=rdr.read();}
-					catch(Exception ex){TL.tl().error(ex, "TL.Json.Prsr.read");}
-					char c= h==-1?'\0':(char)h;
-					return c;}
+		char read(){
+			int h=-1;try{h=rdr.read();if(body!=null&&h!=-1)body.append((char)h);}
+			catch(Exception ex){TL.tl().error(ex, "TL.Json.Prsr.read");}
+			char c= h==-1?'\0':(char)h;
+			return c;}
 
 				public char peek(){
 					char c='\0';
@@ -2199,9 +2209,9 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					c=nxt(h);
 					return c;}
 
-				/**this method works differently than next(), in particular how char c is read and buffered*/
-				public String next(int n)
-				{String old=consume(),retVal=null;while(n-->0)buff(nxt());retVal=consume();buff.append(old);return retVal;}
+	/**this method works differently than next(), in particular how char c is read and buffered*/
+	public String next(int n)
+	{String old=consume(),retVal=null;while(n-->0)buff(nxt());retVal=consume();buff.append(old);return retVal;}
 
 				public char buff(){return buff(c);}
 				char buff(char p){buff.append(p);return p;}
@@ -2228,4 +2238,17 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 
 			}//Prsr
 		}//class Json
+
+/*public static void main(String[]args){
+	dev201801.Dbg.Srvlt s=dev201801.Dbg.Srvlt.sttc;
+	s.pc=new dev201801.Dbg.PC();
+	s.pc.a=dev201801.Dbg.SrvltContxt.sttc();
+	s.pc.q.ssn=new dev201801.Dbg.Ssn();
+	String[]p={"get","?sttstcs=count amount&","{showDefs=true,sttstcs='avg count amount'}"};
+	s.pc.q.init(p);
+
+	Realestate201805.service( s.pc.q,s.pc.p );
+
+}//main */
+
 %>
