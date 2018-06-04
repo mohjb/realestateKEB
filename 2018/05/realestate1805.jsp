@@ -1,24 +1,16 @@
 <%! //<?
-
-
 /**
  * Created by Vaio-PC on 2/23/2018.
  * Created by Vaio-PC on 1/26/2018.
  * Created by Vaio-PC on 18/01/2018.
  * Created by moh on 14/7/17.
  */
-
 static final String SrvltName = packageName + ".jsp", UrlPrefix = ""; //packageName = "report20180526"
-
 static Map<String, Method> mth = new HashMap<String, Method>();
-
-
 		static void staticInit() {
 			registerMethods(Realestate201805.class);
 		}
-
 		static {staticInit();}
-
 		public static void registerMethods(Class p) {
 			Method[] b = p.getMethods();
 			String cn = p.getSimpleName();
@@ -30,8 +22,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				}
 			}
 		}//registerHttpMethod
-
-
 		/**
 		 * annotation to designate a java method as an ajax/xhr entry point of execution
 		 */
@@ -46,7 +36,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 			boolean prmLoadByUrl() default false;
 			boolean prmBody() default false;
 		}//HttpMethod
-
 		//@Override
 		public static void service(HttpServletRequest request, HttpServletResponse response) {
 			TL tl = null;
@@ -70,7 +59,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					Annotation[][] prmsAnno = op.getParameterAnnotations();
 					int n = prmsAnno == null ? 0 : prmsAnno.length, i = - 1;tl.h.urli=-1;
 					Object[] args = new Object[n];
-
 					for(Annotation[] t : prmsAnno) try {
 						HttpMethod pp = t.length > 0 && t[0] instanceof HttpMethod ? (HttpMethod) t[0] : null;
 						Class prmClss = prmTypes[++ i];
@@ -147,12 +135,10 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				TL.Exit();
 			}
 		}//run op servlet.service
-
 		/** * Created by mbohamad on 19/07/2017.*/
 		static class TL{
 			public static final String TlName=packageName+".TL";
 			public TL(HttpServletRequest r,HttpServletResponse n,Writer o){h.req=r;h.rspns=n;out=new Json.Output(o);}
-
 			public H h=new H();
 			public Map<String,Object> /**accessing request in json-format*/json;
 			public Object bodyData;public StringBuilder bodyTxt;
@@ -160,17 +146,13 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 			Map usr;//M
 			/**wrapping JspWriter or any other servlet writer in "out" */
 			Json.Output out,/**jo is a single instanceof StringWriter buffer*/jo;
-
 //TL member variables
-
 			/**the static/class variable "tl"*/ static ThreadLocal<TL> tl=new ThreadLocal<TL>();
 			public static final String CommentHtml[]={"\n<!--","-->\n"},CommentJson[]={"\n/*","\n*/"};
-
 			public Json.Output jo(){if(jo==null)try{jo=new Json.Output();}catch(Exception x){
 				error(x,TlName,".jo:IOEx:");
 			}return jo;}
 			public Json.Output getOut() throws IOException {return out;}
-
 			/**sets a new TL-instance to the localThread*/
 			public static TL Enter(HttpServletRequest r,HttpServletResponse response) throws IOException{
 				TL p;//if(mth==null || mth.size()==0)Srvlt.staticInit();
@@ -202,7 +184,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 			{TL p=TL.tl();if(p==null)return;
 				Sql.close(p);//changed 2017.7.17
 				p.onExit();tl.set(null);}
-
 			public class H{
 				public boolean logOut=false;public int urli;
 				public String ip,comments[]=CommentJson,url[];
@@ -260,7 +241,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					//if(ServletFileUpload.isMultipartContent(req))
 					return m;
 				}//Map getMultiParts()
-
 				/**get a request-scope attribute*/
 				public Object r(Object n){return req.getAttribute(String.valueOf(n));}
 				/**set a request-scope attribute*/
@@ -314,7 +294,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						}
 					}return defVal;
 				}
-
 				public Object reqo(String n){
 					if(json!=null )
 					{Object o=json.get(n);if(o!=null)return o;}
@@ -322,12 +301,10 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					if(r==null)r=req.getHeader(n);
 					if(logOut)log(TlName,".h.reqo(",n,"):",r);
 					return r;}
-
 				public String req(String n){
 					Object o=reqo(n);
 					String r=o instanceof String?(String)o:o!=null?o.toString():null;
 					return r;}
-
 				public int req(String n,int defval)
 				{Object o=reqo(n);
 					if(o instanceof Integer)defval=(Integer)o;
@@ -336,14 +313,12 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						String s=o instanceof String?(String)o:(o.toString());
 						defval=Util.parseInt(s, defval);}
 					return defval;}
-
 				public Date req(String n,Date defval){
 					Object o=req(n);
 					if(o instanceof Date)defval=(Date)o;
 					else if(o instanceof Number)defval=new Date(((Number)o).longValue());
 					else if(o!=null)defval=Util.parseDate(o instanceof String?(String)o:(o.toString()));
 					return defval;}
-
 				public double req(String n,double defval) {
 					Object o=reqo(n);
 					if(o instanceof Double)defval=(Double)o;
@@ -353,7 +328,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						if(Util.isNum( s ))
 							defval=new Double(s);}
 					return defval;}
-
 				public <T>T req(String n,T defVal) {
 					Object o=reqo(n);if(o instanceof String)
 						defVal=Util.parse((String)o,defVal);
@@ -362,7 +336,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						defVal=o1;
 					}else if(o!=null)defVal=Util.parse( o.toString(),defVal );
 					return defVal;}
-
 				public Object req(String n,Class c) {
 					Object o=reqo(n);
 					if(c.isInstance( o ))return o;
@@ -373,12 +346,9 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						String s=o instanceof String?(String)o:o.toString();
 						o=Util.parse(s,c);}}
 					return o;}
-
 			}//class H
-
 			/**get the TL-instance for the current Thread*/
 			public static TL tl(){Object o=tl.get();return o instanceof TL?(TL)o:null;}
-
 			////////////////////////////////
 			public String logo(Object...a){String s=null;
 				if(a!=null&&a.length>0)
@@ -403,7 +373,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 			}catch(Exception ex){
 				ex.printStackTrace();
 			}}
-
 			public void error(Throwable x,Object...p){try{
 				String s=jo().clrSW().w("error:").o(p,x).toString();
 				h.getServletContext().log(s);
@@ -423,10 +392,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				if(a[0]==null)//o==null||!(o instanceof Connection))
 					a[0]= Sql.c();
 				return (Connection)a[0];}
-
-
 		}//class TL
-
 		enum context{ROOT(
 			"C:\\apache-tomcat-8.0.15\\webapps\\ROOT\\"
 			,"/Users/moh/Google Drive/air/apache-tomcat-8.0.30/webapps/ROOT/"
@@ -472,7 +438,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				return -1;}
 			//***/static Map<Sql,String> getContextPack(TL t,List<Map<Sql,String>>a){return null;}
 		}//context
-
 		static class Util{//utility methods
 			public static Map<Object, Object> mapCreate(Object...p)
 			{Map<Object, Object> m=new HashMap<Object,Object>();//null;
@@ -594,7 +559,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					TL.tl().error(x, SrvltName,".Util.<T>T parse(String s,Class):",s,c);
 				}
 				return s;}
-
 			public static String md5(String s){
 				if(s!=null)try{java.security.MessageDigest m=
 					java.security.MessageDigest.getInstance("MD5");
@@ -605,7 +569,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					TL.tl().error(x, SrvltName,".Util.md5(String s):",s);
 				}
 				return "";}
-
 			public static String b64d(String s){
 				if(s!=null)try{
 					byte[]m=java.util.Base64.getDecoder().decode( s );
@@ -615,7 +578,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					TL.tl().error(x, SrvltName,".Util.b64d(String s):",s);
 				}
 				return "";}
-
 			public static String b64e(String s){
 				if(s!=null)try{
 					byte[]m=s.getBytes();
@@ -625,8 +587,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					TL.tl().error(x, SrvltName,".Util.b64e(String s):",s);
 				}
 				return "";}
-
-
 			public static Object[]toEnumArray(Class c,Object o){
 				if(o==null)return null;
 				Class ic=c.getComponentType();
@@ -646,7 +606,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				}
 				else {
 					String s=o.toString().toLowerCase();
-
 					List<Integer> i=new LinkedList<>();
 					for(Object x:a) {
 						int j=s.indexOf(x.toString().toLowerCase());
@@ -660,24 +619,14 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 							}
 						}
 					}
-
-
-
 				}
 				if(l.size()==0)
-
-
-
 					return null;
 				Object[]r=(Object[])java.lang.reflect.Array.newInstance(ic,l.size());
 				int d=0;for(Object x:l)r[d++]=x;
-
-
 				return r;
 			}
-
 		}//class Util
-
 		static class Sql {
 			/**returns a jdbc pooled Connection.
 			 uses MysqlConnectionPoolDataSource with a database from the enum context.Sql.url.str,
@@ -764,7 +713,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					for(int i=0;p!=null&&i<p.length;i++)
 					{r.setObject(i+1,p[i]);if(t.h.logOut)t.log("dbP:"+i+":"+p[i]);}
 				if(t.h.logOut)t.log("dbP:sql="+sql+":n="+(p==null?-1:p.length)+":"+r);return r;}
-
 			/**returns a jdbc-ResultSet, setting the variable-length-arguments parameters-p, calls dbP()*/
 			public static ResultSet r( String sql, Object...p)throws SQLException{return R(sql,p);}//changed 2017.7.17
 			/**returns a jdbc-ResultSet, setting the values array-parameters-p, calls dbP()*/
@@ -799,7 +747,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 			}catch (Exception ex){
 				tl.error(ex,SrvltName,".Sql.push");
 			}}
-
 			//public static void close(Connection c){close(c,tl());}
 			public static void close(Connection c,TL tl){
 				try{if(c!=null){
@@ -878,7 +825,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					catch(IOException x){
 						t.error(x,SrvltName,".Sql.List:",sql);
 					}}}
-
 			public static List<Integer[]>qLInt(String sql,Object...p)throws SQLException{return qLInt(sql,p);}//2017.07.14
 			public static List<Integer[]>QLInt(String sql,Object[]p)throws SQLException{//2017.07.14
 				TL tl=TL.tl();
@@ -902,7 +848,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					}
 				}
 			}
-
 			public static List<Object> q1colList(String sql,Object...p)throws SQLException {
 				ResultSet s=null;List<Object> r=null;try{s=R(sql,p);r=new LinkedList<Object>();
 					while(s.next())r.add(s.getObject(1));return r;}
@@ -911,7 +856,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						          .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 						t.error(x,SrvltName,".Sql.q1colList:",sql);
 					}}}
-
 			public static <T>List<T> q1colTList(String sql,Class<T>t,Object...p)throws SQLException {
 				ResultSet s=null;List<T> r=null;try{s=R(sql,p);r=new LinkedList<T>();//Class<T>t=null;
 					while(s.next())r.add(
@@ -921,7 +865,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						           .o(sql).w(",prms=").o(p).w(",return=").o(r).toStrin_());}catch(IOException x){
 						tl.error(x,SrvltName,".Sql.q1colList:",sql);
 					}}}
-
 			public static Object[] q1col(String sql,Object...p)throws SQLException
 			{List<Object> l=q1colList(sql,p);Object r[]=new Object[l.size()];l.toArray(r);l.clear();return r;}
 			public static <T>T[] q1colT(String sql,Class<T>t,Object...p)throws SQLException
@@ -1043,9 +986,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 			public abstract static class Tbl implements Json.Output.JsonOutput {//<PK>
 				// /**encapsulating Html-form fields, use annotation Form.F for defining/mapping member-variables to html-form-fields*/ public abstract static class Form{
 				@Override public String toString(){return toJson();}
-
 				/**get table name*/public abstract String getName();
-
 				public Json.Output jsonOutput(Json.Output o,String ind,String path)throws java.io.IOException{return jsonOutput( o,ind,path,true );}
 				public Json.Output jsonOutput(Json.Output o,String ind,String path,boolean closeBrace)throws java.io.IOException{
 					//if(o.comment)o.w("{//TL.Form:").w('\n').p(ind);else//.w(p.getClass().toString())
@@ -1065,7 +1006,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 							o.w("}//Sql.Tbl&cachePath=\"").p(path).w("\"\n").p(ind);
 						else o.w('}');}
 					return o; }
-
 				public String toJson(){TL tl=TL.tl();
 				Json.Output o= tl.jo().clrSW();
 					try {jsonOutput(o, "", "");
@@ -1073,7 +1013,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						tl.error(ex,packageName,".Sql.Tbl");
 					}
 					return "null";}
-
 				public Tbl readReq(String prefix){
 					TL t=TL.tl();CI[]a=columns();for(CI f:a){
 						String s=t.h.req(prefix==null||prefix.length()<1?prefix+f:f.toString());
@@ -1086,9 +1025,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 								,f+" ,c=",c," ,s=",s," ,v=",v);
 						}}
 					return this;}
-
 				public abstract CI[]columns();//public abstract FI[]flds();
-
 				public Object[]valsForSql(){
 					CI[]a=columns();
 					Object[]r=new Object[a.length];
@@ -1103,21 +1040,17 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 			for(CI f:a){i++;
 				r[i]=v(a[i]);
 			}return r;}*/}
-
 				public Object valForSql(CI f){
 					Object o=v(f);
 					if(o instanceof Map)
 						o=Json.Output.out( o );
 					return o;}
-
 				public Tbl vals (Object[]p){
 					int i=-1;CI[]a=columns();//Field[]a=fields();
 					for(CI f:a)
 						v(f,p[++i]);
 					return this;}
-
 				public Map asMap(){ return asMap(null);}
-
 				public Map asMap(Map r){
 					CI[]a=columns();//Field[]a=fields();
 					if(r==null)r=new HashMap();
@@ -1125,18 +1058,14 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					for(CI f:a){i++;
 						r.put(f.getName(),v(a[i]));
 					}return r;}
-
 				public Tbl fromMap (Map p){
 					CI[]a=columns();//Field[]a=fields();
 					for(CI f:a){String n=f.getName();
 						if(p.containsKey(n))
 							v(f,p.get(n));}
 					return this;}
-
 				public Tbl v(CI p,Object v){return v(p.f(),v);}//this is beautiful(tear running down cheek)
-
 				public Object v(CI p){return v(p.f());}//this is beautiful(tear running down cheek)
-
 				Tbl v(Field p,Object v){//this is beautiful(tear running down cheek)
 					try{Class <?>t=p.getType();
 						if(v!=null && !t.isAssignableFrom( v.getClass() ))//t.isEnum()||t.isAssignableFrom(URL.class))
@@ -1146,48 +1075,37 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						TL.tl().error(ex,SrvltName,".Sql.Tbl.v(",this,",",p,",",v,")");
 					}
 					return this;}
-
 				Object v(Field p){//this is beautiful(tear running down cheek)
 					try{return p.get(this);}
 					catch (Exception ex) {//IllegalArgumentException,IllegalAccessException
 						TL.tl().error(ex,SrvltName,".Sql.Tbl.v(",this,",",p,")");return null;
 					}}
-
 				/**Field annotation to designate a java member for use in a dbTbl-column/field*/
 				@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
 				public @interface F{}
-
 				/**Interface for enum-items from different forms and sql-tables ,
 				 * the enum items represent a reference Column Fields for identifing the column and selection.*/
 				public interface CI{
 					public Field f();
 					public String getName();
 					public Class getType();}//interface I
-
 //}//public abstract static class Form
-
 				/**Sql-Column Interface, for enum -items that represent columns in sql-tables
 				 * the purpose of creating this interface is to centerlize
 				 * the definition of the names of columns in java source code*/
-
 				public abstract Object[]wherePK();//{Object[]c=pkcols(),v=pkvals(),a=new Object[c.length+v.length];for(int i=0;i<c.length;i++){a[i*2]=c[i];a[i*2+1]=v[i];}return a;}
-
 				public static CI[]cols(CI...p){return p;}
 				public static Object[]where(Object...p){return p;}
 				//public abstract CI pkc(int i);public abstract CI[]pkcols();public abstract int pkcn();
 				//public abstract PK pkv(int i);public abstract PK[]pkvals();
 				//public abstract PK[]pkv(PK[]v);
 				//public PK[]pka(PK...p){return p;}//static
-
 				public String sql(CI[]cols,Object[]where){
 					return sql(cols,where,null,null,getName());}
-
 				public static String sql(CI[]cols,Object[]where,String name){
 					return sql( cols, where,null,null,name);}//StringBuilder sql,
-
 				public String sql(CI[]cols,Object[]where,CI[]groupBy){
 					return sql(cols,where,groupBy,null,getName());}
-
 				public String sql(String cols,Object[]where,CI[]groupBy,CI[]orderBy) {
 					StringBuilder sql=new StringBuilder("select ");
 					sql.append(cols);//Co.generate(sql,cols);
@@ -1201,10 +1119,8 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						sql.append(" order by ");
 						Co.generate(sql,orderBy);}
 					return sql.toString();}
-
 				public static String sql(CI[]cols,Object[]where,CI[]groupBy,CI[]orderBy,String dbtName){
 					return sql(cols,where,groupBy,orderBy,dbtName,null);}
-
 				public static String sql(CI[]cols,Object[]where,CI[]groupBy,CI[]orderBy,String dbtName,String dbn){
 					//if(cols==null)cols=columns();
 					StringBuilder sql=new StringBuilder("select ");
@@ -1337,14 +1253,11 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						v(f,Json.Prsr.parse( rs.getCharacterStream(++c)));
 					else v(f,rs.getObject(++c));
 					return this;}
-
 				/**loads one row from the table*/
 				public Tbl load(){return loadWhere(wherePK());}
-
 				public Tbl nullify(){return nullify(columns());}
 				public Tbl nullify(CI[]a){for(CI f:a)v(f,null);return this;}
 				// /**loads one row from the table*/ Tbl load(){return load(pkv());}
-
 				/**loads one row using column CI c */
 				Tbl loadBy(CI c,Object v){
 					try{Object[]a= Sql.q1row(sql(cols(Co.all),where(c)),v);
@@ -1353,7 +1266,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						TL.tl().error(x,SrvltName,".Sql.Tbl(",this,").loadBy(",c,",",v,")");
 					}
 					return this;}//loadBy
-
 				/**loads one row based on the where clause */
 				Tbl loadWhere(Object[]where){
 					ResultSet rs=null;
@@ -1368,7 +1280,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					}finally {
 						close(rs);
 					}return null;}//loadBy
-
 				/**loads one row based on the where clause */
 				public static Tbl loadWhere(Class<? extends Tbl>c,Object[]where){
 					Tbl t=null;
@@ -1377,7 +1288,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						TL.tl().error(x,SrvltName,".Sql.Tbl(",t,").loadWhere(",c,",",where,")");
 					}
 					return t;}//loadBy
-
 				/**store this entity in the dbt */
 				public Tbl create() throws Exception{
 					CI[] cols = columns();
@@ -1390,10 +1300,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					Sql.X( sql.toString(), valsForSql() );
 					TL.tl().log( "create", this );//log(nw?Sql.Tbl.Log.Act.New:Sql.Tbl.Log.Act.Update);
 					return this;}//save
-
-
 				//public Tbl update(CI...c) throws Exception{return update(c);}
-
 				/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
 				public Tbl update(CI[]c) throws Exception{
 					StringBuilder sql = new StringBuilder( "update`" )
@@ -1403,11 +1310,9 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					for(CI x:c)
 						if(x==c[0])sql.append( " , `" ).append( x ).append( "`=?" );
 					//for()
-
 					Sql.X( sql.toString(), valsForSql() );
 					TL.tl().log( "update", this );//log(nw?Sql.Tbl.Log.Act.New:Sql.Tbl.Log.Act.Update);
 					return this;}//save
-
 				/**store this entity in the dbt , if pkv is null , this method uses the max+1 of pk-col*/
 				public Tbl save() throws Exception{
 					CI[] cols = columns();
@@ -1420,7 +1325,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					Sql.X( sql.toString(), valsForSql() );
 					TL.tl().log( "save", this );//log(nw?Sql.Tbl.Log.Act.New:Sql.Tbl.Log.Act.Update);
 					return this;}//save
-
 				//void log(Sql.Tbl.Log.Act act){	Map val=asMap();Integer k=(Integer)pkv();Sql.Tbl.Log.log( Sql.Tbl.Log.Entity.valueOf(getName()), k, act, val);}
 				public int delete() throws SQLException{
 					int x=-1;Object[]where=wherePK();
@@ -1429,7 +1333,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					Co.where( b,where );
 					x= Sql.X( b.toString(),where );
 					return x;}
-
 				/**retrieve from the db table all the rows that match
 				 * the conditions in < where > , create an iterator
 				 * , e.g.<code>for(Tbl row:query(
@@ -1500,10 +1403,8 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 							TL.tl().error(x,SrvltName,".Sql.Tbl.f(",name,c,"):");
 						}
 						return r;}
-
 					/**generate Sql into the StringBuilder*/
 					public static StringBuilder generate(StringBuilder b,CI[]col){ return generate(b,col,",");}
-
 					static StringBuilder generate(StringBuilder b,CI[]col,String separator){
 						if(separator==null)separator=",";
 						for(int n=col.length,i=0;i<n;i++){
@@ -1515,7 +1416,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 							}else
 								b.append("`").append(col[i]).append("`");}
 						return b;}
-
 					public static StringBuilder genList(StringBuilder b,List l){
 						b.append(" (");boolean comma=false;
 						for(Object z:l){
@@ -1529,7 +1429,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 									.append( '\'' );
 						}b.append(")");
 						return b;}
-
 					static StringBuilder where(StringBuilder b,Object[]where){
 						if(where==null || where.length<1)return b;
 						b.append(" where ");
@@ -1539,7 +1438,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 							i++;
 						}//for //where(b,Co.and,where);
 						return b;}
-
 					/**
 					 * in the case of Co.and and Co.or
 					 * the even-prm is Co.or or Co.and , and the odd-prm is a list
@@ -1577,7 +1475,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						else TL.tl().error(null,SrvltName,".Sql.Tbl.Col.where:for:",o);
 						return b;}
 				}//enum Co
-
 				/**output to jspOut one row of json of this row*/
 				public void outputJson(){try{TL.tl().getOut().o(this);}catch(IOException x){
 					TL.tl().error(x,"moh.Sql.Tbl.outputJson:IOEx:");
@@ -1605,9 +1502,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						}}catch(Exception ex){
 						tl.error( ex,SrvltName,".Sql.Tbl.check" );
 					} }
-
 				public static boolean exists(Object[]where,String dbtName){return exists(where,null,dbtName);}
-
 				public static boolean exists(Object[]where,CI[]groupBy,String dbtName){
 					boolean b=false;
 					int n=0;
@@ -1617,12 +1512,10 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				}
 			}//class Tbl
 		}//class Sql
-
 		static class Json{
 			public static class Output
 			{ public interface JsonOutput{
 				public Json.Output jsonOutput( Json.Output o, String ind, String path ) throws IOException ;}
-
 				public Writer w;
 				public boolean initCache=false,includeObj=false,comment=false;
 				Map<Object, String> cache;
@@ -1684,7 +1577,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						     .w(",\"hashCode\":").oStr(Long.toHexString(a.hashCode()),ind);
 						if(c)w("}//Object&cachePath=\"").p(path).w("\"\n").p(ind);
 						else w("}");}return this;}
-
 				public Output oStr(String a,String indentation)throws IOException
 				{final boolean m=comment;if(a==null)return w(m?" null //String\n"+indentation:"null");
 					w('"');for(int n=a.length(),i=0;i<n;i++)
@@ -1693,7 +1585,7 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				else if(c=='\n'){w('\\').w('n');if(m)w("\"\n").p(indentation).w("+\"");}
 				else if(c=='\r')w('\\').w('r');
 				else if(c=='\t')w('\\').w('t');
-				else if(c=='\'')w('\\').w('\'');
+				//else if(c=='\'')w('\\').w('\'');
 				else p(c);}return w('"');}
 				public Output oDt(java.util.Date a,String indentation)throws IOException
 				{if(a==null)return w(comment?" null //Date\n":"null");
@@ -1758,9 +1650,9 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					Iterator e=o.keySet().iterator();Object k,v;
 					//if(o instanceof Store.JsonStorage)w("uuid:").o(((Store.JsonStorage)o).uuid);
 					if(e.hasNext()){k=e.next();v=o.get(k);//if(o instanceof Store.JsonStorage)w(",");
-						o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
+						o(String.valueOf(k),ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 					while(e.hasNext()){k=e.next();v=o.get(k);w(",");
-						o(k,ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
+						o(String.valueOf(k),ind,c?path+k:path);w(":");o(v,ind,c?path+k:path);}
 					if(c) w("}//")
 						      .p(o.getClass().getName())
 						      .w("&cachePath=\"")
@@ -1863,7 +1755,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					if(c)try{w("}//").p(y.getClass().getName()).w("&cachePath=\"").p(path).w("\"\n").p(ind);
 					}catch(Exception ex){TL.tl().error(ex,"Json.Output.Cookie:");}else w("}");
 					return this;}
-
 				Output oTL(TL y,String ind,String path)throws IOException
 				{final boolean c=comment;try{String i2=c?ind+"\t":ind;
 					(c?w("{//").p(y.getClass().getName()).w(":PageContext\n").p(ind):w("{"))
@@ -1885,7 +1776,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					catch(Exception ex){TL.tl().error(ex,"Json.Output.oTL:closing:");}
 					else w("}");
 					return this;}
-
 				Output oSC(ServletContext y,String ind,String path)
 				{final boolean c=comment;try{String i2=c?ind+"\t":ind;(c?w("{//").p(y.getClass().getName()).w(":ServletContext\n").p(ind):w("{"))
 					.w(",\"ContextPath\":").o(y.getContextPath(),i2,c?path+".ContextPath":path)
@@ -1896,7 +1786,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					else w("}");
 				}catch(Exception ex){TL.tl().error(ex,"Json.Output.ServletContext:");}
 					return this;}
-
 				Output oSCnfg(ServletConfig y,String ind,String path)throws IOException
 				{final boolean c=comment;try{if(c)w("{//").p(y.getClass().getName()).w(":ServletConfiguration\n").p(ind);
 				else w("{");
@@ -1943,31 +1832,22 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 				public Output clrSW(){if(w instanceof StringWriter){((StringWriter)w).getBuffer().setLength(0);}return this;}
 				public Output flush() throws IOException{w.flush();return this;}
 			} //class Output
-
-
 			public static class Prsr {
-
 				public StringBuilder body,buff=new StringBuilder() ,lookahead=new StringBuilder();
 				public Reader rdr;
-
 				public String comments=null;
 				public char c;Map<String,Object>cache=null;
-
 				enum Literal{Undefined,Null};//,False,True
-
 				public static Object parse(String p)throws Exception{
 					return parse(new java.io.StringReader(p));}
 					
 		public static Object parse(HttpServletRequest p,StringBuilder bodyTxt)throws Exception{
 			return parse(p.getReader(),bodyTxt);}
-
 		public static Object parse(Reader p)throws Exception{return parse(p,null);}
-
 		public static Object parse(Reader p,StringBuilder bodyTxt)throws Exception{
 			if(p==null)return null;
 			Prsr j=new Prsr();j.body=bodyTxt;j.rdr=p;j.nxt(j.c=j.read());
 			return j.parse();}
-
 				/**skip Redundent WhiteSpace*/void skipRWS(){
 					boolean b=Character.isWhitespace(c);
 					while(b && c!='\0'){
@@ -1976,7 +1856,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 							nxt();
 					}
 				}
-
 				void skipRWSx(char...p){
 					skipRWS();
 					char x=peek();int i=-1,n=p==null?0:p.length;boolean b=false;
@@ -1986,7 +1865,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						}
 					}while(b);
 				}// boolean chk(){boolean b=Character.isWhitespace(c)||c=='/';while(b && c!='\0'){//Character.isWhitespace(c)||)char x=peek();if(c=='/' &&(lookahead("//") || lookahead("/*"))){	skipWhiteSpace();b=Character.isWhitespace(c);}else if(x=='/' &&(lookahead(x+"//") || lookahead(x+"/*") )){}else{	if(b=Character.isWhitespace(x))nxt();}}return false;}
-
 				public Object parse()throws Exception{
 					Object r=c!='\0'?parseItem():null;
 					skipWhiteSpace();if(c!='\0')
@@ -1996,7 +1874,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 							l.add(r);
 						}r=l;}
 					return r;}
-
 				public Object parseItem()throws Exception{
 					Object r=null;int i;skipWhiteSpace();switch(c)
 					{ case '"':case '`':case '\'':r=extractStringLiteral();break;
@@ -2039,7 +1916,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						comments=null;
 					}
 					return r;}
-
 				public String extractStringLiteral()throws Exception{
 					char first=c;nxt();boolean b=c!=first&&c!='\0';
 					while(b)
@@ -2060,7 +1936,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					else buff(c);
 						nxt();b=c!=first&&c!='\0';
 					}if(c==first)nxt();return consume();}
-
 				public Object extractIdentifier(){
 					while(!Character.isUnicodeIdentifierStart(c))
 					{System.err.println("unexpected:"+c+" at row,col="+rc());nxt();return Literal.Null;}
@@ -2072,7 +1947,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						:"null".equals(r)?Literal.Null
 						:"undefined".equals(r)?Literal.Undefined
 						:r;}
-
 				public Object extractDigits(){
 					if(c=='0')//&&offset+1<len)
 					{char c2=peek();if(c2=='x'||c2=='X')
@@ -2095,7 +1969,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					String s=consume();//p.substring(i,offset);
 					if(!dot)try{return Long.parseLong(s);}catch(Exception ex){}
 					try{return Double.parseDouble(s);}catch(Exception ex){}return s;}
-
 				public List<Object> extractArray()throws Exception{
 					if(c!='[')return null;
 					nxt();char x=0;
@@ -2118,7 +1991,6 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						nxt();
 					skipRWS();
 					return l;}
-
 				public Map<Object,Object> extractObject()throws Exception{
 					final char bo='{',bc='}';
 					if(c==bo)nxt();
@@ -2148,12 +2020,10 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						nxt();
 					skipRWS();
 					return r;}
-
 				public void skipWhiteSpace(){
 					boolean b=false;do{
 						while(b=Character.isWhitespace(c))nxt();
 						b=b||(c=='/'&&skipComments());}while(b);}
-
 				public boolean skipComments(){
 					char c2=peek();if(c2=='/'||c2=='*'){nxt();nxt();
 						StringBuilder b=new StringBuilder();if(c2=='/')
@@ -2163,14 +2033,12 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						{while(c!='\0'&&c2!='/'){bNxt();if(c=='*')c2=peek();}
 							if(c=='*'&&c2=='/'){b.deleteCharAt(b.length()-1);nxt();nxt();}
 						}comments=b.toString();return true;}return false;}
-
 				/**read a char from the rdr*/
 		char read(){
 			int h=-1;try{h=rdr.read();if(body!=null&&h!=-1)body.append((char)h);}
 			catch(Exception ex){TL.tl().error(ex, "TL.Json.Prsr.read");}
 			char c= h==-1?'\0':(char)h;
 			return c;}
-
 				public char peek(){
 					char c='\0';
 					int n=lookahead.length();
@@ -2179,12 +2047,10 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						lookahead.append(c);}
 					else c=lookahead.charAt(0);
 					return c;}
-
 				public int _row,_col;String rc(){return "("+_row+','+_col+')';}
 				public void nlRC(){_col=1;_row++;}public void incCol(){_col++;}
 				//boolean eof,mode2=false;
 				public char setEof(){return c='\0';}
-
 				/**update the instance-vars (if needed):c,row,col,eof*/
 				public char nxt(char h){
 					if(h=='\0'||h==-1||c=='\0')return setEof();
@@ -2194,10 +2060,8 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 						nlRC();
 					else incCol();
 					return c;}
-
 				/**put into the buffer the current c , and then call nxt()*/
 				public char bNxt(){buff();return nxt();}
-
 				/**read from the reader a char and store the read char into member-variable c, @returns member-variable c*/
 				public char nxt(){
 					char h='\0';
@@ -2208,17 +2072,13 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 					}else h=read();
 					c=nxt(h);
 					return c;}
-
 	/**this method works differently than next(), in particular how char c is read and buffered*/
 	public String next(int n)
 	{String old=consume(),retVal=null;while(n-->0)buff(nxt());retVal=consume();buff.append(old);return retVal;}
-
 				public char buff(){return buff(c);}
 				char buff(char p){buff.append(p);return p;}
-
 				/**empty the member-variable buff , @returns what was stored in buff*/
 				public String consume(){String s=buff.toString();buff.replace(0, buff.length(), "");return s;}
-
 				public boolean lookahead(String p,int offset){
 					int i=0,pn=p.length()-offset,ln=lookahead.length();
 					boolean b=false;char c=0,h=0;if(pn>0)
@@ -2233,22 +2093,16 @@ static Map<String, Method> mth = new HashMap<String, Method>();
 							                   ==Character.toUpperCase(h))
 						)&& (++i)<pn );
 					return b;}
-
 				public boolean lookahead(String p){return lookahead(p,0);}
-
 			}//Prsr
 		}//class Json
-
 /*public static void main(String[]args){
 	dev201801.Dbg.Srvlt s=dev201801.Dbg.Srvlt.sttc;
 	s.pc=new dev201801.Dbg.PC();
 	s.pc.a=dev201801.Dbg.SrvltContxt.sttc();
 	s.pc.q.ssn=new dev201801.Dbg.Ssn();
-	String[]p={"get","?sttstcs=count amount&","{showDefs=true,sttstcs='avg count amount'}"};
+	String[]p={"get","?sttstcs=amount,avg,avgPrice,SumLand,count","{showDefs=true,sttstcs='amount,avg,avgPrice,SumLand,count'}"};
 	s.pc.q.init(p);
-
 	Realestate201805.service( s.pc.q,s.pc.p );
-
 }//main */
-
 %>
