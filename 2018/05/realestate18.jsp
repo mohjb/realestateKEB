@@ -16,7 +16,7 @@ import="java.io.*
 contentType="text/json; charset=utf-8" pageEncoding="UTF8"
 %><%Realestate201805.service(request,response);%><%! //<?
 
-/** 
+/**
  * Created by Vaio-PC on 5/29/2018.
  */
 public static class Realestate201805 {
@@ -75,9 +75,9 @@ public static class Realestate201805 {
 		enum Statistics{
 			count("count(*)","عدد","Count")
 			,amount("sum(`"+DataTbl.C.price+"`)","إجمالي قيمة التداول","Total Price")
-			,avg("sum(`"+DataTbl.C.price+"`)/sum(`"+DataTbl.C.area+"`)","متوسط السعر","Average Price")
-			,max("max(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)","أعلى سعر متر","Maximum Price of 1 square meter")
-			,min("min(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)","أقل سعر متر","Minimum Price of 1 square meter")
+			,avgPric1("sum(`"+DataTbl.C.price+"`)/sum(`"+DataTbl.C.area+"`)","متوسط السعر متر","Average Price of 1 square meter")
+			,maxPric1("max(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)","أعلى سعر متر","Maximum Price of 1 square meter")
+			,minPric1("min(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)","أقل سعر متر","Minimum Price of 1 square meter")
 			,maxPrice("max(`"+DataTbl.C.price+"`)","أعلى سعر","Maximum Price")
 			,minPrice("min(`"+DataTbl.C.price+"`)","أقل سعر","Minimum Price")
 			,avgPrice("avg(`"+DataTbl.C.price+"`)","متوسط السعر","Average Price")
