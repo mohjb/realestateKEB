@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html ng-app="angApp">
 <head>
-	<title>{{lbl.title}}</title>
+	<title ng-if="lang=='ar'">{{l(lblNo.title,'ar')}}</title><title ng-if="lang=='en'">{{l(lblNo.title,'en')}}</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<!-- external libs from cdnjs -->
 	<link rel="stylesheet" type="text/css" href="res/c3.min.css">
@@ -39,6 +39,8 @@
 			border-radius: 10px;
 			border: 1px solid darkblue;
 		}
+		.ar{display:none}
+		.en{display:}
 	</style>
 
 	<!-- optional: mobile support with jqueryui-touch-punch -->
@@ -223,7 +225,41 @@ function mData2(m,s){
 	return interpolateWrap;
 
     });
-});//config
+})//config
+.directive('labl', function()  
+ {var directive = {restrict:'E'
+	,template : '<span class="ar">{{srvr.lookup.label[lblNo].ar.text}}</span><span class="en">{{srvr.lookup.label[lblNo].en.text}}</span>'
+	,scope:{lblNo: "=lblNo"}}
+	return directive;})
+.directive('lbl', function()
+{	var directive = {restrict:'E'
+	,template : '<span class="ar">{{srvr.lookup.label[lblNo].ar.text}}</span><span class="en">{{srvr.lookup.label[lblNo].en.text}}</span>'
+	,scope:{n: "=n",p:'=p'}//p=gov typ term contrct st sctr lbl
+	,compile: function(element, attributes)  
+	{	//element.css("border", "2px solid blue");  
+		var link = function($scope, element, attributes)   
+		{	var p=$scope.p,n=$scope.n,s=scop.srvr,l=s.lookup
+			,x=  p=='gov' ?l.gov
+				:p=='typ' ?l.type
+				:p=='name'?l.name
+				:p=='sctr'?l.sector
+				:p=='rank'   ?s.defs.Lbl.Rank
+				:p=='term'   ?s.defs.Lbl.Term
+				:p=='contrct'?s.defs.Lbl.Contrct
+				:p=='st'     ?s.defs.Lbl.Statistics
+				:l.label //p=='lbl' ?
+			,y=x.lblNo!=undefined?l.label[x.lblNo]:x
+			,z=y[n]
+			,ar=z.ar.text
+			,en=z.en.text
+			element.html('<span class="en">'+en+'</span><span class="ar">'+ar+'</span>');
+			//element.css("background-color", "yellow");
+		}
+		return link;
+	}}
+	return directive;  
+}); 
+
 scop=0
 
 
@@ -233,7 +269,7 @@ scop=0
 <div style="margin:5px;
 	border-radius: 10px;
 	border: 1px solid darkblue;">
-<h3 Years style="text-align:center">{{lbl.years}}:</h3>
+<h3 Years style="text-align:center"><lbl n="{{lbl.years}}"/>:</h3>
 <rzslider rz-slider-model="yrSlider.minValue"
 	rz-slider-high="yrSlider.maxValue"
 	rz-slider-options="yrSlider.options"></rzslider>
@@ -248,39 +284,44 @@ scop=0
     MARGIN-TOP: 15px;">
 
 <div class="gridItem">
-<h3 Term>{{lbl.term}}:</h3>
-<select ng-model="term" ng-options="t.lblNo for t in srvr.defs.Lbl.Term"></select>
+<h3 Term><lbl n="{{lbl.term}}"/>:</h3>
+<select ng-if="lang=='ar'" ng-model="term" ng-options="srvr.lookup.label[t.lblNo][lang].text for t in srvr.defs.Lbl.Term"></select>
+<select ng-if="lang=='en'" ng-model="term" ng-options="srvr.lookup.label[t.lblNo][lang].text for t in srvr.defs.Lbl.Term"></select>
 </div>
 
 <div class="gridItem">
-<h3 Contrct>{{lbl.contrct}}:</h3>
-<select ng-model="contrct" ng-options="t.lblNo for t in srvr.defs.Lbl.Contrct"></select>
+<h3 Contrct><lbl n="{{lbl.contrct}}"/>:</h3>
+<select ng-if="lang=='ar'" ng-model="contrct" ng-options="srvr.lookup.label[t.lblNo][lang].text for t in srvr.defs.Lbl.Contrct"></select>
+<select ng-if="lang=='en'" ng-model="contrct" ng-options="srvr.lookup.label[t.lblNo][lang].text for t in srvr.defs.Lbl.Contrct"></select>
 </div>
 
 <div class="gridItem">
-<h3 Lang>{{lbl.lang}}:</h3>
+<h3 Lang><lbl n="{{lbl.lang}}"/>:</h3>
 <span ng-repeat="t in srvr.defs.Lang" style="border:1px solid black">
 	<input type="radio" ng-model="lang" name="lang" value="{{t}}" ng-change="initLbl()"/>
 	<span >{{ srvr.lookup.label[t=='ar'?47:48][t].text }}</span></span>
 </div>
 
 <div class="gridItem">
-<h3 Govs>{{lbl.govs}}:</h3>
-<select ng-model="gov" ng-options="t[lang].text for t in srvr.lookup.gov"></select>
+<h3 Govs><lbl n="{{lbl.govs}}"/>:</h3>
+<select ng-if="lang=='ar'" ng-model="gov" ng-options="t[lang].text for t in srvr.lookup.gov"></select>
+<select ng-if="lang=='en'" ng-model="gov" ng-options="t[lang].text for t in srvr.lookup.gov"></select>
 </div>
 
 <div class="gridItem">
-<h3 sector>{{lbl.sector}}:</h3>
-<select ng-model="sector" ng-options="t[lang].text for t in srvr.lookup.sector"></select>
+<h3 sector><lbl n="{{lbl.sector}}"/>:</h3>
+<select ng-if="lang=='ar'" ng-model="sector" ng-options="t[lang].text for t in srvr.lookup.sector"></select>
+<select ng-if="lang=='en'" ng-model="sector" ng-options="t[lang].text for t in srvr.lookup.sector"></select>
 </div>
 
 <div class="gridItem">
-<h3 Types>{{lbl.types}}:</h3>
+<h3 Types><lbl n="{{lbl.types}}"/>:</h3>
 <!--span ng-repeat="t in srvr.lookup.type" style="border:1px solid black">
 	<input type="radio" ng-model="typ" value="{{t.ar.code}}" />
 	<span class="stylAr">{{ t.ar.text }}</span>
 	<span class="stylEn">{{ t.en.text }}</span></span-->
-<select ng-model="typ" ng-options="t[lang].text for t in srvr.lookup.type"></select>
+<select ng-if="lang=='ar'" ng-model="typ" ng-options="t[lang].text for t in srvr.lookup.type"></select>
+<select ng-if="lang=='en'" ng-model="typ" ng-options="t[lang].text for t in srvr.lookup.type"></select>
 </div>
 
 <div class="gridItem">
@@ -293,7 +334,7 @@ scop=0
 <div style="margin:5px;
 	border-radius: 10px;
 	border: 1px solid darkblue;">
-<h3 Statistics style="text-align:center">{{lbl.stts}}:</h3>
+<h3 Statistics style="text-align:center"><lbl n="{{lbl.stts}}"/>:</h3>
 <div style="display:grid;
 	grid-column-gap: 5px;
 	grid-row-gap: 50px;
@@ -303,10 +344,10 @@ scop=0
 	MARGIN-TOP: 15px;">
 <div ng-repeat="t in srvr.defs.Lbl.Statistics" class="gridItem">
 	<input type="checkbox" ng-model="st[t.name]" id="{{t.name}}" />
-	<label for="{{t.name}}">{{ t[lang] }}</label></div>
+	<label for="{{t.name}}"><lbl p="st" n="{{t.lblNo}}"/></label></div>
 </div></div>
 
-{{lbl.kisr}}<br/>
+<lbl n="{{lbl.kisr}}"/><br/>
 {{lbl.kisrTed}}<br/>
 <!-- {{lbl.kisrMohjb}} -->
 		<div id="output" style="margin: 30px;"></div>
