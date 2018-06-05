@@ -14,7 +14,7 @@ import="java.io.*
 ,org.apache.commons.fileupload.servlet.ServletFileUpload
 ,com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource"
 contentType="text/json; charset=utf-8" pageEncoding="UTF8"
-%><%Realestate201805.service(request,response);%><%! //<?
+%><%Realestate201805.service(request,response);%><%! //<? 
 
 /**
  * Created by Vaio-PC on 5/29/2018.
@@ -27,28 +27,25 @@ public static class Realestate201805 {
 
 	enum Lbl{;
 
-		enum Ranks{r1("الأول","1st"),
-			r2("الثاني","2nd"),
-			r3("الثالث","3rd"),
-			r4("الرابع","4th");protected String en,ar;
-			Ranks(String a,String e){ar=a;en=e;}
-			public Map lang(Map m){m.put("ar",ar);m.put("en",en );return m;}
+		enum Ranks{r1(14),
+			r2(15),
+			r3(16),
+			r4(17),
+			;Ranks(int i){lblNo=i;}public int lblNo;
 			public static Map def(){Map a=Util.mapCreate();for(Ranks p:ranks)a.put(p.name(),p.m(null));return a;}
-			public Map m(Map m){if(m==null)m=Util.mapCreate();return Util.mapSet(m,"name",name(),"ar",ar,"en",en);}
+			public Map m(Map m){if(m==null)m=Util.mapCreate();return Util.mapSet(m,"name",name(),"lblNo",lblNo);}
 
 	}
 
 		enum Contrct{
-			all(0,"إجمالي العقود","Total"),
-			c1(1,"عقود مسجلة","Registered"),
-			c2(2,"وكالات عقارية","Agent")
-			;
+			all(0,18),
+			c1(1,19),
+			c2(2,20)			;
 			public static Map def(){Map a=Util.mapCreate();for(Contrct p:contrcts)a.put(p.name(),p.m(null));return a;}
-			public Map m(Map m){if(m==null)m=Util.mapCreate();return Util.mapSet(m,"name",name(),"ar",ar,"en",en,"v",v);}
+			public Map m(Map m){if(m==null)m=Util.mapCreate();return Util.mapSet(m,"name",name(),"lblNo",lblNo,"v",v);}
 
-			protected String ar,en;public int v;
-			Contrct(int i,String p,String e){ar=p;en=e;v=i;}
-			public Map lang(Map m){m.put("ar",ar);m.put("en",en );return m;}
+			public int v,lblNo;
+			Contrct(int i,int lNo){lblNo=lNo;v=i;}
 		};//Contrct
 
 		public static Term[]terms=Term.values();
@@ -57,34 +54,32 @@ public static class Realestate201805 {
 		public static Statistics[]sttstcs=Statistics.values();
 
 		enum Term{
-			aggregate(1,"إجمالي","إجمالي الفترة" ,"Aggregate","aggregate","1")
-			, annual(1,"سنة","سنوي" ,"Annual","Year","`y`")
-			, nineMonths(1,"9شهور","9شهور" ,"Nine Months","Nine Months","`y`")//	=9months
-			, semiAnnual(2,"النصف","نصف سنوي" ,"Semi-Annual","Half","concat(`y`,'h',ceil(`m`/6))")
-			, quarterly(4,"الربع","ربع سنوي" ,"Quarterly","Quarter","concat(`y`,'q',ceil(`m`/3))")
-			, monthly(12,"شهر","شهري" ,"Monthly","Month","concat(`y`,'m',`m`)")
-			, weekly(52,"اسبوع","اسبوعي" ,"Weekly","Week","concat(`y`,'w',`w`)");
-			public int base;protected String ar,lbl,en,enLbl,sql;
-			Term(int b,String a,String lbl,String e,String el,String s){base=b;ar=a;this.lbl=lbl;en=e;enLbl=el;sql=s;}
-			public Map lang(Map m){m.put("ar",ar);m.put("en",en );return m;}
-			public Map lbl(Map m){m.put("arLbl",lbl);m.put("enLbl",enLbl );return m;}
+			aggregate(1,22,21,"1")
+			, annual(1,24,23,"`y`")
+			, nineMonths(1,25,25,"`y`")//	=9months 
+			, semiAnnual(2,27,26,"concat(`y`,'h',ceil(`m`/6))")
+			, quarterly(4,29,28,"concat(`y`,'q',ceil(`m`/3))")
+			, monthly(12,31,30,"concat(`y`,'m',`m`)")
+			, weekly(52,33,32,"concat(`y`,'w',`w`)");
+			public int base,lblNo,lblNo2;protected String sql;
+			Term(int b,int n1,int n2,String s){base=b;lblNo=n1;lblNo2=n2;sql=s;}
 			public static Map def(){Map a=Util.mapCreate();for(Term p:terms)a.put(p.name(),p.m(null));return a;}
-			public Map m(Map m){if(m==null)m=Util.mapCreate();return Util.mapSet(m,"name",name(),"ar",ar,"lbl",lbl,"en",en,"enLbl",enLbl,"base",base,"sql",sql);}
+			public Map m(Map m){if(m==null)m=Util.mapCreate();return Util.mapSet(m,"name",name(),"lblNo",lblNo,"lblNo2",lblNo2,"base",base);}//,"sql",sql
 		}//enum Term
 
 		enum Statistics{
-			count("count(*)","عدد","Count")
-			,amount("sum(`"+DataTbl.C.price+"`)","إجمالي قيمة التداول","Total Price")
-			,avgPric1("sum(`"+DataTbl.C.price+"`)/sum(`"+DataTbl.C.area+"`)","متوسط السعر متر","Average Price of 1 square meter")
-			,maxPric1("max(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)","أعلى سعر متر","Maximum Price of 1 square meter")
-			,minPric1("min(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)","أقل سعر متر","Minimum Price of 1 square meter")
-			,maxPrice("max(`"+DataTbl.C.price+"`)","أعلى سعر","Maximum Price")
-			,minPrice("min(`"+DataTbl.C.price+"`)","أقل سعر","Minimum Price")
-			,avgPrice("avg(`"+DataTbl.C.price+"`)","متوسط السعر","Average Price")
-			,avgLand("avg(`"+DataTbl.C.area+"`)","متوسط المساحة","Average Area")
-			,SumLand("sum(`"+DataTbl.C.area+"`)","إجمالي المساحة","Total Area")
-			,maxLand("max(`"+DataTbl.C.area+"`)","أكبر مساحة","Largest Area")
-			,minLand("min(`"+DataTbl.C.area+"`)","أصغر مساحة","Smallest Area");
+			count("count(*)",34)//"عدد","Count")
+			,amount("sum(`"+DataTbl.C.price+"`)",35)
+			,avgPric1("sum(`"+DataTbl.C.price+"`)/sum(`"+DataTbl.C.area+"`)",36)
+			,maxPric1("max(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)",37)
+			,minPric1("min(`"+DataTbl.C.price+"`/`"+DataTbl.C.area+"`)",38)
+			,maxPrice("max(`"+DataTbl.C.price+"`)",51)
+			,minPrice("min(`"+DataTbl.C.price+"`)",52)
+			,avgPrice("avg(`"+DataTbl.C.price+"`)",50)
+			,avgLand("avg(`"+DataTbl.C.area+"`)",39)
+			,SumLand("sum(`"+DataTbl.C.area+"`)",40)
+			,maxLand("max(`"+DataTbl.C.area+"`)",41)
+			,minLand("min(`"+DataTbl.C.area+"`)",42);
 
 			static Statistics[]parse(Object p){
 				if(p==null)return null;String s=p.toString().toLowerCase();
@@ -104,12 +99,11 @@ public static class Realestate201805 {
 				}Statistics[]a=new Statistics[l.size()];
 				return l.toArray(a);}
 
-			public String sql;protected String ar,en;
-			Statistics(String p,String l,String e){sql=p;ar=l;en=e;}
-			public Map lang(Map m){m.put("ar",ar);m.put("en",en );return m;}
+			public String sql;public int lblNo;
+			Statistics(String p,int i){sql=p;lblNo=i;}
 
 			public static Map def(){Map a=Util.mapCreate();for(Statistics p:sttstcs)a.put(p.name(),p.m(null));return a;}
-			public Map m(Map m){if(m==null)m=Util.mapCreate();return Util.mapSet(m,"name",name(),"ar",ar,"en",en,"sql",sql);}
+			public Map m(Map m){if(m==null)m=Util.mapCreate();return Util.mapSet(m,"name",name(),"lblNo",lblNo);}//,"sql",sql
 		}//enum S//sttstcs
 	}//enum Lbl
 
@@ -125,7 +119,6 @@ public static class Realestate201805 {
 	@HttpMethod(prmName = "showLookup")Boolean showLookup,
 	@HttpMethod(prmName = "showNamesGovs")Boolean showNamesGovs,
 	//@HttpMethod(prmName = "op") String op,
-	//@HttpMethod(prmName = "lang") Lang lang,
 	//@HttpMethod(prmName = "reversedXAxis")boolean reversedXAxis,
 	TL tl)
 	throws Exception
